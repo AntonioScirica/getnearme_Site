@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, FileDown, Info, Loader2, Pencil, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileDown, Info, Loader2 } from 'lucide-react';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage } from '@/components/site/pages';
 import type { PropEdit } from '@/components/site/ui';
@@ -16,16 +16,14 @@ import { printHtml } from '@/lib/printHtml';
 export default function PropertyDetail({ project, loading, onChange }: { project?: ProjectData; loading: boolean; onChange: () => void }) {
   // modello del sito e indirizzo: per l'avviso "sul sito si vede con lo stile del modello"
   const [site, setSite] = useState<{ slug: string | null; template: TemplateId; config: SiteConfig; name: string; logo: string | null } | null>(null);
-  const [editing, setEditing] = useState(false);
+  const editing = true; // la barra di modifica c'e' sempre, a sinistra della pagina del sito
   const [draft, setDraft] = useState<Partial<ProjectData> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const credits = useCredits();
-  const [savingProp, setSavingProp] = useState(false);
   const grid = useRef<HTMLDivElement>(null);
   const [gridH, setGridH] = useState<number>();
   useEffect(() => {
     if (!editing) return;
-    grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // la zona di modifica sale sotto l'intestazione
     const fit = () => { const el = grid.current; if (el) setGridH(Math.max(420, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
     fit();
     const t = setTimeout(fit, 700); // dopo lo scorrimento
@@ -75,13 +73,6 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     <>
       <div className="mb-5 flex items-center justify-between">
         <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Immobili</a>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ease-smooth transition-colors hover:bg-canvas disabled:opacity-60 ${report === 'err' ? 'ring-rose-300 text-rose-700' : 'ring-black/10'}`}>{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} {report === 'busy' ? 'Preparo il report…' : 'Scarica report'}</button>
-          {/* in modifica il pulsante diventa Salva (salva la barra a sinistra); la X della barra annulla */}
-          {editing
-            ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:save-property'))} className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">{savingProp && <Loader2 size={14} className="animate-spin" />} Salva</button>
-            : <button type="button" onClick={() => setEditing(true)} className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><Pencil size={14} /> Modifica</button>}
-        </div>
       </div>
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
       <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
@@ -99,7 +90,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
-        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onBusy={setSavingProp} onDraft={setDraft} onClose={() => { setEditing(false); setDraft(null); }} onSaved={() => { setEditing(false); setDraft(null); onChange(); }} />}
+        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onDraft={setDraft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); onChange(); }}
+          report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
       {!editing && typeof extra.score === 'number' && (
@@ -145,7 +137,7 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 // Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
-function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, onBusy }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; onBusy: (b: boolean) => void }) {
+function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
   const [order, setOrder] = useState(photos);
   const [drag, setDrag] = useState<string | null>(null);
   // foto cambiate da fuori (copertina, togli, salvataggio): si riallinea l'ordine (aggiornamento in render, niente effetto)
@@ -155,20 +147,18 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, o
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const initial = () => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]);
+  const reset = () => { setV(initial()); setErr(''); onClose(); }; // Annulla: si torna ai dati salvati
   const n = (x: string) => Math.max(0, Math.round(Number(x.replace(/[^\d,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0));
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
   const set = (k: string, x: string) => setV(o => { const nv = { ...o, [k]: x }; onDraft(toUp(nv)); return nv; });
   const save = async () => {
     if (busy) return;
-    setBusy(true); onBusy(true); setErr('');
+    setBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
-    setBusy(false); onBusy(false);
+    setBusy(false);
     if (r) onSaved(); else setErr('Salvataggio non riuscito, riprova.');
   };
-  // Salva in alto (al posto di Modifica)
-  const saveRef = useRef(save);
-  useEffect(() => { saveRef.current = save; });
-  useEffect(() => { const on = () => void saveRef.current(); window.addEventListener('agenteimmo:save-property', on); return () => window.removeEventListener('agenteimmo:save-property', on); }, []);
   const input = 'mt-1 h-10 w-full rounded-xl bg-canvas px-3 text-sm outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand';
   const field = (k: keyof ProjectData) => {
     const f = FIELDS.find(x => x.k === k)!;
@@ -183,7 +173,6 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, o
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-bold">Modifica immobile</h2>
         {err && <span className="ml-auto mr-2 text-sm text-rose-600">{err}</span>}
-        <button type="button" onClick={onClose} aria-label="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
         {/* ordine delle foto: si trascinano; la prima e' la copertina */}
@@ -217,7 +206,8 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, o
         ))}
       </div>
       <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
-        <button type="button" onClick={onClose} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
+        {report}
+        <button type="button" onClick={reset} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
         <button type="button" onClick={save} disabled={busy} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
       </div>
     </div>
