@@ -216,6 +216,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const [err, setErr] = useState('');
   const initial = () => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]);
   const reset = () => { setV(initial()); setErr(''); onClose(); }; // Annulla: si torna ai dati salvati
+  const dirty = JSON.stringify(v) !== JSON.stringify(initial()); // Salva e Annulla solo se qualcosa e' cambiato
   const n = (x: string) => Math.max(0, Math.round(Number(x.replace(/[^\d,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0));
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
   const set = (k: string, x: string) => setV(o => { const nv = { ...o, [k]: x }; onDraft(toUp(nv)); return nv; });
@@ -275,8 +276,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
         {report}
-        <button type="button" onClick={reset} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
-        <button type="button" onClick={save} disabled={busy} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
+        <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas disabled:opacity-40 disabled:hover:bg-transparent">Annulla</button>
+        <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
       </div>
     </div>
   );
