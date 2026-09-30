@@ -48,7 +48,14 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     if (html) { await printHtml(html); setReport('idle'); } else setReport('err');
   };
   useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSite({ slug: d.slug ?? null, template: d.config?.template, config: d.config, name: d.name || 'La tua agenzia', logo: d.logo ?? null })).catch(() => {}); }, []);
-  if (loading) return <Loader2 className="animate-spin text-muted" />;
+  // caricamento (anche subito dopo aver creato o salvato l'immobile): la forma della pagina, non una rotellina
+  if (loading) return (
+    <div aria-busy className="animate-pulse">
+      <div className="h-5 w-24 rounded-full bg-black/[0.06]" />
+      <div className="mt-6 h-14 rounded-3xl bg-black/[0.05]" />
+      <div className="mt-8 aspect-[16/10] rounded-[28px] bg-black/[0.05]" />
+    </div>
+  );
   if (!project) return <p className="text-muted">{tr('Immobile non trovato.', 'Listing not found.')} <a href="#/immobili" className="text-brand">{tr('Torna agli immobili', 'Back to listings')}</a>.</p>;
 
   const extra = (project.import_data ?? {}) as { score?: number; suggerimenti?: string[]; photos?: unknown };
@@ -147,7 +154,7 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
     return () => ro.disconnect();
   }, []);
   return (
-    <div ref={box} className={`relative min-w-0 overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`} style={{ height: h ? h * k : undefined }}>
+    <div ref={box} className="relative min-w-0 overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/10" style={{ height: h ? h * k : undefined }}>
       <div ref={inner} className={ctx.propEdit ? '' : 'pointer-events-none select-none'} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }} aria-hidden={!ctx.propEdit}>
         <SitePage ctx={ctx} page={{ page: 'immobile', id }} />
       </div>

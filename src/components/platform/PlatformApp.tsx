@@ -129,6 +129,16 @@ function PlatformInner({ userData }: { userData: UserData }) {
   const morph = morphAt === route;
 
   const reload = () => fetchProjects().then(setProjects);
+  // immobile appena creato: l'elenco in memoria non lo ha ancora. Si ricarica una volta (scheletro nel frattempo) e solo
+  // se non c'e' nemmeno dopo si dice "non trovato" (prima compariva per un attimo prima della pagina)
+  const [checkedId, setCheckedId] = useState<string | null>(null);
+  const wantedId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
+  useEffect(() => {
+    if (!wantedId || !projects || projects.some(p => p.id === wantedId) || checkedId === wantedId) return;
+    let on = true;
+    fetchProjects().then(p => { if (on) { setProjects(p); setCheckedId(wantedId); } }).catch(() => { if (on) setCheckedId(wantedId); });
+    return () => { on = false; };
+  }, [wantedId, projects, checkedId]);
   useEffect(() => {
     reload();
     authFetch('/api/platform/portfolio').then(r => r.json()).then(d => setProfile({ name: d.name, slug: d.slug })).catch(() => setProfile(null));
@@ -155,6 +165,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   // anteprima di un modello del sito (aperta in un'altra scheda dalla galleria dei modelli)
   if (route.startsWith('/anteprima/')) return <TemplatePreview id={route.slice('/anteprima/'.length) as TemplateId} projects={projects} solo={new URLSearchParams(query).get('solo') === '1'} pagina={new URLSearchParams(query).get('pagina')} />;
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
+  const detail = projects?.find(p => p.id === detailId);
   const chat = route === '/staging';
 
   return (
@@ -234,7 +245,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           ) : route === '/nuovo' ? (
             <NewPropertyWizard onCreated={(p) => { reload(); go(`/immobile/${p.id}`); }} />
           ) : detailId ? (
-            <PropertyDetail project={projects?.find(p => p.id === detailId)} loading={projects === null} onChange={reload} />
+            <PropertyDetail project={detail} loading={projects === null || (!detail && checkedId !== detailId)} onChange={reload} />
           ) : route === '/immobili' ? (
             <PropertiesView projects={projects} onChange={reload} />
           ) : route === '/portfolio' ? (
