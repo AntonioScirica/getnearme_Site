@@ -80,9 +80,9 @@ function ChatHistory() {
   const when = (d: number) => (d === 0 ? 'Oggi' : d === 1 ? 'Ieri' : `${d} giorni fa`);
   return (
     <div ref={box} className="relative">
-      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 ease-smooth transition-colors ${open ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:shadow-md'}`}><History size={15} className={open ? '' : 'text-muted'} /> Storico</button>
+      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label="Storico delle chat" title="Storico delle chat" className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink hover:bg-line'}`}><History size={16} /></button>
       {open && (
-        <div className="blur-in absolute right-0 top-12 z-50 w-80 rounded-[24px] bg-white p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
+        <div className="blur-in absolute -right-1 top-11 z-50 w-80 rounded-[24px] bg-white p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
           <div className="px-3 pb-2 pt-1.5 text-xs text-muted">Le chat restano 30 giorni. Foto e video li trovi sempre in Galleria.</div>
           <div className="max-h-[60vh] overflow-y-auto">
             {!list ? <div className="flex h-20 items-center justify-center"><Loader2 size={18} className="animate-spin text-muted" /></div>
@@ -166,11 +166,16 @@ function PlatformInner({ userData }: { userData: UserData }) {
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
-            <div className="blur-in ml-auto flex items-center gap-2">
-              {!noPlan && <ChatHistory />}
-              {!noPlan && <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md"><SquarePen size={15} className="text-muted" /> Nuova chat</button>}
-              <CreditsPill />
+            {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
+            <div className="ml-auto flex items-center gap-2">
+              {credits && !noPlan && (
+                <span className="blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ring-line" style={{ animationDelay: '.15s' }}>
+                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} className="flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold"><SquarePen size={15} className="text-muted" /> Nuova chat</button>
+                  <span className="mr-1 h-5 w-px bg-line" aria-hidden />
+                  <ChatHistory />
+                </span>
+              )}
+              {credits && <CreditsPill />}
             </div>
           </>) : <>
           <a href="#/" className="flex items-center gap-2 justify-self-start">
