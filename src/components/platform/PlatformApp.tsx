@@ -109,6 +109,12 @@ export default function PlatformApp(props: { userData: UserData }) {
 function PlatformInner({ userData }: { userData: UserData }) {
   const credits = useCredits(); // senza piano niente Metti in vetrina in alto
   const noPlan = !!credits && credits.plan === 'none' && !credits.unlimited;
+  const [homeOpen, setHomeOpen] = useState(false); // Miglioralo aperto in home: niente pillola Importa immobile
+  useEffect(() => {
+    const on = (e: Event) => setHomeOpen(!!(e as CustomEvent<boolean>).detail);
+    window.addEventListener('agenteimmo:home-open', on);
+    return () => window.removeEventListener('agenteimmo:home-open', on);
+  }, []);
   const blockNoPlan = (e: React.SyntheticEvent) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new Event('agenteimmo:no-credits')); };
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
@@ -200,7 +206,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
       </header>
 
       {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto) */}
-      {!chat && route === '/' && <div className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+      {!chat && route === '/' && <div inert={homeOpen} className={`fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
         <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <Download size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
         </a>
@@ -459,6 +465,11 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
   const [d0] = useState(morph ? 0.5 : 0); // dall'onboarding: il titolo entra quando le card sono quasi al loro posto
   const [intro, setIntro] = useState(!morph); // arrivando dall'onboarding le card ci sono gia', niente ingresso
   const phase: Phase = !open ? 'closed' : imp.stage === 'input' ? 'input' : imp.stage === 'done' ? 'done' : 'browser';
+  // con Miglioralo aperto la pillola Importa immobile in basso sparisce (dice alla cornice se la card e' aperta)
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('agenteimmo:home-open', { detail: phase !== 'closed' }));
+    return () => { window.dispatchEvent(new CustomEvent('agenteimmo:home-open', { detail: false })); };
+  }, [phase]);
 
   // Titolo: quando cambia fase esce, cambia testo a meta' transizione e rientra.
   const key = phase === 'closed' ? 'home' : phase === 'input' ? 'link' : imp.stage;
