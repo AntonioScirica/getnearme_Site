@@ -577,7 +577,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       if (await agentRoom(nm)) patchV(m.id, { step: 'room' });
       return;
     }
-    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: 'Guardo il video…' } });
+    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: 'Cerco il momento in cui esci dall’inquadratura…' } });
     try {
       const g = await videoGrid(ag.video);
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
@@ -918,7 +918,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               </div>
                               <span className="hidden min-w-0 flex-1 truncate text-xs text-muted sm:block">Da qui la stanza si trasforma: non devi più vederti</span>
                               <button disabled={!!a?.busy || a?.at === undefined || (m.step === 'exit' && a?.exit === false)} onClick={async () => { if (await agentRoom(m)) patchV(m.id, { step: 'room' }); }}
-                                className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a?.busy && <Loader2 size={14} className="animate-spin" />}Scegli lo stile</button>
+                                className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a?.busy && <Loader2 size={14} className="animate-spin" />}Avanti</button>
                             </div>
                             {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
                           </div>
