@@ -1470,7 +1470,7 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
             placeholder={ready ? `${tr('Cosa cambio qui? Es.', 'What should I change here? E.g.')} ${example}` : tool === 'rect' ? tr('Disegna sulla foto', 'Draw on the photo') : clicks.length ? tr('Doppio clic per chiudere', 'Double-click to close') : tr('Disegna il contorno', 'Draw the outline')}
-            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
+            className="mr-2 h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />{/* spazio tra testo e strumenti */}
           {([['rect', tr('Rettangolo: trascina per disegnare la zona', 'Rectangle: drag to draw the area'), SquareDashed], ['lasso', tr('Forma: disegna il contorno o clicca i punti', 'Shape: draw the outline or click the points'), Lasso]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
               <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
