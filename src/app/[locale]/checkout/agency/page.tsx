@@ -782,7 +782,7 @@ function CheckoutAgencyContent() {
   const periodLabel = interval === 'annual' || selectedPlanId === 'agency_annual' ? t.perYear : t.perMonth;
 
   const en = locale === 'en';
-  const box = (on: boolean) => `mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 ease-smooth transition-colors ${on ? 'bg-ink ring-ink text-white' : 'bg-white ring-black/15'}`;
+  const box = (on: boolean) => `flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 ease-smooth transition-colors ${on ? 'bg-ink ring-ink text-white' : 'bg-white ring-black/15'}`;
   const tick = <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 6 5 9 10 3" /></svg>;
   const input = 'h-12 w-full rounded-2xl bg-canvas px-4 text-[15px] text-ink outline-none ring-1 ring-black/5 placeholder:text-muted/70 focus:bg-white focus:ring-2 focus:ring-brand disabled:opacity-50';
   const primary = 'flex h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-black disabled:opacity-40';
@@ -791,7 +791,7 @@ function CheckoutAgencyContent() {
   function renderConsentBoxes() {
     return (
       <div ref={consentRef} className="mt-6 space-y-3 border-t border-line pt-5">
-        <label className="flex cursor-pointer items-start gap-3">
+        <label className="flex cursor-pointer items-center gap-3">
           <input type="checkbox" checked={termsAccepted} onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }} className="peer sr-only" />
           <span className={box(termsAccepted)}>{termsAccepted && tick}</span>
           <span className="text-sm leading-snug text-muted">
@@ -802,7 +802,7 @@ function CheckoutAgencyContent() {
             {' *'}
           </span>
         </label>
-        <label className="flex cursor-pointer items-start gap-3">
+        <label className="flex cursor-pointer items-center gap-3">
           <input type="checkbox" checked={marketingAccepted} onChange={(e) => setMarketingAccepted(e.target.checked)} className="peer sr-only" />
           <span className={box(marketingAccepted)}>{marketingAccepted && tick}</span>
           <span className="text-sm leading-snug text-muted">{t.marketingConsent}</span>

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import AuthCta from '@/components/AuthCta';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
 
@@ -13,6 +12,7 @@ import { PRICING } from '@/lib/pricing';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
 import { deviceId } from '@/lib/deviceId';
+import { supabase } from '@/lib/supabase';
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
@@ -474,6 +474,12 @@ export default function AgenteImmoLanding({ lang = 'it', faq }: { lang?: Landing
 
 function Landing({ faq }: { faq: [string, string][] }) {
   const L = useL(), en = useEn();
+  const [logged, setLogged] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setLogged(!!session?.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, x) => setLogged(!!x?.user));
+    return () => subscription.unsubscribe();
+  }, []);
   const [siteRef, siteOn] = useInView('-15%');
   const [videoRef, videoOn] = useInView('-10%');
   // i video (1,5 MB) si scaricano solo quando la sezione arriva in vista: prima non rubano banda al primo schermo
@@ -491,8 +497,13 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <div className="mx-auto hidden items-center gap-1 md:flex">
               {[['#staging', L('Annunci', "Listings")], ['#video', 'Social'], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")]].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
-            <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">{L('Accedi', "Sign in")}</AuthCta>
-            <Cta className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">{L('Prova gratis', "Try it free")}</Cta>
+            {/* dentro: solo Dashboard; fuori: Registrati e Prova gratis */}
+            {logged
+              ? <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">Dashboard</Cta>
+              : <>
+                  <a href={APP} className="ml-auto hidden px-3 text-sm font-semibold text-ink sm:block md:ml-0">{L('Registrati', "Sign up")}</a>
+                  <Cta className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">{L('Prova gratis', "Try it free")}</Cta>
+                </>}
           </nav>
         </div>
       </header>
