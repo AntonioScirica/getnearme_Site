@@ -154,7 +154,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
       {c && (c.plan === 'none' || c.unlimited || changing) && (<>
       <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? tr('Cambia piano', 'Change plan') : tr('Scegli il piano', 'Choose your plan')}</h2>
-      <p className="mt-1 text-sm text-muted">{changing ? tr('Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.', 'The new plan starts right away: you pay the difference for the current period now and your credits switch to the new plan.') : tr('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', 'Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.')}</p>
+      <p className="mt-1 text-sm text-muted">{changing ? tr('Scegli il piano: su Stripe vedi quanto paghi oggi e confermi. Il nuovo piano parte subito e i crediti diventano quelli del nuovo piano.', 'Pick a plan: on Stripe you see what you pay today and confirm. The new plan starts right away with its credits.') : tr('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', 'Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.')}</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
         <div className={card('starter')}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>

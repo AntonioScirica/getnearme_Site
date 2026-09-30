@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
-import { FORFETTARIO_FOOTER, PACKS } from '@/lib/pricing'
+import { FORFETTARIO_FOOTER, PACKS, STRIPE_PORTAL_CONFIG } from '@/lib/pricing'
 
 // chiave mancante al build (raccolta dati delle pagine su Vercel): non si crea l'errore qui, le chiamate falliscono solo a runtime
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing')
@@ -28,17 +28,23 @@ export async function POST(req: NextRequest) {
   const { data: row } = await admin.from('platform_credits').select('stripe_customer_id, stripe_subscription_id, plan').eq('user_id', u.id).maybeSingle()
   if (pack && (!row?.plan || row.plan === 'none')) return NextResponse.json({ error: 'no_plan' }, { status: 400 })
   const meta: Record<string, string> = pack ? { app: 'agenteimmo', user_id: u.id, plan, pack: pack.id, credits: String(pack.credits) } : { app: 'agenteimmo', user_id: u.id, plan }
-  // cambio piano con un abbonamento attivo: si cambia il prezzo dello stesso abbonamento (niente secondo abbonamento).
-  // Si paga subito la differenza del periodo; se il pagamento non passa il cambio non si applica (pending_if_incomplete).
+  // cambio piano con un abbonamento attivo: pagina di Stripe dove l'agente vede il nuovo prezzo e quanto paga oggi e
+  // conferma lui (niente addebiti con un clic dalla piattaforma). Stesso abbonamento, niente secondo abbonamento.
   // I crediti del nuovo piano li mette il webhook (customer.subscription.updated).
   if (!pack && row?.stripe_subscription_id && row.plan && row.plan !== 'none') {
     const sub = await stripe.subscriptions.retrieve(row.stripe_subscription_id).catch(() => null)
     if (sub && ['active', 'trialing'].includes(sub.status)) {
       const item = sub.items.data[0]
       if (item.price.id === price.id) return NextResponse.json({ error: 'same_plan' }, { status: 400 })
-      const upd = await stripe.subscriptions.update(sub.id, { items: [{ id: item.id, price: price.id }], proration_behavior: 'always_invoice', payment_behavior: 'pending_if_incomplete' })
-      if (upd.pending_update) return NextResponse.json({ error: 'payment_failed' }, { status: 402 })
-      return NextResponse.json({ url: `${siteOf(req)}/it/dashboard#/piano?ok=1` })
+      const portal = await stripe.billingPortal.sessions.create({
+        configuration: STRIPE_PORTAL_CONFIG, customer: sub.customer as string, locale: 'it', return_url: `${siteOf(req)}/it/dashboard#/piano`,
+        flow_data: {
+          type: 'subscription_update_confirm',
+          subscription_update_confirm: { subscription: sub.id, items: [{ id: item.id, price: price.id, quantity: 1 }] },
+          after_completion: { type: 'redirect', redirect: { return_url: `${siteOf(req)}/it/dashboard#/piano?ok=1` } },
+        },
+      })
+      return NextResponse.json({ url: portal.url })
     }
   }
   let customer = row?.stripe_customer_id as string | undefined

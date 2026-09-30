@@ -34,3 +34,7 @@ export const videosFor = (credits: number) => Math.floor(credits / CREDIT_COST.v
 
 // Dicitura del forfettario sulle fatture Stripe: sul cliente gia' prima del pagamento, cosi' c'e' anche sulla prima fattura
 export const FORFETTARIO_FOOTER = 'Operazione senza applicazione dell\'IVA ai sensi dell\'art. 1, commi 54-89, L. 190/2014 (regime forfettario). Imposta di bollo assolta sull\'originale per importi superiori a 77,47 euro.'
+
+// Portale clienti Stripe di Agente Immo (30/09/2026): configurazione dedicata, quella di default e' di GetNearMe e non
+// conosce questi prezzi. Cambio piano confermato sulla pagina di Stripe, disdetta a fine periodo, carta e fatture.
+export const STRIPE_PORTAL_CONFIG = 'bpc_1ULUcQFzCo1FYIKTrUvtn1Pn';

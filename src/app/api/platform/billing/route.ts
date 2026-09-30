@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
+import { STRIPE_PORTAL_CONFIG } from '@/lib/pricing'
 
 // chiave mancante al build (raccolta dati delle pagine su Vercel): non si crea l'errore qui, le chiamate falliscono solo a runtime
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing')
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
   const customer = row?.stripe_customer_id as string | undefined
   if (!customer || !row?.plan || row.plan === 'none') return NextResponse.json({ error: 'no_plan' }, { status: 400 })
   try {
-    const s = await stripe.billingPortal.sessions.create({ customer, return_url: `${siteOf(req)}/it/dashboard#/piano`, locale: 'it' })
+    const s = await stripe.billingPortal.sessions.create({ configuration: STRIPE_PORTAL_CONFIG, customer, return_url: `${siteOf(req)}/it/dashboard#/piano`, locale: 'it' })
     return NextResponse.json({ url: s.url })
   } catch (e) {
     console.error('billing portal', e)
