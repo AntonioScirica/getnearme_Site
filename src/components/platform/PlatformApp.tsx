@@ -14,7 +14,6 @@ import Tour, { TOUR_KEY } from './Tour';
 import type { TemplateId } from '@/lib/siteTemplates';
 import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
-import { Elapsed } from './AiPhoto';
 import CostsView from './CostsView';
 import StagingView from './StagingView';
 import MediaView from './MediaView';
@@ -386,7 +385,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
             className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base'}`} />
           {busy ? (
-            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <Elapsed key={stage} /></span>
+            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <span className="text-muted">{tr('circa 1-2 min', 'about 1-2 min')}</span></span>
           ) : phase === 'done' ? (
             <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">{tr('Nuova analisi', 'New analysis')}</button>
           ) : (
@@ -448,7 +447,7 @@ function StageCompare({ active }: { active: boolean }) {
 
 const TITLES: Record<string, [string, string]> = {
   link: [tr('Incolla il link dell\'annuncio', 'Paste the listing link'), tr('Da qualsiasi portale immobiliare.', 'From any property portal.')],
-  opening: [tr('Apro l\'annuncio', 'Opening the listing'), tr('Ci vuole al massimo un minuto.', 'It takes a minute at most.')],
+  opening: [tr('Apro l\'annuncio', 'Opening the listing'), tr('Di solito ci vuole un paio di minuti.', 'It usually takes a couple of minutes.')],
   scanning: [tr('Sto analizzando l\'annuncio', 'Analysing the listing'), ''],
   done: [tr('Ecco il tuo annuncio, migliorato', 'Here is your listing, improved'), tr('Score, versione riscritta e cosa sistemare.', 'Score, rewritten version and what to fix.')],
   error: [tr('Non riesco a leggerlo', 'I can\'t read it'), tr('Riprova o incolla il testo dell\'annuncio.', 'Try again or paste the listing text.')],
