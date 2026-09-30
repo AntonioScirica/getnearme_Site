@@ -462,17 +462,22 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
 // che la pagina finisse di caricare (immagini), valeva 0 e alcune card non scorrevano.
 
 // Miniatura della home del modello, in scala sulla larghezza della card
-export function Thumb({ children }: { children: ReactNode }) {
+// scroll: la pagina scorre fino in fondo (mouse sopra), come nel mazzo dei modelli della landing
+export function Thumb({ children, scroll = false }: { children: ReactNode; scroll?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
+  const page = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.3);
+  const [h, setH] = useState(0);
   useEffect(() => {
     const ro = new ResizeObserver(() => box.current && setK(box.current.clientWidth / 1280));
     if (box.current) ro.observe(box.current);
     return () => ro.disconnect();
   }, []);
+  useEffect(() => { if (scroll && page.current) setH(page.current.offsetHeight); }, [scroll]); // misurata all'ingresso: immagini gia' caricate
+  const max = Math.max(0, h * k - 1280 * k * 0.75); // quanto la pagina esce dal riquadro 4:3
   return (
     <div ref={box} className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden>
-      <div style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
+      <div ref={page} style={{ width: 1280, transform: `translateY(${scroll ? -max : 0}px) scale(${k})`, transformOrigin: 'top left', transition: scroll ? `transform ${Math.max(4, max / 260)}s linear` : 'transform .8s cubic-bezier(.65,0,.35,1)' }}>{children}</div>
     </div>
   );
 }

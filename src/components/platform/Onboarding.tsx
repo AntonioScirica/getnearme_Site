@@ -79,6 +79,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tpl, setTpl] = useState<TemplateId>(TEMPLATES[0].id); // modello del sito scelto al passo 3
+  const [hover, setHover] = useState<TemplateId | null>(null); // mouse sopra: la pagina del modello scorre
 
   // Saluto breve, poi il nome (precompilato da Google se c'e').
   useEffect(() => {
@@ -175,8 +176,8 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             <div className="grid max-h-[52vh] grid-cols-2 gap-2 overflow-y-auto p-1 sm:grid-cols-3">
               {TEMPLATES.map((t, i) => (
                 // div e non button: l'anteprima del sito ha dentro i suoi bottoni
-                <div key={t.id} role="button" tabIndex={0} aria-pressed={tpl === t.id} onClick={() => setTpl(t.id)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setTpl(t.id)} className={`cursor-pointer rounded-[20px] bg-canvas p-1.5 text-left ease-smooth transition-shadow ${tpl === t.id ? 'ring-2 ring-brand' : 'ring-1 ring-black/5 hover:ring-black/20'} ${settled ? 'rise' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.04}s` }}>
-                  <div className="overflow-hidden rounded-2xl bg-white"><Thumb><SiteThumb ctx={{ cfg: { ...base, template: t.id, primary: t.primary, font: t.font }, name: name.trim(), logo: null, properties: [], base: '', preview: true }} /></Thumb></div>
+                <div key={t.id} role="button" tabIndex={0} aria-pressed={tpl === t.id} onClick={() => setTpl(t.id)} onMouseEnter={() => setHover(t.id)} onMouseLeave={() => setHover(null)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setTpl(t.id)} className={`cursor-pointer rounded-[20px] bg-canvas p-1.5 text-left ease-smooth transition-shadow ${tpl === t.id ? 'ring-2 ring-brand' : 'ring-1 ring-black/5 hover:ring-black/20'} ${settled ? 'rise' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.04}s` }}>
+                  <div className="overflow-hidden rounded-2xl bg-white"><Thumb scroll={hover === t.id}><SiteThumb ctx={{ cfg: { ...base, template: t.id, primary: t.primary, font: t.font }, name: name.trim(), logo: null, properties: [], base: '', preview: true }} /></Thumb></div>
                   <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2 text-sm font-semibold">{t.name}{tpl === t.id && <Check size={14} className="text-brand" />}</span>
                 </div>
               ))}
