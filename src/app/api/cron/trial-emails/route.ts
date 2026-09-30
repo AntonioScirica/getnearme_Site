@@ -28,7 +28,8 @@ function email1(name: string, pic: { before: string | null; after: string } | nu
       + text(`${hi(name)} ecco la stanza che hai arredato con la prova gratis. Un annuncio con le stanze arredate si fa notare di più sui portali e fa immaginare la casa a chi la cerca.`)
       + (pic ? (pic.before ? beforeAfterHero(pic.before, pic.after) : photo_(pic.after, 'La tua stanza arredata', 'La tua foto, arredata con Agente Immo')) : '')
       + text('Con un piano lo fai per <strong style="color:#1d1d1f">tutte le case che hai in vendita</strong>, e dalla stessa foto crei anche un video per Instagram e TikTok.')
-      + stats(`Con Starter, a ${PRICING.starter} € al mese`, [[`${PRICING.starterCredits}`, 'crediti ogni mese'], [`${photosFor(PRICING.starterCredits)}`, 'foto arredate'], [`~${videosFor(PRICING.starterCredits)}`, 'video per i social']])
+      // i crediti si usano per foto o per video: si dice che e' l'uno o l'altro, non entrambi
+      + stats(`Con Starter a ${PRICING.starter} € al mese hai ${PRICING.starterCredits} crediti, da usare come vuoi:`, [[`${photosFor(PRICING.starterCredits)}`, 'foto arredate'], [`<span style="font-size:17px;font-weight:700;color:rgba(255,255,255,.85)">oppure</span> ~${videosFor(PRICING.starterCredits)}`, 'video per i social']])
       + button(PLANS, 'Arreda tutte le tue case', 'Disdici quando vuoi, senza vincoli')
       + signature('Antonio', 'Fondatore di Agente Immo')
       + ps('Hai in vendita case vuote o da rinnovare? Sono proprio quelle che cambiano di più una volta arredate.'),
