@@ -235,7 +235,7 @@ function loadSaved(): Saved | null {
     const d = JSON.parse(raw) as Saved;
     // lavori interrotti dalla ricarica: la foto non si puo' riprendere (e' comunque nella Galleria), il video si' (job)
     // foto interrotta dalla ricarica: resta in lavorazione e si va a riprendere il risultato dalla Galleria (vedi recover)
-    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? { ...m, recover: true }
+    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? (m.at ? { ...m, recover: true } : { ...m, busy: false, err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' })
       : m.role === 'video' && m.previews?.some(p => !p) ? { ...m, previews: m.previews.map(p => p ?? 'err') } : m));
     return d;
   } catch { return null; }
@@ -319,7 +319,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     };
     scrollAnim.current = requestAnimationFrame(step);
   }, []);
-  const busy = msgs.some(m => m.role === 'ai' && m.busy);
+  const busy = msgs.some(m => m.role === 'ai' && m.busy && !m.recover); // la foto in recupero dopo una ricarica non blocca le richieste nuove
   // foto reale caricata per ultima (la stanza vera): va con ogni richiesta, cosi' dopo "Svuota" si sa ancora che era una cucina
   const sourcePhoto = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'user' }> => m.role === 'user' && !!m.image)?.image ?? null;
 
