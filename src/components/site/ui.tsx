@@ -3,7 +3,7 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
-import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
+import { Bath, BedDouble, Check, Star, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
 import { FONTS, fontCss, PAGE_SECTIONS, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
@@ -163,6 +163,8 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
   return (
     <div className={`overflow-hidden bg-[var(--soft)] ${fit || acts ? 'relative' : ''} ${acts ? 'group/ph' : ''} ${className}`}>
       {acts}{ai}
+      {/* scheda in piattaforma: la foto di copertina ha la sua etichetta */}
+      {acts && src === pe?.cover && <span className="pointer-events-none absolute left-4 top-4 z-30 flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-sm font-semibold text-neutral-900 shadow-lg"><Star size={14} className="fill-amber-400 text-amber-400" /> Copertina</span>}
       {shown && fit && <FitImage src={shown} alt={alt} imgClassName={zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''} />}
       {shown && !fit && <img src={shown} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
       {/* senza foto (sul sito vero): un'icona discreta invece del riquadro vuoto */}
