@@ -21,6 +21,20 @@ async function unlimited(userId: string): Promise<boolean> {
 
 const monthAfter = (d: Date) => { const n = new Date(d); n.setMonth(n.getMonth() + 1); return n }
 
+// Crediti dei pacchetti ancora da usare (non scadono: al rinnovo e a fine piano restano, i crediti del mese no).
+// Niente colonna nuova: pacchetti comprati dopo l'ultimo rinnovo/cambio piano + quelli rimasti a quel momento (meta.pack_left
+// dell'evento). Si consumano prima i crediti del mese, quindi dei pacchetti resta al massimo il saldo attuale.
+async function packLeft(userId: string, balance: number): Promise<number> {
+  const { data: last } = await admin.from('platform_credit_events').select('created_at, meta').eq('user_id', userId)
+    .or('reason.eq.rinnovo_mensile,reason.like.piano_%,reason.eq.fine_piano').order('created_at', { ascending: false }).limit(1).maybeSingle()
+  const base = Number((last?.meta as { pack_left?: number } | null)?.pack_left ?? 0) || 0
+  let q = admin.from('platform_credit_events').select('delta').eq('user_id', userId).like('reason', 'pacchetto_%')
+  if (last?.created_at) q = q.gt('created_at', last.created_at)
+  const { data: packs } = await q
+  const bought = (packs ?? []).reduce((a, r) => a + (Number(r.delta) || 0), 0)
+  return Math.max(0, Math.min(balance, base + bought))
+}
+
 export async function getCredits(userId: string): Promise<Credits> {
   if (await unlimited(userId)) return { plan: 'pro', balance: 999999, monthly: 0, renews: null, until: null, unlimited: true }
   const { data } = await admin.from('platform_credits').select('plan, balance, monthly_credits, period_end, subscription_until').eq('user_id', userId).maybeSingle()
@@ -31,11 +45,13 @@ export async function getCredits(userId: string): Promise<Credits> {
   if (data.plan !== 'none' && data.period_end && new Date(data.period_end) <= now && until && until > now) {
     let next = new Date(data.period_end)
     while (next <= now) next = monthAfter(next)
-    const { data: upd } = await admin.from('platform_credits').update({ balance: data.monthly_credits, period_end: next.toISOString(), updated_at: now.toISOString() })
+    const pack = await packLeft(userId, data.balance) // i crediti dei pacchetti passano al mese nuovo, quelli del mese no
+    const fresh = data.monthly_credits + pack
+    const { data: upd } = await admin.from('platform_credits').update({ balance: fresh, period_end: next.toISOString(), updated_at: now.toISOString() })
       .eq('user_id', userId).eq('period_end', data.period_end).select('balance').maybeSingle() // eq period_end: una sola ricarica anche con richieste in parallelo
     if (upd) {
-      await admin.from('platform_credit_events').insert({ user_id: userId, delta: data.monthly_credits - data.balance, reason: 'rinnovo_mensile', balance_after: data.monthly_credits })
-      return { plan: data.plan, balance: data.monthly_credits, monthly: data.monthly_credits, renews: next.toISOString(), until: data.subscription_until }
+      await admin.from('platform_credit_events').insert({ user_id: userId, delta: fresh - data.balance, reason: 'rinnovo_mensile', balance_after: fresh, meta: { pack_left: pack } } as never)
+      return { plan: data.plan, balance: fresh, monthly: data.monthly_credits, renews: next.toISOString(), until: data.subscription_until }
     }
   }
   return { plan: data.plan, balance: data.balance, monthly: data.monthly_credits, renews: data.period_end, until: data.subscription_until }
@@ -84,19 +100,27 @@ export async function grantPack(userId: string, credits: number, pack: string, s
 export async function activatePlan(userId: string, o: { plan: 'starter' | 'plus' | 'pro'; paidUntil: Date; customer?: string; subscription?: string }) {
   const monthly = PLAN_CREDITS[o.plan]
   const periodEnd = monthAfter(new Date())
+  // cambio o nuovo piano: crediti del mese nuovi, i pacchetti restano
+  const { data: cur } = await admin.from('platform_credits').select('balance').eq('user_id', userId).maybeSingle()
+  const pack = cur ? await packLeft(userId, cur.balance ?? 0) : 0
   await admin.from('platform_credits').upsert({
-    user_id: userId, plan: o.plan, monthly_credits: monthly, balance: monthly, period_end: periodEnd.toISOString(), subscription_until: o.paidUntil.toISOString(),
+    user_id: userId, plan: o.plan, monthly_credits: monthly, balance: monthly + pack, period_end: periodEnd.toISOString(), subscription_until: o.paidUntil.toISOString(),
     ...(o.customer ? { stripe_customer_id: o.customer } : {}), ...(o.subscription ? { stripe_subscription_id: o.subscription } : {}), updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id' })
-  await admin.from('platform_credit_events').insert({ user_id: userId, delta: monthly, reason: `piano_${o.plan}`, balance_after: monthly })
+  await admin.from('platform_credit_events').insert({ user_id: userId, delta: monthly + pack - (cur?.balance ?? 0), reason: `piano_${o.plan}`, balance_after: monthly + pack, meta: { pack_left: pack } } as never)
 }
 
 export async function extendPaid(subscription: string, paidUntil: Date) {
   await admin.from('platform_credits').update({ subscription_until: paidUntil.toISOString(), updated_at: new Date().toISOString() }).eq('stripe_subscription_id', subscription)
 }
 
+// fine abbonamento: via i crediti del mese, restano quelli dei pacchetti
 export async function endPlan(subscription: string) {
-  await admin.from('platform_credits').update({ plan: 'none', monthly_credits: 0, balance: 0, updated_at: new Date().toISOString() }).eq('stripe_subscription_id', subscription)
+  const { data: cur } = await admin.from('platform_credits').select('user_id, balance').eq('stripe_subscription_id', subscription).maybeSingle()
+  if (!cur) return
+  const pack = await packLeft(cur.user_id, cur.balance ?? 0)
+  await admin.from('platform_credits').update({ plan: 'none', monthly_credits: 0, balance: pack, updated_at: new Date().toISOString() }).eq('stripe_subscription_id', subscription)
+  await admin.from('platform_credit_events').insert({ user_id: cur.user_id, delta: pack - (cur.balance ?? 0), reason: 'fine_piano', balance_after: pack, meta: { pack_left: pack } } as never)
 }
 
 export async function userForSubscription(subscription: string): Promise<string | null> {

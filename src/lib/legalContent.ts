@@ -14,7 +14,7 @@ interface LegalPage {
 }
 
 // Testi legali di Agente Immo (piattaforma web per agenti immobiliari). Aggiornati il 30/09/2026.
-// Le voci tra parentesi quadre [DA COMPLETARE] / [DA VERIFICARE] (e [TO BE COMPLETED] / [TO BE CHECKED]) vanno
+// 30/09: segnaposto completati (sede, P.IVA, prova 12 mesi, pacchetti che non scadono).
 // riempite o confermate dal titolare prima della pubblicazione. es, fr, ru, uk: il sito le porta all'inglese,
 // quindi usano lo stesso testo inglese.
 
@@ -97,7 +97,7 @@ const privacyIt: LegalPage = {
       "Conversazioni della chat: 30 giorni, poi vengono cancellate. Foto e video generati restano nella Galleria.",
       "Foto e video della Galleria e file caricati: finché non li elimini tu o finché non elimini l'account.",
       "Richieste di contatto dei siti personali: non le archiviamo; restano nella casella email dell'agente e nei registri tecnici di invio del fornitore email per il periodo previsto dal fornitore.",
-      "Dati della prova gratuita (hash di IP e dispositivo, legati all'account): per il tempo necessario a garantire che la prova sia usata una sola volta, [DA COMPLETARE: periodo massimo, per esempio 12 mesi]. Foto e video della prova seguono le regole della Galleria.",
+      "Dati della prova gratuita (hash di IP e dispositivo, legati all'account): per il tempo necessario a garantire che la prova sia usata una sola volta, e comunque non oltre 12 mesi, poi li cancelliamo automaticamente. Foto e video della prova seguono le regole della Galleria.",
       "Dati di pagamento e fatture: 10 anni, come previsto dalla legge (art. 2220 del Codice civile), anche dopo l'eliminazione dell'account.",
       "Registri tecnici e di sicurezza con indirizzo IP: al massimo 90 giorni.",
       "Registri delle operazioni AI e dei crediti: per la durata dell'account.",
@@ -205,7 +205,7 @@ const privacyEn: LegalPage = {
       "Chat conversations: 30 days, then they are deleted. Generated photos and videos remain in the Gallery.",
       "Gallery photos and videos and uploaded files: until you delete them or delete your account.",
       "Contact requests from personal websites: we do not store them; they remain in the agent's mailbox and in the email provider's delivery logs for the period set by that provider.",
-      "Free trial data (IP and device hashes, linked to the account): for as long as needed to ensure the trial is used only once, [TO BE COMPLETED: maximum period, for example 12 months]. Trial photos and videos follow the Gallery rules.",
+      "Free trial data (IP and device hashes, linked to the account): for as long as needed to ensure the trial is used only once, and in any case no longer than 12 months, after which we delete them automatically. Trial photos and videos follow the Gallery rules.",
       "Payment data and invoices: 10 years, as required by Italian law (Art. 2220 of the Civil Code), also after account deletion.",
       "Technical and security logs containing IP addresses: up to 90 days.",
       "Logs of AI operations and credits: for the lifetime of the account.",
@@ -284,7 +284,7 @@ const termsIt: LegalPage = {
     { type: "ul", items: [
       "Ogni operazione (per esempio una foto o un video) consuma un numero di crediti indicato nella piattaforma prima di confermarla.",
       "I crediti del piano si ricaricano a ogni mese di abbonamento: il saldo torna ai crediti previsti dal piano e i crediti non usati non si accumulano.",
-      "Puoi acquistare pacchetti di crediti extra con un pagamento una tantum. I crediti dei pacchetti si aggiungono al saldo. [DA VERIFICARE: se i crediti dei pacchetti restano dopo il rinnovo mensile e dopo la fine dell'abbonamento]",
+      "Puoi acquistare pacchetti di crediti extra con un pagamento una tantum. I crediti dei pacchetti si aggiungono al saldo. I crediti dei pacchetti non scadono: restano dopo il rinnovo mensile e anche se l'abbonamento finisce. Si usano dopo i crediti del mese, che invece si azzerano a ogni rinnovo.",
       "I crediti non sono moneta elettronica né valore prepagato, non hanno valore fuori dal Servizio, non si convertono in denaro e non si trasferiscono ad altri account.",
       "Alla fine dell'abbonamento il saldo dei crediti del piano si azzera."
     ]},
@@ -394,7 +394,7 @@ const termsEn: LegalPage = {
     { type: "ul", items: [
       "Each operation (for example a photo or a video) uses a number of credits shown in the platform before you confirm it.",
       "Plan credits are refilled every month of the subscription: the balance returns to the credits included in the plan, and unused credits do not accumulate.",
-      "You can buy extra credit packs with a one-time payment. Pack credits are added to your balance. [TO BE CHECKED: whether pack credits remain after the monthly refill and after the subscription ends]",
+      "You can buy extra credit packs with a one-time payment. Pack credits are added to your balance. Pack credits do not expire: they remain after the monthly refill and even if the subscription ends. They are used after the monthly credits, which reset at every renewal.",
       "Credits are not electronic money or stored value, have no value outside the Service, cannot be exchanged for cash and cannot be transferred to other accounts.",
       "When the subscription ends, the plan credit balance is reset to zero."
     ]},

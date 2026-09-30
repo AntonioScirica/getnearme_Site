@@ -52,6 +52,8 @@ export async function POST(req: NextRequest) {
     q = mine ? q.in('model', keys) : q.eq('provider', 'counter').gte('created_at', since)
     return (await q).count ?? 0
   }
+  // dati della prova tenuti al massimo 12 mesi (privacy): a ogni prova si cancellano i contatori piu' vecchi (foto e video)
+  void admin.from('ai_usage').delete().in('kind', ['landing_demo', 'landing_demo_video']).in('provider', ['counter', 'counter-fp']).lt('created_at', new Date(Date.now() - 365 * 86_400_000).toISOString()).then(() => {}, () => {})
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
   const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
   const [used, all] = free ? [0, 0] : await Promise.all([count(true), count(false)])
