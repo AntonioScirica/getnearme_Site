@@ -837,7 +837,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => videoCr(a.id))) : videoCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label="crediti" /></span>
                               <span className="block px-3 pt-3 font-semibold">{t.label}</span>
                               <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
-                              {off && <span className="absolute left-4 top-4 z-30 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{outside ? 'Solo foto esterne' : 'Solo stanze'}</span>}
+                              {off && <span className="absolute left-4 top-4 z-30 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' ? 'Solo foto esterne' : 'Solo stanze'}</span>}
                             </button>
                           </div>
                           );
