@@ -3,7 +3,7 @@
 import ConsentGate from './ConsentGate';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
+import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -581,6 +581,7 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
           <Gauge size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Costi AI', 'AI costs')}</span><span className="block text-sm text-muted">{tr('Spesa per le foto e i video generati', 'Spend on generated photos and videos')}</span></span>
         </a>
       )}
+      <Guides />
       {/* documenti legali */}
       <div className={`mt-4 rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>
         {([['Privacy', lp('/privacy')], [tr('Termini e condizioni', 'Terms and conditions'), lp('/termini')], ['Cookie', lp('/cookie')], [tr('Come cancelliamo i dati', 'How we delete your data'), lp('/data-deletion')]] as const).map(([l, href]) => (
@@ -590,6 +591,34 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
       <div className="mt-6 flex items-center justify-between gap-3">
         <button onClick={() => { try { sessionStorage.clear(); } catch { /* niente */ } void supabase.auth.signOut(); }} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> {tr('Esci', 'Log out')}</button>
         <DeleteAccount />
+      </div>
+    </div>
+  );
+}
+
+// Guide per agenti (le pagine SEO del sito): elenco che si apre nel profilo. Titoli caricati solo all'apertura,
+// cosi' i testi delle guide non pesano sulla piattaforma.
+function Guides() {
+  const [list, setList] = useState<{ slug: string; label: string }[] | null>(null);
+  const [open, setOpen] = useState(false);
+  const toggle = () => {
+    setOpen(o => !o);
+    if (!list) void import('@/lib/guides').then(m => setList(m.GUIDES.map(g => ({ slug: g.slug, label: g.label }))));
+  };
+  return (
+    <div className={`mt-4 rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>
+      <button type="button" onClick={toggle} aria-expanded={open} className="flex h-12 w-full items-center justify-between rounded-[20px] px-4 text-sm font-medium ease-smooth transition-colors hover:bg-canvas">
+        <span className="flex items-center gap-2"><BookOpen size={16} className="text-brand" /> {tr('Guide per agenti immobiliari', 'Guides for real estate agents (Italian)')}</span>
+        <ChevronDown size={16} className={`text-muted ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${open && list ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="grid gap-x-2 sm:grid-cols-2">
+            {(list ?? []).map(g => (
+              <a key={g.slug} href={`/it/${g.slug}`} target="_blank" rel="noopener" className="flex h-11 items-center justify-between gap-2 rounded-[20px] px-4 text-sm ease-smooth transition-colors hover:bg-canvas"><span className="truncate">{g.label}</span><ExternalLink size={14} className="shrink-0 text-muted" /></a>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
