@@ -122,9 +122,17 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
 function EditProperty({ project, onClose, onSaved, onDraft }: { project: ProjectData; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void }) {
-  // all'apertura la barra sale in cima (sotto l'intestazione): alta quanto la finestra, altrimenti Salva restava fuori schermo
   const panel = useRef<HTMLDivElement>(null);
-  useEffect(() => { panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, []);
+  // altezza = dal punto in cui sta la barra fino al fondo dello schermo (meno 24 px): i bottoni sono sempre in vista.
+  // Si ricalcola scorrendo (la barra e' ferma in alto solo dopo un po') e ridimensionando la finestra.
+  const [maxH, setMaxH] = useState<number>();
+  useEffect(() => {
+    const fit = () => { const el = panel.current; if (el) setMaxH(Math.max(320, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
+    fit();
+    window.addEventListener('scroll', fit, true);
+    window.addEventListener('resize', fit);
+    return () => { window.removeEventListener('scroll', fit, true); window.removeEventListener('resize', fit); };
+  }, []);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -147,7 +155,7 @@ function EditProperty({ project, onClose, onSaved, onDraft }: { project: Project
     );
   };
   return (
-    <div ref={panel} className="blur-in flex max-h-[calc(100vh-8rem)] scroll-mt-24 flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24">
+    <div ref={panel} style={{ maxHeight: maxH }} className="blur-in flex flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-bold">Modifica immobile</h2>
         <button type="button" onClick={onClose} aria-label="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
