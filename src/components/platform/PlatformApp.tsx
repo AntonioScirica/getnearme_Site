@@ -187,7 +187,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           ) : detailId ? (
             <PropertyDetail project={projects?.find(p => p.id === detailId)} loading={projects === null} onChange={reload} />
           ) : route === '/immobili' ? (
-            <PropertiesView projects={projects} />
+            <PropertiesView projects={projects} onChange={reload} />
           ) : route === '/portfolio' ? (
             <PortfolioView projects={projects} onChange={reload} />
           ) : (

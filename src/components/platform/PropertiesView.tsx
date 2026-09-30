@@ -1,8 +1,9 @@
 'use client';
 
+import { deleteProject } from '@/lib/projects';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker } from 'leaflet';
-import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus } from 'lucide-react';
+import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
@@ -67,7 +68,7 @@ function ensureLeafletCss() {
   document.head.appendChild(link);
 }
 
-export default function PropertiesView({ projects: real }: { projects: ProjectData[] | null }) {
+export default function PropertiesView({ projects: real, onChange }: { projects: ProjectData[] | null; onChange?: () => void }) {
   // nessun immobile ancora: case d'esempio a Roma (mappa e lista piene), con l'invito a mettere in vetrina la prima.
   // ponytail: in sviluppo si aggiungono sempre i finti
   // durante il tour solo le case d'esempio (evento 'agenteimmo:tour-demo' dal Tour)
@@ -132,7 +133,7 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
         </div>
       ) : shown.length ? (
         <div className="stagger mt-10 grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map(p => <PropertyCard key={p.id} p={p} demo={demo} onHover={on => setHover(on ? p.id : null)} />)}
+          {shown.map(p => <PropertyCard key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
       ) : (
         <p className="mt-12 text-center text-sm text-muted">Nessun immobile con questi filtri.</p>
@@ -156,10 +157,37 @@ function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
   );
 }
 
-function PropertyCard({ p, demo, onHover }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void }) {
+function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void }) {
   const score = (p.import_data as { score?: number } | undefined)?.score;
+  const [menu, setMenu] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const out = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setMenu(false); };
+    document.addEventListener('mousedown', out);
+    return () => document.removeEventListener('mousedown', out);
+  }, [menu]);
+  const remove = async () => {
+    setMenu(false);
+    if (!confirm(`Eliminare “${title(p)}”? Si cancella anche dal tuo sito. Non si può annullare.`)) return;
+    setBusy(true);
+    if (await deleteProject(p.id)) onChange?.(); else { setBusy(false); alert('Non sono riuscito a eliminare l’immobile, riprova.'); }
+  };
   return (
-    // esempio: la scheda non esiste, il clic porta a mettere in vetrina il primo immobile
+    // i tre puntini stanno fuori dal link (un bottone dentro un link non va bene): menu con Modifica ed Elimina
+    <div ref={box} className={`relative ${busy ? 'pointer-events-none opacity-50' : ''}`}>
+    {!demo && (
+      <div className="absolute right-3 top-3 z-20">
+        <button type="button" onClick={() => setMenu(m => !m)} aria-label="Altre azioni" aria-expanded={menu} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
+        {menu && (
+          <div className="blur-in absolute right-0 top-10 w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
+            <a href={`#/immobile/${p.id}`} className="flex h-9 items-center gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> Modifica</a>
+            <button type="button" onClick={remove} className="flex h-9 w-full items-center gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> Elimina</button>
+          </div>
+        )}
+      </div>
+    )}
     <a href={demo ? '#/nuovo' : `#/immobile/${p.id}`} onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)} className="group block">
       <div className={`relative aspect-[4/3] overflow-hidden rounded-[24px] bg-canvas ${CARD_SHADOW} ease-smooth transition-transform group-hover:-translate-y-1`}>
         {p.cover
@@ -171,7 +199,7 @@ function PropertyCard({ p, demo, onHover }: { p: ProjectData; demo?: boolean; on
           {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">In vetrina</span>}
           {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>
-        {typeof score === 'number' && <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{score}/100</span>}
+        {typeof score === 'number' && <span className="absolute right-14 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{score}/100</span>}
         <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
         <span className="absolute bottom-3 right-3 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full bg-white text-ink opacity-0 shadow ease-smooth transition-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100"><ArrowUpRight size={17} /></span>
       </div>
@@ -181,6 +209,7 @@ function PropertyCard({ p, demo, onHover }: { p: ProjectData; demo?: boolean; on
         <Facts p={p} className="mt-2" />
       </div>
     </a>
+    </div>
   );
 }
 
