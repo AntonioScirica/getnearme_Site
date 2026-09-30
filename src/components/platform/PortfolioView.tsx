@@ -185,7 +185,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             </button>
           </div>
           </div>
-        <div data-tour="site-editor" className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+        {/* barra e sito entrano con la stessa dissolvenza della pagina (prima comparivano di scatto dopo lo scheletro) */}
+        <div data-tour="site-editor" className="blur-in grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]" style={{ animationDelay: '.1s' }}>
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
