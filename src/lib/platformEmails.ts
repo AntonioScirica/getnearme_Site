@@ -23,6 +23,7 @@ export type PlatformEmail =
   | { kind: 'cancel_scheduled'; plan: Plan; until: Date }
   | { kind: 'plan_ended' }
   | { kind: 'payment_failed'; plan: Plan }
+  | { kind: 'affiliate_used'; code: string; credits: number; uses: number }
 
 function build(e: PlatformEmail, name: string): { subject: string; html: string } {
   switch (e.kind) {
@@ -65,6 +66,15 @@ function build(e: PlatformEmail, name: string): { subject: string; html: string 
         + text(`${hi(name)} il tuo abbonamento è terminato. I tuoi immobili, la Galleria e i crediti dei pacchetti che hai comprato restano nel tuo account.`)
         + text('Quando vuoi ripartire scegli di nuovo un piano: ritrovi tutto come l’hai lasciato.')
         + button(`${APP}#/piano?cambia=1`, 'Scegli un piano'),
+    }) }
+    // all'affiliato quando qualcuno usa il suo codice: anonima, niente nome ne' email di chi l'ha usato
+    case 'affiliate_used': return { subject: `Qualcuno ha usato il tuo codice: +${e.credits} crediti`, html: email({
+      preheader: `Il codice ${e.code} ti ha fatto guadagnare ${e.credits} crediti.`,
+      body: eyebrow('Codice affiliato') + title(`+${e.credits} crediti per te`)
+        + text(`${hi(name)} un agente ha appena usato il tuo codice <strong style="color:#1d1d1f">${e.code}</strong>. I ${e.credits} crediti sono già nel tuo saldo e <strong style="color:#1d1d1f">non scadono</strong> con il mese.`)
+        + planChoice('Il tuo codice finora', `Usato da ${e.uses} ${e.uses === 1 ? 'persona' : 'persone'}: ${e.uses * e.credits} crediti ricevuti`, [`${photosFor(e.credits)}`, 'foto arredate'], [`${videosFor(e.credits)}`, 'video per i social'])
+        + text('Continua a condividerlo: ogni agente che lo inserisce riceve crediti anche lui, e tu ne ricevi altri.')
+        + button(`${APP}#/staging`, 'Usa i tuoi crediti'),
     }) }
     case 'payment_failed': return { subject: 'Pagamento non riuscito: aggiorna la carta', html: email({
       preheader: 'Aggiorna il metodo di pagamento per non interrompere il piano.',

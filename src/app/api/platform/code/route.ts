@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
 import { getCredits, grant } from '@/lib/credits'
 import { REASON, codeOf, loadAffiliates, normCode } from '@/lib/affiliates'
+import { sendPlatformEmail } from '@/lib/platformEmails'
 
 // Codice affiliato (vedi lib/affiliates.ts).
 // GET: se e' un affiliato, il suo codice con quante persone l'hanno usato.
@@ -61,5 +62,6 @@ export async function POST(req: NextRequest) {
   if (balance < 0) return NextResponse.json({ error: 'server' }, { status: 500 })
   if ((await grant(owner, store.affiliate, `pacchetto_affiliato_${code}_${u.id.slice(0, 8)}`, { code, from: u.id })) < 0)
     console.error('codice affiliato: accredito all\'affiliato non riuscito, da rifare a mano', code, owner, u.id)
+  else await sendPlatformEmail(owner, { kind: 'affiliate_used', code, credits: store.affiliate, uses: await uses(code) }) // anonima: non dice chi
   return NextResponse.json({ ok: true, credits: store.redeem, balance })
 }
