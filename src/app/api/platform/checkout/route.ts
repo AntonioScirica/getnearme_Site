@@ -56,8 +56,10 @@ export async function POST(req: NextRequest) {
     locale: 'it',
     billing_address_collection: 'required',
     tax_id_collection: { enabled: true, required: 'if_supported' },
-    custom_fields: [{ key: 'sdi', label: { type: 'custom', custom: 'Codice SDI o PEC (fattura elettronica)' }, type: 'text', optional: false }],
-    custom_text: { submit: { message: 'Prezzo finale: operazione senza IVA, regime forfettario (art. 1, commi 54-89, L. 190/2014). Riceverai la fattura elettronica.' } },
+    // SDI o PEC facoltativo: senza, la fattura elettronica va con 0000000 e l'agente la trova nel cassetto fiscale
+    custom_fields: [{ key: 'sdi', label: { type: 'custom', custom: 'Codice SDI o PEC (facoltativo)' }, type: 'text', optional: true }],
+    // il conto Stripe e' lo stesso di GetNearMe: marchio di Agente Immo solo su questo checkout (la nota del forfettario resta in fattura)
+    branding_settings: { display_name: 'Agente Immo', icon: { type: 'url', url: `${SITE}/icon-192.png` }, button_color: '#537eec', border_style: 'pill' },
     allow_promotion_codes: true,
     success_url: `${siteOf(req)}/it/dashboard#/piano?ok=1`,
     // partito dalla landing: annullando si torna ai prezzi della landing, non alla piattaforma
