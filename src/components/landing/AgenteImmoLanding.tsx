@@ -275,7 +275,8 @@ function TryIt({ gate = false }: { gate?: boolean }) {
   const pick = (f?: File) => {
     if (!f || !f.type.startsWith('image/')) return;
     const u = URL.createObjectURL(f);
-    load(u, url => { URL.revokeObjectURL(u); if (gate) return toTrial(url, false); setBefore(url); setAfter(null); setVideo(null); setMsg(''); });
+    // testo gia' scritto: si arreda subito, senza premere Arreda
+    load(u, url => { URL.revokeObjectURL(u); if (gate) return toTrial(url, !!text.trim()); setBefore(url); setAfter(null); setVideo(null); setMsg(''); if (text.trim()) void run(url); });
   };
   // pagina /prova: si riparte dalla foto caricata sulla landing o da quella d'esempio; con invio o Arreda si arreda subito
   const restored = useRef(false); // una volta sola (in sviluppo l'effetto parte due volte)
