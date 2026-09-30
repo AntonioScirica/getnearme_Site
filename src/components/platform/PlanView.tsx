@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, Coins, Loader2, Sparkles, UserRound, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
@@ -65,7 +65,15 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
-  const [changing, setChanging] = useState(!!change); // con un piano attivo: card dei piani aperte per cambiarlo (?cambia=1: arrivando da un invito a passare di piano, gia' aperte)
+  const [changing, setChanging] = useState(!!change);
+  // arrivando da un invito (?cambia=1): la pagina scorre fino ai piani, una volta sola quando le card ci sono
+  const plansRef = useRef<HTMLHeadingElement>(null);
+  const scrolled = useRef(false);
+  useEffect(() => {
+    if (!change || scrolled.current || !c || !plansRef.current) return;
+    scrolled.current = true;
+    setTimeout(() => plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+  }, [c, change]); // con un piano attivo: card dei piani aperte per cambiarlo (?cambia=1: arrivando da un invito a passare di piano, gia' aperte)
   const go = async (p: Buy | PackId) => {
     setBusy(p); setPortalError(null);
     const d = await checkout(p);
@@ -124,7 +132,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
       )}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
       {c && (c.plan === 'none' || c.unlimited || changing) && (<>
-      <h2 className="mt-8 font-semibold">{changing ? 'Cambia piano' : 'Scegli il piano'}</h2>
+      <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? 'Cambia piano' : 'Scegli il piano'}</h2>
       <p className="mt-1 text-sm text-muted">{changing ? 'Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.' : 'Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.'}</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
