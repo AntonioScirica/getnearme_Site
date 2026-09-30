@@ -31,11 +31,12 @@ export function email(opts: { preheader: string; body: string; footer?: string }
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"><title>Agente Immo</title></head>
 <body style="margin:0;padding:0;background:#f3f3f1;font-family:${FONT};color:${INK}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${opts.preheader}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f3f1"><tr><td align="center" style="padding:36px 14px 40px">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f3f1"><tr><td align="center" style="padding:32px 14px 40px">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
-<tr><td align="center" style="padding:0 0 22px;text-align:center"><a href="https://agenteimmo.me/it" style="text-decoration:none;color:${INK}"><img src="https://agenteimmo.me/immo/logo-mark.png" width="40" height="40" alt="" style="vertical-align:middle;border:0"><span style="font-family:${FONT};font-size:20px;font-weight:800;letter-spacing:-.02em;vertical-align:middle;padding-left:8px">Agente <span style="color:${BLUE}">Immo</span></span></a></td></tr>
-<tr><td style="background:#ffffff;border-radius:32px;border:1px solid #ebebea;padding:40px 0 40px">
-<table width="100%" cellpadding="0" cellspacing="0">${opts.body}</table>
+<tr><td style="background:#ffffff;border-radius:32px;border:1px solid #ebebea;padding:34px 0 40px">
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr><td align="center" style="padding:0 40px 30px;text-align:center"><a href="https://agenteimmo.me/it" style="text-decoration:none;color:${INK}"><img src="https://agenteimmo.me/immo/logo-mark.png" width="40" height="40" alt="" style="vertical-align:middle;border:0"><span style="font-family:${FONT};font-size:20px;font-weight:800;letter-spacing:-.02em;vertical-align:middle;padding-left:8px">Agente <span style="color:${BLUE}">Immo</span></span></a></td></tr>
+${opts.body}</table>
 </td></tr>
 <tr><td align="center" style="padding:24px 24px 0;font-family:${FONT};font-size:12px;line-height:1.6;color:#9a9a9f;text-align:center">
 ${opts.footer ? `${opts.footer}<br>` : ''}Agente Immo · Viale Pretoriano 3, Roma · P.IVA 16096461005<br><a href="https://agenteimmo.me/it" style="color:#9a9a9f">agenteimmo.me</a></td></tr>
