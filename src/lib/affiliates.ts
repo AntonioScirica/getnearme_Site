@@ -5,7 +5,7 @@
 // ponytail: codici in questo file (niente tabella, niente DDL su prod); nuovo affiliato = una riga qui + deploy.
 // Se gli affiliati diventano tanti: tabella affiliate_codes con pannello admin.
 export const REDEEM_CREDITS = 200
-export const AFFILIATE_CREDITS = 500
+export const AFFILIATE_CREDITS = 400
 
 // CODICE (maiuscolo) -> email dell'account dell'affiliato su Agente Immo. max = persone al massimo (facoltativo).
 export const AFFILIATE_CODES: Record<string, { owner: string; max?: number }> = {
