@@ -140,7 +140,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
           {/* interruttore solo con un piano che include il sito (senza, c'e' l'avviso Plus e Pro) */}
-          {credits && sitePlan && <PublicSwitch on={online} onClick={publish} labels={['Pubblico', 'Non pubblico']} right />}
+          {credits && sitePlan && <PublicSwitch on={online} onClick={publish} labels={['Pubblico', 'Non pubblico']} both />}
           <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'pointer-events-none select-none opacity-50'}`} aria-disabled={!online}>{/* sito non online: indirizzo solo da vedere, niente link, copia o apri */}
             <Globe size={15} className="shrink-0 text-muted" />
             <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
@@ -670,15 +670,23 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
   );
 }
 
-export function PublicSwitch({ on, onClick, labels = ['Pubblico', 'Privato'], right = false }: { on: boolean; onClick: () => void; labels?: [string, string]; right?: boolean }) {
-  const label = <span className={on ? 'text-brand' : 'text-muted'}>{on ? labels[0] : labels[1]}</span>;
+// both: "Non pubblico" a sinistra e "Pubblico" a destra dell'interruttore, evidenziato quello attivo
+export function PublicSwitch({ on, onClick, labels = ['Pubblico', 'Privato'], both = false }: { on: boolean; onClick: () => void; labels?: [string, string]; both?: boolean }) {
+  const knob = (
+    <span className={`relative h-6 w-10 rounded-full transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+    </span>
+  );
   return (
     <button role="switch" aria-checked={on} onClick={onClick} className="flex shrink-0 items-center gap-2 text-sm">
-      {!right && label}
-      <span className={`relative h-6 w-10 rounded-full transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
-      </span>
-      {right && label}
+      {both ? <>
+        <span className={`ease-smooth transition-colors ${on ? 'text-muted/60' : 'font-medium text-ink'}`}>{labels[1]}</span>
+        {knob}
+        <span className={`ease-smooth transition-colors ${on ? 'font-medium text-brand' : 'text-muted/60'}`}>{labels[0]}</span>
+      </> : <>
+        <span className={on ? 'text-brand' : 'text-muted'}>{on ? labels[0] : labels[1]}</span>
+        {knob}
+      </>}
     </button>
   );
 }
