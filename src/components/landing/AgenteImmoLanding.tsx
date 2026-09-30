@@ -422,7 +422,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
             <input ref={input} type="file" accept="image/*" className="hidden" onChange={e => { pick(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
           <div className="px-1.5 pb-2 pt-3 sm:p-3">
-            <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 focus-within:bg-white focus-within:ring-2 focus-within:ring-ai sm:flex-nowrap">
+            <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 [&:has(input:focus)]:bg-white [&:has(input:focus)]:ring-2 [&:has(input:focus)]:ring-ai sm:flex-nowrap">
               {!after && <>
               <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
               <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && void run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
