@@ -594,13 +594,10 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <div className="mx-auto hidden items-center gap-1 md:flex">
               {[['#staging', L('Annunci', "Listings")], ['#video', 'Social'], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")]].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
-            {/* dentro: solo Dashboard; fuori: Registrati e Prova gratis */}
+            {/* dentro: solo Dashboard; fuori: solo Prova gratis */}
             {logged
               ? <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">Dashboard</Cta>
-              : <>
-                  <a href={APP} className="ml-auto hidden px-3 text-sm font-semibold text-ink sm:block md:ml-0">{L('Registrati', "Sign up")}</a>
-                  <Cta href={TRIAL_LOGIN} className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">{L('Prova gratis', "Try it free")}</Cta>
-                </>}
+              : <Cta href={TRIAL_LOGIN} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">{L('Prova gratis', "Try it free")}</Cta>}
           </nav>
         </div>
       </header>
