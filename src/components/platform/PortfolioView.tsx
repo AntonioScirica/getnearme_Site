@@ -11,6 +11,7 @@ import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { useCredits } from './PlanView';
+import { SITE_PERKS } from '@/components/PlanParts';
 import { uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, go, portfolioUrl, setPublic } from './api';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
@@ -125,6 +126,9 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   // miniature dei modelli: sempre piene di case, le tue piu' quelle di esempio fino a 9 (solo anteprima, non va online)
   const showcase = [...props, ...FAKE_PROPERTIES.filter(f => !props.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, props.length));
   const covers = [...new Set(pub.map(toSite).map(p => p.cover).filter(Boolean))].slice(0, 12);
+
+  // Starter non ha il sito: niente link ne' editor, solo cosa avrebbe passando a Plus (anteprima vera col suo nome)
+  if (credits?.plan === 'starter') return <StarterSite cfg={site.config} name={site.name || tr('La tua agenzia', 'Your agency')} logo={site.logo} props={showcase} />;
 
   return (
     <>
@@ -414,6 +418,36 @@ function scrollTopEased(el: HTMLElement, done?: () => void) {
 }
 
 // Galleria dei modelli: anteprima vera della home (con i dati dell'agente), clic per entrare nell'editor
+function StarterSite({ cfg, name, logo, props }: { cfg: SiteConfig; name: string; logo: string | null; props: SiteProperty[] }) {
+  const [hover, setHover] = useState(false);
+  const en = pageLang() === 'en';
+  return (
+    <>
+      <div className="border-b border-line pb-6">
+        <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio sito', 'My website')}</h1>
+        <p className="pt-1 text-sm text-muted">{tr('Il tuo sito da agente, con i tuoi immobili, è nei piani Plus e Pro.', 'Your agent website with your listings is included in Plus and Pro.')}</p>
+      </div>
+      <div className={`blur-in mt-8 grid items-center gap-8 overflow-hidden rounded-[32px] bg-white p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:p-10 ${CARD_SHADOW}`}>
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand">{tr('Il tuo sito da agente', 'Your agent website')}</span>
+          <h2 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight">{tr('I clienti ti trovano, le case si vendono da sole.', 'Clients find you, listings sell themselves.')}</h2>
+          <p className="mt-3 text-muted">{tr('Con Plus hai un sito tuo, già pronto, con tutti i tuoi immobili e un link da mandare ai clienti. Senza web agency.', 'With Plus you get your own ready-made website with all your listings and a link to send to clients. No web agency.')}</p>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            {SITE_PERKS.map(([Icon, l, e]) => (
+              <li key={l} className="flex items-start gap-3 text-[15px]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Icon size={15} /></span><span className="pt-1">{en ? e : l}</span></li>
+            ))}
+          </ul>
+          <button type="button" onClick={() => go('/piano?cambia=1')} className="mt-8 flex h-12 items-center gap-2 rounded-full bg-brand px-6 text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Passa a Plus', 'Upgrade to Plus')} <ArrowLeft size={16} className="rotate-180" /></button>
+        </div>
+        {/* anteprima vera del sito col suo nome: al passaggio del mouse la pagina scorre */}
+        <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} className="overflow-hidden rounded-[24px] ring-1 ring-black/5">
+          <Thumb scroll={hover}><SiteThumb ctx={{ cfg, name, logo, properties: props, base: '', preview: true }} /></Thumb>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: string; logo: string | null; props: SiteProperty[]; onPick: (id: TemplateId) => void }) {
   // come in home: al clic le altre card escono (piu' piccole, sfocate), poi la card scelta diventa l'editor
   const [leaving, setLeaving] = useState<TemplateId | null>(null);

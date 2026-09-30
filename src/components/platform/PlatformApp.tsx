@@ -156,7 +156,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
       <DemoDownload />
-      {tour && !chat && credits && <Tour noPlan={noPlan} onDone={() => setTour(false)} />}
+      {tour && !chat && credits && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-md:flex'}`}>
@@ -450,6 +450,7 @@ const TITLES: Record<string, [string, string]> = {
 };
 
 export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: string; initialUrl?: string; onSaved?: () => void; morph?: boolean }) {
+  const noSite = useCredits()?.plan === 'starter'; // Starter non ha il sito: niente indirizzo sulla card Mettilo in vetrina
   const imp = useImprove();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState(initialUrl);
@@ -512,7 +513,7 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
         <Tile index={1} intro={intro} wrapClass={others(1)} kicker={tr('Hai un nuovo immobile?', 'Got a new property?')} title={tr('Mettilo in vetrina', 'Put it on show')} href="#/nuovo">
           {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
-          <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span></span>
+          {!noSite && <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span></span>}
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
             <div key={src} className={`absolute left-1/2 ${i === 1 ? 'top-4' : 'top-6'} ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
               <img src={src} alt="" className={`${i === 1 ? 'h-32' : 'h-28'} w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
@@ -585,9 +586,11 @@ function DeleteAccount() {
     setBusy(true); setErr('');
     const r = await authFetch('/api/account/delete', { method: 'DELETE' }).catch(() => null);
     if (!r?.ok) { setBusy(false); setErr(tr('Non sono riuscito a eliminare l’account, riprova o scrivici.', 'I couldn’t delete the account, try again or write to us.')); return; }
-    try { sessionStorage.clear(); } catch { /* niente */ } // la chat e le altre memorie della scheda non passano al prossimo account
+    // la chat e le altre memorie della scheda non passano al prossimo account; il segno dice alla dashboard di andare
+    // sulla home del sito e non al login (all'uscita la dashboard reindirizza da sola)
+    try { sessionStorage.clear(); sessionStorage.setItem('gnm_post_delete', '1'); } catch { /* niente */ }
     await supabase.auth.signOut();
-    window.location.href = '/';
+    window.location.replace(lp(''));
   };
   return (
     <>

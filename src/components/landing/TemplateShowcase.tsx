@@ -33,7 +33,7 @@ const Site = memo(function Site({ id, k, scroll }: { id: (typeof TEMPLATES)[numb
   const max = Math.max(0, h * k - 1280 * k * 0.75); // quanto la pagina esce dal riquadro 4:3
   return (
     <div className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden>
-      <div ref={page} style={{ width: 1280, transform: `translateY(${scroll ? -max : 0}px) scale(${k})`, transformOrigin: 'top left', transition: scroll ? `transform ${Math.max(4, max / 260)}s linear` : 'transform .8s cubic-bezier(.65,0,.35,1)' }}>
+      <div ref={page} style={{ width: 1280, transform: `translateY(${scroll ? -max : 0}px) scale(${k})`, transformOrigin: 'top left', transition: scroll ? `transform ${Math.max(4, max / 260)}s cubic-bezier(.45,0,.55,1)` : 'transform .8s cubic-bezier(.65,0,.35,1)' }}>
         <SiteThumb ctx={{ cfg, name, logo: null, properties: PROPS, base: '', preview: true }} />
       </div>
     </div>

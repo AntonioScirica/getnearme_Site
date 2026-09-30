@@ -9,33 +9,28 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Best-effort: annulla SUBITO la subscription Stripe, così un account eliminato
-// non continua a essere fatturato. Non blocca la cancellazione account se Stripe
-// fallisce. Cancella per id subscription e (se ricavabile) tutte quelle del customer.
-async function cancelStripeSubscription(subscriptionId: string) {
+// Best-effort: annulla SUBITO gli abbonamenti Stripe, cosi' un account eliminato non continua a essere fatturato.
+// Non blocca la cancellazione account se Stripe fallisce. Parte dagli abbonamenti noti (GetNearMe in user_credits,
+// Agente Immo in platform_credits) e annulla tutti quelli ancora vivi dei loro clienti.
+const LIVE = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'])
+async function cancelStripe(subs: string[], customers: string[]) {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) { console.error('cancelStripeSubscription: STRIPE_SECRET_KEY mancante'); return; }
+  if (!key) { console.error('cancelStripe: STRIPE_SECRET_KEY mancante'); return; }
+  const api = (path: string, method = 'GET') => fetch(`https://api.stripe.com/v1/${path}`, { method, headers: { Authorization: `Bearer ${key}` } }).then(async r => ({ ok: r.ok, json: await r.json().catch(() => null) }));
   try {
-    // 1) annulla la subscription nota
-    const res = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    const sub = await res.json();
-    if (!res.ok) { console.error('cancel sub failed:', sub?.error?.message); return; }
-    // 2) per sicurezza, annulla eventuali altre subscription attive dello stesso customer
-    const customerId = sub?.customer;
-    if (customerId) {
-      const list = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=active&limit=100`, { headers: { Authorization: `Bearer ${key}` } });
-      const json = await list.json();
-      if (list.ok && Array.isArray(json?.data)) {
-        await Promise.all(json.data.map((s: { id: string }) =>
-          fetch(`https://api.stripe.com/v1/subscriptions/${s.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${key}` } }).catch(() => null)
-        ));
-      }
+    const custs = new Set(customers);
+    for (const id of subs) {
+      const r = await api(`subscriptions/${id}`, 'DELETE');
+      if (!r.ok) console.error('cancel sub failed:', id, r.json?.error?.message);
+      if (r.json?.customer) custs.add(r.json.customer);
+    }
+    for (const c of custs) {
+      const r = await api(`subscriptions?customer=${encodeURIComponent(c)}&status=all&limit=100`);
+      const live = (r.json?.data ?? []).filter((x: { status: string }) => LIVE.has(x.status));
+      await Promise.all(live.map((x: { id: string }) => api(`subscriptions/${x.id}`, 'DELETE').catch(() => null)));
     }
   } catch (err) {
-    console.error('cancelStripeSubscription error:', (err as Error)?.message);
+    console.error('cancelStripe error:', (err as Error)?.message);
   }
 }
 
@@ -50,14 +45,14 @@ export async function DELETE(req: NextRequest) {
 
     // Cancella la subscription Stripe PRIMA di eliminare l'utente (colonna reale:
     // stripe_agency_subscription_id, NON stripe_customer_id che non esiste).
-    const { data: credits } = await admin
-      .from('user_credits')
-      .select('stripe_agency_subscription_id')
-      .eq('user_id', user.id)
-      .single();
-    if (credits?.stripe_agency_subscription_id) {
-      await cancelStripeSubscription(credits.stripe_agency_subscription_id);
-    }
+    const [{ data: credits }, { data: plat }] = await Promise.all([
+      admin.from('user_credits').select('stripe_agency_subscription_id').eq('user_id', user.id).maybeSingle(),
+      admin.from('platform_credits').select('stripe_subscription_id, stripe_customer_id').eq('user_id', user.id).maybeSingle(),
+    ]);
+    await cancelStripe(
+      [credits?.stripe_agency_subscription_id, plat?.stripe_subscription_id].filter((x): x is string => !!x),
+      [plat?.stripe_customer_id].filter((x): x is string => !!x),
+    );
 
     // Foto create in Galleria e caricate per il sito: via anche da R2 (best effort, non blocca l'eliminazione)
     try {

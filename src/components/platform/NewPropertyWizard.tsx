@@ -72,6 +72,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const [dir, setDir] = useState<1 | -1>(1);
   const [d, setD] = useState<Details>({ mostra_indirizzo: true });
   const [note, setNote] = useState('');
+  const [zoneOpen, setZoneOpen] = useState(false); // servizi della zona: compatti finche' non si apre
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [plan, setPlan] = useState<string | null>(null);
   const [ai, setAi] = useState<AiResult | null>(null);
@@ -215,7 +216,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         </div>,
         document.body,
       )}
-      {/* Testa: copertina + riassunto + progresso */}
+      {/* Testa: copertina + riassunto + progresso (non mentre l'AI scrive l'ultimo passo: li' solo il messaggio al centro) */}
+      {!(done && !ai) && <>
       <div className="flex items-center gap-4">
         {/* freccia = passo precedente (dal primo passo torna alla home) */}
         <button type="button" onClick={() => { if (done && ai) setBack(true); if (step > 0) go(Math.min(step, STEPS.length) - 1); else location.hash = '#/'; }} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? tr('Passo precedente', 'Previous step') : 'Home'}><ArrowLeft size={18} /></button>
@@ -232,6 +234,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       <div className="mt-4 flex gap-1">
         {STEPS.map((s, i) => <button key={s.id} onClick={() => i <= step && go(i)} aria-label={s.title} title={s.title} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i < step || done ? 'bg-brand' : i === step ? 'bg-ink' : 'bg-line'}`} />)}
       </div>
+      </>}
 
       {/* Scheda corrente */}
       {!done && (
@@ -273,7 +276,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className="card p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">{tr('Nella zona', 'In the area')} {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
                   <p className="mt-0.5 text-xs text-muted">{tr('Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell\'annuncio (massimo 5): l\'AI parte da quelli.', 'Services verified on OpenStreetMap. Tap the ones to highlight in the listing (up to 5): the AI starts from those.')}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  {/* chiusa: due righe di servizi e una sfumatura; un clic mostra tutto */}
+                  <div className={`relative mt-3 overflow-hidden ease-smooth transition-[max-height] duration-[600ms] ${zoneOpen ? 'max-h-[1200px]' : 'max-h-[76px]'}`}>
+                  <div className="flex flex-wrap gap-2">
                     {(Array.isArray(d.zona) ? d.zona : []).map(l => {
                       const ev = Array.isArray(d.zona_evidenza) ? d.zona_evidenza : [];
                       const on = ev.includes(l);
@@ -285,6 +290,12 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                       );
                     })}
                     {!zoneBusy && !(Array.isArray(d.zona) && d.zona.length) && <span className="text-xs text-muted">{tr('Nessun servizio trovato nel raggio di 1 km.', 'No services found within 1 km.')}</span>}
+                  </div>
+                  {!zoneOpen && Array.isArray(d.zona) && d.zona.length > 6 && (
+                    <button type="button" onClick={() => setZoneOpen(true)} className="absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-white via-white/90 to-transparent text-xs font-semibold text-brand">
+                      {tr(`Vedi tutti i ${d.zona.length} servizi`, `See all ${d.zona.length} places`)}
+                    </button>
+                  )}
                   </div>
                 </div>
               )}
@@ -369,9 +380,10 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
       {/* Pronto per il portale: tutto da copiare e incollare, foto pronte, pubblicazione sul sito */}
       {done && (
-        <section className="mt-8" style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
+        <section className={ai ? 'mt-8' : 'flex min-h-[70vh] flex-col items-center justify-center text-center'} style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
           <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Quasi pronto per il tuo sito', 'Almost ready for your site')}</h1>
           {busy && <div className="mt-6 flex items-center gap-2 text-muted"><Loader2 size={18} className="animate-spin" /> {busy}</div>}
+          {!ai && !busy && error && <button onClick={() => generate()} className="mt-5 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white">{tr('Riprova', 'Try again')}</button>}
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           {ai && (
             <div className={`mt-8 space-y-6 ${busy ? 'pointer-events-none opacity-50' : ''}`}>

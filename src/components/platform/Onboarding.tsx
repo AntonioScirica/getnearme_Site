@@ -9,6 +9,7 @@ import { Thumb } from './PortfolioView';
 import { SiteThumb } from '@/components/site/pages';
 import { cleanSite, TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
 import { tr } from './i18n';
+import { useCredits } from './PlanView';
 
 // Onboarding: l'AI "costruisce" il sito dell'agente davanti ai suoi occhi.
 // 0 logo al centro, poi sale e saluta > 1 solo il campo nome > 2 compare il finto sito col nome, lo slug si scrive da solo
@@ -94,10 +95,15 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
 
+  // Starter non ha il sito: dal nome si va dritti alla fine (niente link ne' modello; il link resta scelto in automatico,
+  // serve se poi passa a Plus o Pro)
+  const credits = useCredits();
+  const noSite = credits?.plan === 'starter';
   const onName = (v: string) => { setName(v); if (!slugTouched) setSlug(slugify(v)); };
   const nameOk = name.trim().length >= 2;
   const next = () => {
-    if (step === 1 && nameOk) { if (!slug) setSlug(slugify(name)); setTyped(0); setBar(false); setStep(2); setTimeout(() => setBar(true), 900); }
+    if (step === 1 && nameOk && noSite) { if (!slug) setSlug(slugify(name)); setStep(4); }
+    else if (step === 1 && nameOk) { if (!slug) setSlug(slugify(name)); setTyped(0); setBar(false); setStep(2); setTimeout(() => setBar(true), 900); }
     else if (step === 2 && done && check.state === 'ok') setStep(3);
     else if (step === 3) setStep(4);
   };
@@ -105,8 +111,13 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   const save = async () => {
     if (saving) return;
     setSaving(true); setError(null);
-    const res = await authFetch('/api/platform/portfolio', { method: 'PUT', body: JSON.stringify({ name: name.trim(), slug }) });
-    const d = await res.json().catch(() => ({}));
+    let res = await authFetch('/api/platform/portfolio', { method: 'PUT', body: JSON.stringify({ name: name.trim(), slug }) });
+    let d = await res.json().catch(() => ({}));
+    // Starter: il link non l'ha visto, se e' preso si usa il primo libero senza chiedere
+    if (noSite && d.error === 'slug_taken' && d.suggestion) {
+      res = await authFetch('/api/platform/portfolio', { method: 'PUT', body: JSON.stringify({ name: name.trim(), slug: d.suggestion }) });
+      d = await res.json().catch(() => ({}));
+    }
     // riuscito: il loader resta finche' l'onboarding sparisce (niente "Inizia" di nuovo per un attimo)
     if (!res.ok) setSaving(false);
     if (res.ok) {
@@ -120,7 +131,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     else setError(tr('Salvataggio non riuscito, riprova.', 'Saving failed, try again.'));
   };
 
-  const [head, sub] = TITLES[shown];
+  const [head, sub] = shown === 4 && noSite ? [tr('Tutto pronto, iniziamo.', 'All set, let’s start.'), tr('Ecco cosa puoi fare con Agente Immo.', 'Here’s what you can do with Agente Immo.')] : TITLES[shown];
   const words = head.split(' ');
   const ctaOff = step === 2 && (!done || check.state !== 'ok');
   const base = cleanSite(null, name.trim(), ''); // configurazione di partenza per le anteprime dei modelli

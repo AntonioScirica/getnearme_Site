@@ -16,7 +16,7 @@ export function Credits({ n, en }: { n: number; en?: boolean }) {
   );
 }
 
-const SITE_PERKS: [typeof Globe, string, string][] = [[Search, 'Ti trovano su Google nella tua zona', 'Found on Google in your area'], [Pencil, 'Modifichi colori, testi e foto', 'Edit colors, text and photos'], [MessageCircle, 'Le richieste arrivano a te', 'Inquiries come to you'], [Sparkles, 'Ogni casa va online da sola', 'Every listing goes live on its own']];
+export const SITE_PERKS: [typeof Globe, string, string][] = [[Search, 'Ti trovano su Google nella tua zona', 'Found on Google in your area'], [Pencil, 'Modifichi colori, testi e foto', 'Edit colors, text and photos'], [MessageCircle, 'Le richieste arrivano a te', 'Inquiries come to you'], [Sparkles, 'Ogni casa va online da sola', 'Every listing goes live on its own']];
 // slug: nella piattaforma l'indirizzo vero dell'agente al posto di "tuonome"
 export function SiteIncluded({ en, slug }: { en?: boolean; slug?: string | null }) {
   return (

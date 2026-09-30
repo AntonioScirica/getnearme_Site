@@ -177,11 +177,11 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
   };
   return (
     // i tre puntini stanno fuori dal link (un bottone dentro un link non va bene): menu con Modifica ed Elimina
-    <div ref={box} className={`relative ${busy ? 'pointer-events-none' : ''}`}>
+    <div ref={box} className={`group/card relative ${busy ? 'pointer-events-none' : ''}`}>
     {/* eliminazione in corso: rotellina sulla card */}
     {busy && <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[24px] bg-white/60 backdrop-blur-[2px]"><Loader2 size={22} className="animate-spin text-muted" /></div>}
     {!demo && (
-      <div className="absolute right-3 top-3 z-20">
+      <div className="absolute right-3 top-3 z-20 ease-smooth transition-transform group-hover/card:-translate-y-1">{/* sale con la card */}
         <button type="button" onClick={() => setMenu(m => !m)} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={menu} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
         {menu && (
           <div className="blur-in absolute right-0 top-10 w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
@@ -192,7 +192,7 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
       </div>
     )}
     <a href={demo ? '#/nuovo' : `#/immobile/${p.id}`} onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)} className="group block">
-      <div className={`relative aspect-[4/3] overflow-hidden rounded-[24px] bg-canvas ${CARD_SHADOW} ease-smooth transition-transform group-hover:-translate-y-1`}>
+      <div className={`relative aspect-[4/3] overflow-hidden rounded-[24px] bg-canvas ${CARD_SHADOW} ease-smooth transition-transform group-hover/card:-translate-y-1`}>
         {p.cover
           ? <img src={p.cover} alt="" className="h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
           : <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={36} /></div>}

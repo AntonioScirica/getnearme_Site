@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState, useMemo } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { tr } from './i18n';
 
@@ -24,10 +24,13 @@ const ALL_STEPS: { target: string; go: string; title: string; text: string; edit
 ];
 export const TOUR_KEY = 'agenteimmo:tour';
 
-export default function Tour({ onDone, noPlan = false }: { onDone: () => void; noPlan?: boolean }) {
+export default function Tour({ onDone, noPlan = false, noSite = false }: { onDone: () => void; noPlan?: boolean; noSite?: boolean }) {
   // col piano crediti e profilo stanno in una pillola sola (un passo per entrambi); senza piano niente crediti
   // ne' Metti in vetrina in alto: si passa dritti al profilo
-  const STEPS = ALL_STEPS.filter(s => (noPlan ? s.target !== 'crediti' && s.target !== 'nuovo' : s.target !== 'profilo'));
+  // memo: il passo resta lo stesso oggetto tra un render e l'altro (l'effetto che lo segue dipende da lui)
+  const STEPS = useMemo(() => ALL_STEPS.filter(s => (noPlan ? s.target !== 'crediti' && s.target !== 'nuovo' : s.target !== 'profilo')
+    && !(noSite && (s.target === 'site-editor' || s.target === 'site-link'))) // Starter: la pagina del sito e' solo l'invito a Plus
+    .map(s => (noSite && s.target === '/portfolio' ? { ...s, text: tr('Il tuo sito da agente con tutti i tuoi immobili: lo attivi passando a Plus.', 'Your agent website with all your listings: unlock it by upgrading to Plus.') } : s)), [noPlan, noSite]);
   const [i, setI] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
   // all'inizio niente finche' la prima voce non e' trovata (o 1 s, se non si vede: card al centro); la luce
