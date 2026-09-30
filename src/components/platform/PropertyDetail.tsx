@@ -8,6 +8,7 @@ import type { PropEdit } from '@/components/site/ui';
 import { updateProject, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { PublicSwitch, toSite } from './PortfolioView';
+import { useCredits } from './PlanView';
 import { printHtml } from '@/lib/printHtml';
 
 // Dettaglio in piattaforma: stessa pagina della casa del portfolio pubblico + barra agente
@@ -17,7 +18,9 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const [site, setSite] = useState<{ slug: string | null; template: TemplateId; config: SiteConfig; name: string; logo: string | null } | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<ProjectData> | null>(null);
-  const [busy, setBusy] = useState<string | null>(null); // foto su cui si sta lavorando (copertina, togli) // dati in modifica: la pagina del sito si aggiorna mentre si scrive
+  const [busy, setBusy] = useState<string | null>(null);
+  const credits = useCredits();
+  const sitePlan = !credits || credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'; // come in Il mio sito // foto su cui si sta lavorando (copertina, togli) // dati in modifica: la pagina del sito si aggiorna mentre si scrive
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
   const downloadReport = async (id: string) => {
@@ -61,11 +64,14 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
         <Info size={16} className="shrink-0 text-brand" />
         {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
-        <span className="min-w-0 flex-1 truncate text-muted">{project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'} con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</span>
+        {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
+        <span className="min-w-0 flex-1 truncate text-muted">{!sitePlan ? 'Non è online.' : project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'}{sitePlan && <> con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</>}</span>
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
         <span className="h-5 w-px bg-line" aria-hidden />
-        <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} right onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
-        {project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
+        {sitePlan
+          ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} right onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
+          : <a href="#/piano" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">Passa a Plus o Pro per pubblicare</a>}
+        {sitePlan && project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
       </div>
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       <div className={`mt-8 grid items-start gap-6 ${editing ? 'lg:grid-cols-[360px_minmax(0,1fr)]' : ''}`}>
