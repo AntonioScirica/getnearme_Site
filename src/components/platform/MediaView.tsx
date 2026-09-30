@@ -22,6 +22,31 @@ export async function fetchMedia(): Promise<MediaItem[]> {
   return d?.items ?? [];
 }
 
+// Novita' in Galleria (notifica sulla voce del menu): foto e video finiti dopo l'ultima visita alla Galleria, anche
+// se l'agente ha chiuso la chat mentre il video si faceva. Si controlla ogni 30 s con la pagina in vista; i video ancora
+// in lavorazione si sollecitano come fa la Galleria (la richiesta sul lavoro lo chiude e lo salva).
+// ponytail: si rilegge l'elenco intero (poche centinaia di file su R2); se diventa pesante, un endpoint "ultimo at".
+export function useGalleryNews(uid: string, onGallery: boolean): number {
+  const key = `agenteimmo:gallery-seen:${uid}`;
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (onGallery) { try { localStorage.setItem(key, String(Date.now())); } catch { /* niente */ } return; }
+    let stop = false;
+    const check = async () => {
+      if (document.hidden) return;
+      let seen = Number((() => { try { return localStorage.getItem(key); } catch { return null; } })() ?? 0);
+      if (!seen) { seen = Date.now(); try { localStorage.setItem(key, String(seen)); } catch { /* niente */ } } // primo accesso: niente arretrati
+      const items = await fetchMedia();
+      for (const m of items.filter(x => x.pending && x.job)) await authFetch(`/api/platform/video?job=${encodeURIComponent(m.job!)}`).catch(() => null);
+      if (!stop) setN(items.filter(m => !m.pending && m.at > seen).length);
+    };
+    void check();
+    const id = setInterval(() => void check(), 30000);
+    return () => { stop = true; clearInterval(id); };
+  }, [key, onGallery]);
+  return onGallery ? 0 : n;
+}
+
 const DAY = new Intl.DateTimeFormat(pageLocale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 const PERIODS = [
   { value: 'tutto', label: tr('Sempre', 'All time'), days: 0 },

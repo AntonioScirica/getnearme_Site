@@ -16,7 +16,7 @@ import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import CostsView from './CostsView';
 import StagingView from './StagingView';
-import MediaView from './MediaView';
+import MediaView, { useGalleryNews } from './MediaView';
 import PropertiesView from './PropertiesView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
@@ -118,6 +118,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   const blockNoPlan = (e: React.SyntheticEvent) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new Event('agenteimmo:no-credits')); };
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
+  const news = useGalleryNews(userData.id, route === '/galleria');
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
@@ -204,7 +205,10 @@ function PlatformInner({ userData }: { userData: UserData }) {
           <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
             {NAV.map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
-              return <a key={path} href={`#${path}`} data-tour={path} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
+              return <a key={path} href={`#${path}`} data-tour={path} className={`relative rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}
+                {/* foto o video pronti dall'ultima visita alla Galleria */}
+                {path === '/galleria' && news > 0 && <span className="pop absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-white ring-2 ring-canvas">{news > 9 ? '9+' : news}</span>}
+              </a>;
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
