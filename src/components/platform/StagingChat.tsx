@@ -92,11 +92,11 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
     { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: VIDEO_SAMPLES.gravity },
   ] },
   // un'animazione sola: dal template si passa subito alla scelta della stanza
-  { id: 'volo-cantiere', label: 'Volo nel cantiere', desc: 'Un volo tra le fondamenta, poi il palazzo si svela finito', sample: VIDEO_SAMPLES.fpv, anims: [
-    { id: 'fpv', label: 'Volo nel cantiere', desc: 'Un volo tra le fondamenta, poi il palazzo si svela finito', sample: VIDEO_SAMPLES.fpv },
-  ] },
   { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere, anims: [
     { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere },
+  ] },
+  { id: 'volo-cantiere', label: 'Volo nel cantiere', desc: 'Un volo tra le fondamenta, poi il palazzo si svela finito', sample: VIDEO_SAMPLES.fpv, anims: [
+    { id: 'fpv', label: 'Volo nel cantiere', desc: 'Un volo tra le fondamenta, poi il palazzo si svela finito', sample: VIDEO_SAMPLES.fpv },
   ] },
   { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight, anims: [
     { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight },
@@ -693,6 +693,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // i suggerimenti partono subito, senza passare dal campo
   // modifiche scritte gia' fatte sulla foto di partenza (le prime 3 gratis per foto: lo conta il server, qui solo per le pill)
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out && !!x.req && x.req.angle !== 'day' && creditsOf(x.req, 0) === CREDIT_COST.modifica && (x.req.reference ?? x.req.imageUrl ?? x.req.imageBase64) === sourcePhoto).length;
+  // template non disponibile per questa foto. Cantiere e Volo nel cantiere nascono per foto della casa vista da fuori
+  // (su una stanza lo scavo non torna); Prima e dopo e' per le stanze; Giorno e notte e Camminata vanno dentro e fuori.
+  // Tipo di foto non ancora noto: tutto aperto.
+  const templateOff = (id: string) => {
+    const outside = id === 'cantiere' || id === 'volo-cantiere' || id === 'fpv'
+    const both = id === 'giorno-notte' || id === 'camera' || id === 'daynight'
+    return outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
+  };
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
   const videoChip = base && scene !== 'planimetria' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
@@ -818,12 +826,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente') /* Con te in video: solo dopo aver mandato un video */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => {
-                          // Cantiere e Giorno/notte nascono per foto della casa vista da fuori (su una stanza Nano Banana non fa lo
-                          // scavo e Kling non finisce); Prima e dopo e' per le stanze. Tipo di foto non ancora noto: tutto aperto.
-                          const outside = t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' // solo facciate; Giorno e notte e Camminata vanno sia dentro sia fuori
-                          const both = t.id === 'giorno-notte' || t.id === 'camera' || t.id === 'daynight'
-                          const off = outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
+                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente') /* Con te in video: solo dopo aver mandato un video */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
+                          const off = templateOff(t.id) // i disponibili prima, i non disponibili in fondo
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
                             <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const solo = one?.length === 1 ? one[0].id : m.step === 'anim' ? t.id as VideoAnim : undefined; if (solo && directVideo(solo) && (kind === 'scene:esterno' || kind === 'scene:giardino')) { void makeVideo({ ...m, anim: solo, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }, m.photo, 'Stanza com’è'); return; } /* facciate e giardini: c'e' solo "Com'e' ora", niente passo dello stile */ const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
