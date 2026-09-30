@@ -149,6 +149,25 @@ function Cr({ n, dark, tight, still }: { n: number; dark?: boolean; tight?: bool
   if (n === 0) return null;
   return <span title={`${n} ${tr('crediti', 'credits')}`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : still ? 'bg-black/[.06] text-muted' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
 }
+// scelte fatte (modello, stile...): una sola pillola con un divisore verticale tra una scelta e l'altra
+function Picks({ picks }: { picks: { label: string; icon: keyof typeof PICK_ICON; src?: string }[] }) {
+  return (
+    <span className="inline-flex max-w-full flex-wrap items-center rounded-2xl bg-white py-1.5 text-xs font-medium shadow-sm ring-1 ring-black/5">
+      {picks.map((p, i) => {
+        const Icon = PICK_ICON[p.icon];
+        return (
+          <span key={p.label} className="blur-in flex items-center">
+            {i > 0 && <span className="h-5 w-px bg-line" aria-hidden />}
+            <span className={`flex items-center gap-2 pr-3 ${i > 0 ? 'pl-3' : 'pl-1.5'}`}>
+              {p.src ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
+              {p.label}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 const uid = () => Math.random().toString(36).slice(2, 10);
 // testi fissi confrontati nel codice: stesso valore dove si scrivono e dove si leggono (la lingua non cambia senza ricaricare)
 const CREATE_VIDEO = tr('Crea un video', 'Create a video');
@@ -951,19 +970,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
                   {/* scelte fatte: miniature sopra la domanda; restano ferme tra un passo e l'altro, entra solo l'ultima */}
                   {m.picks.length > 0 && m.step !== 'anim' && m.step !== 'render' && (
-                    <div className="flex flex-wrap gap-2 px-2 pb-4">
-                      {m.picks.map(p => {
-                        const Icon = PICK_ICON[p.icon];
-                        return (
-                          <span key={p.label} className="blur-in flex items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium shadow-sm ring-1 ring-black/5">
-                            {p.src
-                              ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" />
-                              : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
-                            {p.label}
-                          </span>
-                        );
-                      })}
-                    </div>
+                    <div className="px-2 pb-4"><Picks picks={m.picks} /></div>
                   )}
                   <StepSwap step={m.step}>
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
@@ -1191,17 +1198,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} />{/* foto nello stile gia' fatta (e pagata): Riprova rilancia solo il video */}<button onClick={() => { const st = m.anim === 'walk' || m.anim === 'agent' ? m.agent?.styled : undefined; if (st) { if (!short(m, videoCr(m.anim))) void makeVideo(m, m.photo, '', st); } else patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') }); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">{tr('Riprova', 'Try again')}</button></div>}
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         <div className="flex items-center gap-2 pt-3">
-                          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
-                            {m.picks.map(p => {
-                              const Icon = PICK_ICON[p.icon];
-                              return (
-                                <span key={p.label} className="flex items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium shadow-sm ring-1 ring-black/5">
-                                  {p.src ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
-                                  {p.label}
-                                </span>
-                              );
-                            })}
-                          </div>
+                          <div className="flex min-w-0 flex-1"><Picks picks={m.picks} /></div>
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
                             className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
                         </div>
