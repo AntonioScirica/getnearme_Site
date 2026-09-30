@@ -6,19 +6,20 @@ import { supabase } from '@/lib/supabase';
 import { DETAIL_FIELDS, TARGET_FIELDS, aiMapColumns, autoMapColumns, buildImportRows, readSheet, type ImportResult } from '@/lib/propertyImport';
 import { authFetch, CARD_SHADOW } from './api';
 import Dropdown from '@/components/ui/Dropdown';
+import { tr } from './i18n';
 
 // Import immobili: da link degli annunci (immobiliare, idealista, qualsiasi sito: il server legge la pagina con ZenRows,
 // api/projects/import-link) o da CSV/Excel (logica condivisa con la vecchia dashboard in lib/propertyImport). Nel file,
 // se c'e' la colonna "Link annuncio", ogni riga col link si completa dal portale: dati e tutte le foto.
 type LinkState = { url: string; status: 'coda' | 'leggo' | 'ok' | 'esiste' | 'errore'; nome?: string; msg?: string };
 const LINK_RE = /https?:\/\/[^\s,;|"'<>]+/g;
-const ERR: Record<string, string> = { not_a_listing: 'Non sembra un annuncio (non trovo prezzo e superficie)', blocked: 'Pagina non leggibile (lenta, rimossa o bloccata)', invalid_url: 'Link non valido', daily_limit: 'Limite giornaliero di annunci letti raggiunto' };
+const ERR: Record<string, string> = { not_a_listing: tr('Non sembra un annuncio (non trovo prezzo e superficie)', 'Does not look like a listing (no price or floor area found)'), blocked: tr('Pagina non leggibile (lenta, rimossa o bloccata)', 'Page not readable (slow, removed or blocked)'), invalid_url: tr('Link non valido', 'Invalid link'), daily_limit: tr('Limite giornaliero di annunci letti raggiunto', 'Daily limit of listings read reached') };
 // un link alla volta: il server ci mette 15-90 s a pagina (ZenRows), poi copia le foto
 async function importLink(url: string, extra: { riferimento?: string; nome?: string } = {}): Promise<{ ok: true; existing: boolean; nome: string } | { ok: false; msg: string }> {
   const res = await authFetch('/api/projects/import-link', { method: 'POST', body: JSON.stringify({ url, ...extra }) }).catch(() => null);
   const d = res ? await res.json().catch(() => ({})) : {};
   if (res?.ok && d?.id) return { ok: true, existing: !!d.existing, nome: d.nome ?? '' };
-  return { ok: false, msg: ERR[d?.error] ?? 'Lettura non riuscita, riprova' };
+  return { ok: false, msg: ERR[d?.error] ?? tr('Lettura non riuscita, riprova', 'Could not read it, please try again') };
 }
 
 export default function ImportView({ onDone }: { onDone: () => void }) {
@@ -33,7 +34,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
 
   const cols = rawRows.length ? Object.keys(rawRows[0]) : [];
   const [allDetails, setAllDetails] = useState(false); // campi della scheda: di base solo quelli trovati nel file
-  const colOptions = [{ value: '', label: 'Non presente' }, ...cols.map(c => ({ value: c, label: c }))];
+  const colOptions = [{ value: '', label: tr('Non presente', 'Not present') }, ...cols.map(c => ({ value: c, label: c }))];
   const row = (key: string, label: string, required?: boolean) => (
     <div key={key} className="flex items-center gap-4 px-4 py-2">
       <span className="w-44 shrink-0 text-sm font-medium">{label}{required && ' *'}</span>
@@ -49,7 +50,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
     setError(null); setResult(null);
     try {
       const json = await readSheet(file);
-      if (!json.length) return setError('Il file non contiene righe.');
+      if (!json.length) return setError(tr('Il file non contiene righe.', 'The file has no rows.'));
       const c = Object.keys(json[0]);
       setFileName(file.name); setRawRows(json); setMapping(autoMapColumns(c));
       setAiBusy(true);
@@ -61,7 +62,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
         return m;
       });
     } catch {
-      setError('Impossibile leggere il file. Usa un .csv, .xlsx o .xls valido.');
+      setError(tr('Impossibile leggere il file. Usa un .csv, .xlsx o .xls valido.', 'Could not read the file. Use a valid .csv, .xlsx or .xls.'));
     } finally { setAiBusy(false); }
   };
 
@@ -75,13 +76,13 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
       const plain = rows.filter(r => !linked.includes(r));
       let created = 0, updated = 0, skipped = skippedClient; const errors: string[] = [];
       for (const [i, r] of linked.entries()) {
-        setProgress(`Leggo l'annuncio ${i + 1} di ${linked.length}: ${r.nome}`);
+        setProgress(tr(`Leggo l'annuncio ${i + 1} di ${linked.length}: ${r.nome}`, `Reading listing ${i + 1} of ${linked.length}: ${r.nome}`));
         const out = await importLink(r.url!, { riferimento: r.riferimento, nome: r.nome });
         if (out.ok) { if (out.existing) updated++; else created++; }
         else { skipped++; errors.push(`${r.nome}: ${out.msg}`); }
       }
       if (plain.length) {
-        setProgress(plain.length === rows.length ? '' : `Importo le altre ${plain.length} righe`);
+        setProgress(plain.length === rows.length ? '' : tr(`Importo le altre ${plain.length} righe`, `Importing the other ${plain.length} rows`));
         const res = await authFetch('/api/projects/import', { method: 'POST', body: JSON.stringify({ rows: plain }) });
         if (!res.ok) throw new Error();
         const r = (await res.json()) as ImportResult;
@@ -90,7 +91,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
       setResult({ created, updated, skipped, errors });
       onDone();
     } catch {
-      setError("Errore durante l'import, riprova.");
+      setError(tr("Errore durante l'import, riprova.", 'Import failed, please try again.'));
     } finally { setImporting(false); setProgress(''); }
   };
 
@@ -118,11 +119,11 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Nuovo immobile nella tua vetrina</a>
-      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">Importa i tuoi immobili</h1>
-      <p className="mt-1 text-muted">{mode === 'link' ? 'Incolla i link degli annunci: leggiamo dati e foto dal portale e li mettiamo in vetrina.' : 'Carica l\u2019export del tuo gestionale: riconosciamo le colonne da soli, tu controlli e confermi.'}</p>
+      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> {tr('Nuovo immobile nella tua vetrina', 'New property in your showcase')}</a>
+      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">{tr('Importa i tuoi immobili', 'Import your properties')}</h1>
+      <p className="mt-1 text-muted">{mode === 'link' ? tr('Incolla i link degli annunci: leggiamo dati e foto dal portale e li mettiamo in vetrina.', 'Paste the listing links: we read the details and photos from the portal and add them to your showcase.') : tr('Carica l\u2019export del tuo gestionale: riconosciamo le colonne da soli, tu controlli e confermi.', 'Upload the export from your CRM: we recognise the columns, you check and confirm.')}</p>
       <div className="mt-5 flex w-fit rounded-full bg-canvas p-1">
-        {([['link', 'Da link', Link2], ['file', 'Da CSV o Excel', FileSpreadsheet]] as const).map(([m, l, Icon]) => (
+        {([['link', tr('Da link', 'From links'), Link2], ['file', tr('Da CSV o Excel', 'From CSV or Excel'), FileSpreadsheet]] as const).map(([m, l, Icon]) => (
           <button key={m} type="button" disabled={linksBusy || importing} onClick={() => setMode(m)} className={`flex h-9 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${mode === m ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><Icon size={14} /> {l}</button>
         ))}
       </div>
@@ -131,11 +132,11 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
         <div className="mt-6 space-y-4">
           {!links.length ? (
             <>
-              <textarea value={text} onChange={e => setText(e.target.value)} rows={6} placeholder={'https://www.immobiliare.it/annunci/...\nhttps://www.idealista.it/immobile/...\nUn link per riga, anche 50 alla volta.'}
+              <textarea value={text} onChange={e => setText(e.target.value)} rows={6} placeholder={'https://www.immobiliare.it/annunci/...\nhttps://www.idealista.it/immobile/...\n' + tr('Un link per riga, anche 50 alla volta.', 'One link per line, up to 50 at a time.')}
                 className="w-full resize-none rounded-2xl bg-white p-4 text-sm leading-relaxed outline-none ring-1 ring-line focus:ring-ink/20" />
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-muted">{urls.length ? `${urls.length} link trovati` : 'Immobiliare, Idealista, Casa.it e gli altri portali.'} Ogni annuncio richiede da 30 secondi a 2 minuti.</span>
-                <button onClick={runLinks} disabled={!urls.length} className="btn-ink rounded-xl px-6 py-2.5 text-sm font-semibold disabled:opacity-50">Importa {urls.length || ''} {urls.length === 1 ? 'annuncio' : 'annunci'}</button>
+                <span className="text-xs text-muted">{urls.length ? tr(`${urls.length} link trovati`, `${urls.length} links found`) : tr('Immobiliare, Idealista, Casa.it e gli altri portali.', 'Immobiliare, Idealista, Casa.it and other portals.')} {tr('Ogni annuncio richiede da 30 secondi a 2 minuti.', 'Each listing takes 30 seconds to 2 minutes.')}</span>
+                <button onClick={runLinks} disabled={!urls.length} className="btn-ink rounded-xl px-6 py-2.5 text-sm font-semibold disabled:opacity-50">{tr('Importa', 'Import')} {urls.length || ''} {urls.length === 1 ? tr('annuncio', 'listing') : tr('annunci', 'listings')}</button>
               </div>
             </>
           ) : (
@@ -147,16 +148,16 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
                       {l.status === 'leggo' ? <Loader2 size={14} className="animate-spin text-ai" /> : l.status === 'ok' || l.status === 'esiste' ? <Check size={14} className="text-emerald-600" /> : l.status === 'errore' ? <X size={14} className="text-rose-600" /> : <span className="h-1.5 w-1.5 rounded-full bg-line" />}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{l.nome || l.url}</span>
-                    <span className="shrink-0 text-xs text-muted">{l.status === 'coda' ? 'In coda' : l.status === 'leggo' ? 'Leggo l\u2019annuncio…' : l.status === 'ok' ? 'In vetrina' : l.status === 'esiste' ? 'Già in vetrina' : l.msg}</span>
+                    <span className="shrink-0 text-xs text-muted">{l.status === 'coda' ? tr('In coda', 'Queued') : l.status === 'leggo' ? tr('Leggo l\u2019annuncio…', 'Reading the listing…') : l.status === 'ok' ? tr('In vetrina', 'In showcase') : l.status === 'esiste' ? tr('Già in vetrina', 'Already in showcase') : l.msg}</span>
                   </li>
                 ))}
               </ul>
               {linksDone && (
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm">{links.filter(l => l.status === 'ok').length} importati{links.some(l => l.status === 'esiste') ? `, ${links.filter(l => l.status === 'esiste').length} già presenti` : ''}{links.some(l => l.status === 'errore') ? `, ${links.filter(l => l.status === 'errore').length} non letti` : ''}.</span>
+                  <span className="text-sm">{links.filter(l => l.status === 'ok').length} {tr('importati', 'imported')}{links.some(l => l.status === 'esiste') ? `, ${links.filter(l => l.status === 'esiste').length} ${tr('già presenti', 'already there')}` : ''}{links.some(l => l.status === 'errore') ? `, ${links.filter(l => l.status === 'errore').length} ${tr('non letti', 'not read')}` : ''}.</span>
                   <div className="flex gap-3">
-                    <button onClick={() => { setLinks([]); setText(''); }} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">Altri link</button>
-                    <a href="#/immobili" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">Vedi immobili</a>
+                    <button onClick={() => { setLinks([]); setText(''); }} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">{tr('Altri link', 'More links')}</button>
+                    <a href="#/immobili" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">{tr('Vedi immobili', 'View properties')}</a>
                   </div>
                 </div>
               )}
@@ -165,27 +166,27 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
         </div>
       ) : result ? (
         <div className="mt-8 card p-6">
-          <h2 className="font-display text-xl font-semibold">Import completato</h2>
-          <p className="mt-2 text-sm">{result.created} nuovi, {result.updated} aggiornati{result.skipped ? `, ${result.skipped} saltati` : ''}.</p>
+          <h2 className="font-display text-xl font-semibold">{tr('Import completato', 'Import complete')}</h2>
+          <p className="mt-2 text-sm">{result.created} {tr('nuovi', 'new')}, {result.updated} {tr('aggiornati', 'updated')}{result.skipped ? `, ${result.skipped} ${tr('saltati', 'skipped')}` : ''}.</p>
           {result.errors?.length > 0 && <ul className="mt-3 max-h-40 space-y-1 overflow-auto text-xs text-muted">{result.errors.slice(0, 30).map((e, i) => <li key={i}>{e}</li>)}</ul>}
           <div className="mt-5 flex gap-3">
-            <a href="#/immobili" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">Vedi immobili</a>
-            <button onClick={() => { setResult(null); setRawRows([]); setFileName(''); }} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">Importa altro file</button>
+            <a href="#/immobili" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">{tr('Vedi immobili', 'View properties')}</a>
+            <button onClick={() => { setResult(null); setRawRows([]); setFileName(''); }} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">{tr('Importa altro file', 'Import another file')}</button>
           </div>
         </div>
       ) : !rawRows.length ? (
         <label onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); onFile(e.dataTransfer.files?.[0]); }}
           className="mt-8 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line bg-white py-14 text-muted hover:border-brand hover:text-brand">
           <FileSpreadsheet size={30} />
-          <span className="text-sm font-medium">Trascina qui il file o clicca per sceglierlo</span>
+          <span className="text-sm font-medium">{tr('Trascina qui il file o clicca per sceglierlo', 'Drag the file here or click to choose it')}</span>
           <span className="text-xs">.csv, .xlsx, .xls</span>
           <input type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={e => { onFile(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
       ) : (
         <div className="mt-8 space-y-5">
           <div className="flex items-center justify-between text-sm">
-            <span><span className="font-medium">{fileName}</span> · {rawRows.length} righe</span>
-            {aiBusy && <span className="flex items-center gap-1.5 text-ai"><Sparkles size={14} /> L&apos;AI sta riconoscendo le colonne...</span>}
+            <span><span className="font-medium">{fileName}</span> · {rawRows.length} {tr('righe', 'rows')}</span>
+            {aiBusy && <span className="flex items-center gap-1.5 text-ai"><Sparkles size={14} /> {tr('L\'AI sta riconoscendo le colonne...', 'AI is recognising the columns...')}</span>}
           </div>
           <div className={`divide-y divide-line overflow-hidden rounded-3xl bg-white ${CARD_SHADOW}`}>
             {TARGET_FIELDS.map(f => row(f.key, f.label, f.required))}
@@ -193,8 +194,8 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
           {/* campi della scheda (classe energetica, piano, riscaldamento...): valori riconosciuti e normalizzati riga per riga */}
           <div>
             <div className="flex items-center justify-between pb-2">
-              <span className="text-sm font-semibold">Altri dati della scheda <span className="font-normal text-muted">{foundDetails.length} trovati</span></span>
-              <button onClick={() => setAllDetails(v => !v)} className="rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">{allDetails ? 'Solo quelli trovati' : 'Mostra tutti'}</button>
+              <span className="text-sm font-semibold">{tr('Altri dati della scheda', 'Other property details')} <span className="font-normal text-muted">{foundDetails.length} {tr('trovati', 'found')}</span></span>
+              <button onClick={() => setAllDetails(v => !v)} className="rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">{allDetails ? tr('Solo quelli trovati', 'Only the ones found') : tr('Mostra tutti', 'Show all')}</button>
             </div>
             {(allDetails ? DETAIL_FIELDS : foundDetails).length > 0 && (
               <div className={`divide-y divide-line overflow-hidden rounded-3xl bg-white ${CARD_SHADOW}`}>
@@ -205,16 +206,16 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
           {!!mapping['url'] && (
             <label className={`flex cursor-pointer items-start gap-3 rounded-3xl bg-white p-4 text-sm ${CARD_SHADOW}`}>
               <input type="checkbox" checked={readLinks} onChange={e => setReadLinks(e.target.checked)} className="mt-0.5 accent-ink" />
-              <span><span className="font-medium">Completa dal portale le {rows.filter(r => r.url).length} righe con il link</span><br /><span className="text-muted">Leggiamo l&apos;annuncio: descrizione, scheda e tutte le foto. Da 30 secondi a 2 minuti a immobile, uno alla volta.</span></span>
+              <span><span className="font-medium">{tr(`Completa dal portale le ${rows.filter(r => r.url).length} righe con il link`, `Complete the ${rows.filter(r => r.url).length} rows with a link from the portal`)}</span><br /><span className="text-muted">{tr('Leggiamo l\'annuncio: descrizione, scheda e tutte le foto. Da 30 secondi a 2 minuti a immobile, uno alla volta.', 'We read the listing: description, details and all photos. 30 seconds to 2 minutes per property, one at a time.')}</span></span>
             </label>
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex items-center justify-between gap-4">
-            <button onClick={() => { setRawRows([]); setFileName(''); }} className="text-sm text-muted hover:text-ink">Cambia file</button>
+            <button onClick={() => { setRawRows([]); setFileName(''); }} className="text-sm text-muted hover:text-ink">{tr('Cambia file', 'Change file')}</button>
             <span className="min-w-0 flex-1 truncate text-right text-xs text-muted">{progress}</span>
             <button onClick={runImport} disabled={importing || !rows.length} className="flex shrink-0 items-center gap-2 btn-ink rounded-xl px-6 py-2.5 text-sm font-semibold">
               {importing && <Loader2 size={16} className="animate-spin" />}
-              {importing ? (linked.length ? 'Importo…' : 'Importo... (le foto richiedono qualche secondo)') : `Importa ${rows.length} immobili`}
+              {importing ? (linked.length ? tr('Importo…', 'Importing…') : tr('Importo... (le foto richiedono qualche secondo)', 'Importing... (photos take a few seconds)')) : tr(`Importa ${rows.length} immobili`, `Import ${rows.length} properties`)}
             </button>
           </div>
         </div>

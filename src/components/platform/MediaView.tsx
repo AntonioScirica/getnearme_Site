@@ -11,6 +11,7 @@ import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW } from './api';
 import { FAKE_MEDIA, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import ImmoLoader from '@/components/ui/ImmoLoader';
+import { pageLocale, tr } from './i18n';
 
 // Una voce = una foto di partenza: ultima versione (dopo), originale (prima) e i passaggi in mezzo.
 export type MediaItem = { id: string; video?: string; pending?: boolean; job?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
@@ -21,17 +22,17 @@ export async function fetchMedia(): Promise<MediaItem[]> {
   return d?.items ?? [];
 }
 
-const DAY = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+const DAY = new Intl.DateTimeFormat(pageLocale(), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 const PERIODS = [
-  { value: 'tutto', label: 'Sempre', days: 0 },
-  { value: 'oggi', label: 'Oggi', days: 1 },
-  { value: '7', label: 'Ultimi 7 giorni', days: 7 },
-  { value: '30', label: 'Ultimi 30 giorni', days: 30 },
+  { value: 'tutto', label: tr('Sempre', 'All time'), days: 0 },
+  { value: 'oggi', label: tr('Oggi', 'Today'), days: 1 },
+  { value: '7', label: tr('Ultimi 7 giorni', 'Last 7 days'), days: 7 },
+  { value: '30', label: tr('Ultimi 30 giorni', 'Last 30 days'), days: 30 },
 ] as const;
 type Period = (typeof PERIODS)[number]['value'];
 const PAGE = 24;
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: 'Prima' }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text || 'Modifica' }))];
+const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: tr('Prima', 'Before') }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text || tr('Modifica', 'Edit') }))];
 
 // Galleria: divisa per immobile, con ricerca (stanza, casa, richiesta), filtri e caricamento a scorrimento
 // (24 alla volta). Passando sopra una foto si vede com'era all'inizio.
@@ -59,10 +60,10 @@ export default function MediaView() {
     const r = keys.length ? await authFetch('/api/platform/media', { method: 'DELETE', body: JSON.stringify({ keys }) }).catch(() => null) : null;
     const d = keys.length ? (r?.ok ? await r.json() : null) : { kept: 0 };
     setDeleting(false); setConfirm(false);
-    if (!d) { setNote('Non sono riuscito a eliminarle, riprova.'); return; }
+    if (!d) { setNote(tr('Non sono riuscito a eliminarle, riprova.', "Couldn't delete them, please try again.")); return; }
     const fresh = keys.length ? await fetchMedia() : (items ?? []).filter(m => m.keys.length);
     setItems(dev ? [...fresh, ...(items ?? []).filter(m => !m.keys.length && !sel.has(m.id))].sort((a, b) => b.at - a.at) : fresh);
-    setNote(d.kept ? `Alcune foto sono usate in un immobile e sono rimaste: toglile prima dall'immobile.` : '');
+    setNote(d.kept ? tr(`Alcune foto sono usate in un immobile e sono rimaste: toglile prima dall'immobile.`, 'Some photos are used in a property and were kept: remove them from the property first.') : '');
     stopSelecting();
   };
   const [now] = useState(() => Date.now()); // riferimento per i periodi (Oggi, 7 giorni...)
@@ -110,7 +111,7 @@ export default function MediaView() {
 
   const nameOf = (id: string | null) => {
     const p = id ? projects.find(x => x.id === id) : null;
-    return p ? p.titolo || p.nome || p.addr : 'Senza immobile';
+    return p ? p.titolo || p.nome || p.addr : tr('Senza immobile', 'No property');
   };
   const filtered = useMemo(() => {
     if (!items) return [];
@@ -148,52 +149,52 @@ export default function MediaView() {
     return [...g.entries()];
   }, [filtered, shown]);
   const count = (k: string) => filtered.filter(m => (m.casa ?? 'nessuna') === k).length;
-  const casaOptions = [{ value: 'tutte', label: 'Tutti gli immobili' }, ...[...new Set((items ?? []).map(m => m.casa ?? 'nessuna'))].map(id => ({ value: id, label: id === 'nessuna' ? 'Senza immobile' : nameOf(id) }))];
+  const casaOptions = [{ value: 'tutte', label: tr('Tutti gli immobili', 'All properties') }, ...[...new Set((items ?? []).map(m => m.casa ?? 'nessuna'))].map(id => ({ value: id, label: id === 'nessuna' ? tr('Senza immobile', 'No property') : nameOf(id) }))];
   const pill = 'h-10 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-line';
 
   return (
     <div>
       <div className="flex items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Galleria</h1>
-          <p className="pt-1 text-sm text-muted">Le foto create con l&apos;AI, all&apos;ultima versione. Passa sopra per vedere com&apos;era, aprila per tutti i passaggi.</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Galleria', 'Gallery')}</h1>
+          <p className="pt-1 text-sm text-muted">{tr("Le foto create con l'AI, all'ultima versione. Passa sopra per vedere com'era, aprila per tutti i passaggi.", 'Your AI photos, latest version. Hover to see the original, open one to see every step.')}</p>
         </div>
-        <a href="#/staging" className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> Nuova foto</a>
+        <a href="#/staging" className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> {tr('Nuova foto', 'New photo')}</a>
       </div>
 
       {demo && (
         <div className="blur-in mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5">
           <div>
-            <div className="font-semibold">Queste sono foto e video di esempio</div>
-            <p className="mt-0.5 text-sm text-muted">Arreda la tua prima stanza: qui trovi tutto quello che crei.</p>
+            <div className="font-semibold">{tr('Queste sono foto e video di esempio', 'These are sample photos and videos')}</div>
+            <p className="mt-0.5 text-sm text-muted">{tr('Arreda la tua prima stanza: qui trovi tutto quello che crei.', 'Stage your first room: everything you create will show up here.')}</p>
           </div>
-          <a href="#/staging" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Arreda una stanza</a>
+          <a href="#/staging" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Arreda una stanza', 'Stage a room')}</a>
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 pt-6">
         <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
           <Search size={16} className="shrink-0 text-muted" />
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Cerca per stanza, casa o richiesta" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca per stanza, casa o richiesta', 'Search by room, property or request')} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
         </label>
-        <Dropdown value={tipo} options={[{ value: 'tutto', label: 'Foto e video' }, { value: 'foto', label: 'Solo foto' }, { value: 'video', label: 'Solo video' }]} onChange={setTipo} className={pill} />
+        <Dropdown value={tipo} options={[{ value: 'tutto', label: tr('Foto e video', 'Photos and videos') }, { value: 'foto', label: tr('Solo foto', 'Photos only') }, { value: 'video', label: tr('Solo video', 'Videos only') }]} onChange={setTipo} className={pill} />
         <Dropdown value={casa} options={casaOptions} onChange={setCasa} className={pill} />
         <Dropdown value={period} options={PERIODS.map(p => ({ value: p.value, label: p.label }))} onChange={setPeriod} className={pill} />
-        {items && <span className="ml-auto text-sm text-muted">{filtered.length} {tipo === 'video' ? 'video' : tipo === 'foto' ? 'foto' : 'elementi'}</span>}
-        {!!items?.length && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? 'Annulla' : 'Seleziona'}</button>}
+        {items && <span className="ml-auto text-sm text-muted">{filtered.length} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span>}
+        {!!items?.length && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
       </div>
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
       {items === null ? (
         <div className="flex h-64 items-center justify-center"><ImmoLoader size="block" /></div>
       ) : !items.length ? (
-        <p className="flex h-64 items-center justify-center text-sm text-muted">Qui finiranno le foto che crei nella chat di home staging.</p>
+        <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Qui finiranno le foto che crei nella chat di home staging.', 'Photos you create in the home staging chat will show up here.')}</p>
       ) : !filtered.length ? (
-        <p className="flex h-64 items-center justify-center text-sm text-muted">Niente con questi filtri.</p>
+        <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Niente con questi filtri.', 'Nothing matches these filters.')}</p>
       ) : (
         <div className={`space-y-10 pt-8 ${selecting ? 'pb-28' : ''}`}>
           {groups.map(([k, list]) => (
             <section key={k}>
-              <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} {tipo === 'video' ? 'video' : tipo === 'foto' ? 'foto' : 'elementi'}</span></h2>
+              <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span></h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
                   <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}
@@ -215,19 +216,19 @@ export default function MediaView() {
                         : m.pending
                         ? <>
                           {m.dopo && <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full scale-105 object-cover blur-md" />}
-                          <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white"><Loader2 size={22} className="animate-spin" /><span className="text-xs font-medium">Video in lavorazione</span></span>
+                          <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white"><Loader2 size={22} className="animate-spin" /><span className="text-xs font-medium">{tr('Video in lavorazione', 'Video in progress')}</span></span>
                         </>
                         : <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
                       {m.video && <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Clapperboard size={12} /> Video</span>}
                       {m.prima && <img src={m.prima} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-0 ease-smooth transition-opacity group-hover:opacity-100" />}
                       <span className="absolute bottom-3 left-3 flex items-center gap-2">
-                        {m.prima && <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur"><span className="group-hover:hidden">Dopo</span><span className="hidden group-hover:inline">Prima</span></span>}
+                        {m.prima && <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur"><span className="group-hover:hidden">{tr('Dopo', 'After')}</span><span className="hidden group-hover:inline">{tr('Prima', 'Before')}</span></span>}
                         {m.steps.length > 1 && <span className="flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Layers size={12} /> {m.steps.length}</span>}
                       </span>
                     </button>
                     <div className="flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted">
                       <span className="min-w-0 flex-1 truncate">{DAY.format(m.at)}</span>
-                      <button type="button" onClick={() => downloadImage(m.video ?? m.dopo, m.video ? 'agenteimmo-video.mp4' : 'agenteimmo.jpg')} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</button>
+                      <button type="button" onClick={() => downloadImage(m.video ?? m.dopo, m.video ? 'agenteimmo-video.mp4' : 'agenteimmo.jpg')} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><Download size={14} className="translate-y-px" /> {tr('Scarica', 'Download')}</button>
                     </div>
                   </div>
                 ))}
@@ -244,9 +245,9 @@ export default function MediaView() {
           {/* sfumatura progressiva sotto la barra: le foto scorrono dietro e la barra resta leggibile */}
           <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
           <div className={`pointer-events-auto relative flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
-            <span className="font-medium">{sel.size} selezionate</span>
-            <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">Seleziona tutte</button>
-            <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> Elimina</button>
+            <span className="font-medium">{sel.size} {tr('selezionate', 'selected')}</span>
+            <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Seleziona tutte', 'Select all')}</button>
+            <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>
         </div>,
         document.body,
@@ -254,11 +255,11 @@ export default function MediaView() {
       {confirm && createPortal(
         <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => !deleting && setConfirm(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-[32px] bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold">Eliminare {sel.size} foto?</h2>
-            <p className="pt-1 text-sm text-muted">Si cancellano anche il prima e tutti i passaggi. Non si può annullare.</p>
+            <h2 className="text-lg font-semibold">{tr(`Eliminare ${sel.size} foto?`, `Delete ${sel.size} ${sel.size === 1 ? 'photo' : 'photos'}?`)}</h2>
+            <p className="pt-1 text-sm text-muted">{tr('Si cancellano anche il prima e tutti i passaggi. Non si può annullare.', 'The original and all steps will be deleted too. This cannot be undone.')}</p>
             <div className="flex justify-end gap-2 pt-6">
-              <button type="button" disabled={deleting} onClick={() => setConfirm(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">Annulla</button>
-              <button type="button" disabled={deleting} onClick={remove} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60">{deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} Elimina</button>
+              <button type="button" disabled={deleting} onClick={() => setConfirm(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">{tr('Annulla', 'Cancel')}</button>
+              <button type="button" disabled={deleting} onClick={remove} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60">{deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} {tr('Elimina', 'Delete')}</button>
             </div>
           </div>
         </div>,

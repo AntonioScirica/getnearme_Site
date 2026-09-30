@@ -33,17 +33,20 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 // ponytail: le guide per chi inizia (come diventare, provvigione) restano online ma non si linkano da qui: la landing parla ad agenti gia' in attivita'
 const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
 
-const TRIAL = '/it/prova'; // pagina della prova, solo con l'account
-const TRIAL_LOGIN = `/it/accedi?next=/it/prova`; // Prova gratis: dritti al login e poi alla pagina della prova (se gia' dentro, l'accesso rimanda li')
 const TRIAL_KEY = 'agenteimmo:prova'; // foto e richiesta messe da parte prima del login
 const EXAMPLE = '/immo/home/demo-before.webp';
-const APP = '/it/dashboard'; // ponytail: la piattaforma per ora e' solo in italiano, anche dalla landing inglese
 
 // Lingua della landing (it su /it, en su /en): L('testo italiano', "English text") accanto nel codice.
 export type LandingLang = 'it' | 'en';
 const Lang = createContext<LandingLang>('it');
 const useL = () => { const en = useContext(Lang) === 'en'; return (it: string, eng: string) => (en ? eng : it); };
 const useEn = () => useContext(Lang) === 'en';
+// link nella lingua della landing (la piattaforma e' in italiano e in inglese): APP = piattaforma, TRIAL = pagina della prova
+// (solo con l'account), TRIAL_LOGIN = Prova gratis: dritti al login e poi alla prova (se gia' dentro, l'accesso rimanda li')
+const useLinks = () => {
+  const l = useEn() ? 'en' : 'it';
+  return { l, APP: `/${l}/dashboard`, TRIAL: `/${l}/prova`, TRIAL_LOGIN: `/${l}/accedi?next=/${l}/prova` };
+};
 // i modelli di video della piattaforma (stessi esempi della chat)
 const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Camminata', 'Walk-in'], ['agent', 'Con te in video', 'You on camera']];
 
@@ -245,6 +248,7 @@ const BOX = 'aspect-[4/3] md:aspect-[16/10]';
 // gate (landing): la foto d'esempio c'e' gia', ogni azione (invio, Arreda, carica) porta al login e poi alla pagina /prova
 function TryIt({ gate = false }: { gate?: boolean }) {
   const L = useL();
+  const { APP, TRIAL, TRIAL_LOGIN } = useLinks();
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
   const [style, setStyle] = useState<(typeof DEMO_STYLES)[number][0]>('modern');
@@ -281,7 +285,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     try { localStorage.setItem(TRIAL_KEY, JSON.stringify({ image, style, text: text.trim(), go })); } catch { /* spazio pieno: si riparte dall'esempio */ }
     // senza accesso dritti al login (niente passaggio visibile dalla pagina della prova)
     const { data: { session } } = await supabase.auth.getSession();
-    window.location.href = session ? TRIAL : `/it/accedi?next=${TRIAL}`;
+    window.location.href = session ? TRIAL : TRIAL_LOGIN;
   };
   // foto ridotta nel browser a 1600 px (upload veloce anche da telefono), in JPEG
   const load = (src: string, done: (url: string) => void) => {
@@ -321,7 +325,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
-    if (d?.error === 'login') return window.location.replace(`/it/accedi?next=${TRIAL}`); // sessione scaduta
+    if (d?.error === 'login') return window.location.replace(TRIAL_LOGIN); // sessione scaduta
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
     if (d?.image) { setPhotoToken(d.token ?? null); setEmptied(st === 'empty' && !tx); return setAfter(d.image); } // foto pronta: prima si guarda, poi Crea video o Scarica
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
@@ -491,7 +495,8 @@ function TryIt({ gate = false }: { gate?: boolean }) {
 function Pricing() {
   const L = useL(), en = useEn();
   // Piano scelto: con l'accesso gia' fatto dritti a Stripe; altrimenti accesso e poi Stripe (?buy=). Annullando si torna qui.
-  const buyHref = (b: Buy) => `/it/checkout/agency?buy=${b}`;
+  const { l, TRIAL_LOGIN } = useLinks();
+  const buyHref = (b: Buy) => `/${l}/checkout/agency?buy=${b}`;
   const buyClick = (b: Buy) => async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     if (!(await startCheckout(b, { back: en ? 'en' : 'it' }))) window.location.href = buyHref(b);
@@ -559,6 +564,7 @@ export default function AgenteImmoLanding({ lang = 'it', faq }: { lang?: Landing
 
 function Landing({ faq }: { faq: [string, string][] }) {
   const L = useL(), en = useEn();
+  const { l, APP, TRIAL_LOGIN } = useLinks();
   const scrolled = useScrolled();
   const [logged, setLogged] = useState(false);
   useEffect(() => {
@@ -773,7 +779,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             [L('Prodotto', "Product"), [['#staging', 'Home staging'], ['#video', L('Video per i social', "Social videos")], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")], ['#domande', L('Domande frequenti', "FAQ")]]],
             // le guide sono articoli in italiano: nella versione inglese la colonna non c'e'
             ...(en ? [] : [['Guide', GUIDE_LINKS]]),
-            ['Agente Immo', [['/it/privacy', 'Privacy'], ['/it/cookie', 'Cookie'], ['/it/termini', L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
+            ['Agente Immo', [[`/${l}/privacy`, 'Privacy'], [`/${l}/cookie`, 'Cookie'], [`/${l}/termini`, L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
           ] as [string, string[][]][]).map(([h, links]) => (
             <nav key={h} aria-label={h}>
               <div className="text-sm font-semibold">{h}</div>
@@ -802,11 +808,12 @@ export function TrialPage({ lang = 'it' }: { lang?: LandingLang }) {
 
 function Trial() {
   const L = useL();
+  const { l, APP, TRIAL_LOGIN } = useLinks();
   const scrolled = useScrolled();
   const [ok, setOk] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/accedi?next=${TRIAL}`)));
-  }, []);
+    supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(TRIAL_LOGIN)));
+  }, [TRIAL_LOGIN]);
   if (!ok) return <div className="dots-bg min-h-screen" />; // finche' non si sa se c'e' l'accesso: niente pagina (poi login o prova)
   return (
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
@@ -816,7 +823,7 @@ function Trial() {
         <ProgressiveBlur show={scrolled} fade={40} />
         <div className="mx-auto max-w-6xl px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
-            <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
+            <Link href={`/${l}`} className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
             <a href={APP} className="ml-auto inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5">{L('Entra in piattaforma', "Go to the platform")}</a>
           </nav>
         </div>

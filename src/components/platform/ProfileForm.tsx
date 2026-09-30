@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { authFetch, portfolioPrefix } from './api';
+import { tr } from './i18n';
 
 export type Profile = { name: string | null; slug: string | null };
 
@@ -61,7 +62,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
     setSaving(false);
     if (res.ok) return onSaved({ name: d.name, slug: d.slug });
     if (d.error === 'slug_taken') setResult({ slug, state: 'taken', suggestion: d.suggestion });
-    else setError(d.error === 'invalid_name' ? 'Inserisci un nome di almeno 2 caratteri.' : 'Salvataggio non riuscito, riprova.');
+    else setError(d.error === 'invalid_name' ? tr('Inserisci un nome di almeno 2 caratteri.', 'Enter a name of at least 2 characters.') : tr('Salvataggio non riuscito, riprova.', 'Saving failed, try again.'));
   };
 
   const canSave = name.trim().length >= 2 && check.state === 'ok' && (name !== initial.name || slug !== initial.slug);
@@ -69,16 +70,16 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
   return (
     <form onSubmit={save} className="space-y-5">
       <div>
-        <label className="mb-1.5 block text-sm font-medium">Nome e cognome (o nome agenzia)</label>
-        <input value={name} onChange={e => onName(e.target.value)} maxLength={80} placeholder="Mario Rossi" autoFocus={!initial.name}
+        <label className="mb-1.5 block text-sm font-medium">{tr('Nome e cognome (o nome agenzia)', 'Full name (or agency name)')}</label>
+        <input value={name} onChange={e => onName(e.target.value)} maxLength={80} placeholder={tr('Mario Rossi', 'John Smith')} autoFocus={!initial.name}
           className="w-full rounded-full border border-line bg-white px-4 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium">Indirizzo del tuo portfolio</label>
+        <label className="mb-1.5 block text-sm font-medium">{tr('Indirizzo del tuo portfolio', 'Your portfolio address')}</label>
         <div className="flex items-center rounded-full border border-line bg-white pl-1 text-sm focus-within:border-brand">
           <span className="pl-3 text-muted">{portfolioPrefix()}</span>
           <input value={slug} onChange={e => { setSlugTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40)); }}
-            placeholder="mario-rossi" className="min-w-0 flex-1 bg-transparent py-2.5 outline-none" />
+            placeholder={tr('mario-rossi', 'john-smith')} className="min-w-0 flex-1 bg-transparent py-2.5 outline-none" />
           <span className="pr-3">
             {check.state === 'checking' && <Loader2 size={16} className="animate-spin text-muted" />}
             {check.state === 'ok' && <Check size={16} className="text-green-600" />}
@@ -87,15 +88,15 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
         </div>
         {check.state === 'taken' && (
           <p className="mt-2 text-sm text-red-600">
-            Già in uso.{check.suggestion && <> Prova <button type="button" className="font-medium underline" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}
+            {tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}
           </p>
         )}
-        {check.state === 'invalid' && <p className="mt-2 text-sm text-red-600">Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.</p>}
-        {check.state === 'bad' && <p className="mt-2 text-sm text-red-600">Questo indirizzo contiene una parola che non possiamo usare.</p>}
+        {check.state === 'invalid' && <p className="mt-2 text-sm text-red-600">{tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}</p>}
+        {check.state === 'bad' && <p className="mt-2 text-sm text-red-600">{tr('Questo indirizzo contiene una parola che non possiamo usare.', 'This address contains a word we can’t use.')}</p>}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button disabled={!canSave || saving} className="w-full btn-ink rounded-full py-2.5 text-sm font-semibold">
-        {saving ? 'Salvo...' : submitLabel}
+        {saving ? tr('Salvo...', 'Saving...') : submitLabel}
       </button>
     </form>
   );

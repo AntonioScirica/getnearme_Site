@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronsLeftRight, Download, Layers, X } from 'lucide-react';
 import { downloadImage } from '@/lib/staging';
+import { tr } from '@/components/platform/i18n';
 
 type Step = { src: string; label: string };
 
@@ -11,7 +12,7 @@ type Step = { src: string; label: string };
 // si possono aprire tutti i passaggi dall'originale all'ultima versione. Con `video` (Galleria) mostra il video con
 // il pulsante Scarica. Frecce, Esc o clic fuori chiude.
 export default function PhotoViewer({ src, before, steps, video, onClose }: { src: string; before?: string; steps?: Step[]; video?: string; onClose: () => void }) {
-  const list: Step[] = steps?.length ? steps : [...(before ? [{ src: before, label: 'Prima' }] : []), { src, label: 'Dopo' }];
+  const list: Step[] = steps?.length ? steps : [...(before ? [{ src: before, label: tr('Prima', 'Before') }] : []), { src, label: tr('Dopo', 'After') }];
   const [i, setI] = useState(list.length - 1);
   const [all, setAll] = useState(false); // passaggi intermedi visibili
   // confronto con il cursore (prima a sinistra, dopo a destra): si apre cosi' quando c'e' un prima
@@ -41,21 +42,21 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
           : cmp && list.length > 1
             ? <div onClick={e => e.stopPropagation()} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); drag(e); }} onPointerMove={e => { if (e.buttons) drag(e); }}
                 className="blur-in relative cursor-ew-resize touch-none select-none overflow-hidden rounded-2xl shadow-2xl">
-                <img src={list[0].src} alt="Prima" draggable={false} className="block max-h-[calc(100vh-9rem)] max-w-[92vw] object-contain" />
-                <img src={list[list.length - 1].src} alt="Dopo" draggable={false} className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: `inset(0 0 0 ${pos}%)` }} />
+                <img src={list[0].src} alt={tr('Prima', 'Before')} draggable={false} className="block max-h-[calc(100vh-9rem)] max-w-[92vw] object-contain" />
+                <img src={list[list.length - 1].src} alt={tr('Dopo', 'After')} draggable={false} className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: `inset(0 0 0 ${pos}%)` }} />
                 <span className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(0,0,0,.4)]" style={{ left: `${pos}%` }} />
                 <span className="pointer-events-none absolute top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-lg" style={{ left: `${pos}%` }}><ChevronsLeftRight size={18} /></span>
-                <span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">Prima</span>
-                <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">Dopo</span>
+                <span className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">{tr('Prima', 'Before')}</span>
+                <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-semibold text-white">{tr('Dopo', 'After')}</span>
               </div>
             : <img key={cur.src} src={cur.src} alt="" onClick={e => e.stopPropagation()}
             className="blur-in max-h-full max-w-[92vw] rounded-2xl object-contain shadow-2xl" />}
       </div>
       {video && (
         <button onClick={e => { e.stopPropagation(); downloadImage(video, 'agenteimmo-video.mp4'); }}
-          className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-white/90"><Download size={16} /> Scarica</button>
+          className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-white/90"><Download size={16} /> {tr('Scarica', 'Download')}</button>
       )}
-      <button onClick={onClose} aria-label="Chiudi" className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ease-smooth transition-colors hover:bg-white/25"><X size={20} /></button>
+      <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ease-smooth transition-colors hover:bg-white/25"><X size={20} /></button>
       {!video && list.length > 1 && (
         <div className="flex shrink-0 flex-col items-center" onClick={e => e.stopPropagation()}>
           {/* passaggi: chiusi non occupano spazio; aprendoli la fascia cresce (righe della griglia 0fr -> 1fr)
@@ -67,7 +68,7 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
               {list.map((s, j) => (
                 <button key={s.src} onClick={() => { setCmp(false); setI(j); }} title={s.label} className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ease-smooth transition-[box-shadow,opacity] ${j === i ? 'ring-white' : 'opacity-60 ring-transparent hover:opacity-100'}`}>
                   <img src={s.src} alt="" className="h-full w-full object-cover" />
-                  <span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">{j === 0 ? 'Prima' : `${j}. ${s.label}`}</span>
+                  <span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">{j === 0 ? tr('Prima', 'Before') : `${j}. ${s.label}`}</span>
                 </button>
               ))}
             </div>
@@ -77,14 +78,14 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
           )}
           <div className="flex items-center gap-2">
             <div className="flex rounded-full bg-white/15 p-1 backdrop-blur">
-              {([['Prima', 0], ['Prima/Dopo', -1], ['Dopo', list.length - 1]] as const).map(([l, j]) => {
+              {([[tr('Prima', 'Before'), 0], [tr('Prima/Dopo', 'Before/After'), -1], [tr('Dopo', 'After'), list.length - 1]] as const).map(([l, j]) => {
                 const on = j < 0 ? cmp : !cmp && i === j;
                 return <button key={l} onClick={() => { if (j < 0) setCmp(true); else { setCmp(false); setI(j); } }} className={`h-9 rounded-full px-5 text-sm font-semibold ease-smooth transition-colors ${on ? 'bg-white text-ink' : 'text-white hover:bg-white/10'}`}>{l}</button>;
               })}
             </div>
             {list.length > 2 && (
               <button onClick={() => setAll(v => !v)} aria-pressed={all} className={`flex h-11 outline-none focus-visible:ring-2 focus-visible:ring-white/60 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${all ? 'bg-white text-ink' : 'bg-white/15 text-white hover:bg-white/25'}`}>
-                <Layers size={15} /> Tutti i passaggi ({list.length - 1})
+                <Layers size={15} /> {tr('Tutti i passaggi', 'All steps')} ({list.length - 1})
               </button>
             )}
           </div>

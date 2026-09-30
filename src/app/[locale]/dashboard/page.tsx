@@ -197,8 +197,8 @@ export default function DashboardPage() {
   if (unavailable) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', justifyContent: 'center', background: '#faf9f7', fontSize: 15, color: '#444' }}>
-        <div>Servizio momentaneamente non disponibile.</div>
-        <button onClick={() => window.location.reload()} style={{ padding: '10px 18px', borderRadius: 10, background: '#15181f', color: '#fff', border: 0, cursor: 'pointer' }}>Riprova</button>
+        <div>{locale === 'en' ? 'Service temporarily unavailable.' : 'Servizio momentaneamente non disponibile.'}</div>
+        <button onClick={() => window.location.reload()} style={{ padding: '10px 18px', borderRadius: 10, background: '#15181f', color: '#fff', border: 0, cursor: 'pointer' }}>{locale === 'en' ? 'Try again' : 'Riprova'}</button>
       </div>
     );
   }
@@ -206,7 +206,7 @@ export default function DashboardPage() {
   if (loading || !userData) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f7' }}>
-        <ImmoLoader />
+        <ImmoLoader label={locale === 'en' ? 'Loading' : 'Caricamento'} />
       </div>
     );
   }

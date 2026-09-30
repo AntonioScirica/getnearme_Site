@@ -9,6 +9,7 @@ import type { ProjectData } from '@/lib/projects';
 import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { addFitButton } from '@/components/ui/LeafletMap';
 import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
+import { pageLocale, tr } from './i18n';
 
 // Pagina Immobili: in alto la mappa con tutti gli immobili (pin con la foto, clic = scheda),
 // sotto la lista. Le coordinate arrivano dall'indirizzo (Nominatim) e restano in cache nel browser.
@@ -16,13 +17,13 @@ import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 type LatLon = [number, number];
 type Filter = 'tutti' | 'vetrina' | 'bozze';
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'tutti', label: 'Tutti' },
-  { id: 'vetrina', label: 'In vetrina' },
-  { id: 'bozze', label: 'Non pubblicati' },
+  { id: 'tutti', label: tr('Tutti', 'All') },
+  { id: 'vetrina', label: tr('In vetrina', 'Live') },
+  { id: 'bozze', label: tr('Non pubblicati', 'Unpublished') },
 ];
 
-const place = (p: ProjectData) => p.addr?.split(',').map(s => s.trim()).filter(Boolean).slice(-2).join(', ') || 'Indirizzo n.d.';
-const title = (p: ProjectData) => p.titolo || p.nome || 'Immobile';
+const place = (p: ProjectData) => p.addr?.split(',').map(s => s.trim()).filter(Boolean).slice(-2).join(', ') || tr('Indirizzo n.d.', 'No address');
+const title = (p: ProjectData) => p.titolo || p.nome || tr('Immobile', 'Property');
 
 // ponytail: geocoding dal browser, uno al secondo (limite Nominatim); salvare lat/lon sul progetto se gli immobili diventano centinaia
 const GEO_KEY = 'gnm-geo';
@@ -99,7 +100,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
       <div className={`relative z-10 mx-auto max-w-6xl px-6 ${empty ? 'pt-32' : '-mt-24'}`}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="blur-in font-display text-4xl font-bold leading-[1.2] tracking-tight">
-          Immobili{projects && !demo && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
+          {tr('Immobili', 'Properties')}{projects && !demo && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
         </h1>
         {/* Filtri: stato e ricerca */}
         <div className="blur-in flex items-center gap-2" style={{ animationDelay: '.08s' }}>
@@ -111,20 +112,20 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
           </div>
           <label className="flex h-10 items-center gap-2 rounded-full bg-white px-3.5 ring-1 ring-black/10 ease-smooth transition-shadow focus-within:ring-ink/30">
             <Search size={15} className="text-muted" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Cerca via, città, rif." className="w-40 bg-transparent text-[13px] outline-none placeholder:text-muted/60" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca via, città, rif.', 'Search street, city, ref.')} className="w-40 bg-transparent text-[13px] outline-none placeholder:text-muted/60" />
           </label>
           {/* in alto solo se c'e' gia' qualche immobile: con la lista vuota c'e' la card sotto */}
-          {!empty && !demo && <a href="#/nuovo" className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-black"><Plus size={15} /> Aggiungi immobile</a>}
+          {!empty && !demo && <a href="#/nuovo" className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-black"><Plus size={15} /> {tr('Aggiungi immobile', 'Add property')}</a>}
         </div>
       </div>
 
       {(demo || empty) && (
         <div className="blur-in mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5">
           <div>
-            <div className="font-semibold">{demo ? 'Queste sono case di esempio' : 'Non hai ancora immobili'}</div>
-            <p className="mt-0.5 text-sm text-muted">Aggiungi il tuo primo immobile: qui e sulla mappa vedrai i tuoi.</p>
+            <div className="font-semibold">{demo ? tr('Queste sono case di esempio', 'These are sample properties') : tr('Non hai ancora immobili', 'No properties yet')}</div>
+            <p className="mt-0.5 text-sm text-muted">{tr('Aggiungi il tuo primo immobile: qui e sulla mappa vedrai i tuoi.', 'Add your first property: your listings will show up here and on the map.')}</p>
           </div>
-          <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Aggiungi immobile</a>
+          <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Aggiungi immobile', 'Add property')}</a>
         </div>
       )}
       {!projects ? (
@@ -136,7 +137,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
           {shown.map(p => <PropertyCard key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
       ) : (
-        <p className="mt-12 text-center text-sm text-muted">Nessun immobile con questi filtri.</p>
+        <p className="mt-12 text-center text-sm text-muted">{tr('Nessun immobile con questi filtri.', 'No properties match these filters.')}</p>
       )}
       </div>
     </div>
@@ -146,8 +147,8 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
 function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
   const items = [
     p.mq ? { icon: Maximize2, v: `${p.mq} m²` } : null,
-    p.camere ? { icon: BedDouble, v: `${p.camere} ${p.camere === 1 ? 'camera' : 'camere'}` } : p.locali ? { icon: BedDouble, v: `${p.locali} locali` } : null,
-    p.bagni ? { icon: Bath, v: `${p.bagni} ${p.bagni === 1 ? 'bagno' : 'bagni'}` } : null,
+    p.camere ? { icon: BedDouble, v: `${p.camere} ${p.camere === 1 ? tr('camera', 'bedroom') : tr('camere', 'bedrooms')}` } : p.locali ? { icon: BedDouble, v: `${p.locali} ${tr('locali', 'rooms')}` } : null,
+    p.bagni ? { icon: Bath, v: `${p.bagni} ${p.bagni === 1 ? tr('bagno', 'bathroom') : tr('bagni', 'bathrooms')}` } : null,
   ].filter(Boolean) as { icon: typeof Bath; v: string }[];
   if (!items.length) return null;
   return (
@@ -170,9 +171,9 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
   }, [menu]);
   const remove = async () => {
     setMenu(false);
-    if (!confirm(`Eliminare “${title(p)}”? Si cancella anche dal tuo sito. Non si può annullare.`)) return;
+    if (!confirm(tr(`Eliminare “${title(p)}”? Si cancella anche dal tuo sito. Non si può annullare.`, `Delete “${title(p)}”? It will also be removed from your website. This cannot be undone.`))) return;
     setBusy(true);
-    if (await deleteProject(p.id)) onChange?.(); else { setBusy(false); alert('Non sono riuscito a eliminare l’immobile, riprova.'); }
+    if (await deleteProject(p.id)) onChange?.(); else { setBusy(false); alert(tr('Non sono riuscito a eliminare l’immobile, riprova.', 'Couldn’t delete the property, please try again.')); }
   };
   return (
     // i tre puntini stanno fuori dal link (un bottone dentro un link non va bene): menu con Modifica ed Elimina
@@ -181,11 +182,11 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
     {busy && <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[24px] bg-white/60 backdrop-blur-[2px]"><Loader2 size={22} className="animate-spin text-muted" /></div>}
     {!demo && (
       <div className="absolute right-3 top-3 z-20">
-        <button type="button" onClick={() => setMenu(m => !m)} aria-label="Altre azioni" aria-expanded={menu} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
+        <button type="button" onClick={() => setMenu(m => !m)} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={menu} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
         {menu && (
           <div className="blur-in absolute right-0 top-10 w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
-            <a href={`#/immobile/${p.id}`} className="flex h-9 items-center gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> Modifica</a>
-            <button type="button" onClick={remove} className="flex h-9 w-full items-center gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> Elimina</button>
+            <a href={`#/immobile/${p.id}`} className="flex h-9 items-center gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> {tr('Modifica', 'Edit')}</a>
+            <button type="button" onClick={remove} className="flex h-9 w-full items-center gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>
         )}
       </div>
@@ -197,8 +198,8 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
           : <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={36} /></div>}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
         <div className="absolute left-3 right-16 top-3 flex min-w-0 gap-1.5">
-          {demo && <span className="shrink-0 whitespace-nowrap rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md">Esempio</span>}
-          {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">In vetrina</span>}
+          {demo && <span className="shrink-0 whitespace-nowrap rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md">{tr('Esempio', 'Sample')}</span>}
+          {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{tr('In vetrina', 'Live')}</span>}
           {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>
         {typeof score === 'number' && <span className="absolute right-14 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{score}/100</span>}
@@ -244,7 +245,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       const esri = (l: string) => `/api/site/tiles/${l.toLowerCase()}/{z}/{y}/{x}`;
       Lf.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
       Lf.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
-      Lf.control.zoom({ position: 'bottomleft', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
+      Lf.control.zoom({ position: 'bottomleft', zoomInTitle: tr('Avvicina', 'Zoom in'), zoomOutTitle: tr('Allontana', 'Zoom out') }).addTo(m);
       // + e - in basso a sinistra, sopra la parte sfumata e il titolo
       Object.assign(m.getContainer().querySelector<HTMLElement>('.leaflet-bottom.leaflet-left')!.style, { bottom: '34%', left: '12px' });
       // stile come il resto della pagina (il CSS di Leaflet, caricato dopo, vincerebbe sulle classi)
@@ -332,7 +333,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       {!pinned.length && (
         <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center">
           <span className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-[13px] font-medium text-muted shadow-sm ring-1 ring-black/5 backdrop-blur-md">
-            {waiting ? <><Loader2 size={14} className="animate-spin" /> Metto gli immobili sulla mappa…</> : 'Aggiungi l’indirizzo agli immobili per vederli sulla mappa'}
+            {waiting ? <><Loader2 size={14} className="animate-spin" /> {tr('Metto gli immobili sulla mappa…', 'Placing your properties on the map…')}</> : tr('Aggiungi l’indirizzo agli immobili per vederli sulla mappa', 'Add an address to your properties to see them on the map')}
           </span>
         </div>
       )}
@@ -343,8 +344,11 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
 
 const PIN_SHADOW = '0 6px 16px rgba(0,0,0,.25)';
 const POI_ICON: Record<string, typeof Train> = { Metro: TrainFront, Stazione: Train, Tram: TramFront, Supermercato: ShoppingCart, Scuola: School, 'Università': GraduationCap, Parco: Trees, Ospedale: Hospital, Farmacia: Pill };
+// nome della categoria da mostrare (le categorie arrivano in italiano da lib/zone)
+const POI_EN: Record<string, string> = { Metro: 'Metro', Stazione: 'Station', Tram: 'Tram', Supermercato: 'Supermarket', Scuola: 'School', 'Università': 'University', Parco: 'Park', Ospedale: 'Hospital', Farmacia: 'Pharmacy' };
+const catLabel = (c: string) => tr(c, POI_EN[c] ?? c);
 const zoneCache: Record<string, Poi[]> = {};
-const km = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })} km` : `${m} m`);
+const km = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString(pageLocale(), { maximumFractionDigits: 1 })} km` : `${m} m`);
 
 // Sidebar a destra sulla mappa: l'immobile e cosa c'e' vicino (stessa fonte dell'estensione: OpenStreetMap).
 // Se l'immobile ha gia' la zona salvata (import_data.zona) la uso, se no la chiedo a /api/platform/zone.
@@ -374,16 +378,16 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
         <div className="relative aspect-[2/1] shrink-0 bg-canvas">
           {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover" />}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
-          <button onClick={onClose} aria-label="Chiudi" className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm backdrop-blur-md hover:text-ink"><X size={15} /></button>
+          <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm backdrop-blur-md hover:text-ink"><X size={15} /></button>
           <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
         </div>
         <div className="p-5">
           <div className="line-clamp-2 font-semibold leading-snug">{title(p)}</div>
-          <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-muted"><MapPin size={13} className="shrink-0" />{p.addr || 'Indirizzo n.d.'}</div>
+          <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-muted"><MapPin size={13} className="shrink-0" />{p.addr || tr('Indirizzo n.d.', 'No address')}</div>
           <Facts p={p} className="mt-2.5" />
 
           <div className="mt-6 flex items-center justify-between gap-2">
-            <span className="text-[13px] font-semibold">Nelle vicinanze</span>
+            <span className="text-[13px] font-semibold">{tr('Nelle vicinanze', 'Nearby')}</span>
             {/* raggio della ricerca */}
             <div className="flex rounded-full bg-canvas p-0.5">
               {[500, 1000, 2000, 5000].map(r => (
@@ -393,11 +397,11 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
             </div>
           </div>
           {pois === 'err' ? (
-            <p className="mt-2 text-[13px] text-muted">Non riesco a caricare i servizi, riprova tra poco.</p>
+            <p className="mt-2 text-[13px] text-muted">{tr('Non riesco a caricare i servizi, riprova tra poco.', 'Couldn’t load nearby places, try again shortly.')}</p>
           ) : !pois ? (
             <div className="mt-3 space-y-2">{[0, 1, 2, 3].map(i => <div key={i} className="h-11 animate-pulse rounded-2xl bg-canvas" />)}</div>
           ) : !pois.length ? (
-            <p className="mt-2 text-[13px] text-muted">Nessun servizio trovato entro {km(radius)}.</p>
+            <p className="mt-2 text-[13px] text-muted">{tr('Nessun servizio trovato entro', 'Nothing found within')} {km(radius)}.</p>
           ) : (
             <div className="stagger mt-2 space-y-1">
               {Object.entries(groups).map(([cat, list]) => {
@@ -406,8 +410,8 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
                   <div key={`${cat}${k}`} className="flex items-center gap-3 rounded-2xl px-2 py-2 ease-smooth transition-colors hover:bg-canvas">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-canvas text-ink/70"><I size={15} /></span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-medium">{x.nome !== cat ? x.nome : cat}</div>
-                      <div className="text-[11px] text-muted">{cat}</div>
+                      <div className="truncate text-[13px] font-medium">{x.nome !== cat ? x.nome : catLabel(cat)}</div>
+                      <div className="text-[11px] text-muted">{catLabel(cat)}</div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-[13px] font-semibold">{km(x.distanza)}</div>
@@ -421,7 +425,7 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
         </div>
       </div>
       <div className="border-t border-black/5 p-3">
-        <button onClick={() => go(`/immobile/${p.id}`)} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-brand text-sm font-semibold text-white ease-smooth transition-[background-color,transform] hover:bg-brand/90 active:scale-[0.98]">Apri immobile <ArrowUpRight size={15} /></button>
+        <button onClick={() => go(`/immobile/${p.id}`)} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-brand text-sm font-semibold text-white ease-smooth transition-[background-color,transform] hover:bg-brand/90 active:scale-[0.98]">{tr('Apri immobile', 'Open property')} <ArrowUpRight size={15} /></button>
       </div>
     </aside>
   );

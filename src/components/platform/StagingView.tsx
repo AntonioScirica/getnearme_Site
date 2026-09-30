@@ -7,6 +7,7 @@ import { ANGLES, type SceneType } from '@/lib/stagingPrompts';
 import { AiPhotoStage, Elapsed, useAiPhoto, type EditRequest } from './AiPhoto';
 import StagingChat from './StagingChat';
 import { CARD_SHADOW } from './api';
+import { tr, trf } from './i18n';
 
 // Home staging nella piattaforma (GPT Image, prompt in lib/stagingPrompts e lib/nanoBanana). Una foto alla volta: chat
 // (StagingChat). Piu' foto caricate insieme: batch, ogni foto con la sua impostazione, "Genera tutte"
@@ -16,13 +17,13 @@ type Scene = SceneType | 'planimetria';
 type Item = { id: string; src: string; scene: Scene; style: string | null; angle: string | null; custom: string };
 
 const SCENES: { id: Scene; label: string }[] = [
-  { id: 'interno', label: 'Interno' },
-  { id: 'esterno', label: 'Facciata' },
-  { id: 'giardino', label: 'Giardino' },
-  { id: 'planimetria', label: 'Planimetria' },
+  { id: 'interno', label: tr('Interno', 'Interior') },
+  { id: 'esterno', label: tr('Facciata', 'Facade') },
+  { id: 'giardino', label: tr('Giardino', 'Garden') },
+  { id: 'planimetria', label: tr('Planimetria', 'Floor plan') },
 ];
 const stylesFor = (scene: Scene) => (scene === 'planimetria' ? STAGING_STYLES.filter(s => !['daynight', 'empty'].includes(s.id)) : STAGING_STYLES);
-const styleLabel = (scene: Scene, id: string, fallback: string) => (scene === 'esterno' || scene === 'giardino' ? SCENE_STYLE_LABELS[scene][id] : null) ?? fallback;
+const styleLabel = (scene: Scene, id: string, fallback: string) => trf((scene === 'esterno' || scene === 'giardino' ? SCENE_STYLE_LABELS[scene][id] : null) ?? fallback);
 
 // Richiesta per /api/platform/photo-edit: testo libero > vista > stile.
 function reqFor(it: Item): EditRequest {
@@ -66,27 +67,27 @@ export default function StagingView({ initial }: { initial?: { photo?: string; p
     <div className="mx-auto max-w-5xl pb-16 pt-6">
       <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight md:text-5xl md:leading-[1.2]">
         <span className="blur-in inline-block">Home staging</span>
-        <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Scegli cosa fare su ogni foto, poi generale tutte insieme.</span>
+        <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>{tr('Scegli cosa fare su ogni foto, poi generale tutte insieme.', 'Choose what to do on each photo, then generate them all at once.')}</span>
       </h1>
       {items.length > 1 && (
         <>
           {/* Barra del batch: stesso stile per tutte, aggiungi, genera tutte, scarica tutte */}
           <div className={`rise sticky top-24 z-20 mt-10 flex flex-wrap items-center gap-2 rounded-[22px] bg-white/90 p-2 pl-4 backdrop-blur-md ${CARD_SHADOW}`}>
-            <span className="text-sm font-semibold">{items.length} foto</span>
-            <span className="text-sm text-muted">{ready ? `· ${ready} pronte` : ''}</span>
+            <span className="text-sm font-semibold">{items.length} {tr('foto', 'photos')}</span>
+            <span className="text-sm text-muted">{ready ? `· ${ready} ${tr('pronte', 'ready')}` : ''}</span>
             <select defaultValue="" onChange={e => { if (e.target.value) allStyle(e.target.value); e.target.value = ''; }}
               className="ml-2 h-9 rounded-full bg-canvas px-3 text-[13px] font-medium outline-none ring-1 ring-inset ring-black/10">
-              <option value="">Stesso stile per tutte…</option>
-              {STAGING_STYLES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              <option value="">{tr('Stesso stile per tutte…', 'Same style for all…')}</option>
+              {STAGING_STYLES.map(s => <option key={s.id} value={s.id}>{trf(s.label)}</option>)}
             </select>
             <div className="ml-auto flex items-center gap-2">
-              <label className={`${secondary} cursor-pointer`}><Plus size={14} /> Aggiungi {picker(true)}</label>
+              <label className={`${secondary} cursor-pointer`}><Plus size={14} /> {tr('Aggiungi', 'Add')} {picker(true)}</label>
               {ready > 0 && (
                 <button className={secondary} onClick={() => items.forEach((it, i) => done[it.id] && setTimeout(() => downloadImage(done[it.id], fileName(it, i + 1)), i * 400))}>
-                  <Download size={14} /> Scarica pronte
+                  <Download size={14} /> {tr('Scarica pronte', 'Download ready')}
                 </button>
               )}
-              <button className={primary} onClick={() => setRunAll(n => n + 1)}><Wand2 size={14} /> Genera tutte</button>
+              <button className={primary} onClick={() => setRunAll(n => n + 1)}><Wand2 size={14} /> {tr('Genera tutte', 'Generate all')}</button>
             </div>
           </div>
           <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -128,26 +129,26 @@ function BatchCard({ item, index, runAll, onChange, onRemove, onDone }: { item: 
       <div className="relative">
         <AiPhotoStage src={item.src} busy={ai.busy} out={ai.out} reveal={ai.reveal} msg={ai.msg} fileName={fileName(item, index + 1)} className="aspect-[4/3]" />
         {!ai.busy && (
-          <button onClick={onRemove} aria-label="Togli foto" className="absolute left-3 top-3 z-[12] flex h-8 w-8 items-center justify-center rounded-full bg-white/85 text-muted shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:text-ink"><X size={15} /></button>
+          <button onClick={onRemove} aria-label={tr('Togli foto', 'Remove photo')} className="absolute left-3 top-3 z-[12] flex h-8 w-8 items-center justify-center rounded-full bg-white/85 text-muted shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:text-ink"><X size={15} /></button>
         )}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
         <select value={scene} onChange={e => onChange({ scene: e.target.value as Scene, angle: null })} className={select}>
-          {SCENES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+          {SCENES.map(s => <option key={s.id} value={s.id}>{trf(s.label)}</option>)}
         </select>
         <select value={freeText ? 'custom' : mode} onChange={e => choose(e.target.value)} className={`${select} flex-1`}>
-          <optgroup label="Stile">
+          <optgroup label={tr('Stile', 'Style')}>
             {stylesFor(scene).map(s => <option key={s.id} value={`style:${s.id}`}>{styleLabel(scene, s.id, s.label)}</option>)}
           </optgroup>
-          {scene === 'interno' && <optgroup label="Altre viste">{ANGLES.map(a => <option key={a.id} value={`angle:${a.id}`}>{a.label}</option>)}</optgroup>}
-          <option value="custom">Testo libero…</option>
+          {scene === 'interno' && <optgroup label={tr('Altre viste', 'Other views')}>{ANGLES.map(a => <option key={a.id} value={`angle:${a.id}`}>{trf(a.label)}</option>)}</optgroup>}
+          <option value="custom">{tr('Testo libero…', 'Free text…')}</option>
         </select>
         <button onClick={() => ai.run(reqFor(item))} disabled={ai.busy || (freeText && !custom.trim())} className={primary}>
-          {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {ai.out ? 'Rigenera' : 'Genera'}</>}
+          {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {ai.out ? tr('Rigenera', 'Regenerate') : tr('Genera', 'Generate')}</>}
         </button>
       </div>
       {freeText && (
-        <textarea rows={2} value={custom} onChange={e => onChange({ custom: e.target.value })} placeholder="Descrivi la modifica per questa foto"
+        <textarea rows={2} value={custom} onChange={e => onChange({ custom: e.target.value })} placeholder={tr('Descrivi la modifica per questa foto', 'Describe the edit for this photo')}
           className="mt-2 w-full resize-none rounded-2xl bg-canvas px-4 py-2.5 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
       )}
       {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}

@@ -6,7 +6,7 @@ import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
 import Dropdown from '@/components/ui/Dropdown';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { FIELD_LABELS, FONTS, fontCss, PAGE_SECTIONS, PLACEHOLDERS, withPlaceholders, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FIELD_LABELS, FIELD_LABELS_EN, SECTION_LABELS_EN, FONTS, fontCss, PAGE_SECTIONS, PLACEHOLDERS, withPlaceholders, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
@@ -15,12 +15,16 @@ import { uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, go, portfolioUrl, setPublic } from './api';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
 import ImmoLoader from '@/components/ui/ImmoLoader';
+import { pageLang, tr } from './i18n';
 
 // Vetrina: l'agente sceglie uno dei 5 template e modifica colori, testi, foto, contatti e sezioni,
 // con l'anteprima dal vivo accanto (stesse pagine del sito pubblico, con i suoi immobili).
 
 type Site = { slug: string | null; name: string; email: string; logo: string | null; published: boolean; config: SiteConfig };
-const PAGES = [['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo'], ['servizi', 'Servizi'], ['contatti', 'Contatti'], ['zona', 'Zona']] as const;
+const PAGES = [['home', 'Home'], ['immobili', tr('Immobili', 'Listings')], ['immobile', tr('Scheda', 'Listing page')], ['agente', tr('Profilo', 'Profile')], ['servizi', tr('Servizi', 'Services')], ['contatti', tr('Contatti', 'Contact')], ['zona', tr('Zona', 'Area')]] as const;
+// nomi dei campi e delle sezioni nella lingua dell'editor (in siteTemplates stanno le due versioni)
+const fieldLabel = (k: string) => (pageLang() === 'en' ? FIELD_LABELS_EN[k] : FIELD_LABELS[k]) ?? k;
+const secLabel = (s: { id: string; label: string }) => (pageLang() === 'en' ? SECTION_LABELS_EN[s.id] ?? s.label : s.label);
 const pageOf = (id: PageId, firstId?: string, zone?: string): Page => id === 'immobile' ? { page: 'immobile', id: firstId ?? '' } : id === 'zona' ? { page: 'zona', slug: zone ?? '' } : { page: id } as Page;
 const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b', '#be185d', '#8a6a4f'];
 
@@ -128,28 +132,28 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           le schede e Pubblica */}
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
-          <p className="pt-1 text-sm text-muted">Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio sito', 'My website')}</h1>
+          <p className="pt-1 text-sm text-muted">{tr('Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.', 'Pick a template, edit it and publish your website in 5 minutes.')}</p>
           {/* avviso senza piano col sito: si apre con un movimento quando il piano e' noto (prima compariva di scatto) */}
           <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${credits && !sitePlan ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
             <div className="min-h-0 overflow-hidden">
-              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">{tr('Il sito pubblico è nei piani Plus e Pro.', 'The public website is included in the Plus and Pro plans.')} <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">{tr('Passa a Pro', 'Upgrade to Pro')}</button></p>
             </div>
           </div>
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
           {/* interruttore solo con un piano che include il sito (senza, c'e' l'avviso Plus e Pro) */}
-          {credits && sitePlan && <PublicSwitch on={online} onClick={publish} labels={['Pubblico', 'Non pubblico']} both />}
+          {credits && sitePlan && <PublicSwitch on={online} onClick={publish} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both />}
           <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'pointer-events-none select-none opacity-50'}`} aria-disabled={!online}>{/* sito non online: indirizzo solo da vedere, niente link, copia o apri */}
             <Globe size={15} className="shrink-0 text-muted" />
             <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
-            <Tooltip label={copied ? 'Copiato' : 'Copia il link'}>
-              <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label="Copia il link"
+            <Tooltip label={copied ? tr('Copiato', 'Copied') : tr('Copia il link', 'Copy link')}>
+              <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label={tr('Copia il link', 'Copy link')}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
             </Tooltip>
-            <Tooltip label="Apri il sito">
-              <a href={url} target="_blank" rel="noreferrer" aria-label="Apri il sito" className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ExternalLink size={15} /></a>
+            <Tooltip label={tr('Apri il sito', 'Open website')}>
+              <a href={url} target="_blank" rel="noreferrer" aria-label={tr('Apri il sito', 'Open website')} className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ExternalLink size={15} /></a>
             </Tooltip>
           </div>
           </div>
@@ -158,7 +162,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       {/* dentro l'editor di un modello le schede spariscono: si torna con "Tutti i modelli" */}
       {!(tab === 'sito' && editing) && (
         <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 ring-1 ring-black/10 mt-6">
-          {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili']] as const).map(([id, l]) => (
+          {([['sito', tr('Aspetto del sito', 'Website design')], ['immobili', tr('Immobili', 'Listings')]] as const).map(([id, l]) => (
             <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
           ))}
         </div>
@@ -172,16 +176,16 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           {/* a sinistra si torna ai modelli, a destra si pubblica */}
           <div className="blur-in mb-5 flex flex-wrap items-center justify-between gap-3" style={{ animationDelay: '.2s' }}>
           <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10">
-            <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
-              className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
+            <button onClick={() => { if (!dirty || confirm(tr('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?', 'You have unpublished changes. Go back to the templates and discard them?'))) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
+              className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> {tr('Tutti i modelli', 'All templates')}</button>
           </div>
           {/* Pubblica a destra, sulla stessa riga */}
           <div className="flex items-center gap-3 text-sm">
-            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? 'Sito aggiornato' : dirty ? 'Modifiche non pubblicate' : ''}</span>
+            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? tr('Sito aggiornato', 'Website updated') : dirty ? tr('Modifiche non pubblicate', 'Unpublished changes') : ''}</span>
             <button onClick={save} disabled={!dirty || saved === 'saving'}
               className="flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
-              {saved === 'ok' ? 'Pubblicato' : 'Pubblica modifiche'}
+              {saved === 'ok' ? tr('Pubblicato', 'Published') : tr('Pubblica modifiche', 'Publish changes')}
             </button>
           </div>
           </div>
@@ -231,7 +235,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
     // compare dopo, mentre l'anteprima si sta ancora trasformando dalla card scelta
     <aside className={`blur-in rounded-[28px] bg-white lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-8rem)] lg:flex-col ${CARD_SHADOW}`} style={{ animationDelay: '.3s' }}>
       <div className="flex gap-1 border-b border-line p-2">
-        {([['pagina', 'Pagina'], ['generale', 'Generale']] as const).map(([id, l]) => (
+        {([['pagina', tr('Pagina', 'Page')], ['generale', tr('Generale', 'General')]] as const).map(([id, l]) => (
           <button key={id} onClick={() => setTab(id)} className={`flex-1 rounded-full py-2 text-sm font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
         ))}
       </div>
@@ -239,9 +243,9 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
         {tab === 'pagina' ? (
           <>
             <label className="mb-3 block">
-              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted">Pagina che stai modificando</span>
+              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted">{tr('Pagina che stai modificando', 'Page you are editing')}</span>
               <Dropdown value={page.page as PageId} className="h-10 w-full justify-between bg-canvas px-4 text-sm font-medium"
-                options={PAGES.filter(([id]) => !(id === 'immobile' && !firstId)).map(([id, l]) => ({ value: id, label: cfg.hidden.includes(`page:${id}`) ? `${l} (nascosta)` : l }))}
+                options={PAGES.filter(([id]) => !(id === 'immobile' && !firstId)).map(([id, l]) => ({ value: id, label: cfg.hidden.includes(`page:${id}`) ? `${l} ${tr('(nascosta)', '(hidden)')}` : l }))}
                 onChange={v => onPage(pageOf(v, firstId, zoneSlug(withPlaceholders(cfg).zones[0]?.name ?? '')))} />
             </label>
             {/* ogni pagina tranne la Home si puo' togliere dal sito: esce dal menu e il suo indirizzo non si apre piu' */}
@@ -249,7 +253,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
               const key = `page:${page.page}`, on = !cfg.hidden.includes(key);
               return (
                 <div className={`mb-3 flex items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5 text-sm ${on ? 'bg-canvas' : 'bg-rose-50'}`}>
-                  <span>{on ? 'Pagina visibile nel sito' : <span className="text-rose-700">Pagina nascosta: non è nel menu e il suo link non si apre</span>}</span>
+                  <span>{on ? tr('Pagina visibile nel sito', 'Page visible on the website') : <span className="text-rose-700">{tr('Pagina nascosta: non è nel menu e il suo link non si apre', 'Hidden page: it is not in the menu and its link does not open')}</span>}</span>
                   <button type="button" role="switch" aria-checked={on} onClick={() => set({ hidden: on ? [...cfg.hidden, key] : cfg.hidden.filter(x => x !== key) })}
                     className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
                     <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${on ? 'translate-x-4' : ''}`} />
@@ -257,7 +261,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
                 </div>
               );
             })()}
-            <p className="mb-4 text-xs text-muted">Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.</p>
+            <p className="mb-4 text-xs text-muted">{tr('Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.', 'Click an element in the preview to edit it, or open a section below.')}</p>
             <div className="space-y-2">
               {secs.map(sec => {
                 const open = selected === sec.id, off = hidden.has(sec.id);
@@ -265,17 +269,17 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
                   <div key={sec.id} ref={el => { refs.current[sec.id] = el; }} className={`scroll-mt-2 rounded-2xl ring-1 ease-smooth transition-colors ${open ? 'ring-brand/40' : 'ring-black/10'}`}>
                     <div className="flex items-center gap-2 p-3">
                       <button onClick={() => setSelected(open ? null : sec.id)} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold ${off ? 'text-muted line-through' : ''}`}>
-                        <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? '' : '-rotate-90'}`} />{sec.label}
+                        <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? '' : '-rotate-90'}`} />{secLabel(sec)}
                       </button>
-                      {sec.hideable && <button onClick={() => toggleHide(sec.id)} title={off ? 'Mostra la sezione' : 'Nascondi la sezione'} className="text-muted hover:text-ink">{off ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
+                      {sec.hideable && <button onClick={() => toggleHide(sec.id)} title={off ? tr('Mostra la sezione', 'Show section') : tr('Nascondi la sezione', 'Hide section')} className="text-muted hover:text-ink">{off ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
                     </div>
                     {open && (
                       <div className="space-y-3 border-t border-black/5 p-3">
-                        {sec.note && <p className="text-xs text-muted">{sec.note}</p>}
+                        {sec.note && <p className="text-xs text-muted">{tr(sec.note, sec.note_en ?? sec.note)}</p>}
                         {/* campi nell'ordine in cui si vedono nella sezione */}
                         {(sec.order ?? [...(sec.texts ?? []), ...(sec.cfg ?? [])]).filter(k => (sec.cfg as string[] | undefined)?.includes(k) || !used?.size || used.has(k)).map(k => (sec.cfg as string[] | undefined)?.includes(k)
                           ? <CfgField key={k} k={k as keyof SiteConfig} cfg={cfg} set={set} covers={covers} />
-                          : <TextField key={k} label={FIELD_LABELS[k] ?? k} value={cfg.texts[k] ?? ''} placeholder={TEXTS[k]} long={TEXTS[k].length > 60}
+                          : <TextField key={k} label={fieldLabel(k)} value={cfg.texts[k] ?? ''} placeholder={TEXTS[k]} long={TEXTS[k].length > 60}
                               onChange={v => { const next = { ...cfg.texts }; if (v) next[k] = v; else delete next[k]; set({ texts: next }); }} />)}
                       </div>
                     )}
@@ -286,19 +290,19 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
           </>
         ) : (
           <div className="space-y-7">
-            <Group title="Colore e caratteri">
+            <Group title={tr('Colore e caratteri', 'Colour and fonts')}>
               <div className="flex flex-wrap items-center gap-2">
                 {COLORS.map(c => <button key={c} onClick={() => set({ primary: c })} aria-label={c} className={`h-8 w-8 rounded-full ring-offset-2 ease-smooth transition-shadow ${cfg.primary === c ? 'ring-2 ring-ink' : ''}`} style={{ background: c }} />)}
-                <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full ring-1 ring-black/10" title="Altro colore" style={{ background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' }}>
+                <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full ring-1 ring-black/10" title={tr('Altro colore', 'Other colour')} style={{ background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' }}>
                   <input type="color" value={cfg.primary} onChange={e => set({ primary: e.target.value })} className="absolute inset-0 cursor-pointer opacity-0" />
                 </label>
               </div>
             </Group>
-            <Group title="Carattere dei titoli"><FontPicker cfg={cfg} set={set} /></Group>
-            <Group title="Logo in alto"><LogoField cfg={cfg} set={set} /></Group>
-            <Group title="Recapiti">{(['ctaLabel', 'phone', 'whatsapp', 'email', 'address'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
-            <Group title="Social e dati legali">{(['instagram', 'facebook', 'legal'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
-            <Group title="In tutte le pagine">{(['topBar', 'whatsappButton', 'showPrices', 'showStats'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
+            <Group title={tr('Carattere dei titoli', 'Heading font')}><FontPicker cfg={cfg} set={set} /></Group>
+            <Group title={tr('Logo in alto', 'Top logo')}><LogoField cfg={cfg} set={set} /></Group>
+            <Group title={tr('Recapiti', 'Contact details')}>{(['ctaLabel', 'phone', 'whatsapp', 'email', 'address'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
+            <Group title={tr('Social e dati legali', 'Social and legal info')}>{(['instagram', 'facebook', 'legal'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
+            <Group title={tr('In tutte le pagine', 'On every page')}>{(['topBar', 'whatsappButton', 'showPrices', 'showStats'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
           </div>
         )}
       </div>
@@ -311,7 +315,7 @@ function TextField({ label, value, placeholder, long, onChange }: { label: strin
   const cls = 'w-full rounded-2xl bg-canvas px-3.5 py-2.5 text-sm outline-none ease-smooth transition-shadow placeholder:text-ink/40 focus:bg-white focus:ring-1 focus:ring-ink/15';
   return (
     <label className="block">
-      <span className="mb-1 flex items-center justify-between text-xs font-medium text-ink/70">{label}{value && <button type="button" onClick={() => onChange('')} className="flex items-center gap-1 text-[11px] text-muted hover:text-ink"><RotateCcw size={11} /> Originale</button>}</span>
+      <span className="mb-1 flex items-center justify-between text-xs font-medium text-ink/70">{label}{value && <button type="button" onClick={() => onChange('')} className="flex items-center gap-1 text-[11px] text-muted hover:text-ink"><RotateCcw size={11} /> {tr('Originale', 'Original')}</button>}</span>
       {long ? <textarea rows={2} value={value} placeholder={placeholder} maxLength={600} onChange={e => onChange(e.target.value)} className={`${cls} resize-none`} />
         : <input value={value} placeholder={placeholder} maxLength={600} onChange={e => onChange(e.target.value)} className={cls} />}
     </label>
@@ -322,9 +326,9 @@ function TextField({ label, value, placeholder, long, onChange }: { label: strin
 function FontPicker({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void }) {
   const value = cfg.headingFont || cfg.font;
   const options = [
-    { value: 'serif', label: 'Elegante (del modello)', group: 'Del modello', style: { fontFamily: 'var(--font-serif-accent)', fontSize: 17 } },
-    { value: 'sans', label: 'Moderno (del modello)', group: 'Del modello', style: { fontWeight: 700 } },
-    ...FONTS.map(f => ({ value: f.id, label: f.label, group: f.serif ? 'Con grazie' : 'Senza grazie', style: { fontFamily: `'${f.family}', ${f.serif ? 'serif' : 'sans-serif'}`, fontWeight: f.weight, fontSize: 16 } })),
+    { value: 'serif', label: tr('Elegante (del modello)', 'Elegant (template)'), group: tr('Del modello', 'From the template'), style: { fontFamily: 'var(--font-serif-accent)', fontSize: 17 } },
+    { value: 'sans', label: tr('Moderno (del modello)', 'Modern (template)'), group: tr('Del modello', 'From the template'), style: { fontWeight: 700 } },
+    ...FONTS.map(f => ({ value: f.id, label: f.label, group: f.serif ? tr('Con grazie', 'Serif') : tr('Senza grazie', 'Sans serif'), style: { fontFamily: `'${f.family}', ${f.serif ? 'serif' : 'sans-serif'}`, fontWeight: f.weight, fontSize: 16 } })),
   ];
   return (
     <>
@@ -352,18 +356,18 @@ function LogoField({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>
       <div className="flex h-24 items-center justify-center rounded-xl bg-white px-4">
         {cfg.logo
           ? <img src={cfg.logo} alt="" style={{ height: Math.min(64, cfg.logoSize) }} className="max-w-full object-contain" />
-          : <span className="text-center text-xs text-muted">Nessun logo<br />in alto c’è il tuo nome</span>}
+          : <span className="text-center text-xs text-muted">{tr('Nessun logo', 'No logo')}<br />{tr('in alto c’è il tuo nome', 'your name shows at the top')}</span>}
       </div>
       <div className="flex items-center gap-2 px-1 pt-2">
         <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-medium ring-1 ring-black/5 hover:bg-line/40">
-          {busy ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {cfg.logo ? 'Cambia logo' : 'Carica logo'}
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {cfg.logo ? tr('Cambia logo', 'Change logo') : tr('Carica logo', 'Upload logo')}
           <input type="file" accept="image/*" className="hidden" onChange={e => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
-        {cfg.logo && <button type="button" onClick={() => set({ logo: '' })} className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted hover:bg-white hover:text-ink"><Trash2 size={14} /> Togli</button>}
+        {cfg.logo && <button type="button" onClick={() => set({ logo: '' })} className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted hover:bg-white hover:text-ink"><Trash2 size={14} /> {tr('Togli', 'Remove')}</button>}
       </div>
       {cfg.logo && (
         <label className="block px-1 pb-1 pt-4">
-          <span className="flex items-center justify-between text-xs font-medium text-ink/70">Grandezza <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-muted">{cfg.logoSize}px</span></span>
+          <span className="flex items-center justify-between text-xs font-medium text-ink/70">{tr('Grandezza', 'Size')} <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-muted">{cfg.logoSize}px</span></span>
           <input type="range" min={20} max={96} step={2} value={cfg.logoSize} onChange={e => set({ logoSize: Number(e.target.value) })} className="mt-2 w-full accent-[#2563eb]" />
         </label>
       )}
@@ -373,10 +377,10 @@ function LogoField({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>
 
 // Un campo della configurazione, con il controllo giusto per il tipo
 function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; covers: string[] }) {
-  const label = FIELD_LABELS[k] ?? k;
+  const label = fieldLabel(k);
   const v = cfg[k];
   if (typeof v === 'boolean') return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm"><span>{label}{k === 'whatsappButton' && v && !cfg.whatsapp && <span className="block text-xs text-rose-600">Compare solo con il numero WhatsApp in Recapiti</span>}</span>
+    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm"><span>{label}{k === 'whatsappButton' && v && !cfg.whatsapp && <span className="block text-xs text-rose-600">{tr('Compare solo con il numero WhatsApp in Recapiti', 'Shows only with a WhatsApp number in Contact details')}</span>}</span>
       {/* interruttore: pista 40x24, pallino 20 centrato (2px di margine), scorre di 16 */}
       <button type="button" role="switch" aria-checked={v} onClick={() => set({ [k]: !v })}
         className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${v ? 'bg-brand' : 'bg-line'}`}>
@@ -386,10 +390,10 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   );
   if (k === 'heroImage') return <Pics label={label} covers={covers} value={cfg.heroImage} onChange={x => set({ heroImage: x })} />;
   if (k === 'aboutImage') return <Pics label={label} covers={[]} value={cfg.aboutImage} onChange={x => set({ aboutImage: x })} />;
-  if (k === 'highlights') return <Field label={`${label} (separati da virgola)`} value={cfg.highlights.join(', ')} onChange={x => set({ highlights: x.split(',').map(y => y.trimStart()).slice(0, 6) })} max={320} />;
-  if (k === 'services') return <ListEditor items={cfg.services} max={8} addLabel="Aggiungi servizio" onChange={x => set({ services: x })} fields={[['title', 'Nome del servizio', 70, false], ['text', 'Descrizione', 600, true]]} empty={{ title: '', text: '' }} />;
-  if (k === 'zones') return <><p className="text-xs text-muted">Una pagina per località (es. “Casa a Sirolo”). Scrivi “## Titolo” per un sottotitolo.</p><ListEditor items={cfg.zones} max={8} addLabel="Aggiungi zona" onChange={x => set({ zones: x })} fields={[['name', 'Località', 40, false], ['text', 'Testo sulla zona', 4000, true]]} empty={{ name: '', text: '' }} /></>;
-  if (k === 'reviews') return <ListEditor items={cfg.reviews} max={3} addLabel="Aggiungi recensione" onChange={x => set({ reviews: x })} fields={[['text', 'Cosa ha detto il cliente', 300, true], ['name', 'Nome', 60, false]]} empty={{ text: '', name: '', zone: '' }} />;
+  if (k === 'highlights') return <Field label={`${label} ${tr('(separati da virgola)', '(comma separated)')}`} value={cfg.highlights.join(', ')} onChange={x => set({ highlights: x.split(',').map(y => y.trimStart()).slice(0, 6) })} max={320} />;
+  if (k === 'services') return <ListEditor items={cfg.services} max={8} addLabel={tr('Aggiungi servizio', 'Add service')} onChange={x => set({ services: x })} fields={[['title', tr('Nome del servizio', 'Service name'), 70, false], ['text', tr('Descrizione', 'Description'), 600, true]]} empty={{ title: '', text: '' }} />;
+  if (k === 'zones') return <><p className="text-xs text-muted">{tr('Una pagina per località (es. “Casa a Sirolo”). Scrivi “## Titolo” per un sottotitolo.', 'One page per area (e.g. “Homes in Sirolo”). Write “## Title” for a subheading.')}</p><ListEditor items={cfg.zones} max={8} addLabel={tr('Aggiungi zona', 'Add area')} onChange={x => set({ zones: x })} fields={[['name', tr('Località', 'Area'), 40, false], ['text', tr('Testo sulla zona', 'Text about the area'), 4000, true]]} empty={{ name: '', text: '' }} /></>;
+  if (k === 'reviews') return <ListEditor items={cfg.reviews} max={3} addLabel={tr('Aggiungi recensione', 'Add review')} onChange={x => set({ reviews: x })} fields={[['text', tr('Cosa ha detto il cliente', 'What the client said'), 300, true], ['name', tr('Nome', 'Name'), 60, false]]} empty={{ text: '', name: '', zone: '' }} />;
   if (k === 'years' || k === 'sold' || k === 'clients') return <Field label={label} value={String(v)} placeholder={PLACEHOLDERS[k]} onChange={x => set({ [k]: x.replace(/\D/g, '') })} max={6} />;
   const long = k === 'aboutText' || k === 'method' || k === 'heroSubtitle';
   return <Field label={label} value={String(v ?? '')} placeholder={PLACEHOLDERS[k]} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
@@ -424,7 +428,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
   };
   return (
     <div className="mt-6">
-      <p className="mb-6 text-sm text-muted">Dieci stili già pronti con i tuoi immobili: scegline uno e personalizzalo. Online cambia solo quando pubblichi.</p>
+      <p className="mb-6 text-sm text-muted">{tr('Dieci stili già pronti con i tuoi immobili: scegline uno e personalizzalo. Online cambia solo quando pubblichi.', 'Ten ready-made styles with your listings: pick one and customise it. Your live website only changes when you publish.')}</p>
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {TEMPLATES.map((t, i) => {
           const used = cfg.template === t.id;
@@ -441,16 +445,16 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
                 {/* in hover (sempre su telefono): anteprima in un'altra scheda o scelta del modello, stessa larghezza */}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 to-transparent opacity-0 ease-smooth transition-opacity duration-[600ms] md:group-hover:opacity-100" />
                 <div className="absolute inset-x-3 bottom-3 z-10 grid grid-cols-2 gap-2 ease-smooth transition-[opacity,transform] duration-[600ms] md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
-                  <a href={`#/anteprima/${t.id}`} target="_blank" rel="noopener" className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white/95 text-sm font-semibold text-ink shadow-lg ring-1 ring-black/5 backdrop-blur hover:bg-white"><Eye size={15} /> Anteprima</a>
-                  <button type="button" data-pick={t.id} onClick={e => pick(t.id, e.currentTarget.closest('.group') as HTMLElement)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-ink text-sm font-semibold text-white shadow-lg hover:bg-black"><Pencil size={14} /> Scegli template</button>
+                  <a href={`#/anteprima/${t.id}`} target="_blank" rel="noopener" className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white/95 text-sm font-semibold text-ink shadow-lg ring-1 ring-black/5 backdrop-blur hover:bg-white"><Eye size={15} /> {tr('Anteprima', 'Preview')}</a>
+                  <button type="button" data-pick={t.id} onClick={e => pick(t.id, e.currentTarget.closest('.group') as HTMLElement)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-ink text-sm font-semibold text-white shadow-lg hover:bg-black"><Pencil size={14} /> {tr('Scegli template', 'Choose template')}</button>
                 </div>
               </div>
               <div className="flex min-h-12 items-center gap-3 px-2 pt-2">
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">{t.name}</span>
-                  <span className="block truncate text-xs text-muted">{t.desc}</span>
+                  <span className="block truncate text-xs text-muted">{tr(t.desc, t.desc_en)}</span>
                 </span>
-                {used && <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">In uso</span>}
+                {used && <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">{tr('In uso', 'In use')}</span>}
               </div>
             </div>
           );
@@ -497,12 +501,12 @@ function PageMenu({ current, firstId, onPick }: { current: string; firstId?: str
     document.addEventListener('mousedown', out); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc); };
   }, [open]);
-  const label = PAGES.find(([id]) => id === current)?.[1] ?? 'Pagina';
+  const label = PAGES.find(([id]) => id === current)?.[1] ?? tr('Pagina', 'Page');
   return (
     <div ref={box} className="relative ml-3">
       <button type="button" onClick={() => setOpen(o => !o)} aria-haspopup="listbox" aria-expanded={open}
         className={`flex h-8 items-center gap-2 rounded-full pl-3.5 pr-2.5 text-xs font-semibold ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink hover:bg-line/60'}`}>
-        <span className={open ? 'text-white/60' : 'text-muted'}>Pagina</span>{label}
+        <span className={open ? 'text-white/60' : 'text-muted'}>{tr('Pagina', 'Page')}</span>{label}
         <ChevronDown size={14} className={`ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
@@ -547,7 +551,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
       {/* pulsante WhatsApp del sito: fisso nell'angolo come sul sito vero */}
       {/* passando a Modifica: avviso sopra il sito per un attimo, poi sparisce */}
       <div className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-[2px] ease-smooth transition-opacity duration-[600ms] ${hint ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!hint}>
-        <span className={`flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink shadow-xl ease-smooth transition-transform duration-[600ms] ${hint ? 'scale-100' : 'scale-90'}`}><Pencil size={15} className="text-brand" /> Ora puoi modificare: clicca su una parte del sito</span>
+        <span className={`flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink shadow-xl ease-smooth transition-transform duration-[600ms] ${hint ? 'scale-100' : 'scale-90'}`}><Pencil size={15} className="text-brand" /> {tr('Ora puoi modificare: clicca su una parte del sito', 'You can edit now: click any part of the website')}</span>
       </div>
       {wa && <span className="pointer-events-none absolute bottom-4 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)]"><MessageCircle size={21} fill="currentColor" /></span>}
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
@@ -557,7 +561,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
         <PageMenu current={page.page} firstId={firstId} onPick={id => onPage(pageOf(id, firstId, zone))} />
         {/* stesse misure di prima, piu' visibile: icone e colore pieno su quello attivo (Modifica in blu) */}
         <div className="ml-auto flex items-center rounded-full bg-canvas p-1">
-          {([[false, 'Naviga', Eye], [true, 'Modifica', Pencil]] as const).map(([v, l, I]) => (
+          {([[false, tr('Naviga', 'Browse'), Eye], [true, tr('Modifica', 'Edit'), Pencil]] as const).map(([v, l, I]) => (
             <button key={l} onClick={() => { setEditMode(v); if (v && !editMode) { setHint(true); setTimeout(() => setHint(false), 1800); } }} className={`flex items-center gap-1.5 rounded-full px-4 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
           ))}
         </div>
@@ -585,7 +589,7 @@ function ListEditor<T extends Record<string, string>>({ items, fields, onChange,
           {fields.map(([k, label, m, area]) => area
             ? <textarea key={k} rows={4} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full resize-y rounded-xl bg-white px-3 py-2 text-sm outline-none" />
             : <input key={k} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full rounded-xl bg-white px-3 py-2 text-sm font-medium outline-none" />)}
-          <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-muted hover:text-rose-600"><Trash2 size={13} /> Togli</button>
+          <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-muted hover:text-rose-600"><Trash2 size={13} /> {tr('Togli', 'Remove')}</button>
         </div>
       ))}
       {items.length < max && <button onClick={() => onChange([...items, { ...empty }])} className="flex items-center gap-1.5 text-sm font-medium text-brand"><Plus size={15} /> {addLabel}</button>}
@@ -626,7 +630,7 @@ function Pics({ label, covers, value, onChange }: { label: string; covers: strin
       <span className="mb-1 block text-xs font-medium text-ink/70">{label}</span>
       <div className="grid grid-cols-4 gap-1.5">
         <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl bg-canvas text-[10px] font-medium text-muted ring-1 ring-dashed ring-black/15 hover:text-ink">
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}Carica
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}{tr('Carica', 'Upload')}
           <input type="file" accept="image/*" className="hidden" onChange={e => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
         {own && <button onClick={() => onChange(value)} className="aspect-square overflow-hidden rounded-xl ring-2 ring-ink ring-offset-1"><img src={value} alt="" className="h-full w-full object-cover" /></button>}
@@ -636,7 +640,7 @@ function Pics({ label, covers, value, onChange }: { label: string; covers: strin
             <img src={c} alt="" className="h-full w-full object-cover" />
           </button>
         ))}
-        {!covers.length && value && <button onClick={() => onChange('')} className="flex aspect-square items-center justify-center rounded-xl bg-canvas text-[10px] font-medium text-muted">Togli</button>}
+        {!covers.length && value && <button onClick={() => onChange('')} className="flex aspect-square items-center justify-center rounded-xl bg-canvas text-[10px] font-medium text-muted">{tr('Togli', 'Remove')}</button>}
       </div>
     </div>
   );
@@ -648,9 +652,9 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
   return (
     <div className="mt-8">
       <div>
-        <h2 className="font-display text-xl font-semibold">Immobili in vetrina</h2>
+        <h2 className="font-display text-xl font-semibold">{tr('Immobili in vetrina', 'Listings on your website')}</h2>
         {!projects ? <Loader2 className="mt-4 animate-spin text-muted" /> : !projects.length ? (
-          <p className="mt-4 text-sm text-muted">Nessun immobile. <a href="#/nuovo" className="text-brand">Mettine uno in vetrina</a>.</p>
+          <p className="mt-4 text-sm text-muted">{tr('Nessun immobile.', 'No listings.')} <a href="#/nuovo" className="text-brand">{tr('Mettine uno in vetrina', 'Add one to your website')}</a>.</p>
         ) : (
           <ul className={`mt-4 divide-y divide-line overflow-hidden rounded-[24px] bg-white ${CARD_SHADOW}`}>
             {projects.map(p => (
@@ -672,7 +676,7 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
 
 // both: "Non pubblico" a sinistra e "Pubblico" a destra dell'interruttore, evidenziato quello attivo
 // Il clic sposta subito l'interruttore (poi si salva): mentre si salva c'e' la rotellina sul pallino e non si riclicca
-export function PublicSwitch({ on: saved, onClick, labels = ['Pubblico', 'Privato'], both = false }: { on: boolean; onClick: () => void | Promise<unknown>; labels?: [string, string]; both?: boolean }) {
+export function PublicSwitch({ on: saved, onClick, labels = [tr('Pubblico', 'Public'), tr('Privato', 'Private')], both = false }: { on: boolean; onClick: () => void | Promise<unknown>; labels?: [string, string]; both?: boolean }) {
   const [pending, setPending] = useState<boolean | null>(null);
   const on = pending ?? saved;
   const click = async () => {
@@ -702,7 +706,7 @@ export function PublicSwitch({ on: saved, onClick, labels = ['Pubblico', 'Privat
 // Anteprima di un modello in un'altra scheda (#/anteprima/<id>): barra con PC / Tablet / Telefono e il sito in una
 // cornice della larghezza scelta. La cornice carica #/anteprima/<id>?solo=1 (solo il sito): cosi' le regole
 // responsive del sito vedono davvero la larghezza del telefono, non un sito da computer rimpicciolito.
-const DEVICES = [['pc', 'PC', '100%'], ['tablet', 'Tablet', '834px'], ['phone', 'Telefono', '390px']] as const;
+const DEVICES = [['pc', 'PC', '100%'], ['tablet', 'Tablet', '834px'], ['phone', tr('Telefono', 'Phone'), '390px']] as const;
 // pagina: pagina iniziale della cornice (?pagina=immobili ecc.), per aprire subito una pagina precisa
 export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId; projects: ProjectData[] | null; solo: boolean; pagina?: string | null }) {
   const [site, setSite] = useState<{ name: string; logo: string | null; config: SiteConfig } | null>(null);
@@ -728,9 +732,9 @@ export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId
         {/* indietro: l'anteprima si apre in un'altra scheda (dal link, con una sola voce di cronologia il browser la lascia chiudere);
             se non si chiude (aperta a mano) si va ai modelli */}
         <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
-          <button type="button" onClick={() => { window.close(); setTimeout(() => { location.hash = '#/portfolio'; }, 150); }} aria-label="Torna ai modelli"
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={16} /> Indietro</button>
-          <span className="truncate"><span className="text-muted">Anteprima del modello</span> <b>{t.name}</b></span>
+          <button type="button" onClick={() => { window.close(); setTimeout(() => { location.hash = '#/portfolio'; }, 150); }} aria-label={tr('Torna ai modelli', 'Back to templates')}
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={16} /> {tr('Indietro', 'Back')}</button>
+          <span className="truncate"><span className="text-muted">{tr('Anteprima del modello', 'Template preview')}</span> <b>{t.name}</b></span>
         </span>
         <div className="flex rounded-full bg-canvas p-1">
           {DEVICES.map(([k, l]) => <button key={k} type="button" onClick={() => setDevice(k)} className={`h-8 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${device === k ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</button>)}
@@ -738,7 +742,7 @@ export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId
         <span className="flex-1" />
       </div>
       <div className="flex min-h-0 flex-1 justify-center overflow-hidden p-4">
-        <iframe title={`Anteprima ${t.name}`} src={`${location.pathname}#/anteprima/${t.id}?solo=1`} style={{ width: w, maxWidth: '100%' }}
+        <iframe title={`${tr('Anteprima', 'Preview')} ${t.name}`} src={`${location.pathname}#/anteprima/${t.id}?solo=1`} style={{ width: w, maxWidth: '100%' }}
           className={`h-full bg-white ease-smooth transition-[width] ${device === 'pc' ? 'rounded-2xl' : 'rounded-[32px] shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)] ring-8 ring-ink'}`} />
       </div>
     </div>

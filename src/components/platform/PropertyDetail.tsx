@@ -11,6 +11,7 @@ import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { PublicSwitch, toSite } from './PortfolioView';
 import { useCredits } from './PlanView';
 import { printHtml } from '@/lib/printHtml';
+import { tr } from './i18n';
 
 // Dettaglio in piattaforma: stessa pagina della casa del portfolio pubblico + barra agente
 // (torna agli immobili, pubblico/privato) e suggerimenti dell'AI in fondo.
@@ -48,7 +49,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   };
   useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSite({ slug: d.slug ?? null, template: d.config?.template, config: d.config, name: d.name || 'La tua agenzia', logo: d.logo ?? null })).catch(() => {}); }, []);
   if (loading) return <Loader2 className="animate-spin text-muted" />;
-  if (!project) return <p className="text-muted">Immobile non trovato. <a href="#/immobili" className="text-brand">Torna agli immobili</a>.</p>;
+  if (!project) return <p className="text-muted">{tr('Immobile non trovato.', 'Listing not found.')} <a href="#/immobili" className="text-brand">{tr('Torna agli immobili', 'Back to listings')}</a>.</p>;
 
   const extra = (project.import_data ?? {}) as { score?: number; suggerimenti?: string[]; photos?: unknown };
   // la pagina del sito e' anche il posto dove si modifica: testi al clic, azioni sulle foto (AI, copertina, togli)
@@ -58,7 +59,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     if (order.join() === photos.join()) return;
     setDraft(d => ({ ...d, cover: order[0], import_data: { ...(project.import_data ?? {}), photos: order } }));
     const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'order', order }) }).catch(() => null);
-    if (r?.ok) onChange(); else { dropPhotoDraft(); alert('Non sono riuscito a cambiare l’ordine delle foto, riprova.'); }
+    if (r?.ok) onChange(); else { dropPhotoDraft(); alert(tr('Non sono riuscito a cambiare l’ordine delle foto, riprova.', 'Could not change the photo order, please try again.')); }
   };
   const propEdit: PropEdit = {
     photos, cover: project.cover, busy, editing, // in modifica le foto hanno il velo e i pulsanti sempre in vista
@@ -74,7 +75,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       setBusy(src);
       const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: action, photo: src }) }).catch(() => null);
       setBusy(null);
-      if (r?.ok) onChange(); else { dropPhotoDraft(); alert(action === 'cover' ? 'Non sono riuscito a mettere la copertina, riprova.' : 'Non sono riuscito a togliere la foto, riprova.'); }
+      if (r?.ok) onChange(); else { dropPhotoDraft(); alert(action === 'cover' ? tr('Non sono riuscito a mettere la copertina, riprova.', 'Could not set the cover photo, please try again.') : tr('Non sono riuscito a togliere la foto, riprova.', 'Could not remove the photo, please try again.')); }
     },
     onField: async (k, v) => {
       const val = k === 'prezzo' ? Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) : v.trim();
@@ -85,24 +86,24 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   return (
     <>
       <div className="mb-5 flex items-center justify-between">
-        <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Immobili</a>
+        <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> {tr('Immobili', 'Listings')}</a>
       </div>
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
       <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
         <Info size={16} className="shrink-0 text-brand" />
         {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
-        <span className="min-w-0 flex-1 truncate text-muted">{!planKnown ? '' : !sitePlan ? 'Non è online.' : project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'}{sitePlan && <> con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</>}</span>
-        <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
+        <span className="min-w-0 flex-1 truncate text-muted">{!planKnown ? '' : !sitePlan ? tr('Non è online.', 'Not online yet.') : project.is_public ? tr('Sul tuo sito si vede', 'Live on your website') : tr('Non è sul tuo sito. Online si vedrà', 'Not on your website yet. It will show')}{sitePlan && <> {tr('con lo stile del modello', 'with the template')} {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : tr('scelto', 'you picked')}.</>}</span>
+        <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">{tr('Cambia modello', 'Change template')}</a>
         <span className="h-5 w-px bg-line" aria-hidden />
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
-          ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
-          : <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">Passa a Plus o Pro per pubblicare</a>}
+          ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
+          : <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>}
         {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
         {sitePlan && site?.slug && (
           <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
             <span className="min-w-0 overflow-hidden">
-              <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>
+              <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
             </span>
           </span>
         )}
@@ -111,12 +112,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
         {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); onChange(); }}
-          report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
+          report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
       {!editing && typeof extra.score === 'number' && (
         <section className="mt-10 card p-6">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Qualità dell&apos;annuncio</h2><span className="font-display text-2xl font-bold text-ai">{extra.score}/100</span></div>
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">{tr('Qualità dell’annuncio', 'Listing quality')}</h2><span className="font-display text-2xl font-bold text-ai">{extra.score}/100</span></div>
           {!!extra.suggerimenti?.length && <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">{extra.suggerimenti.map(s => <li key={s}>{s}</li>)}</ul>}
         </section>
       )}
@@ -126,12 +127,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
 
 // Modifica dei dati dell'immobile: gli stessi campi della scheda pubblica. Numeri vuoti = 0 (non indicato).
 const FIELDS: { k: keyof ProjectData; label: string; num?: boolean; wide?: boolean; ph?: string }[] = [
-  { k: 'titolo', label: 'Titolo', wide: true, ph: 'Prati, trilocale con box vicino alla metro' },
-  { k: 'addr', label: 'Indirizzo', wide: true, ph: 'Via Cola di Rienzo 120, Roma' },
-  { k: 'prezzo', label: 'Prezzo (€)', num: true }, { k: 'mq', label: 'Superficie (m²)', num: true },
-  { k: 'locali', label: 'Locali', num: true }, { k: 'camere', label: 'Camere', num: true },
-  { k: 'bagni', label: 'Bagni', num: true }, { k: 'tipologia', label: 'Tipologia', ph: 'Appartamento' },
-  { k: 'riferimento', label: 'Riferimento', ph: 'Codice interno' },
+  { k: 'titolo', label: tr('Titolo', 'Title'), wide: true, ph: 'Prati, trilocale con box vicino alla metro' },
+  { k: 'addr', label: tr('Indirizzo', 'Address'), wide: true, ph: 'Via Cola di Rienzo 120, Roma' },
+  { k: 'prezzo', label: tr('Prezzo (€)', 'Price (€)'), num: true }, { k: 'mq', label: tr('Superficie (m²)', 'Floor area (m²)'), num: true },
+  { k: 'locali', label: tr('Locali', 'Rooms'), num: true }, { k: 'camere', label: tr('Camere', 'Bedrooms'), num: true },
+  { k: 'bagni', label: tr('Bagni', 'Bathrooms'), num: true }, { k: 'tipologia', label: tr('Tipologia', 'Property type'), ph: tr('Appartamento', 'Apartment') },
+  { k: 'riferimento', label: tr('Riferimento', 'Reference'), ph: tr('Codice interno', 'Internal code') },
 ]
 // Pagina del sito in scala, larga 1280 px come su un computer; non cliccabile (si guarda e si scorre con la pagina)
 function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id: string }) {
@@ -173,38 +174,38 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
     before.current = new Map();
   }, [order]);
   const first = (src: string) => { snap(); setOrder(o => [src, ...o.filter(x => x !== src)]); }; // metti per prima (= copertina, salvata con l'ordine)
-  const remove = (src: string) => { if (!confirm('Togliere questa foto dall’immobile?')) return; setOrder(o => o.filter(x => x !== src)); onPhoto?.(src, 'remove'); };
+  const remove = (src: string) => { if (!confirm(tr('Togliere questa foto dall’immobile?', 'Remove this photo from the listing?'))) return; setOrder(o => o.filter(x => x !== src)); onPhoto?.(src, 'remove'); };
   const [drag, setDrag] = useState<string | null>(null);
   const move = (over: string) => { if (!drag || drag === over) return; snap(); setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; }); };
   return createPortal(
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-4xl flex-col rounded-[32px] bg-white shadow-2xl">
         <div className="px-7 pt-7">
-          <h2 className="font-display text-2xl font-bold tracking-tight">Le foto</h2>
-          <p className="mt-1 text-sm text-muted">Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.</p>
+          <h2 className="font-display text-2xl font-bold tracking-tight">{tr('Le foto', 'Photos')}</h2>
+          <p className="mt-1 text-sm text-muted">{tr('Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.', 'Drag them to change the order clients will see them in: the first one is the cover. Hover over a photo to improve it with AI or remove it.')}</p>
         </div>
         <ul className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
             <li key={src} ref={el => { if (el) tiles.current.set(src, el); else tiles.current.delete(src); }} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
               className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-2xl bg-canvas ease-smooth transition-[opacity,transform,box-shadow] active:cursor-grabbing ${drag === src ? 'scale-95 opacity-40' : 'hover:shadow-lg'} ${i === 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
               <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
-              <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? 'Copertina' : i + 1}</span>
+              <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? tr('Copertina', 'Cover') : i + 1}</span>
               {/* maniglia: in hover si sposta accanto alla X (sopra il velo) */}
               <span className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow ease-smooth transition-[right] ${onPhoto ? 'group-hover:right-12' : ''}`} aria-hidden><GripVertical size={16} /></span>
               {onPhoto && (
                 // in hover: velo su tutta la foto, azioni al centro una sotto l'altra, togli in alto a destra (sopra la maniglia)
                 <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
-                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow"><Wand2 size={13} /> Migliora con l’AI</button>
-                  {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow"><Star size={13} /> Metti per prima</button>}
-                  <button type="button" onClick={() => remove(src)} aria-label="Togli la foto" className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
+                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow"><Wand2 size={13} /> {tr('Migliora con l’AI', 'Improve with AI')}</button>
+                  {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow"><Star size={13} /> {tr('Metti per prima', 'Move to first')}</button>}
+                  <button type="button" onClick={() => remove(src)} aria-label={tr('Togli la foto', 'Remove photo')} className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
                 </span>
               )}
             </li>
           ))}
         </ul>
         <div className="flex items-center justify-end gap-2 border-t border-line px-7 py-4">
-          <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
-          <button type="button" onClick={() => onSave(order)} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black">Salva ordine</button>
+          <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-sm font-medium text-muted hover:bg-canvas">{tr('Annulla', 'Cancel')}</button>
+          <button type="button" onClick={() => onSave(order)} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black">{tr('Salva ordine', 'Save order')}</button>
         </div>
       </div>
     </div>,
@@ -214,7 +215,8 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
 
 // Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
-const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
+// [nome italiano (fa anche da chiave), nome inglese, campi]
+const GROUPS: [string, string, (keyof ProjectData)[]][] = [['Annuncio', 'Listing', ['titolo', 'addr']], ['Prezzo e spazi', 'Price and size', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', 'Other', ['tipologia', 'riferimento']]];
 function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onPhoto: PropEdit['onPhoto']; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
   const panel = useRef<HTMLDivElement>(null);
@@ -232,7 +234,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     setBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
     setBusy(false);
-    if (r) onSaved(); else setErr('Salvataggio non riuscito, riprova.');
+    if (r) onSaved(); else setErr(tr('Salvataggio non riuscito, riprova.', 'Save failed, please try again.'));
   };
   const input = 'mt-1 h-10 w-full rounded-xl bg-canvas px-3 text-sm outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand';
   const field = (k: keyof ProjectData) => {
@@ -246,7 +248,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   return (
     <div ref={panel} className="blur-in flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
-        <h2 className="font-display text-lg font-bold">Modifica immobile</h2>
+        <h2 className="font-display text-lg font-bold">{tr('Modifica immobile', 'Edit listing')}</h2>
         {err && <span className="ml-auto mr-2 text-sm text-rose-600">{err}</span>}
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
@@ -258,22 +260,22 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
                 {photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className="h-11 w-11 rounded-xl object-cover ring-2 ring-canvas" style={{ zIndex: 3 - i }} />)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">Le foto</span>
-                <span className="block text-xs text-muted">{photos.length} foto · ordine, copertina e AI</span>
+                <span className="block text-sm font-semibold">{tr('Le foto', 'Photos')}</span>
+                <span className="block text-xs text-muted">{photos.length} {tr('foto · ordine, copertina e AI', 'photos · order, cover and AI')}</span>
               </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> Riordina</button>
-              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> Modifica</button>
+              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> {tr('Riordina', 'Reorder')}</button>
+              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
             </div>
           </section>
         )}
-        {GROUPS.map(([title, keys]) => (
+        {GROUPS.map(([title, titleEn, keys]) => (
           <section key={title}>
-            <h3 className="text-sm font-semibold">{title}</h3>
+            <h3 className="text-sm font-semibold">{tr(title, titleEn)}</h3>
             <div className="mt-2 grid grid-cols-2 gap-3">{keys.map(field)}</div>
             {title === 'Annuncio' && (
-              <label className="mt-3 block text-xs font-medium text-muted">Descrizione
+              <label className="mt-3 block text-xs font-medium text-muted">{tr('Descrizione', 'Description')}
                 <textarea value={v.descrizione} onChange={e => set('descrizione', e.target.value)} rows={7} maxLength={8000} className="mt-1 w-full resize-none rounded-xl bg-canvas px-3 py-2.5 text-sm leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
               </label>
             )}
@@ -283,8 +285,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
         {report}
-        <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas disabled:opacity-40 disabled:hover:bg-transparent">Annulla</button>
-        <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
+        <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas disabled:opacity-40 disabled:hover:bg-transparent">{tr('Annulla', 'Cancel')}</button>
+        <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Salva', 'Save')}</button>
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
 import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal, useCredits } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
+import { tr, lp } from './i18n';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -58,9 +59,9 @@ export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/staging', label: 'Chat', icon: MessageSquare },
-  { path: '/immobili', label: 'Immobili', icon: Building2 },
-  { path: '/portfolio', label: 'Il mio sito', icon: Globe },
-  { path: '/galleria', label: 'Galleria', icon: Images },
+  { path: '/immobili', label: tr('Immobili', 'Properties'), icon: Building2 },
+  { path: '/portfolio', label: tr('Il mio sito', 'My website'), icon: Globe },
+  { path: '/galleria', label: tr('Galleria', 'Gallery'), icon: Images },
 ];
 
 // Storico delle chat (api/platform/chats): elenco con anteprima, titolo e data; un clic riapre la chat e si continua.
@@ -77,16 +78,16 @@ function ChatHistory() {
     document.addEventListener('mousedown', out); document.addEventListener('keydown', esc);
     return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc); };
   }, [open]);
-  const when = (d: number) => (d === 0 ? 'Oggi' : d === 1 ? 'Ieri' : `${d} giorni fa`);
+  const when = (d: number) => (d === 0 ? tr('Oggi', 'Today') : d === 1 ? tr('Ieri', 'Yesterday') : tr(`${d} giorni fa`, `${d} days ago`));
   return (
     <div ref={box} className="relative">
-      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label="Storico delle chat" title="Storico delle chat" className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink hover:bg-line'}`}><History size={16} /></button>
+      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label={tr('Storico delle chat', 'Chat history')} title={tr('Storico delle chat', 'Chat history')} className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink hover:bg-line'}`}><History size={16} /></button>
       {open && (
         <div className="blur-in absolute -right-1 top-11 z-50 w-80 rounded-[24px] bg-white p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
-          <div className="px-3 pb-2 pt-1.5 text-xs text-muted">Le chat restano 30 giorni. Foto e video li trovi sempre in Galleria.</div>
+          <div className="px-3 pb-2 pt-1.5 text-xs text-muted">{tr('Le chat restano 30 giorni. Foto e video li trovi sempre in Galleria.', 'Chats are kept for 30 days. Your photos and videos are always in the Gallery.')}</div>
           <div className="max-h-[60vh] overflow-y-auto">
             {!list ? <div className="flex h-20 items-center justify-center"><Loader2 size={18} className="animate-spin text-muted" /></div>
-              : !list.length ? <p className="px-3 py-6 text-center text-sm text-muted">Ancora nessuna chat.</p>
+              : !list.length ? <p className="px-3 py-6 text-center text-sm text-muted">{tr('Ancora nessuna chat.', 'No chats yet.')}</p>
               : list.map(c => (
                 <button key={c.id} type="button" onClick={() => { window.dispatchEvent(new CustomEvent('agenteimmo:open-chat', { detail: c.id })); setOpen(false); }}
                   className="flex w-full items-center gap-3 rounded-2xl p-2 text-left ease-smooth transition-colors hover:bg-canvas">
@@ -163,14 +164,14 @@ function PlatformInner({ userData }: { userData: UserData }) {
           {chat ? (<>
             {/* Indietro dalla chat porta sempre alla home (non alla pagina precedente) */}
             <button type="button" onClick={() => { location.hash = '#/'; }}
-              className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
+              className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> {tr('Indietro', 'Back')}</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
             {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
             <div className="ml-auto flex items-center gap-2">
               {credits && !noPlan && (
                 <span className="blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ring-line" style={{ animationDelay: '.15s' }}>
-                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} className="flex h-full items-center pl-4 pr-3 text-sm font-semibold">Nuova chat</button>
+                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} className="flex h-full items-center pl-4 pr-3 text-sm font-semibold">{tr('Nuova chat', 'New chat')}</button>
                   <span className="mr-1 h-5 w-px bg-line" aria-hidden />
                   <ChatHistory />
                 </span>
@@ -192,7 +193,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
             {/* senza piano solo Scegli un piano (in nero): Metti in vetrina appare col piano */}
-            {credits && (credits.unlimited || credits.plan !== 'none') && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>}
+            {credits && (credits.unlimited || credits.plan !== 'none') && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">{tr('Metti in vetrina', 'List a property')}</a>}
           </div>
           </>}
         </div>
@@ -201,7 +202,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
       {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto) */}
       {!chat && route === '/' && <div className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
         <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
-          <Download size={16} className="text-muted" /> Importa immobile
+          <Download size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
         </a>
       </div>}
 
@@ -283,7 +284,7 @@ function ScoreBadge({ on }: { on: boolean }) {
   return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg ease-smooth transition-colors ${color}`}>{n}{n >= 75 && ' ✓'}</span>;
 }
 
-const TITLE_WORDS = (name?: string) => (name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?').split(' ');
+const TITLE_WORDS = (name?: string) => (name ? tr(`Ciao ${name.split(' ')[0]}, da dove partiamo?`, `Hi ${name.split(' ')[0]}, where do we start?`) : tr('Da dove partiamo?', 'Where do we start?')).split(' ');
 
 
 // Card "Migliora" che si trasforma in quattro fasi, sempre lo stesso box:
@@ -334,13 +335,13 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
         className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] ease-smooth ${height} ${CARD_SHADOW} ${open ? 'shadow-[0_1px_3px_rgba(0,0,0,.04),0_16px_40px_-22px_rgba(0,0,0,.18)]' : ''}`}>
         {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
-        <button type="button" onClick={onClose} aria-label="Torna indietro" tabIndex={open ? 0 : -1}
+        <button type="button" onClick={onClose} aria-label={tr('Torna indietro', 'Go back')} tabIndex={open ? 0 : -1}
           className={`absolute z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-all hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px]' : 'right-4 top-4'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
 
         {/* Titolo della card: svanisce e si chiude */}
         <div className={`overflow-hidden transition-all ease-smooth ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
-          <span className="par-1 block text-sm text-muted">Miglioralo</span>
-          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Annuncio già online?</span>
+          <span className="par-1 block text-sm text-muted">{tr('Miglioralo', 'Improve it')}</span>
+          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">{tr('Annuncio già online?', 'Listing already online?')}</span>
         </div>
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
@@ -379,11 +380,11 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
             className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base'}`} />
           {busy ? (
-            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? 'Apro' : 'Analizzo'} <Elapsed key={stage} /></span>
+            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <Elapsed key={stage} /></span>
           ) : phase === 'done' ? (
-            <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">Nuova analisi</button>
+            <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">{tr('Nuova analisi', 'New analysis')}</button>
           ) : (
-            <button disabled={!ok} tabIndex={open ? 0 : -1} className="h-11 shrink-0 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-30 disabled:active:scale-100">{flow ? 'Riprova' : 'Analizza'}</button>
+            <button disabled={!ok} tabIndex={open ? 0 : -1} className="h-11 shrink-0 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-30 disabled:active:scale-100">{flow ? tr('Riprova', 'Try again') : tr('Analizza', 'Analyse')}</button>
           )}
         </form>
 
@@ -440,12 +441,12 @@ function StageCompare({ active }: { active: boolean }) {
 }
 
 const TITLES: Record<string, [string, string]> = {
-  link: ['Incolla il link dell\'annuncio', 'Da qualsiasi portale immobiliare.'],
-  opening: ['Apro l\'annuncio', 'Ci vuole al massimo un minuto.'],
-  scanning: ['Sto analizzando l\'annuncio', ''],
-  done: ['Ecco il tuo annuncio, migliorato', 'Score, versione riscritta e cosa sistemare.'],
-  error: ['Non riesco a leggerlo', 'Riprova o incolla il testo dell\'annuncio.'],
-  manual: ['Incolla il testo dell\'annuncio', 'Titolo, prezzo, caratteristiche e descrizione.'],
+  link: [tr('Incolla il link dell\'annuncio', 'Paste the listing link'), tr('Da qualsiasi portale immobiliare.', 'From any property portal.')],
+  opening: [tr('Apro l\'annuncio', 'Opening the listing'), tr('Ci vuole al massimo un minuto.', 'It takes a minute at most.')],
+  scanning: [tr('Sto analizzando l\'annuncio', 'Analysing the listing'), ''],
+  done: [tr('Ecco il tuo annuncio, migliorato', 'Here is your listing, improved'), tr('Score, versione riscritta e cosa sistemare.', 'Score, rewritten version and what to fix.')],
+  error: [tr('Non riesco a leggerlo', 'I can\'t read it'), tr('Riprova o incolla il testo dell\'annuncio.', 'Try again or paste the listing text.')],
+  manual: [tr('Incolla il testo dell\'annuncio', 'Paste the listing text'), tr('Titolo, prezzo, caratteristiche e descrizione.', 'Title, price, features and description.')],
 };
 
 export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: string; initialUrl?: string; onSaved?: () => void; morph?: boolean }) {
@@ -479,11 +480,11 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
 
   // Apre Migliora = intenzione di analizzare: si accende la GPU dell'analisi (avvio a freddo ~3,5 min).
   const openLink = () => { setIntro(false); setOpen(true); };
-  const vetrina = (name ?? 'tuonome').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const vetrina = (name ?? tr('tuonome', 'yourname')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora, pubblica o arreda.'] : TITLES[shown];
+  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), tr('Migliora, pubblica o arreda.', 'Improve, publish or furnish.')] : TITLES[shown];
   const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
@@ -509,7 +510,7 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
         </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
-        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai un nuovo immobile?" title="Mettilo in vetrina" href="#/nuovo">
+        <Tile index={1} intro={intro} wrapClass={others(1)} kicker={tr('Hai un nuovo immobile?', 'Got a new property?')} title={tr('Mettilo in vetrina', 'Put it on show')} href="#/nuovo">
           {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
           <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span></span>
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
@@ -524,7 +525,7 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
         </Tile>
 
         {/* Home staging: stanza vuota -> arredata, la linea prima/dopo scorre al passaggio del mouse */}
-        <Tile index={2} intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Home staging" title="Hai una stanza vuota?" href="#/staging">
+        <Tile index={2} intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Home staging" title={tr('Hai una stanza vuota?', 'Got an empty room?')} href="#/staging">
           {/* .par-2 imposta la sua transizione su transform: la rotazione sta su un contenitore a parte, cosi' e' morbida */}
           <div className="par-2 absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2">
             <div className="rounded-xl bg-white p-1.5 shadow-md ease-smooth transition-[rotate,scale,box-shadow] group-hover:rotate-2 group-hover:scale-[1.03] group-hover:shadow-lg">
@@ -544,28 +545,28 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
 function ProfileView({ email, profile, onSaved, admin }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void; admin: boolean }) {
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Il mio profilo</h1>
+      <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio profilo', 'My profile')}</h1>
       <p className="mt-1 text-muted">{email}</p>
       <div className={`mt-8 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
-        <h2 className="font-semibold">Il tuo sito personale</h2>
-        <p className="mt-1 text-sm text-muted">Il nome che vedono i clienti e l&apos;indirizzo della pagina con le tue case.</p>
-        <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel="Salva" onSaved={onSaved} /></div>
-        {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">Modifica il tuo sito</a>}
+        <h2 className="font-semibold">{tr('Il tuo sito personale', 'Your personal website')}</h2>
+        <p className="mt-1 text-sm text-muted">{tr('Il nome che vedono i clienti e l\'indirizzo della pagina con le tue case.', 'The name your clients see and the address of the page with your properties.')}</p>
+        <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel={tr('Salva', 'Save')} onSaved={onSaved} /></div>
+        {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
       </div>
       {/* Costi AI: solo per gli amministratori, qui invece che nel menu */}
       {admin && (
         <a href="#/costi" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
-          <Gauge size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">Costi AI</span><span className="block text-sm text-muted">Spesa per le foto e i video generati</span></span>
+          <Gauge size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Costi AI', 'AI costs')}</span><span className="block text-sm text-muted">{tr('Spesa per le foto e i video generati', 'Spend on generated photos and videos')}</span></span>
         </a>
       )}
       {/* documenti legali */}
       <div className={`mt-4 rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>
-        {([['Privacy', '/it/privacy'], ['Termini e condizioni', '/it/termini'], ['Cookie', '/it/cookie'], ['Come cancelliamo i dati', '/it/data-deletion']] as const).map(([l, href]) => (
+        {([['Privacy', lp('/privacy')], [tr('Termini e condizioni', 'Terms and conditions'), lp('/termini')], ['Cookie', lp('/cookie')], [tr('Come cancelliamo i dati', 'How we delete your data'), lp('/data-deletion')]] as const).map(([l, href]) => (
           <a key={href} href={href} target="_blank" rel="noopener" className="flex h-12 items-center justify-between rounded-[20px] px-4 text-sm font-medium ease-smooth transition-colors hover:bg-canvas">{l}<ExternalLink size={15} className="text-muted" /></a>
         ))}
       </div>
       <div className="mt-6 flex items-center justify-between gap-3">
-        <button onClick={() => { try { sessionStorage.clear(); } catch { /* niente */ } void supabase.auth.signOut(); }} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
+        <button onClick={() => { try { sessionStorage.clear(); } catch { /* niente */ } void supabase.auth.signOut(); }} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> {tr('Esci', 'Log out')}</button>
         <DeleteAccount />
       </div>
     </div>
@@ -574,6 +575,7 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
 
 // Eliminazione dell'account: conferma scrivendo ELIMINA. Cancella account, immobili, sito, foto create e
 // l'abbonamento Stripe (/api/account/delete), poi esce.
+const CONFIRM = tr('ELIMINA', 'DELETE'); // parola da scrivere per confermare, nella lingua della pagina
 function DeleteAccount() {
   const [open, setOpen] = useState(false);
   const [word, setWord] = useState('');
@@ -582,27 +584,27 @@ function DeleteAccount() {
   const run = async () => {
     setBusy(true); setErr('');
     const r = await authFetch('/api/account/delete', { method: 'DELETE' }).catch(() => null);
-    if (!r?.ok) { setBusy(false); setErr('Non sono riuscito a eliminare l’account, riprova o scrivici.'); return; }
+    if (!r?.ok) { setBusy(false); setErr(tr('Non sono riuscito a eliminare l’account, riprova o scrivici.', 'I couldn’t delete the account, try again or write to us.')); return; }
     try { sessionStorage.clear(); } catch { /* niente */ } // la chat e le altre memorie della scheda non passano al prossimo account
     await supabase.auth.signOut();
     window.location.href = '/';
   };
   return (
     <>
-      <button onClick={() => setOpen(true)} className="rounded-full px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">Elimina account</button>
+      <button onClick={() => setOpen(true)} className="rounded-full px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">{tr('Elimina account', 'Delete account')}</button>
       {/* nel body: dentro la pagina un antenato con transform limitava il velo al solo contenuto */}
       {open && createPortal(
         <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => !busy && setOpen(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-[32px] bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-semibold">Eliminare l’account?</h2>
-            <p className="pt-2 text-sm text-muted">Cancelliamo per sempre il tuo account, gli immobili, il tuo sito, le foto della Galleria e l’eventuale abbonamento. Non si può annullare.</p>
-            <label className="mt-5 block text-xs font-medium text-ink/70">Per confermare scrivi <b>ELIMINA</b>
+            <h2 className="text-lg font-semibold">{tr('Eliminare l’account?', 'Delete the account?')}</h2>
+            <p className="pt-2 text-sm text-muted">{tr('Cancelliamo per sempre il tuo account, gli immobili, il tuo sito, le foto della Galleria e l’eventuale abbonamento. Non si può annullare.', 'We permanently delete your account, properties, website, Gallery photos and any subscription. This can’t be undone.')}</p>
+            <label className="mt-5 block text-xs font-medium text-ink/70">{tr('Per confermare scrivi', 'To confirm, type')} <b>{CONFIRM}</b>
               <input value={word} onChange={e => setWord(e.target.value)} autoFocus className="mt-1.5 h-11 w-full rounded-full bg-canvas px-4 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
             </label>
             {err && <p className="pt-3 text-sm text-rose-600">{err}</p>}
             <div className="flex justify-end gap-2 pt-6">
-              <button disabled={busy} onClick={() => setOpen(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">Annulla</button>
-              <button disabled={busy || word.trim() !== 'ELIMINA'} onClick={run} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />} Elimina per sempre</button>
+              <button disabled={busy} onClick={() => setOpen(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">{tr('Annulla', 'Cancel')}</button>
+              <button disabled={busy || word.trim() !== CONFIRM} onClick={run} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Elimina per sempre', 'Delete forever')}</button>
             </div>
           </div>
         </div>,

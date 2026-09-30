@@ -8,6 +8,7 @@ import { downloadImage } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import InlineSlider from '@/components/InlineSlider';
 import { authFetch, CARD_SHADOW } from './api';
+import { tr } from './i18n';
 
 // Modifica foto con Qwen-Image, condivisa da "Sistema con AI" (Migliora annuncio) e Home staging:
 // stato della generazione, riquadro con alone mentre lavora e slider prima/dopo alla fine.
@@ -21,7 +22,7 @@ export function Elapsed({ className = 'text-muted', since }: { className?: strin
   return <span className={`tabular-nums ${className}`}>{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
 }
 
-const MSGS = ['Guardo la foto', 'Applico la modifica', 'Sistemo luce e dettagli', 'Rifinisco i bordi', 'Quasi pronta'];
+const MSGS = [tr('Guardo la foto', 'Looking at the photo'), tr('Applico la modifica', 'Applying the edit'), tr('Sistemo luce e dettagli', 'Fixing light and details'), tr('Rifinisco i bordi', 'Refining the edges'), tr('Quasi pronta', 'Almost ready')];
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export type Region = { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] };
@@ -51,7 +52,7 @@ export function useAiPhoto() {
     // ponytail: demo senza login (anteprima) in modalita' finta: stessa foto dopo qualche secondo
     if (AI_MOCK && res?.status === 401) { await wait(5000); d = { url: req.imageUrl || req.imageBase64 }; }
     setBusy(false);
-    if (!d.url) { setErr(d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.'); return; }
+    if (!d.url) { setErr(d.error === 'timeout' ? tr('La GPU si sta avviando, riprova tra un minuto.', 'The GPU is starting up, try again in a minute.') : tr('Modifica non riuscita, riprova.', 'Edit failed, please try again.')); return; }
     setOut(d.url); setReveal('burst');
     setTimeout(() => setReveal('line'), 600);
     setTimeout(() => setReveal('slider'), 1450);
@@ -108,23 +109,23 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
       )}
       {reveal === 'slider' && out && (
         <>
-          <span className={`blur-in bottom-3 left-3 ${tag}`}>Prima</span>
-          <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
+          <span className={`blur-in bottom-3 left-3 ${tag}`}>{tr('Prima', 'Before')}</span>
+          <span className={`blur-in bottom-3 right-3 ${tag}`}>{tr('Dopo', 'After')}</span>
           {/* un solo pulsante: Scarica (dopo il clic "Scaricato" per 2 s); con `parked` (Modifica aperta) si stringe e diventa la X.
               Sta sopra la selezione (z-30) cosi' non ci sono mai due pulsanti uno sull'altro. */}
           {/* Salva (nell'immobile) accanto a Scarica, stesso stile; con Modifica aperta non c'e' (opacity-0 non basta: blur-in la riporta a 1) */}
           {onSave && !parked && (
             <button onPointerDown={e => e.stopPropagation()} onClick={onSave} aria-pressed={saveActive} style={{ right: 12 + (labelW ?? 96) + 8 }}
               className={`blur-in absolute top-3 z-30 flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[opacity,background-color] ${saveActive ? 'bg-white' : 'bg-white/85 hover:bg-white'} `}>
-              <Building2 size={14} /> Salva
+              <Building2 size={14} /> {tr('Salva', 'Save')}
             </button>
           )}
-          <button onPointerDown={e => e.stopPropagation()} aria-label={parked ? 'Annulla selezione' : 'Scarica'}
+          <button onPointerDown={e => e.stopPropagation()} aria-label={parked ? tr('Annulla selezione', 'Cancel selection') : tr('Scarica', 'Download')}
             onClick={() => { if (parked) { onUnpark?.(); return; } downloadImage(out, fileName); onDownload?.(out); setSaved(true); clearTimeout(savedT.current); savedT.current = setTimeout(() => setSaved(false), 2000); }}
             style={{ width: parked ? 36 : labelW }}
             className="blur-in absolute right-3 top-3 z-30 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
             <span ref={labelRef} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 ease-smooth transition-opacity ${parked ? 'opacity-0' : ''}`}>
-              {saved ? <span key="ok" className="blur-in flex items-center gap-1.5 text-emerald-700"><Check size={14} /> Scaricato</span> : <span key="dl" className="blur-in flex items-center gap-1.5"><Download size={14} /> Scarica</span>}
+              {saved ? <span key="ok" className="blur-in flex items-center gap-1.5 text-emerald-700"><Check size={14} /> {tr('Scaricato', 'Downloaded')}</span> : <span key="dl" className="blur-in flex items-center gap-1.5"><Download size={14} /> {tr('Scarica', 'Download')}</span>}
             </span>
             <X size={16} className={`absolute ease-smooth transition-opacity ${parked ? '' : 'opacity-0'}`} />
           </button>
@@ -143,11 +144,11 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
 // ---------------------------------------------------------------------------
 export type Suggestion = { id: string; label: string; req: Partial<EditRequest> };
 export const QUICK_PRESETS: Suggestion[] = [
-  { id: 'modern', label: 'Arreda moderno', req: { style: 'modern' } },
-  { id: 'nordic', label: 'Arreda nordico', req: { style: 'nordic' } },
-  { id: 'empty', label: 'Svuota la stanza', req: { style: 'empty' } },
-  { id: 'day', label: 'Luminoso', req: { angle: 'day' } },
-  { id: 'tidy', label: 'Togli il disordine', req: { prompt: 'Togli gli oggetti in giro e il disordine, lascia i mobili' } },
+  { id: 'modern', label: tr('Arreda moderno', 'Modern furniture'), req: { style: 'modern' } },
+  { id: 'nordic', label: tr('Arreda nordico', 'Nordic furniture'), req: { style: 'nordic' } },
+  { id: 'empty', label: tr('Svuota la stanza', 'Empty the room'), req: { style: 'empty' } },
+  { id: 'day', label: tr('Luminoso', 'Brighter'), req: { angle: 'day' } },
+  { id: 'tidy', label: tr('Togli il disordine', 'Remove clutter'), req: { prompt: 'Togli gli oggetti in giro e il disordine, lascia i mobili' } },
 ];
 type Version = { url: string; text: string };
 
@@ -190,15 +191,15 @@ export function PhotoChat({ original, scene, fileName, actions = [], className, 
       {versions.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
           {versions.map((v, i) => (
-            <button key={v.url} title={v.text || 'Originale'} onClick={() => { if (!ai.busy) { ai.reset(); setCur(i); } }}
+            <button key={v.url} title={v.text || tr('Originale', 'Original')} onClick={() => { if (!ai.busy) { ai.reset(); setCur(i); } }}
               className={`relative h-14 w-20 shrink-0 overflow-hidden rounded-xl ring-2 ease-smooth transition ${i === cur ? 'ring-brand' : 'ring-transparent opacity-70 hover:opacity-100'}`}>
               <img src={v.url} alt="" className="h-full w-full object-cover" />
-              <span className="absolute left-1 top-1 rounded-full bg-ink/75 px-1.5 text-[10px] font-semibold text-white">{i === 0 ? 'Orig.' : i}</span>
+              <span className="absolute left-1 top-1 rounded-full bg-ink/75 px-1.5 text-[10px] font-semibold text-white">{i === 0 ? tr('Orig.', 'Orig.') : i}</span>
             </button>
           ))}
         </div>
       )}
-      {cur > 0 && !ai.busy && <p className="mt-1 px-1 text-xs text-muted">Versione {cur}: «{current.text}». Scrivi un&apos;altra richiesta per continuare da qui.</p>}
+      {cur > 0 && !ai.busy && <p className="mt-1 px-1 text-xs text-muted">{tr('Versione', 'Version')} {cur}: «{current.text}». {tr('Scrivi un\'altra richiesta per continuare da qui.', 'Write another request to continue from here.')}</p>}
 
       {/* Suggerimenti: scrivono nel campo, poi si possono cambiare */}
       <div className="mt-3 flex flex-wrap gap-2 px-1">
@@ -210,7 +211,7 @@ export function PhotoChat({ original, scene, fileName, actions = [], className, 
 
       {/* Campo stile home: richiesta + bottoni nello stesso contenitore */}
       <div className="mt-3 flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
-        <textarea rows={2} value={text} onChange={e => setText(e.target.value)} placeholder={cur ? 'Cosa cambiamo ancora? Es. più moderno, pareti bianche' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
+        <textarea rows={2} value={text} onChange={e => setText(e.target.value)} placeholder={cur ? tr('Cosa cambiamo ancora? Es. più moderno, pareti bianche', 'What else should we change? E.g. more modern, white walls') : tr('Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo', 'What do you want to change? E.g. remove the sofa and add a dining table')}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
         {cur > 0 && !ai.busy && actions.map(a => (
@@ -219,9 +220,9 @@ export function PhotoChat({ original, scene, fileName, actions = [], className, 
             {a.primary && <Check size={14} strokeWidth={3} />} {a.label}
           </button>
         ))}
-        <button onClick={send} disabled={ai.busy || !text.trim()} aria-label="Invia"
+        <button onClick={send} disabled={ai.busy || !text.trim()} aria-label={tr('Invia', 'Send')}
           className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
-          {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {cur ? 'Continua' : 'Genera'}</>}
+          {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {cur ? tr('Continua', 'Continue') : tr('Genera', 'Generate')}</>}
         </button>
       </div>
       {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
@@ -230,7 +231,7 @@ export function PhotoChat({ original, scene, fileName, actions = [], className, 
 }
 
 // Pannello sopra la pagina con la modifica a chat. `actions` agiscono sulla versione corrente.
-export function PhotoEditModal({ src, title, subtitle = 'Scrivi cosa vuoi cambiare, poi continua a chiedere finché non ti piace.', initialText, actions, onClose }: {
+export function PhotoEditModal({ src, title, subtitle = tr('Scrivi cosa vuoi cambiare, poi continua a chiedere finché non ti piace.', 'Write what you want to change, then keep asking until you like it.'), initialText, actions, onClose }: {
   src: string; title: string; subtitle?: string; initialText?: string;
   actions: { label: string; primary?: boolean; onClick: (url: string) => void }[];
   onClose: () => void;
@@ -251,7 +252,7 @@ export function PhotoEditModal({ src, title, subtitle = 'Scrivi cosa vuoi cambia
             <h3 className="text-xl font-bold tracking-tight first-letter:uppercase">{title}</h3>
             <p className="mt-0.5 text-sm text-muted">{subtitle}</p>
           </div>
-          <button onClick={onClose} aria-label="Chiudi" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+          <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
         <PhotoChat className="mt-4" original={src} initialText={initialText} actions={actions} fileName={`${title.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'foto'}-ai.jpg`} />
       </div>

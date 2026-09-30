@@ -7,10 +7,13 @@ import { isBuy, type Buy } from '@/lib/startCheckout';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
 export { isBuy };
 import { PRICING, PACKS, photosFor, videosFor, type PackId } from '@/lib/pricing';
+import { tr, pageLang, pageLocale } from './i18n';
 
 export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
-const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-const date = (s: string | null) => (s ? new Date(s).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }) : '');
+const en = pageLang() === 'en';
+const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, en ? ',' : '.');
+const eur = (n: number) => (en ? `€${n}` : `${n} €`);
+const date = (s: string | null) => (s ? new Date(s).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long' }) : '');
 
 export function useCredits(): Credits | null {
   const [c, setC] = useState<Credits | null>(null);
@@ -34,19 +37,19 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   // mentre si caricano: un posto della stessa misura, cosi' arrivando non sposta gli altri pulsanti
   if (!c) return <span className="flex h-10 w-[136px] rounded-full bg-white ring-1 ring-line" aria-hidden />;
   const low = isLow(c);
-  const profile = <a href="#/profilo" data-tour="profilo" aria-label="Il mio profilo" title="Il mio profilo" className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
+  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
   if (c.plan === 'none' && !c.unlimited) return (
     <span className="blur-in flex items-center gap-2">
-      <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">Scegli un piano</a>
+      <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">{tr('Scegli un piano', 'Choose a plan')}</a>
       <span className="flex h-10 items-center rounded-full bg-white px-1 ring-1 ring-line">{profile}</span>
     </span>
   );
   return (
     <span className={`blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
-      <a href="#/piano" title={c.unlimited ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
+      <a href="#/piano" title={c.unlimited ? undefined : tr(`${fmt(c.balance)} crediti`, `${fmt(c.balance)} credits`)} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
         {/* numero e moneta, senza la parola "crediti" */}
-        {c.unlimited ? <><Coins size={15} className="text-ai" /> Illimitati</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
+        {c.unlimited ? <><Coins size={15} className="text-ai" /> {tr('Illimitati', 'Unlimited')}</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· {tr('Ricarica', 'Top up')}</span>}
       </a>
       <span className="mr-1 h-5 w-px bg-line" aria-hidden />
       {profile}
@@ -81,7 +84,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
     setBusy(p); setPortalError(null);
     const d = await checkout(p);
     setBusy('');
-    if (d?.error === 'payment_failed') setPortalError('Pagamento non riuscito: il piano non è cambiato. Controlla la carta in Gestisci abbonamento.');
+    if (d?.error === 'payment_failed') setPortalError(tr('Pagamento non riuscito: il piano non è cambiato. Controlla la carta in Gestisci abbonamento.', 'Payment failed: your plan has not changed. Check your card in Manage subscription.'));
     else if (d?.url?.includes('ok=1')) setChanging(false);
   };
   useEffect(() => {
@@ -92,42 +95,42 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [slug, setSlug] = useState<string | null>(null);
   useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSlug(d.slug ?? null)).catch(() => {}); }, []);
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
-  const billed = yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
+  const billed = yearly ? tr(`${PRICING.yearly * 12} € fatturati ogni anno`, `€${PRICING.yearly * 12} billed yearly`) : tr(`${PRICING.quarterly * 3} € fatturati ogni 3 mesi`, `€${PRICING.quarterly * 3} billed every 3 months`);
   // stesse card dei prezzi della landing
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Il tuo piano</h1>
-      {ok && <p className="mt-3 flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700"><Check size={15} /> Pagamento ricevuto: i crediti arrivano in pochi secondi.</p>}
-      {c?.unlimited && <p className="mt-4 text-sm text-muted">Account amministratore: crediti illimitati, niente da pagare.</p>}
+      <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il tuo piano', 'Your plan')}</h1>
+      {ok && <p className="mt-3 flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700"><Check size={15} /> {tr('Pagamento ricevuto: i crediti arrivano in pochi secondi.', 'Payment received: your credits will arrive in a few seconds.')}</p>}
+      {c?.unlimited && <p className="mt-4 text-sm text-muted">{tr('Account amministratore: crediti illimitati, niente da pagare.', 'Admin account: unlimited credits, nothing to pay.')}</p>}
       {c && c.plan !== 'none' && !c.unlimited && (
         <div className={`mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div>
             {/* con un piano attivo non si rivedono le card: cambio piano, disdetta, pagamento e fatture nel portale Stripe */}
-            <div className="text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
+            <div className="text-sm text-muted">{tr('Piano', 'Plan')} {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
             {portalError && <p className="text-sm text-rose-600">{portalError}</p>}
-            <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
-            <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
+            <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} {tr('crediti', 'credits')}</div>
+            <div className="text-sm text-muted">{tr(`circa ${photosFor(c.balance)} foto o ${videosFor(c.balance)} video · si ricaricano a ${fmt(c.monthly)} il ${date(c.renews)}`, `about ${photosFor(c.balance)} photos or ${videosFor(c.balance)} videos · back to ${fmt(c.monthly)} on ${date(c.renews)}`)}</div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setChanging(v => !v)} aria-expanded={changing}
-            className={`flex h-11 items-center rounded-full px-6 text-sm font-semibold ring-1 ease-smooth transition-colors ${changing ? 'bg-canvas ring-ink' : 'bg-white ring-black/10 hover:ring-ink'}`}>Cambia piano</button>
-          <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError('Portale non disponibile, riprova tra poco.'); } }}
-            className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}Gestisci abbonamento</button>
+            className={`flex h-11 items-center rounded-full px-6 text-sm font-semibold ring-1 ease-smooth transition-colors ${changing ? 'bg-canvas ring-ink' : 'bg-white ring-black/10 hover:ring-ink'}`}>{tr('Cambia piano', 'Change plan')}</button>
+          <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError(tr('Portale non disponibile, riprova tra poco.', 'Portal not available, try again shortly.')); } }}
+            className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}{tr('Gestisci abbonamento', 'Manage subscription')}</button>
           </div>
         </div>
       )}
       {c && c.plan !== 'none' && !c.unlimited && (
         <>
-          <h2 className="mt-8 font-semibold">Ti servono altri crediti?</h2>
-          <p className="mt-1 text-sm text-muted">I pacchetti si aggiungono al saldo e non scadono con il mese. Pagamento singolo.</p>
+          <h2 className="mt-8 font-semibold">{tr('Ti servono altri crediti?', 'Need more credits?')}</h2>
+          <p className="mt-1 text-sm text-muted">{tr('I pacchetti si aggiungono al saldo e non scadono con il mese. Pagamento singolo.', 'Packs are added to your balance and don’t expire at the end of the month. One-off payment.')}</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {PACKS.map(p => (
               <div key={p.id} className={`flex items-center justify-between gap-4 rounded-[24px] bg-white p-5 ${CARD_SHADOW}`}>
                 <div>
-                  <div className="font-display text-2xl font-extrabold tracking-tight">{fmt(p.credits)} crediti</div>
-                  <div className="text-sm text-muted">{photosFor(p.credits)} foto o {videosFor(p.credits)} video</div>
+                  <div className="font-display text-2xl font-extrabold tracking-tight">{fmt(p.credits)} {tr('crediti', 'credits')}</div>
+                  <div className="text-sm text-muted">{tr(`${photosFor(p.credits)} foto o ${videosFor(p.credits)} video`, `${photosFor(p.credits)} photos or ${videosFor(p.credits)} videos`)}</div>
                 </div>
-                <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {p.eur} €</button>
+                <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {eur(p.eur)}</button>
               </div>
             ))}
           </div>
@@ -135,45 +138,45 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
       )}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
       {c && (c.plan === 'none' || c.unlimited || changing) && (<>
-      <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? 'Cambia piano' : 'Scegli il piano'}</h2>
-      <p className="mt-1 text-sm text-muted">{changing ? 'Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.' : 'Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.'}</p>
+      <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? tr('Cambia piano', 'Change plan') : tr('Scegli il piano', 'Choose your plan')}</h2>
+      <p className="mt-1 text-sm text-muted">{changing ? tr('Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.', 'The new plan starts right away: you pay the difference for the current period now and your credits switch to the new plan.') : tr('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', 'Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.')}</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
-          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.starter} €</span><span className="pb-2 text-muted">/ mese</span></div>
-          <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
-          <Credits n={PRICING.starterCredits} />
+          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{eur(PRICING.starter)}</span><span className="pb-2 text-muted">{tr('/ mese', '/ month')}</span></div>
+          <div className="mt-1 text-sm text-muted">{tr('Mensile, disdici quando vuoi', 'Monthly, cancel anytime')}</div>
+          <Credits n={PRICING.starterCredits} en={en} />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy || (changing && c?.plan === 'starter')} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'starter' ? 'Il tuo piano' : 'Passa a Starter') : 'Scegli Starter'}</button>
+          <button type="button" disabled={!!busy || (changing && c?.plan === 'starter')} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'starter' ? tr('Il tuo piano', 'Your plan') : tr('Passa a Starter', 'Switch to Starter')) : tr('Scegli Starter', 'Choose Starter')}</button>
         </div>
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Plus</div>
-          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.plus} €</span><span className="pb-2 text-muted">/ mese</span></div>
-          <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
-          <Credits n={PRICING.plusCredits} />
-          <SiteIncluded slug={slug} />
+          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{eur(PRICING.plus)}</span><span className="pb-2 text-muted">{tr('/ mese', '/ month')}</span></div>
+          <div className="mt-1 text-sm text-muted">{tr('Mensile, disdici quando vuoi', 'Monthly, cancel anytime')}</div>
+          <Credits n={PRICING.plusCredits} en={en} />
+          <SiteIncluded slug={slug} en={en} />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy || (changing && c?.plan === 'plus')} onClick={() => go('plus')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'plus' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'plus' ? 'Il tuo piano' : 'Passa a Plus') : 'Scegli Plus'}</button>
+          <button type="button" disabled={!!busy || (changing && c?.plan === 'plus')} onClick={() => go('plus')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'plus' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'plus' ? tr('Il tuo piano', 'Your plan') : tr('Passa a Plus', 'Switch to Plus')) : tr('Scegli Plus', 'Choose Plus')}</button>
         </div>
         <div className="relative flex flex-col rounded-[32px] bg-white p-8 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)] ring-2 ring-ink">
-          <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
+          <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{tr('Consigliato', 'Recommended')}</span>
           <div className="flex h-10 items-center justify-between gap-3">
             <div className="text-sm font-semibold text-muted">Pro</div>
             <div className="flex rounded-full bg-canvas p-1">
-              {([[false, 'Trimestrale'], [true, 'Annuale']] as const).map(([y, l]) => (
+              {([[false, tr('Trimestrale', 'Quarterly')], [true, tr('Annuale', 'Yearly')]] as const).map(([y, l]) => (
                 <button key={l} type="button" onClick={() => setYearly(y)} className={`h-8 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${yearly === y ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
               ))}
             </div>
           </div>
-          <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{pro} €</span><span className="pb-2 text-muted">/ mese</span></div>
+          <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{eur(pro)}</span><span className="pb-2 text-muted">{tr('/ mese', '/ month')}</span></div>
           <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
-          <Credits n={PRICING.credits} />
-          <SiteIncluded slug={slug} />
+          <Credits n={PRICING.credits} en={en} />
+          <SiteIncluded slug={slug} en={en} />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'pro' ? 'Cambia fatturazione' : 'Passa a Pro') : 'Scegli Pro'}</button>
+          <button type="button" disabled={!!busy} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'pro' ? tr('Cambia fatturazione', 'Change billing') : tr('Passa a Pro', 'Switch to Pro')) : tr('Scegli Pro', 'Choose Pro')}</button>
         </div>
       </div>
-      <p className="mt-5 text-center text-xs text-muted">Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).</p>
+      <p className="mt-5 text-center text-xs text-muted">{tr('Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).', 'Secure payment with Stripe. We ask for your company name and VAT details for the invoice. Final prices, no VAT added (Italian flat-rate scheme).')}</p>
       </>)}
     </div>
   );
@@ -197,19 +200,19 @@ export function NoCreditsModal() {
       <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-2 shadow-2xl">
         <div className="relative overflow-hidden rounded-[24px]">
           <img src="/immo/home/demo-after.webp" alt="" className="aspect-[16/9] w-full object-cover" />
-          <span className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur"><Sparkles size={12} className="text-brand" /> Arredata con l’AI</span>
-          <button type="button" onClick={() => setOpen(false)} aria-label="Chiudi" className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur hover:bg-white"><X size={16} /></button>
+          <span className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur"><Sparkles size={12} className="text-brand" /> {tr('Arredata con l’AI', 'Furnished with AI')}</span>
+          <button type="button" onClick={() => setOpen(false)} aria-label={tr('Chiudi', 'Close')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur hover:bg-white"><X size={16} /></button>
         </div>
         <div className="px-5 pb-5 pt-5">
-          <h2 className="font-display text-2xl font-extrabold tracking-tight">Scegli un piano per iniziare</h2>
-          <p className="mt-1.5 text-sm text-muted">Da {PRICING.starter} € al mese, disdici quando vuoi.</p>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">{tr('Scegli un piano per iniziare', 'Choose a plan to get started')}</h2>
+          <p className="mt-1.5 text-sm text-muted">{tr(`Da ${PRICING.starter} € al mese, disdici quando vuoi.`, `From €${PRICING.starter} a month, cancel anytime.`)}</p>
           <ul className="mt-5 space-y-2.5 text-[15px]">
-            {['Foto arredate e svuotate in pochi secondi', 'Video per i social dalle tue foto', 'Il tuo sito con i tuoi immobili (Plus e Pro)'].map(t => (
+            {[tr('Foto arredate e svuotate in pochi secondi', 'Photos furnished or emptied in seconds'), tr('Video per i social dalle tue foto', 'Social videos from your photos'), tr('Il tuo sito con i tuoi immobili (Plus e Pro)', 'Your website with your properties (Plus and Pro)')].map(t => (
               <li key={t} className="flex items-center gap-3"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} strokeWidth={3} /></span>{t}</li>
             ))}
           </ul>
-          <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Vedi i piani</a>
-          <button type="button" onClick={() => setOpen(false)} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-muted hover:text-ink">Più tardi</button>
+          <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Vedi i piani', 'See plans')}</a>
+          <button type="button" onClick={() => setOpen(false)} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-muted hover:text-ink">{tr('Più tardi', 'Later')}</button>
         </div>
       </div>
     </div>
@@ -217,15 +220,15 @@ export function NoCreditsModal() {
   return (
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => setOpen(false)}>
       <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-7 text-center shadow-2xl">
-        <button type="button" onClick={() => setOpen(false)} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={16} /></button>
+        <button type="button" onClick={() => setOpen(false)} aria-label={tr('Chiudi', 'Close')} className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={16} /></button>
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ai/10 text-ai"><Sparkles size={20} /></span>
-        <h2 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{hasPlan ? 'Crediti finiti' : 'Ti servono crediti'}</h2>
-        <p className="mt-2 text-sm text-muted">{hasPlan ? `Si ricaricano il ${date(c!.renews)}. Se ti servono prima, un pacchetto si aggiunge subito al saldo e non scade.` : `Scegli un piano per arredare le foto, creare video e avere il tuo sito. Da ${PRICING.starter} € al mese.`}</p>
+        <h2 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{hasPlan ? tr('Crediti finiti', 'Out of credits') : tr('Ti servono crediti', 'You need credits')}</h2>
+        <p className="mt-2 text-sm text-muted">{hasPlan ? tr(`Si ricaricano il ${date(c!.renews)}. Se ti servono prima, un pacchetto si aggiunge subito al saldo e non scade.`, `They top up on ${date(c!.renews)}. Need them sooner? A pack is added to your balance right away and doesn’t expire.`) : tr(`Scegli un piano per arredare le foto, creare video e avere il tuo sito. Da ${PRICING.starter} € al mese.`, `Choose a plan to furnish photos, create videos and get your website. From €${PRICING.starter} a month.`)}</p>
         {hasPlan ? (
           <div className="mt-6 flex flex-col gap-2">
-            {PACKS.map(p => <button key={p.id} type="button" disabled={!!busy} onClick={() => { setBusy(p.id); void checkout(p.id).then(() => setBusy('')); }} className="flex h-11 items-center justify-between rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60"><span>{fmt(p.credits)} crediti</span><span>{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : `${p.eur} €`}</span></button>)}
+            {PACKS.map(p => <button key={p.id} type="button" disabled={!!busy} onClick={() => { setBusy(p.id); void checkout(p.id).then(() => setBusy('')); }} className="flex h-11 items-center justify-between rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60"><span>{fmt(p.credits)} {tr('crediti', 'credits')}</span><span>{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : eur(p.eur)}</span></button>)}
           </div>
-        ) : <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-sm font-semibold text-white">Vedi i piani</a>}
+        ) : <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-sm font-semibold text-white">{tr('Vedi i piani', 'See plans')}</a>}
       </div>
     </div>
   );
@@ -266,22 +269,22 @@ export function DemoDownload({ onDone }: { onDone?: () => void }) {
     ]);
     close();
   };
-  const what = demo.photo && demo.video ? 'foto e video' : demo.video ? 'il video' : 'la foto';
+  const what = demo.photo && demo.video ? tr('foto e video', 'photo and video') : demo.video ? tr('il video', 'the video') : tr('la foto', 'the photo');
   return (
     <div className="blur-in fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={busy ? undefined : close}>
       <div onClick={e => e.stopPropagation()} className="relative w-full max-w-lg rounded-[32px] bg-white p-7 text-center shadow-2xl">
-        <button type="button" onClick={close} disabled={busy} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={16} /></button>
-        <h2 className="font-display text-2xl font-extrabold tracking-tight">La tua prova è pronta</h2>
-        <p className="mt-2 text-sm text-muted">Ecco quello che hai creato sulla nostra pagina. Scaricalo e usalo per il tuo annuncio.</p>
+        <button type="button" onClick={close} disabled={busy} aria-label={tr('Chiudi', 'Close')} className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={16} /></button>
+        <h2 className="font-display text-2xl font-extrabold tracking-tight">{tr('La tua prova è pronta', 'Your trial is ready')}</h2>
+        <p className="mt-2 text-sm text-muted">{tr('Ecco quello che hai creato sulla nostra pagina. Scaricalo e usalo per il tuo annuncio.', 'Here is what you created on our page. Download it and use it for your listing.')}</p>
         <div className={`mt-5 grid gap-2 ${demo.photo && demo.video ? 'grid-cols-2' : ''}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {demo.photo && <img src={demo.photo} alt="Foto arredata" className="aspect-[4/3] w-full rounded-[20px] object-cover" />}
+          {demo.photo && <img src={demo.photo} alt={tr('Foto arredata', 'Furnished photo')} className="aspect-[4/3] w-full rounded-[20px] object-cover" />}
           {demo.video && <video src={demo.video} autoPlay muted loop playsInline className="aspect-[4/3] w-full rounded-[20px] bg-canvas object-cover" />}
         </div>
         <button type="button" disabled={busy} onClick={go} className="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white disabled:opacity-70">
-          {busy && <Loader2 size={16} className="animate-spin" />}{onDone ? `Conosci Immo e scarica ${what}` : `Scarica ${what}`}
+          {busy && <Loader2 size={16} className="animate-spin" />}{onDone ? tr(`Conosci Immo e scarica ${what}`, `Meet Immo and download ${what}`) : tr(`Scarica ${what}`, `Download ${what}`)}
         </button>
-        {!onDone && <p className="mt-5 text-sm text-muted">Per arredare le tue case, fare video e pubblicare il sito <a href="#/piano" onClick={close} className="font-medium text-ink underline underline-offset-4">scegli un piano</a>.</p>}
+        {!onDone && <p className="mt-5 text-sm text-muted">{tr('Per arredare le tue case, fare video e pubblicare il sito', 'To furnish your properties, make videos and publish your website,')} <a href="#/piano" onClick={close} className="font-medium text-ink underline underline-offset-4">{tr('scegli un piano', 'choose a plan')}</a>.</p>}
       </div>
     </div>
   );

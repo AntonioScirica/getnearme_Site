@@ -543,7 +543,7 @@ function CheckoutAgencyContent() {
       } catch (e) {
         console.error('seat checkout error:', e);
         setIsRedirecting(false);
-        setError('Errore nella creazione del pagamento. Riprova.');
+        setError(locale === 'en' ? "We couldn't start the payment. Please try again." : 'Errore nella creazione del pagamento. Riprova.');
       }
       return;
     }
@@ -551,7 +551,7 @@ function CheckoutAgencyContent() {
     const paymentLink = interval === 'annual' && plan.payment_link_annual
       ? plan.payment_link_annual
       : plan.payment_link_monthly;
-    if (!paymentLink) { setError('Piano non ancora disponibile per l\'acquisto.'); return; }
+    if (!paymentLink) { setError(locale === 'en' ? 'This plan is not available for purchase yet.' : 'Piano non ancora disponibile per l\'acquisto.'); return; }
     setIsRedirecting(true);
 
     const url = new URL(paymentLink);

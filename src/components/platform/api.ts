@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { tr, pageLocale } from './i18n';
 
 export async function authFetch(path: string, init: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
@@ -15,7 +16,7 @@ export async function authFetch(path: string, init: RequestInit = {}) {
 
 export const go = (path: string) => { window.location.hash = path; };
 
-export const formatPrice = (n: number) => (n ? `€ ${n.toLocaleString('it-IT')}` : 'Prezzo n.d.');
+export const formatPrice = (n: number) => (n ? `€ ${n.toLocaleString(pageLocale())}` : tr('Prezzo n.d.', 'Price n/a'));
 
 // Dominio vetrina (NEXT_PUBLIC_PORTFOLIO_HOST, es. agenteimmo.me); in locale senza env resta sul sito.
 const PORTFOLIO_HOST = process.env.NEXT_PUBLIC_PORTFOLIO_HOST;

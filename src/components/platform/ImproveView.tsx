@@ -7,6 +7,7 @@ import { authFetch, CARD_SHADOW, go } from './api';
 import CountUp from './CountUp';
 import { PhotoEditModal } from './AiPhoto';
 import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
+import { pageLang, tr, trf } from './i18n';
 
 // "Migliora annuncio": link di qualsiasi sito -> il nostro server legge l'annuncio (api/platform/read-listing) ->
 // scansione animata -> verdetto a regole, riscrittura a richiesta. Se non si riesce a leggere: testo incollato.
@@ -25,7 +26,7 @@ export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'manual' | 'erro
 
 // Qualsiasi sito di annunci: l'estensione legge la pagina in modo generico e Qwen ne estrae i dati.
 const LINK_RE = /^https:\/\/[^/\s]+\.[^/\s]+/i;
-export const SCAN_STEPS = ['Leggo i dati dell\'annuncio', 'Guardo le foto', 'Valuto titolo e descrizione', 'Cerco i dati mancanti', 'Riscrivo l\'annuncio'];
+export const SCAN_STEPS = [tr('Leggo i dati dell\'annuncio', 'Reading the listing details'), tr('Guardo le foto', 'Checking the photos'), tr('Valuto titolo e descrizione', 'Reviewing title and description'), tr('Cerco i dati mancanti', 'Looking for missing details'), tr('Riscrivo l\'annuncio', 'Rewriting the listing')];
 
 const text = (v: unknown) => (typeof v === 'string' ? v : '');
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -64,10 +65,10 @@ export function useImprove() {
     // pagina grezza accorciata: bastano l'inizio del testo e dei dati incorporati per leggere i campi
     const raw = l.raw as { text?: string; json?: string; meta?: unknown } | undefined;
     const slim = raw ? { text: raw.text?.slice(0, 20000), json: raw.json?.slice(0, 20000), meta: raw.meta } : undefined;
-    const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: { ...l, raw: slim } }) }).catch(() => null);
+    const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: { ...l, raw: slim }, lang: pageLang() }) }).catch(() => null);
     if (id !== run.current) return;
-    if (res?.status === 402) { window.dispatchEvent(new Event('agenteimmo:no-credits')); setError('Hai usato le 5 analisi gratuite. Scegli un piano per continuare.'); setStage('error'); return; }
-    if (!res?.ok) { setError('Analisi non riuscita, riprova.'); setStage('error'); return; }
+    if (res?.status === 402) { window.dispatchEvent(new Event('agenteimmo:no-credits')); setError(tr('Hai usato le 5 analisi gratuite. Scegli un piano per continuare.', 'You have used your 5 free analyses. Choose a plan to continue.')); setStage('error'); return; }
+    if (!res?.ok) { setError(tr('Analisi non riuscita, riprova.', 'Analysis failed, please try again.')); setStage('error'); return; }
     setAnalysis(cap(await res.json()));
     setStage('done');
   };
@@ -76,7 +77,7 @@ export function useImprove() {
     const id = ++run.current;
     const u = target.trim();
     setError(null); setAnalysis(null);
-    if (!LINK_RE.test(u)) { setError('Incolla il link completo dell\'annuncio (inizia con https://).'); setStage('error'); return; }
+    if (!LINK_RE.test(u)) { setError(tr('Incolla il link completo dell\'annuncio (inizia con https://).', 'Paste the full listing link (it starts with https://).')); setStage('error'); return; }
     setListing({ url: u, title: '', address: '', propertyInfo: {}, photos: [] });
     setStage('opening');
     if (AI_MOCK) { await wait(1500); if (id === run.current) analyze(MOCK_LISTING(u), id, true); return; }
@@ -91,8 +92,8 @@ export function useImprove() {
     }
     if (res?.ok && d) { analyze(d as unknown as Listing, id); return; }
     setError(d?.error === 'not_a_listing'
-      ? 'Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'
-      : 'Non sono riuscito a leggere l\'annuncio (pagina lenta, rimossa o bloccata). Riprova tra poco, oppure incolla il testo.');
+      ? tr('Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.', 'This page does not look like a property listing (no price or floor area found). Check the link.')
+      : tr('Non sono riuscito a leggere l\'annuncio (pagina lenta, rimossa o bloccata). Riprova tra poco, oppure incolla il testo.', 'I could not read the listing (slow, removed or blocked page). Try again shortly, or paste the text.'));
     setStage('error');
   };
 
@@ -118,18 +119,18 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
   const [pasted, setPasted] = useState('');
 
   if (stage === 'error') return (
-    <Center title="Qualcosa non è andato" body={error ?? 'Riprova tra poco.'}>
-      <button onClick={onRetry} className="btn-ink rounded-full px-5 py-2.5 text-sm font-semibold">Riprova</button>
-      <button onClick={onManual} className="btn-ghost rounded-full px-5 py-2.5 text-sm font-medium">Incolla il testo</button>
+    <Center title={tr('Qualcosa non è andato', 'Something went wrong')} body={error ?? tr('Riprova tra poco.', 'Try again shortly.')}>
+      <button onClick={onRetry} className="btn-ink rounded-full px-5 py-2.5 text-sm font-semibold">{tr('Riprova', 'Retry')}</button>
+      <button onClick={onManual} className="btn-ghost rounded-full px-5 py-2.5 text-sm font-medium">{tr('Incolla il testo', 'Paste the text')}</button>
     </Center>
   );
   if (stage === 'manual') return (
     <div className="blur-in flex h-full flex-col p-2">
-      <textarea autoFocus value={pasted} onChange={e => setPasted(e.target.value)} placeholder="Titolo, prezzo, caratteristiche e descrizione, copiati dalla pagina dell'annuncio..."
+      <textarea autoFocus value={pasted} onChange={e => setPasted(e.target.value)} placeholder={tr('Titolo, prezzo, caratteristiche e descrizione, copiati dalla pagina dell\'annuncio...', 'Title, price, features and description, copied from the listing page...')}
         className="min-h-0 w-full flex-1 resize-none rounded-2xl bg-canvas p-4 text-sm leading-relaxed outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
       <div className="mt-3 flex items-center justify-between gap-3">
-        <span className="text-xs text-muted">{url ? 'Il link resta collegato all\'analisi.' : ''}</span>
-        <button onClick={() => onText(pasted)} disabled={pasted.trim().length < 80} className="btn-ink rounded-full px-5 py-2.5 text-sm font-semibold">Analizza il testo</button>
+        <span className="text-xs text-muted">{url ? tr('Il link resta collegato all\'analisi.', 'The link stays attached to the analysis.') : ''}</span>
+        <button onClick={() => onText(pasted)} disabled={pasted.trim().length < 80} className="btn-ink rounded-full px-5 py-2.5 text-sm font-semibold">{tr('Analizza il testo', 'Analyse the text')}</button>
       </div>
     </div>
   );
@@ -189,11 +190,11 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="blur-in flex items-end justify-between gap-3" style={{ animationDelay: '.4s' }}>
           <div>
-            <div className="text-xs font-medium text-muted">Score dell&apos;annuncio attuale</div>
+            <div className="text-xs font-medium text-muted">{tr('Score dell\'annuncio attuale', 'Current listing score')}</div>
             <div className={`mt-1 text-5xl font-bold leading-none tracking-tight ${tone.text}`}><CountUp value={a.score} delay={400} duration={1200} /><span className="text-xl text-muted">/100</span>
-              {a.score_potenziale > a.score && <span className="ml-3 text-sm font-semibold tracking-normal text-emerald-600">→ {a.score_potenziale} sistemando tutto</span>}</div>
+              {a.score_potenziale > a.score && <span className="ml-3 text-sm font-semibold tracking-normal text-emerald-600">→ {a.score_potenziale} {tr('sistemando tutto', 'once everything is fixed')}</span>}</div>
           </div>
-          <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> Originale</a>
+          <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> {tr('Originale', 'Original')}</a>
         </div>
         <div className="blur-in relative mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.5s' }}>
           <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-emerald-500/25" style={{ width: `${a.score_potenziale}%` }} />
@@ -201,10 +202,10 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
         </div>
         <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.6s' }}>{a.sintesi}</p>
         <div className="stagger-chips mt-auto flex flex-wrap gap-1.5 pt-3 text-xs">
-          {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20">{urgent} da fare subito</span>}
-          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{a.problemi.length} punti da sistemare</span>
-          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{a.dati_mancanti.length} dati mancanti</span>
-          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{listing.photos.length} foto</span>
+          {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20">{urgent} {tr('da fare subito', 'to fix now')}</span>}
+          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{a.problemi.length} {tr('punti da sistemare', 'points to fix')}</span>
+          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{a.dati_mancanti.length} {tr('dati mancanti', 'missing details')}</span>
+          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{listing.photos.length} {tr('foto', 'photos')}</span>
         </div>
       </div>
     </div>
@@ -218,9 +219,9 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
 const BOX = `rounded-[28px] bg-white p-6 sm:p-7 ${CARD_SHADOW}`;
 
 const GRAVITA: Record<Problem['gravita'], { label: string; cls: string }> = {
-  alta: { label: 'Da fare subito', cls: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-700/20' },
-  media: { label: 'Consigliato', cls: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-700/20' },
-  bassa: { label: 'Rifinitura', cls: 'bg-canvas text-muted ring-1 ring-inset ring-black/10' },
+  alta: { label: tr('Da fare subito', 'Fix now'), cls: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-700/20' },
+  media: { label: tr('Consigliato', 'Recommended'), cls: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-700/20' },
+  bassa: { label: tr('Rifinitura', 'Polish'), cls: 'bg-canvas text-muted ring-1 ring-inset ring-black/10' },
 };
 
 export function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listing; analysis: Analysis; onSaved?: () => void; onRestart: () => void }) {
@@ -235,7 +236,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
     const res = await authFetch('/api/platform/rewrite', { method: 'POST', body: JSON.stringify({ url: listing.url, fields: { ...a.fields, titolo, descrizione } }) }).catch(() => null);
     const d = res ? await res.json().catch(() => null) : null;
     setRewriting(false);
-    if (!res?.ok || !d?.descrizione) { setRewriteError(d?.error === 'no_credits' ? 'Crediti finiti: scegli un piano per riscrivere l\'annuncio.' : 'Riscrittura non riuscita, riprova.'); return; }
+    if (!res?.ok || !d?.descrizione) { setRewriteError(d?.error === 'no_credits' ? tr('Crediti finiti: scegli un piano per riscrivere l\'annuncio.', 'Out of credits: choose a plan to rewrite the listing.') : tr('Riscrittura non riuscita, riprova.', 'Rewrite failed, please try again.')); return; }
     setTitolo(d.titolo); setDescrizione(d.descrizione); setRiscritto(true); setShowBefore(true);
   };
   const origTitle = text(a.fields?.titolo) || listing.title;
@@ -253,7 +254,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
       body: JSON.stringify({ titolo, descrizione, listing: { ...listing, raw: undefined }, score: a.score, suggerimenti: a.problemi.map(x => x.soluzione) }),
     }).catch(() => null);
     setSaving(false);
-    if (!res?.ok) { setSaveError('Salvataggio non riuscito, riprova.'); return; }
+    if (!res?.ok) { setSaveError(tr('Salvataggio non riuscito, riprova.', 'Save failed, please try again.')); return; }
     const { id } = await res.json();
     onSaved?.(); go(`/immobile/${id}`);
   };
@@ -267,25 +268,25 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-2xl font-bold leading-none tracking-tight">{riscritto ? 'Annuncio riscritto' : 'Il tuo annuncio'}</h2>
+              <h2 className="text-2xl font-bold leading-none tracking-tight">{riscritto ? tr('Annuncio riscritto', 'Rewritten listing') : tr('Il tuo annuncio', 'Your listing')}</h2>
               <ScoreInfo a={a} />
             </div>
-            <p className="mt-2 text-sm text-muted">{riscritto ? 'Pronto da incollare sul portale.' : 'Titolo e descrizione come sono ora. Falli riscrivere dall\'AI, poi ritocca quello che vuoi.'}</p>
+            <p className="mt-2 text-sm text-muted">{riscritto ? tr('Pronto da incollare sul portale.', 'Ready to paste on the portal.') : tr('Titolo e descrizione come sono ora. Falli riscrivere dall\'AI, poi ritocca quello che vuoi.', 'Title and description as they are now. Have the AI rewrite them, then tweak anything you like.')}</p>
             {rewriteError && <p className="mt-2 text-sm text-rose-600">{rewriteError}</p>}
           </div>
           {riscritto
-            ? <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
-            : <button onClick={rewrite} disabled={rewriting} className="btn-ink flex shrink-0 items-center gap-2 self-start rounded-full px-5 py-2.5 text-sm font-semibold">{rewriting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {rewriting ? 'Riscrivo...' : 'Riscrivi con l\'AI'}</button>}
+            ? <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? tr('Nascondi originale', 'Hide original') : tr('Confronta con originale', 'Compare with original')}</button>
+            : <button onClick={rewrite} disabled={rewriting} className="btn-ink flex shrink-0 items-center gap-2 self-start rounded-full px-5 py-2.5 text-sm font-semibold">{rewriting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {rewriting ? tr('Riscrivo...', 'Rewriting...') : tr('Riscrivi con l\'AI', 'Rewrite with AI')}</button>}
         </div>
 
-        <Field label="Titolo" meta={`${titolo.length}/60`} warn={titolo.length > 60}>
+        <Field label={tr('Titolo', 'Title')} meta={`${titolo.length}/60`} warn={titolo.length > 60}>
           {showBefore && <Before text={origTitle} />}
           <div className="relative">
             <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-12 text-base font-medium`} />
             <CopyIcon text={titolo} center />
           </div>
         </Field>
-        <Field label="Descrizione" meta={`${words} parole`}>
+        <Field label={tr('Descrizione', 'Description')} meta={`${words} ${tr('parole', 'words')}`}>
           <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
             {showBefore && <Before text={origDescr} tall />}
             <div className="relative">
@@ -298,8 +299,8 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
 
       {/* Cosa sistemare */}
       <section className="rise pt-6" style={{ animationDelay: '1.3s' }}>
-        <h2 className="text-center text-3xl font-bold tracking-tight">Cosa sistemare sul portale</h2>
-        <p className="mt-1 text-center text-muted">In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
+        <h2 className="text-center text-3xl font-bold tracking-tight">{tr('Cosa sistemare sul portale', 'What to fix on the portal')}</h2>
+        <p className="mt-1 text-center text-muted">{tr('In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.', 'In order of priority: what is wrong, why it costs you leads, what to do now.')}</p>
         {/* auto-rows-fr: tutte le card alte uguali; la modifica foto si apre in un pannello sopra, non allunga la card */}
         <ol className="mt-8 grid auto-rows-fr gap-5 lg:grid-cols-2">
           {a.problemi.map((p, i) => <ProblemCard key={i} p={p} i={i} photos={listing.photos} />)}
@@ -307,26 +308,26 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
       </section>
 
       <div className="space-y-5 pt-2">
-        <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare.">
-          {a.dati_mancanti.length ? <Checklist items={a.dati_mancanti} /> : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
+        <Section title={tr('Dati da aggiungere', 'Details to add')} hint={tr('I compratori li cercano prima di chiamare.', 'Buyers look for them before calling.')}>
+          {a.dati_mancanti.length ? <Checklist items={a.dati_mancanti} /> : <li className="text-sm text-muted">{tr('Nessuno, i dati principali ci sono.', 'None, the key details are there.')}</li>}
         </Section>
-        {a.foto_consigli.length > 0 && <Section limit={3} title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
+        {a.foto_consigli.length > 0 && <Section limit={3} title={tr('Foto: cosa rifare', 'Photos: what to redo')} hint={tr(`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`, `First ${Math.min(3, listing.photos.length)} photos reviewed.`)}>
           {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />{f}</li>)}
         </Section>}
         {a.punti_forza.length > 0 && 
-<Section limit={3} title="Cosa funziona già" hint="Da tenere anche nella nuova versione.">
+<Section limit={3} title={tr('Cosa funziona già', 'What already works')} hint={tr('Da tenere anche nella nuova versione.', 'Keep it in the new version too.')}>
           {a.punti_forza.map(f => <li key={f} className="flex gap-2 text-sm text-muted"><Check size={15} className="mt-0.5 shrink-0 text-emerald-600" />{f}</li>)}
         </Section>}
       </div>
 
       {/* CTA finale: salva titolo e descrizione (anche ritoccati), foto e dati letti dall'estensione */}
       <section className={`flex flex-col items-center gap-4 text-center ${BOX} sm:p-10`}>
-        <h2 className="text-2xl font-bold tracking-tight">Salvalo nei tuoi immobili</h2>
-        <p className="max-w-md text-sm text-muted">Tieni la versione riscritta, le {listing.photos.length} foto e tutti i dati dell&apos;annuncio, pronti per il tuo portfolio.</p>
+        <h2 className="text-2xl font-bold tracking-tight">{tr('Salvalo nei tuoi immobili', 'Save it to your properties')}</h2>
+        <p className="max-w-md text-sm text-muted">{tr(`Tieni la versione riscritta, le ${listing.photos.length} foto e tutti i dati dell'annuncio, pronti per il tuo portfolio.`, `Keep the rewritten version, the ${listing.photos.length} photos and all the listing details, ready for your portfolio.`)}</p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-          <button onClick={onRestart} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Analizza un altro annuncio</button>
+          <button onClick={onRestart} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">{tr('Analizza un altro annuncio', 'Analyse another listing')}</button>
           <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">
-            {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Salva nei miei immobili'}
+            {saving && <Loader2 size={16} className="animate-spin" />} {saving ? tr(`Salvo ${listing.photos.length} foto...`, `Saving ${listing.photos.length} photos...`) : tr('Salva nei miei immobili', 'Save to my properties')}
           </button>
         </div>
         {saveError && <p className="text-sm text-rose-600">{saveError}</p>}
@@ -351,29 +352,29 @@ function ScoreInfo({ a }: { a: Analysis }) {
   return (
     // translate-y 2px: centro ottico, il titolo e' quasi tutto minuscolo e il suo centro cade sotto quello delle maiuscole
     <div ref={box} className="relative translate-y-[2px]">
-      <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open} title="Come calcoliamo il punteggio"
+      <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open} title={tr('Come calcoliamo il punteggio', 'How we calculate the score')}
         className="flex h-7 items-center gap-1.5 rounded-full bg-emerald-50 pl-2.5 pr-1 text-sm font-semibold leading-none text-emerald-700 outline-none ring-1 ring-inset ring-emerald-700/20 ease-smooth transition-colors hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-300">
         {a.score_potenziale}/100
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">i</span>
       </button>
       {open && (
         <div className="blur-in absolute left-0 top-full z-50 mt-2 w-[min(26rem,calc(100vw-3rem))] rounded-3xl bg-white p-5 text-left shadow-[0_2px_6px_rgba(0,0,0,.05),0_24px_48px_-16px_rgba(0,0,0,.22)] ring-1 ring-black/5">
-          <div className="text-base font-bold tracking-tight">{gap > 0 ? `Perché ${a.score_potenziale} e non 100` : 'Punteggio pieno'}</div>
-          <p className="mt-1 text-xs text-muted">Cinque criteri, 100 punti. Ora {a.score}, con le correzioni {a.score_potenziale}.{gap > 0 ? ' Quello che manca non si risolve modificando l\'annuncio:' : ''}</p>
+          <div className="text-base font-bold tracking-tight">{gap > 0 ? tr(`Perché ${a.score_potenziale} e non 100`, `Why ${a.score_potenziale} and not 100`) : tr('Punteggio pieno', 'Full score')}</div>
+          <p className="mt-1 text-xs text-muted">{tr(`Cinque criteri, 100 punti. Ora ${a.score}, con le correzioni ${a.score_potenziale}.`, `Five criteria, 100 points. Now ${a.score}, with the fixes ${a.score_potenziale}.`)}{gap > 0 ? tr(' Quello che manca non si risolve modificando l\'annuncio:', ' The rest cannot be fixed by editing the listing:') : ''}</p>
           <ul className="mt-4 space-y-3.5">
             {CRITERI.map(c => {
               const x = a.criteri[c.key];
               return (
                 <li key={c.key}>
                   <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className="font-semibold">{c.label}</span>
+                    <span className="font-semibold">{trf(c.label)}</span>
                     <span className="shrink-0 tabular-nums text-muted">{x.punti}{x.punti_dopo > x.punti && <span className="font-semibold text-emerald-600"> → {x.punti_dopo}</span>}/{c.max}</span>
                   </div>
                   <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-canvas">
                     <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/30" style={{ width: `${(x.punti_dopo / c.max) * 100}%` }} />
                     <div className="absolute inset-y-0 left-0 rounded-full bg-ink" style={{ width: `${(x.punti / c.max) * 100}%` }} />
                   </div>
-                  <p className="mt-1 text-xs text-muted">{x.punti_dopo < c.max ? (x.limite || x.nota) : 'Pieno con le correzioni.'}</p>
+                  <p className="mt-1 text-xs text-muted">{x.punti_dopo < c.max ? (x.limite || x.nota) : tr('Pieno con le correzioni.', 'Full marks with the fixes.')}</p>
                 </li>
               );
             })}
@@ -404,7 +405,7 @@ function Checklist({ items }: { items: string[] }) {
           </li>
         );
       })}
-      <li className="pt-2 text-xs text-muted">{done.size === items.length ? 'Tutto aggiunto.' : `${done.size} di ${items.length} aggiunti`}</li>
+      <li className="pt-2 text-xs text-muted">{done.size === items.length ? tr('Tutto aggiunto.', 'All added.') : tr(`${done.size} di ${items.length} aggiunti`, `${done.size} of ${items.length} added`)}</li>
     </>
   );
 }
@@ -429,12 +430,12 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
         <span className={`rounded-full px-3 py-1 text-xs font-medium ${g.cls}`}>{g.label}</span>
         {edit && (fixed ? (
-          <button onClick={() => setFix(true)} title="Riapri la modifica" className="blur-in ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/20">
-            <Check size={14} strokeWidth={3} /> Foto sistemata
+          <button onClick={() => setFix(true)} title={tr('Riapri la modifica', 'Reopen the edit')} className="blur-in ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/20">
+            <Check size={14} strokeWidth={3} /> {tr('Foto sistemata', 'Photo fixed')}
           </button>
         ) : (
           <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
-            <Wand2 size={14} /> Sistema con AI
+            <Wand2 size={14} /> {tr('Sistema con AI', 'Fix with AI')}
           </button>
         ))}
       </div>
@@ -445,14 +446,14 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
           <img key={fixed ?? src} src={fixed ?? src} alt="" className="blur-in h-12 w-16 shrink-0 rounded-xl object-cover" />
           <div className="min-w-0 text-xs text-muted">
             <div className="font-medium text-ink first-letter:uppercase">{roomLabel(p)}</div>
-            {fixed ? 'Sistemata con l\'AI, pronta da ricaricare sul portale.' : edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}
+            {fixed ? tr('Sistemata con l\'AI, pronta da ricaricare sul portale.', 'Fixed with AI, ready to upload to the portal again.') : edit ? tr('Si può sistemare con l\'AI, senza rifarla.', 'It can be fixed with AI, no need to reshoot.') : tr('Va rifatta o sostituita: l\'AI non basta.', 'It needs to be reshot or replaced: AI is not enough.')}
           </div>
           {!edit && <Camera size={16} className="ml-auto shrink-0 text-muted" />}
         </div>
       )}
       <div className="mt-auto pt-4">
         <div className="rounded-2xl bg-canvas p-4">
-          <div className="text-xs font-semibold text-ink">Come sistemarlo</div>
+          <div className="text-xs font-semibold text-ink">{tr('Come sistemarlo', 'How to fix it')}</div>
           <p className="mt-1 text-sm leading-relaxed text-ink/80">{p.soluzione}</p>
         </div>
       </div>
@@ -464,7 +465,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
 // Modifica foto con l'AI (GPT Image) in un pannello sopra la pagina: prima/dopo e download.
 function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: string; edit: string; onDone: (url: string) => void; onClose: () => void }) {
   return <PhotoEditModal src={src} title={label} initialText={edit} onClose={onClose}
-    actions={[{ label: 'Finito', primary: true, onClick: url => { onDone(url); onClose(); } }]} />;
+    actions={[{ label: tr('Finito', 'Done'), primary: true, onClick: url => { onDone(url); onClose(); } }]} />;
 }
 
 function Section({ title, hint, children, limit }: { title: string; hint?: string; children: React.ReactNode; limit?: number }) {
@@ -480,7 +481,7 @@ function Section({ title, hint, children, limit }: { title: string; hint?: strin
         </div>
       </div>
       <ul className="mt-4 space-y-2.5">{hidden > 0 ? items.slice(0, limit) : items}</ul>
-      {hidden > 0 && <button onClick={() => setAll(true)} className="mt-3 text-sm font-medium text-brand hover:underline">Leggi di più ({hidden})</button>}
+      {hidden > 0 && <button onClick={() => setAll(true)} className="mt-3 text-sm font-medium text-brand hover:underline">{tr('Leggi di più', 'Read more')} ({hidden})</button>}
     </section>
   );
 }
@@ -489,7 +490,7 @@ function Section({ title, hint, children, limit }: { title: string; hint?: strin
 export function CopyIcon({ text: t, center }: { text: string; center?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button type="button" aria-label="Copia" title="Copia" onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+    <button type="button" aria-label={tr('Copia', 'Copy')} title={tr('Copia', 'Copy')} onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
       className={`absolute right-2.5 flex h-7 w-7 ${center ? 'top-1/2 -translate-y-1/2' : 'top-2.5'} items-center justify-center rounded-full bg-white text-muted shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:text-ink`}>
       {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
     </button>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { tr } from '@/components/platform/i18n';
 
 // Mappa di un indirizzo, sempre Leaflet (gratis, niente chiavi): mappa grigia Esri senza negozi e locali,
 // indirizzo cercato su Nominatim (con 700 ms di attesa mentre si scrive, per non chiamarlo a ogni lettera).
@@ -10,7 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 // Terzo pulsante sotto + e -: rimette la mappa inquadrata come all'inizio (stesso stile dei due sopra)
 export function addFitButton(bar: HTMLElement, onFit: () => void) {
   const a = document.createElement('a');
-  a.href = '#'; a.title = 'Centra'; a.setAttribute('role', 'button'); a.setAttribute('aria-label', 'Centra la mappa');
+  a.href = '#'; a.title = tr('Centra', 'Recenter'); a.setAttribute('role', 'button'); a.setAttribute('aria-label', tr('Centra la mappa', 'Recenter the map'));
   a.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="2.5"/></svg>';
   Object.assign(a.style, { width: '36px', height: '36px', lineHeight: '36px', color: '#111', border: '0', borderTop: '1px solid #eee', display: 'block', textAlign: 'center' });
   a.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); onFit(); });
@@ -40,7 +41,7 @@ export default function LeafletMap({ addr, className = '', circle, color = '#256
       const esri = (l: string) => `/api/site/tiles/${l.toLowerCase()}/{z}/{y}/{x}`;
       L.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
       L.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
-      L.control.zoom({ position: 'bottomleft', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
+      L.control.zoom({ position: 'bottomleft', zoomInTitle: tr('Avvicina', 'Zoom in'), zoomOutTitle: tr('Allontana', 'Zoom out') }).addTo(m);
       // stile come nella pagina Immobili (il CSS di Leaflet, caricato dopo, vincerebbe sulle classi)
       const bar = m.getContainer().querySelector<HTMLElement>('.leaflet-control-zoom')!;
       Object.assign(bar.style, { border: '0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,.12)' });

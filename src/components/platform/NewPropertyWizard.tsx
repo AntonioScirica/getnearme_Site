@@ -16,6 +16,7 @@ import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, t
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { CopyIcon } from './ImproveView';
 import CountUp from './CountUp';
+import { pageLocale, tr, trf } from './i18n';
 
 // "Mettilo sul tuo sito": hai appena preso un immobile, AgenteImmo lo mette sul tuo sito (che si
 // costruisce da solo, casa dopo casa) e ti prepara tutto per il portale.
@@ -33,7 +34,7 @@ const DRAFT_KEY = 'gnm_new_property_draft';
 const F = Object.fromEntries(ALL_FIELDS.map(f => [f.key, f])) as Record<string, Field>;
 const readFile = (f: File) => new Promise<string>((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(f); });
 const uid = () => Math.random().toString(36).slice(2, 10);
-const euro = (n: number) => `€ ${n.toLocaleString('it-IT')}`;
+const euro = (n: number) => `€ ${n.toLocaleString(pageLocale())}`;
 
 // Icone per le opzioni che meritano una card (le altre restano chip).
 const ICONS: Record<string, Record<string, Icon>> = {
@@ -52,16 +53,16 @@ const ICONS: Record<string, Record<string, Icon>> = {
 // Le schede: un tema ciascuna. `keys` = campi coinvolti (per completezza e "salta").
 type Step = { id: string; title: string; sub: string; keys: string[]; optional?: boolean };
 const STEPS: Step[] = [
-  { id: 'tipo', title: 'Cosa stai proponendo?', sub: 'Contratto e tipologia.', keys: ['contratto', 'tipologia'] },
-  { id: 'dove', title: 'Dove si trova?', sub: 'Via e città. Puoi nascondere il numero civico nell\'annuncio.', keys: ['indirizzo', 'mostra_indirizzo'] },
-  { id: 'numeri', title: 'I numeri', sub: 'Prezzo, superficie e ambienti.', keys: ['prezzo', 'trattativa_riservata', 'superficie', 'locali', 'camere', 'bagni'] },
-  { id: 'edificio', title: 'Piano e stato', sub: 'Come si presenta la casa.', keys: ['piano', 'piani_edificio', 'ascensore', 'stato', 'anno'], optional: true },
-  { id: 'energia', title: 'Energia e impianti', sub: 'La classe energetica è obbligatoria negli annunci.', keys: ['classe_energetica', 'ipe', 'riscaldamento', 'alimentazione', 'emissione', 'climatizzazione', 'infissi', 'materiale_infissi'], optional: true },
-  { id: 'interni', title: 'Gli interni', sub: 'I dettagli che rendono viva la descrizione.', keys: ['cucina', 'arredato', 'esposizione', 'dotazioni'], optional: true },
-  { id: 'esterni', title: 'Spazi esterni e auto', sub: 'Tra le ricerche più usate dai compratori.', keys: ['esterni', 'superficie_esterna', 'posto_auto', 'cantina'], optional: true },
-  { id: 'costi', title: 'Costi e disponibilità', sub: 'Le prime domande che fanno al telefono.', keys: ['spese_condominiali', 'portineria', 'accesso_disabili', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
-  { id: 'note', title: 'Codice e tour virtuale', sub: 'Il codice di riferimento è quello del tuo gestionale: serve a ritrovare l\'immobile e ad aggiornarlo quando reimporti il file.', keys: ['riferimento', 'virtual_tour'], optional: true },
-  { id: 'foto', title: 'Le foto', sub: 'Carica le foto e riordinale trascinandole: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', keys: [] },
+  { id: 'tipo', title: tr('Cosa stai proponendo?', 'What are you offering?'), sub: tr('Contratto e tipologia.', 'Contract and property type.'), keys: ['contratto', 'tipologia'] },
+  { id: 'dove', title: tr('Dove si trova?', 'Where is it?'), sub: tr('Via e città. Puoi nascondere il numero civico nell\'annuncio.', 'Street and city. You can hide the house number in the listing.'), keys: ['indirizzo', 'mostra_indirizzo'] },
+  { id: 'numeri', title: tr('I numeri', 'The numbers'), sub: tr('Prezzo, superficie e ambienti.', 'Price, floor area and rooms.'), keys: ['prezzo', 'trattativa_riservata', 'superficie', 'locali', 'camere', 'bagni'] },
+  { id: 'edificio', title: tr('Piano e stato', 'Floor and condition'), sub: tr('Come si presenta la casa.', 'What shape the property is in.'), keys: ['piano', 'piani_edificio', 'ascensore', 'stato', 'anno'], optional: true },
+  { id: 'energia', title: tr('Energia e impianti', 'Energy and systems'), sub: tr('La classe energetica è obbligatoria negli annunci.', 'The energy class is required in listings.'), keys: ['classe_energetica', 'ipe', 'riscaldamento', 'alimentazione', 'emissione', 'climatizzazione', 'infissi', 'materiale_infissi'], optional: true },
+  { id: 'interni', title: tr('Gli interni', 'The interior'), sub: tr('I dettagli che rendono viva la descrizione.', 'The details that bring the description to life.'), keys: ['cucina', 'arredato', 'esposizione', 'dotazioni'], optional: true },
+  { id: 'esterni', title: tr('Spazi esterni e auto', 'Outdoor space and parking'), sub: tr('Tra le ricerche più usate dai compratori.', 'Among the searches buyers use most.'), keys: ['esterni', 'superficie_esterna', 'posto_auto', 'cantina'], optional: true },
+  { id: 'costi', title: tr('Costi e disponibilità', 'Costs and availability'), sub: tr('Le prime domande che fanno al telefono.', 'The first questions people ask on the phone.'), keys: ['spese_condominiali', 'portineria', 'accesso_disabili', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
+  { id: 'note', title: tr('Codice e tour virtuale', 'Reference and virtual tour'), sub: tr('Il codice di riferimento è quello del tuo gestionale: serve a ritrovare l\'immobile e ad aggiornarlo quando reimporti il file.', 'The reference code is the one from your CRM: it helps find the property and update it when you re-import the file.'), keys: ['riferimento', 'virtual_tour'], optional: true },
+  { id: 'foto', title: tr('Le foto', 'The photos'), sub: tr('Carica le foto e riordinale trascinandole: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', 'Upload the photos and drag to reorder them: the first one is the cover. You can enhance them with AI later, whenever you like.'), keys: [] },
 ];
 
 const filled = (v: Details[string]) => v !== undefined && v !== '' && v !== false && !(Array.isArray(v) && !v.length);
@@ -146,23 +147,23 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
   const generate = async (auto?: boolean) => {
     const distanze = auto ?? d.distanze_auto !== false;
-    setDir(1); setStep(STEPS.length); setBusy('Scrivo titolo e descrizione...'); setError(null);
+    setDir(1); setStep(STEPS.length); setBusy(tr('Scrivo titolo e descrizione...', 'Writing title and description...')); setError(null);
     try {
       // distanze automatiche: se la ricerca dei servizi non e' ancora arrivata, la si fa ora
       let zona = Array.isArray(d.zona) ? d.zona : [];
       if (distanze && !zona.length && addr.length >= 9) {
-        setBusy('Cerco i servizi vicini...');
+        setBusy(tr('Cerco i servizi vicini...', 'Looking for nearby services...'));
         const z = await authFetch(`/api/platform/zone?address=${encodeURIComponent(addr)}`).then(r => (r.ok ? r.json() : null)).catch(() => null);
         zona = (z?.pois ?? []).map((p: { categoria: string; nome: string; distanza: number }) => `${p.categoria}${p.nome !== p.categoria ? ` ${p.nome}` : ''} a ${p.distanza >= 1000 ? `${(p.distanza / 1000).toFixed(1)} km` : `${p.distanza} m`}`);
         if (zona.length) setD(prev => ({ ...prev, zona }));
-        setBusy('Scrivo titolo e descrizione...');
+        setBusy(tr('Scrivo titolo e descrizione...', 'Writing title and description...'));
       }
       // tutti i dati compilati, con etichetta e valore leggibili (es. "Classe energetica: G", "Spese condominiali: 120 €/mese")
       const dati = ALL_FIELDS.filter(f => visible(f, d)).map(f => { const v = formatValue(f, d[f.key]); return v ? `${f.label}: ${v}` : null; }).filter(Boolean);
       const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { dati, ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
       if (!res.ok) throw new Error();
       setAi(await res.json());
-    } catch { setError('Generazione non riuscita. Riprova.'); } finally { setBusy(null); }
+    } catch { setError(tr('Generazione non riuscita. Riprova.', 'Generation failed. Please try again.')); } finally { setBusy(null); }
   };
 
   const [saving, setSaving] = useState<{ n: number; total: number; label: string } | null>(null);
@@ -171,14 +172,14 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     setError(null);
     // avanzamento reale: una tacca per foto caricata, poi planimetria/copertina e salvataggio
     const total = photos.length + 2;
-    setSaving({ n: 0, total, label: 'Preparo il salvataggio' });
+    setSaving({ n: 0, total, label: tr('Preparo il salvataggio', 'Preparing to save') });
     try {
       const urls: string[] = [];
-      for (const [i, p] of photos.entries()) { setSaving({ n: i, total, label: `Carico la foto ${i + 1} di ${photos.length}` }); const u = p.url ?? await uploadDataUrl(p.dataUrl, 'properties'); if (u) urls.push(u); }
-      setSaving({ n: photos.length, total, label: plan ? 'Carico la planimetria' : 'Preparo la copertina' });
+      for (const [i, p] of photos.entries()) { setSaving({ n: i, total, label: tr(`Carico la foto ${i + 1} di ${photos.length}`, `Uploading photo ${i + 1} of ${photos.length}`) }); const u = p.url ?? await uploadDataUrl(p.dataUrl, 'properties'); if (u) urls.push(u); }
+      setSaving({ n: photos.length, total, label: plan ? tr('Carico la planimetria', 'Uploading the floor plan') : tr('Preparo la copertina', 'Preparing the cover') });
       const planUrl = plan ? await uploadDataUrl(plan, 'properties') : '';
       const thumb = photos[0] ? (photos[0].url ?? await uploadDataUrl(await downscaleDataUrl(photos[0].dataUrl, 100, 0.8), 'covers')) : '';
-      setSaving({ n: photos.length + 1, total, label: publish ? 'Salvo e pubblico sul tuo sito' : 'Salvo l’immobile' });
+      setSaving({ n: photos.length + 1, total, label: publish ? tr('Salvo e pubblico sul tuo sito', 'Saving and publishing to your site') : tr('Salvo l’immobile', 'Saving the property') });
       const project = await createProject({
         nome: ai.titolo, titolo: ai.titolo, descrizione: ai.descrizione, addr: String(d.indirizzo ?? ''), tipologia: String(d.tipologia ?? ''),
         prezzo: Number(d.prezzo) || 0, mq: Number(d.superficie) || 0, locali: Number(d.locali) || undefined, camere: Number(d.camere) || 0, bagni: Number(d.bagni) || 0,
@@ -188,13 +189,13 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       if (!project) throw new Error();
       if (publish) await setPublic(project.id, true);
       localStorage.removeItem(DRAFT_KEY);
-      setSaving({ n: total, total, label: 'Fatto' });
+      setSaving({ n: total, total, label: tr('Fatto', 'Done') });
       onCreated(project);
-    } catch { setError('Salvataggio non riuscito. Riprova.'); } finally { setBusy(null); setSaving(null); }
+    } catch { setError(tr('Salvataggio non riuscito. Riprova.', 'Save failed. Please try again.')); } finally { setBusy(null); setSaving(null); }
   };
 
   // Riassunto vivo in testa: la scheda che prende forma.
-  const summary = [d.tipologia, d.locali ? `${d.locali} locali` : null, d.superficie ? `${d.superficie} m²` : null, d.indirizzo ? String(d.indirizzo).split(',').slice(-1)[0].trim() : null, d.trattativa_riservata ? 'Trattativa riservata' : d.prezzo ? euro(Number(d.prezzo)) + (d.contratto === 'Affitto' ? '/mese' : '') : null].filter(Boolean).join(' · ');
+  const summary = [d.tipologia, d.locali ? `${d.locali} ${tr('locali', 'rooms')}` : null, d.superficie ? `${d.superficie} m²` : null, d.indirizzo ? String(d.indirizzo).split(',').slice(-1)[0].trim() : null, d.trattativa_riservata ? tr('Trattativa riservata', 'Price on request') : d.prezzo ? euro(Number(d.prezzo)) + (d.contratto === 'Affitto' ? tr('/mese', '/month') : '') : null].filter(Boolean).join(' · ');
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -204,7 +205,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           <div className="w-full max-w-sm rounded-[32px] bg-white p-6 shadow-2xl">
             <div className="flex items-center gap-4">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-canvas">{photos[0] && <img src={srcOf(photos[0])} alt="" className="h-full w-full object-cover" />}</div>
-              <div className="min-w-0"><div className="truncate font-semibold">{ai?.titolo || 'Il tuo immobile'}</div><div className="text-sm text-muted">{saving.label}</div></div>
+              <div className="min-w-0"><div className="truncate font-semibold">{ai?.titolo || tr('Il tuo immobile', 'Your property')}</div><div className="text-sm text-muted">{saving.label}</div></div>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-canvas">
               <div className="h-full rounded-full bg-brand ease-smooth transition-[width]" style={{ width: `${Math.round((saving.n / saving.total) * 100)}%` }} />
@@ -217,16 +218,16 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Testa: copertina + riassunto + progresso */}
       <div className="flex items-center gap-4">
         {/* freccia = passo precedente (dal primo passo torna alla home) */}
-        <button type="button" onClick={() => { if (done && ai) setBack(true); if (step > 0) go(Math.min(step, STEPS.length) - 1); else location.hash = '#/'; }} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? 'Passo precedente' : 'Home'}><ArrowLeft size={18} /></button>
+        <button type="button" onClick={() => { if (done && ai) setBack(true); if (step > 0) go(Math.min(step, STEPS.length) - 1); else location.hash = '#/'; }} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? tr('Passo precedente', 'Previous step') : 'Home'}><ArrowLeft size={18} /></button>
         <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-canvas ring-1 ring-line">
           {photos[0] ? <img key={srcOf(photos[0])} src={srcOf(photos[0])} alt="" className="blur-in h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted"><ImagePlus size={16} /></div>}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display text-lg font-semibold">{summary || 'Nuovo immobile nella tua vetrina'}</div>
-          <div className="text-xs text-muted">{done ? 'Pronto' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza <CountUp value={comp.score} duration={400} />%
-            <span className={`ml-2 inline-flex items-center gap-1 text-emerald-600 ease-smooth transition-opacity ${savedShown ? 'opacity-100' : 'opacity-0'}`}><Check size={11} strokeWidth={3} /> Bozza salvata</span></div>
+          <div className="truncate font-display text-lg font-semibold">{summary || tr('Nuovo immobile nella tua vetrina', 'New property in your showcase')}</div>
+          <div className="text-xs text-muted">{done ? tr('Pronto', 'Ready') : tr(`Scheda ${step + 1} di ${STEPS.length}`, `Step ${step + 1} of ${STEPS.length}`)} · {tr('completezza', 'completeness')} <CountUp value={comp.score} duration={400} />%
+            <span className={`ml-2 inline-flex items-center gap-1 text-emerald-600 ease-smooth transition-opacity ${savedShown ? 'opacity-100' : 'opacity-0'}`}><Check size={11} strokeWidth={3} /> {tr('Bozza salvata', 'Draft saved')}</span></div>
         </div>
-        <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">Importa da link o CSV</a>
+        <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">{tr('Importa da link o CSV', 'Import from link or CSV')}</a>
       </div>
       <div className="mt-4 flex gap-1">
         {STEPS.map((s, i) => <button key={s.id} onClick={() => i <= step && go(i)} aria-label={s.title} title={s.title} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i < step || done ? 'bg-brand' : i === step ? 'bg-ink' : 'bg-line'}`} />)}
@@ -245,17 +246,17 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className={`mt-3 flex items-center gap-3 rounded-3xl bg-white p-2 pr-3 ${CARD_SHADOW}`}>
                   <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-2xl bg-canvas"><img src={plan} alt="" className="h-full w-full object-cover" /></div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-sm font-semibold"><LayoutTemplate size={14} className="text-muted" /> Planimetria</div>
-                    <div className="text-xs text-muted">Pronta, andrà nell&apos;annuncio dopo le foto</div>
+                    <div className="flex items-center gap-1.5 text-sm font-semibold"><LayoutTemplate size={14} className="text-muted" /> {tr('Planimetria', 'Floor plan')}</div>
+                    <div className="text-xs text-muted">{tr('Pronta, andrà nell\'annuncio dopo le foto', 'Ready, it will go in the listing after the photos')}</div>
                   </div>
-                  <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-4 text-[13px] font-medium ease-smooth transition-colors hover:bg-line/60"><ImagePlus size={14} /> Cambia
+                  <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-4 text-[13px] font-medium ease-smooth transition-colors hover:bg-line/60"><ImagePlus size={14} /> {tr('Cambia', 'Change')}
                     <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} />
                   </label>
-                  <button onClick={() => setPlan(null)} aria-label="Togli la planimetria" className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={16} /></button>
+                  <button onClick={() => setPlan(null)} aria-label={tr('Togli la planimetria', 'Remove the floor plan')} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={16} /></button>
                 </div>
               ) : (
                 <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white py-4 text-muted ease-smooth transition hover:border-brand hover:text-brand">
-                  <LayoutTemplate size={18} /><span className="text-sm font-medium">Aggiungi planimetria</span><span className="text-xs">facoltativa, aumenta i contatti</span>
+                  <LayoutTemplate size={18} /><span className="text-sm font-medium">{tr('Aggiungi planimetria', 'Add floor plan')}</span><span className="text-xs">{tr('facoltativa, aumenta i contatti', 'optional, brings more leads')}</span>
                   <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} />
                 </label>
               )} />}
@@ -270,8 +271,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               )}
               {addr.length >= 9 && (
                 <div className="card p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">Nella zona {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
-                  <p className="mt-0.5 text-xs text-muted">Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell&apos;annuncio (massimo 5): l&apos;AI parte da quelli.</p>
+                  <div className="flex items-center gap-2 text-sm font-medium">{tr('Nella zona', 'In the area')} {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
+                  <p className="mt-0.5 text-xs text-muted">{tr('Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell\'annuncio (massimo 5): l\'AI parte da quelli.', 'Services verified on OpenStreetMap. Tap the ones to highlight in the listing (up to 5): the AI starts from those.')}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(Array.isArray(d.zona) ? d.zona : []).map(l => {
                       const ev = Array.isArray(d.zona_evidenza) ? d.zona_evidenza : [];
@@ -283,7 +284,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                         </button>
                       );
                     })}
-                    {!zoneBusy && !(Array.isArray(d.zona) && d.zona.length) && <span className="text-xs text-muted">Nessun servizio trovato nel raggio di 1 km.</span>}
+                    {!zoneBusy && !(Array.isArray(d.zona) && d.zona.length) && <span className="text-xs text-muted">{tr('Nessun servizio trovato nel raggio di 1 km.', 'No services found within 1 km.')}</span>}
                   </div>
                 </div>
               )}
@@ -291,7 +292,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             </>}
             {cur.id === 'numeri' && <>
               <div className="card p-5">
-                <NumberField f={F.prezzo} v={d.prezzo} set={v => set('prezzo', v)} big disabled={!!d.trattativa_riservata} suffix={d.contratto === 'Affitto' ? '€/mese' : '€'} />
+                <NumberField f={F.prezzo} v={d.prezzo} set={v => set('prezzo', v)} big disabled={!!d.trattativa_riservata} suffix={d.contratto === 'Affitto' ? tr('€/mese', '€/month') : '€'} />
                 <div className="mt-4"><Toggle f={F.trattativa_riservata} v={d.trattativa_riservata} set={v => set('trattativa_riservata', v)} /></div>
               </div>
               <NumberField f={F.superficie} v={d.superficie} set={v => set('superficie', v)} big suffix="m²" />
@@ -328,7 +329,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <div className="card p-4"><Toggle f={F.cantina} v={d.cantina} set={v => set('cantina', v)} /></div>
             </>}
             {cur.id === 'costi' && <>
-              <NumberField f={F.spese_condominiali} v={d.spese_condominiali} set={v => set('spese_condominiali', v)} suffix="€/mese" />
+              <NumberField f={F.spese_condominiali} v={d.spese_condominiali} set={v => set('spese_condominiali', v)} suffix={tr('€/mese', '€/month')} />
               <Chips f={F.portineria} v={d.portineria} set={v => set('portineria', v)} />
               <div className="card p-4"><Toggle f={F.accesso_disabili} v={d.accesso_disabili} set={v => set('accesso_disabili', v)} /></div>
               <Cards f={F.disponibilita} v={d.disponibilita} set={v => set('disponibilita', v)} />
@@ -340,7 +341,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <Chips f={F.proprieta} v={d.proprieta} set={v => set('proprieta', v)} />
             </>}
             {cur.id === 'note' && <>
-              <div className="grid gap-4 sm:grid-cols-2"><TextField f={{ ...F.riferimento, label: 'Codice di riferimento (opzionale)' }} v={d.riferimento} set={v => set('riferimento', v)} /><TextField f={F.virtual_tour} v={d.virtual_tour} set={v => set('virtual_tour', v)} /></div>
+              <div className="grid gap-4 sm:grid-cols-2"><TextField f={{ ...F.riferimento, label: tr('Codice di riferimento (opzionale)', 'Reference code (optional)') }} v={d.riferimento} set={v => set('riferimento', v)} /><TextField f={F.virtual_tour} v={d.virtual_tour} set={v => set('virtual_tour', v)} /></div>
             </>}
           </div>
 
@@ -353,11 +354,11 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             <div className="pointer-events-auto relative mx-auto flex max-w-3xl items-center justify-between gap-3 px-6">
             <span />
             <div className="flex items-center gap-3">
-              {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
-              {back && ai && <button onClick={() => { setBack(false); go(STEPS.length); }} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Torna all&apos;annuncio <ArrowRight size={16} /></button>}
+              {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">{tr('Salta', 'Skip')}</button>}
+              {back && ai && <button onClick={() => { setBack(false); go(STEPS.length); }} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Torna all\'annuncio', 'Back to the listing')} <ArrowRight size={16} /></button>}
               {back && ai ? null : step < STEPS.length - 1
-                ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Avanti <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">Invio</span></button>
-                : <button onClick={() => generate()} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Continua creazione <ArrowRight size={16} /></button>}
+                ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">{tr('Avanti', 'Next')} <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">{tr('Invio', 'Enter')}</span></button>
+                : <button onClick={() => generate()} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">{tr('Continua creazione', 'Continue')} <ArrowRight size={16} /></button>}
             </div>
             </div>
           </div>,
@@ -369,7 +370,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Pronto per il portale: tutto da copiare e incollare, foto pronte, pubblicazione sul sito */}
       {done && (
         <section className="mt-8" style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Quasi pronto per il tuo sito</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Quasi pronto per il tuo sito', 'Almost ready for your site')}</h1>
           {busy && <div className="mt-6 flex items-center gap-2 text-muted"><Loader2 size={18} className="animate-spin" /> {busy}</div>}
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           {ai && (
@@ -379,27 +380,27 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className="font-display text-4xl font-bold tracking-tight"><CountUp value={comp.score} />%</div>
                 <div className="min-w-0 flex-1">
                   {/* anche le foto contano: servono almeno 12 per il punteggio pieno */}
-                  <div className="text-sm font-semibold">{comp.missing.length || photos.length < 12 ? 'Mancano ancora' : 'Completezza dell’annuncio'}</div>
+                  <div className="text-sm font-semibold">{comp.missing.length || photos.length < 12 ? tr('Mancano ancora', 'Still missing') : tr('Completezza dell’annuncio', 'Listing completeness')}</div>
                   {comp.missing.length || photos.length < 12 ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {photos.length < 12 && <button onClick={() => { setBack(true); go(STEPS.findIndex(st => st.id === 'foto')); }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{12 - photos.length === 1 ? 'Un’altra foto' : `Altre ${12 - photos.length} foto`}</button>}
+                      {photos.length < 12 && <button onClick={() => { setBack(true); go(STEPS.findIndex(st => st.id === 'foto')); }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{12 - photos.length === 1 ? tr('Un’altra foto', 'One more photo') : tr(`Altre ${12 - photos.length} foto`, `${12 - photos.length} more photos`)}</button>}
                       {comp.missing.slice(0, 6).map(f => {
                         const at = STEPS.findIndex(st => st.keys.includes(f.key));
-                        return <button key={f.key} onClick={() => { if (at >= 0) { setBack(true); go(at); } }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{f.label}</button>;
+                        return <button key={f.key} onClick={() => { if (at >= 0) { setBack(true); go(at); } }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{trf(f.label)}</button>;
                       })}
                     </div>
-                  ) : <div className="mt-1 text-sm text-muted">Tutti i dati principali ci sono.</div>}
+                  ) : <div className="mt-1 text-sm text-muted">{tr('Tutti i dati principali ci sono.', 'All the key details are there.')}</div>}
                 </div>
               </div>
 
               {/* Titolo e descrizione */}
               <div className="rise card p-5" style={{ animationDelay: '.12s' }}>
-                <div className="text-xs font-semibold text-muted">Titolo <span className={`ml-1 font-normal ${ai.titolo.length > 60 ? 'text-rose-600' : ''}`}>{ai.titolo.length}/60</span></div>
+                <div className="text-xs font-semibold text-muted">{tr('Titolo', 'Title')} <span className={`ml-1 font-normal ${ai.titolo.length > 60 ? 'text-rose-600' : ''}`}>{ai.titolo.length}/60</span></div>
                 <div className="relative mt-1.5">
                   <input value={ai.titolo} onChange={e => setAi({ ...ai, titolo: e.target.value })} className="w-full rounded-2xl bg-canvas px-4 py-3 pr-12 font-medium outline-none ease-smooth transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15" />
                   <CopyIcon text={ai.titolo} center />
                 </div>
-                <div className="mt-5 text-xs font-semibold text-muted">Descrizione</div>
+                <div className="mt-5 text-xs font-semibold text-muted">{tr('Descrizione', 'Description')}</div>
                 <div className="relative mt-1.5">
                   <textarea rows={14} value={ai.descrizione} onChange={e => setAi({ ...ai, descrizione: e.target.value })} className="w-full rounded-2xl bg-canvas px-4 py-3 pr-12 text-[15px] leading-relaxed outline-none ease-smooth transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15" />
                   <CopyIcon text={ai.descrizione} />
@@ -415,8 +416,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               {/* Sito dell'agente */}
               <div className="rise card p-5" style={{ animationDelay: '.3s' }}>
                 <button type="button" role="switch" aria-checked={publish} onClick={() => setPublish(v => !v)} className="flex w-full items-center justify-between gap-4 text-left">
-                  <span><span className="text-sm font-semibold">Pubblica nella tua vetrina AgenteImmo</span>
-                    <span className="block text-xs text-muted">{slug ? `Comparirà su ${portfolioUrl(slug).replace(/^https?:\/\//, '')}` : 'Comparirà nella tua pagina con tutte le tue case.'}</span></span>
+                  <span><span className="text-sm font-semibold">{tr('Pubblica nella tua vetrina AgenteImmo', 'Publish in your AgenteImmo showcase')}</span>
+                    <span className="block text-xs text-muted">{slug ? tr(`Comparirà su ${portfolioUrl(slug).replace(/^https?:\/\//, '')}`, `It will appear on ${portfolioUrl(slug).replace(/^https?:\/\//, '')}`) : tr('Comparirà nella tua pagina con tutte le tue case.', 'It will appear on your page with all your properties.')}</span></span>
                   <span className={`relative h-7 w-12 shrink-0 rounded-full ease-smooth transition-colors ${publish ? 'bg-brand' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow ease-smooth transition-all ${publish ? 'left-6' : 'left-1'}`} /></span>
                 </button>
               </div>
@@ -427,22 +428,22 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <button type="button" role="switch" aria-checked={d.distanze_auto !== false} disabled={!!busy}
                   onClick={() => { const on = d.distanze_auto === false; setD(prev => ({ ...prev, distanze_auto: on })); generate(on); }}
                   className="flex w-full items-center justify-between gap-4 text-left">
-                  <span><span className="text-sm font-semibold">Aggiungo io cosa c&apos;è vicino</span>
-                    <span className="block text-xs text-muted">Distanze da metro, scuole, supermercati e parchi nella descrizione, e l&apos;elenco dei servizi vicini sulla scheda del tuo sito.</span></span>
+                  <span><span className="text-sm font-semibold">{tr('Aggiungo io cosa c\'è vicino', 'Add what is nearby for me')}</span>
+                    <span className="block text-xs text-muted">{tr('Distanze da metro, scuole, supermercati e parchi nella descrizione, e l\'elenco dei servizi vicini sulla scheda del tuo sito.', 'Distances to metro, schools, supermarkets and parks in the description, and a list of nearby services on your site\'s property page.')}</span></span>
                   <span className={`relative h-7 w-12 shrink-0 rounded-full ease-smooth transition-colors ${d.distanze_auto !== false ? 'bg-brand' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow ease-smooth transition-all ${d.distanze_auto !== false ? 'left-6' : 'left-1'}`} /></span>
                 </button>
               </div>
 
 
               <div className="flex flex-wrap items-center justify-between gap-3 pb-6">
-                <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">Modifica i dati</button>
+                <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">{tr('Modifica i dati', 'Edit details')}</button>
                 <div className="flex gap-2">
-                  <button onClick={save} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Check size={16} strokeWidth={3} /> Salva immobile</button>
+                  <button onClick={save} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Check size={16} strokeWidth={3} /> {tr('Salva immobile', 'Save property')}</button>
                 </div>
               </div>
             </div>
           )}
-          {!ai && !busy && <button onClick={() => generate()} className="mt-6 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Riprova</button>}
+          {!ai && !busy && <button onClick={() => generate()} className="mt-6 btn-ink rounded-full px-6 py-3 text-sm font-semibold">{tr('Riprova', 'Retry')}</button>}
         </section>
       )}
     </div>
@@ -454,7 +455,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 type SetV = (v: Details[string]) => void;
 const sel = (on: boolean) => on ? 'sel-glow' : 'ring-1 ring-line bg-white hover:ring-ink/30';
 
-function Label({ f }: { f: Field }) { return <div className="mb-3 text-sm font-medium">{f.label}</div>; }
+function Label({ f }: { f: Field }) { return <div className="mb-3 text-sm font-medium">{trf(f.label)}</div>; }
 
 // Grandi card con icona (singola o multipla).
 function Cards({ f, v, set, big, multi }: { f: Field; v: Details[string]; set: SetV; big?: boolean; multi?: boolean }) {
@@ -470,7 +471,7 @@ function Cards({ f, v, set, big, multi }: { f: Field; v: Details[string]; set: S
           <button type="button" key={o} onClick={() => pick(o)} aria-pressed={on(o)}
             className={`relative flex flex-col items-start gap-3 rounded-2xl p-4 text-left ease-smooth transition-all active:scale-[0.98] ${big ? 'min-h-28' : ''} ${sel(on(o))}`}>
             {I && <I size={big ? 26 : 20} className={on(o) ? 'text-brand' : 'text-muted'} />}
-            <span className={`text-sm ${on(o) ? 'font-semibold text-ink' : 'font-medium'}`}>{o}</span>
+            <span className={`text-sm ${on(o) ? 'font-semibold text-ink' : 'font-medium'}`}>{trf(o)}</span>
             {on(o) && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-white"><Check size={12} /></span>}
           </button>
         ); })}
@@ -487,7 +488,7 @@ function Chips({ f, v, set, multi }: { f: Field; v: Details[string]; set: SetV; 
       <Label f={f} />
       <div className="flex flex-wrap gap-2">
         {f.options!.map(o => <button type="button" key={o} aria-pressed={on(o)} onClick={() => multi ? set(arr.includes(o) ? arr.filter(x => x !== o) : [...arr, o]) : set(v === o ? undefined : o)}
-          className={`rounded-full px-4 py-2 text-sm ease-smooth transition-all active:scale-95 ${on(o) ? 'btn-primary font-medium' : 'bg-white ring-1 ring-line hover:ring-ink/30'}`}>{o}</button>)}
+          className={`rounded-full px-4 py-2 text-sm ease-smooth transition-all active:scale-95 ${on(o) ? 'btn-primary font-medium' : 'bg-white ring-1 ring-line hover:ring-ink/30'}`}>{trf(o)}</button>)}
       </div>
     </div>
   );
@@ -496,7 +497,7 @@ function Chips({ f, v, set, multi }: { f: Field; v: Details[string]; set: SetV; 
 function Toggle({ f, v, set }: { f: Field; v: Details[string]; set: SetV }) {
   return (
     <button type="button" role="switch" aria-checked={!!v} onClick={() => set(!v || undefined)} className="flex w-full items-center justify-between gap-4 text-left">
-      <span><span className="text-sm font-medium">{f.label}</span>{f.hint && <span className="block text-xs text-muted">{f.hint}</span>}</span>
+      <span><span className="text-sm font-medium">{trf(f.label)}</span>{f.hint && <span className="block text-xs text-muted">{trf(f.hint)}</span>}</span>
       <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${v ? 'bg-brand' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${v ? 'left-6' : 'left-1'}`} /></span>
     </button>
   );
@@ -506,26 +507,26 @@ function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: Set
   const n = Number(v) || 0;
   return (
     <div className={inline ? 'flex items-center justify-between' : 'card p-4 text-center'}>
-      <div className={`text-sm font-medium ${inline ? '' : 'text-muted'}`}>{f.label}{f.unit && <span className="text-muted"> ({f.unit})</span>}</div>
+      <div className={`text-sm font-medium ${inline ? '' : 'text-muted'}`}>{trf(f.label)}{f.unit && <span className="text-muted"> ({trf(f.unit)})</span>}</div>
       <div className={`flex items-center justify-center gap-3 ${inline ? '' : 'mt-3'}`}>
-        <button type="button" aria-label="Meno" onClick={() => set(n > 1 ? n - 1 : undefined)} disabled={!n} className="flex h-10 w-10 items-center justify-center rounded-full bg-canvas ease-smooth transition active:scale-90 disabled:opacity-30"><Minus size={16} /></button>
+        <button type="button" aria-label={tr('Meno', 'Less')} onClick={() => set(n > 1 ? n - 1 : undefined)} disabled={!n} className="flex h-10 w-10 items-center justify-center rounded-full bg-canvas ease-smooth transition active:scale-90 disabled:opacity-30"><Minus size={16} /></button>
         <span className="w-8 font-display text-2xl font-bold">{n || '–'}</span>
-        <button type="button" aria-label="Più" onClick={() => set(n + 1)} className="flex h-10 w-10 items-center justify-center btn-primary rounded-full ease-smooth transition active:scale-90"><Plus size={16} /></button>
+        <button type="button" aria-label={tr('Più', 'More')} onClick={() => set(n + 1)} className="flex h-10 w-10 items-center justify-center btn-primary rounded-full ease-smooth transition active:scale-90"><Plus size={16} /></button>
       </div>
     </div>
   );
 }
 
 function NumberField({ f, v, set, big, suffix, disabled, placeholder, raw }: { f: Field; v: Details[string]; set: SetV; big?: boolean; suffix?: string; disabled?: boolean; placeholder?: string; raw?: boolean }) {
-  const shown = v === undefined ? '' : raw ? String(v) : Number(v).toLocaleString('it-IT');
+  const shown = v === undefined ? '' : raw ? String(v) : Number(v).toLocaleString(pageLocale());
   return (
     <div>
       <Label f={f} />
       <div className={`flex items-center rounded-2xl bg-white ring-1 ring-line focus-within:ring-2 focus-within:ring-brand ${disabled ? 'opacity-40' : ''}`}>
-        <input inputMode="numeric" disabled={disabled} value={shown} placeholder={placeholder ?? f.placeholder ?? '0'}
+        <input inputMode="numeric" disabled={disabled} value={shown} placeholder={placeholder ?? (f.placeholder ? trf(f.placeholder) : '0')}
           onChange={e => { const n = Number(e.target.value.replace(/\D/g, '')); set(n ? n : undefined); }}
           className={`min-w-0 flex-1 bg-transparent px-5 outline-none ${big ? 'py-4 font-display text-3xl font-bold' : 'py-3 text-base'}`} />
-        {(suffix ?? f.unit) && <span className={`pr-5 text-muted ${big ? 'text-xl' : 'text-sm'}`}>{suffix ?? f.unit}</span>}
+        {(suffix ?? f.unit) && <span className={`pr-5 text-muted ${big ? 'text-xl' : 'text-sm'}`}>{suffix ?? trf(f.unit)}</span>}
       </div>
     </div>
   );
@@ -535,7 +536,7 @@ function TextField({ f, v, set, autoFocus, big }: { f: Field; v: Details[string]
   return (
     <div>
       <Label f={f} />
-      <input autoFocus={autoFocus} value={typeof v === 'string' ? v : ''} placeholder={f.placeholder} onChange={e => set(e.target.value || undefined)}
+      <input autoFocus={autoFocus} value={typeof v === 'string' ? v : ''} placeholder={trf(f.placeholder)} onChange={e => set(e.target.value || undefined)}
         className={`w-full rounded-2xl bg-white px-5 outline-none ring-1 ring-line focus:ring-2 focus:ring-brand ${big ? 'py-4 text-xl' : 'py-3 text-base'}`} />
     </div>
   );
@@ -553,18 +554,19 @@ function EnergyScale({ v, set }: { v: Details[string]; set: SetV }) {
             // colori pieni con la scritta in contrasto (bianco sul giallo non si leggeva); scelta piu' alta con il bordo
             className={`flex w-12 items-center justify-center rounded-lg text-sm font-bold ease-smooth transition-all active:scale-95 ${v === k ? 'h-14 ring-2 ring-ink ring-offset-2' : 'h-10 hover:brightness-95'}`} style={{ background: c, color: inkOn(c) }}>{k}</button>
         ))}
-        <button type="button" onClick={() => set(v === 'In attesa' ? undefined : 'In attesa')} className={`h-10 rounded-lg px-3 text-sm ${v === 'In attesa' ? 'bg-ink text-white' : 'bg-white ring-1 ring-line'}`}>In attesa</button>
+        <button type="button" onClick={() => set(v === 'In attesa' ? undefined : 'In attesa')} className={`h-10 rounded-lg px-3 text-sm ${v === 'In attesa' ? 'bg-ink text-white' : 'bg-white ring-1 ring-line'}`}>{tr('In attesa', 'Pending')}</button>
       </div>
     </div>
   );
 }
 
 // Esposizione: una bussola, si toccano i punti cardinali.
+const DIR_EN: Record<string, string> = { Nord: 'North', Sud: 'South', Est: 'East', Ovest: 'West' };
 function Compass({ v, set }: { v: Details[string]; set: SetV }) {
   const arr = Array.isArray(v) ? v : [];
   const t = (o: string) => set(arr.includes(o) ? arr.filter(x => x !== o) : [...arr, o]);
   const btn = (o: string, cls: string) => (
-    <button type="button" key={o} onClick={() => t(o)} aria-pressed={arr.includes(o)} className={`absolute flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold ease-smooth transition-all active:scale-90 ${cls} ${arr.includes(o) ? 'bg-brand text-white' : 'bg-white ring-1 ring-line'}`}>{o[0]}</button>
+    <button type="button" key={o} onClick={() => t(o)} aria-pressed={arr.includes(o)} className={`absolute flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold ease-smooth transition-all active:scale-90 ${cls} ${arr.includes(o) ? 'bg-brand text-white' : 'bg-white ring-1 ring-line'}`}>{tr(o[0], DIR_EN[o][0])}</button>
   );
   return (
     <div>
@@ -574,7 +576,7 @@ function Compass({ v, set }: { v: Details[string]; set: SetV }) {
           {btn('Nord', 'left-1/2 top-2 -translate-x-1/2')}{btn('Sud', 'bottom-2 left-1/2 -translate-x-1/2')}{btn('Est', 'right-2 top-1/2 -translate-y-1/2')}{btn('Ovest', 'left-2 top-1/2 -translate-y-1/2')}
           <SunIcon size={18} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-amber-500" />
         </div>
-        <p className="text-sm text-muted">{arr.length ? `Esposizione ${arr.join(', ').toLowerCase()}` : 'Tocca i lati verso cui affacciano le finestre principali.'}</p>
+        <p className="text-sm text-muted">{arr.length ? tr(`Esposizione ${arr.join(', ').toLowerCase()}`, `Facing ${arr.map(o => DIR_EN[o] ?? o).join(', ').toLowerCase()}`) : tr('Tocca i lati verso cui affacciano le finestre principali.', 'Tap the sides the main windows face.')}</p>
       </div>
     </div>
   );
@@ -592,8 +594,8 @@ function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPh
       <label onDragOver={e => e.preventDefault()} onDrop={e => { if (e.dataTransfer.files.length) { e.preventDefault(); onAdd(e.dataTransfer.files); } }}
         className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white text-muted ease-smooth transition hover:border-brand hover:text-brand ${photos.length ? 'py-6' : 'py-16'}`}>
         <ImagePlus size={photos.length ? 22 : 34} />
-        <span className="text-sm font-medium">{photos.length ? 'Aggiungi altre foto' : 'Trascina qui le foto o clicca per sceglierle'}</span>
-        {!photos.length && <span className="text-xs">Consigliate almeno 10: tutte le stanze, esterni e vista</span>}
+        <span className="text-sm font-medium">{photos.length ? tr('Aggiungi altre foto', 'Add more photos') : tr('Trascina qui le foto o clicca per sceglierle', 'Drag the photos here or click to choose them')}</span>
+        {!photos.length && <span className="text-xs">{tr('Consigliate almeno 10: tutte le stanze, esterni e vista', 'At least 10 recommended: every room, the outside and the view')}</span>}
         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
       </label>
       {extra}
@@ -608,12 +610,12 @@ function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPh
               className={`group relative overflow-hidden rounded-2xl bg-canvas ring-2 ease-smooth transition ${i === 0 ? 'col-span-2 aspect-[16/9] sm:row-span-2 sm:aspect-auto sm:min-h-[280px]' : 'aspect-[4/3]'} ${over === i && drag !== i ? 'ring-brand' : 'ring-transparent'} ${drag === i ? 'opacity-40' : ''} cursor-grab`}>
               {/* immagine assoluta: non allunga la riga della griglia; verticali intere con lo sfondo sfocato */}
               <div key={srcOf(p)} className="blur-in pointer-events-none absolute inset-0"><FitImage src={srcOf(p)} /></div>
-              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-xs text-white">{i === 0 ? <><Star size={11} /> Copertina</> : <><GripVertical size={11} /> {i + 1}</>}</span>
-              <button onClick={() => setPhotos(ps => ps.filter(x => x.id !== p.id))} aria-label="Rimuovi foto" className="absolute right-2 top-2 rounded-full bg-white/90 p-1 opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100"><X size={14} /></button>
+              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-xs text-white">{i === 0 ? <><Star size={11} /> {tr('Copertina', 'Cover')}</> : <><GripVertical size={11} /> {i + 1}</>}</span>
+              <button onClick={() => setPhotos(ps => ps.filter(x => x.id !== p.id))} aria-label={tr('Rimuovi foto', 'Remove photo')} className="absolute right-2 top-2 rounded-full bg-white/90 p-1 opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100"><X size={14} /></button>
               <div className="absolute inset-x-2 bottom-2 flex justify-between opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100">
-                <button onClick={() => move(i, i - 1)} disabled={i === 0} aria-label="Sposta prima" className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowLeft size={14} /></button>
-                {i > 0 && <button onClick={() => move(i, 0)} className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium">Copertina</button>}
-                <button onClick={() => move(i, i + 1)} disabled={i === photos.length - 1} aria-label="Sposta dopo" className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowRight size={14} /></button>
+                <button onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={tr('Sposta prima', 'Move earlier')} className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowLeft size={14} /></button>
+                {i > 0 && <button onClick={() => move(i, 0)} className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium">{tr('Copertina', 'Cover')}</button>}
+                <button onClick={() => move(i, i + 1)} disabled={i === photos.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowRight size={14} /></button>
               </div>
             </li>
           ))}
@@ -627,7 +629,7 @@ function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPh
 // Tutti i campi compilati, nell'ordine della scheda del portale, ognuno da copiare.
 function PortalFields({ d }: { d: Details }) {
   const rows = ALL_FIELDS.filter(f => !['mostra_indirizzo', 'trattativa_riservata'].includes(f.key) && visible(f, d))
-    .map(f => ({ key: f.key, label: f.label, value: formatValue(f, d[f.key]) }))
+    .map(f => ({ key: f.key, label: trf(f.label), value: formatValue(f, d[f.key]) }))
     .filter((x): x is { key: string; label: string; value: string } => !!x.value);
   const [copied, setCopied] = useState<string | null>(null);
   const [edges, setEdges] = useState({ top: false, bottom: rows.length > 7 });
@@ -637,9 +639,9 @@ function PortalFields({ d }: { d: Details }) {
   return (
     <div className="rise card p-5" style={{ animationDelay: '.18s' }}>
       <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold">Campi del portale</div>
+        <div className="text-sm font-semibold">{tr('Campi del portale', 'Portal fields')}</div>
         <button onClick={() => copy('*', rows.map(r => `${r.label}: ${r.value}`).join('\n'))} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">
-          {copied === '*' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} Copia tutti</button>
+          {copied === '*' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} {tr('Copia tutti', 'Copy all')}</button>
       </div>
       {/* sfumata solo dove la lista continua: in alto se hai scorso, in basso finche' non sei in fondo */}
       <dl onScroll={e => { const el = e.currentTarget; setEdges({ top: el.scrollTop > 2, bottom: el.scrollTop + el.clientHeight < el.scrollHeight - 2 }); }}
@@ -649,7 +651,7 @@ function PortalFields({ d }: { d: Details }) {
           <div key={r.key} className="group flex items-center justify-between gap-4 py-2 text-sm">
             <dt className="text-muted">{r.label}</dt>
             <dd className="flex items-center gap-2 text-right font-medium">{r.value}
-              <button onClick={() => copy(r.key, r.value)} aria-label={`Copia ${r.label}`} className="rounded-full p-1 text-muted opacity-0 ease-smooth transition group-hover:opacity-100 hover:bg-canvas hover:text-ink max-md:opacity-100">
+              <button onClick={() => copy(r.key, r.value)} aria-label={`${tr('Copia', 'Copy')} ${r.label}`} className="rounded-full p-1 text-muted opacity-0 ease-smooth transition group-hover:opacity-100 hover:bg-canvas hover:text-ink max-md:opacity-100">
                 {copied === r.key ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}</button>
             </dd>
           </div>
@@ -664,7 +666,7 @@ function ReadyPhotos({ photos }: { photos: Photo[]; title?: string }) {
   return (
     <div className="rise card p-5" style={{ animationDelay: '.24s' }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div><div className="text-sm font-semibold">Foto, nell&apos;ordine giusto</div><div className="text-xs text-muted">{photos.length} foto{photos.some(p => p.ai) ? `, ${photos.filter(p => p.ai).length} migliorate con l'AI` : ''}. Caricale sul portale in quest&apos;ordine.</div></div>
+        <div><div className="text-sm font-semibold">{tr('Foto, nell\'ordine giusto', 'Photos, in the right order')}</div><div className="text-xs text-muted">{photos.length} {tr('foto', 'photos')}{photos.some(p => p.ai) ? `, ${photos.filter(p => p.ai).length} ${tr('migliorate con l\'AI', 'enhanced with AI')}` : ''}. {tr('Caricale sul portale in quest\'ordine.', 'Upload them to the portal in this order.')}</div></div>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
         {photos.map((p, i) => (

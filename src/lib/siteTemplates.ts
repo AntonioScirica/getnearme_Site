@@ -70,17 +70,18 @@ export type SiteProperty = {
   prima?: Record<string, string> // foto AI -> foto originale (per il prima/dopo nella galleria)
 }
 
-export const TEMPLATES: { id: TemplateId; name: string; desc: string; primary: string; font: SiteConfig['font'] }[] = [
-  { id: 'prato', name: 'Prato', desc: 'Classico da agenzia: ricerca a sinistra, foto a destra', primary: '#1d5b3c', font: 'sans' },
-  { id: 'bosco', name: 'Bosco', desc: 'Foto a tutto schermo, ricerca che la accavalla', primary: '#4d7a2c', font: 'serif' },
-  { id: 'cielo', name: 'Cielo', desc: 'Foto in una card arrotondata, toni morbidi', primary: '#2a2b7c', font: 'sans' },
-  { id: 'citta', name: 'Città', desc: 'Bianco e nero, titolo al centro della foto', primary: '#111111', font: 'sans' },
-  { id: 'nord', name: 'Nord', desc: 'Moderno, modulo di ricerca dentro la foto', primary: '#ff6a2b', font: 'serif' },
-  { id: 'atelier', name: 'Atelier', desc: 'Editoriale, serif con corsivo e fondo verde scuro', primary: '#1d2b24', font: 'serif' },
-  { id: 'oro', name: 'Oro', desc: 'Oro e crema, ricerca a schede e categorie con icone', primary: '#b8923a', font: 'serif' },
-  { id: 'orizzonte', name: 'Orizzonte', desc: 'Leggero e azzurro, ricerca a pillola e filtri rapidi', primary: '#3b5bdb', font: 'sans' },
-  { id: 'vista', name: 'Vista', desc: 'Pulito e deciso, riquadri con numeri e mappa', primary: '#111111', font: 'sans' },
-  { id: 'riviera', name: 'Riviera', desc: 'Agenzia di zona: barra contatti, ricerca avanzata, pagine per località', primary: '#5fc9bd', font: 'sans' },
+// desc_en: descrizione in inglese per la galleria dei modelli della piattaforma (i nomi restano quelli)
+export const TEMPLATES: { id: TemplateId; name: string; desc: string; desc_en: string; primary: string; font: SiteConfig['font'] }[] = [
+  { id: 'prato', name: 'Prato', desc: 'Classico da agenzia: ricerca a sinistra, foto a destra', desc_en: 'Classic agency look: search on the left, photo on the right', primary: '#1d5b3c', font: 'sans' },
+  { id: 'bosco', name: 'Bosco', desc: 'Foto a tutto schermo, ricerca che la accavalla', desc_en: 'Full screen photo with the search overlapping it', primary: '#4d7a2c', font: 'serif' },
+  { id: 'cielo', name: 'Cielo', desc: 'Foto in una card arrotondata, toni morbidi', desc_en: 'Photo in a rounded card, soft tones', primary: '#2a2b7c', font: 'sans' },
+  { id: 'citta', name: 'Città', desc: 'Bianco e nero, titolo al centro della foto', desc_en: 'Black and white, title in the middle of the photo', primary: '#111111', font: 'sans' },
+  { id: 'nord', name: 'Nord', desc: 'Moderno, modulo di ricerca dentro la foto', desc_en: 'Modern, search form inside the photo', primary: '#ff6a2b', font: 'serif' },
+  { id: 'atelier', name: 'Atelier', desc: 'Editoriale, serif con corsivo e fondo verde scuro', desc_en: 'Editorial, italic serif on a dark green background', primary: '#1d2b24', font: 'serif' },
+  { id: 'oro', name: 'Oro', desc: 'Oro e crema, ricerca a schede e categorie con icone', desc_en: 'Gold and cream, tabbed search and icon categories', primary: '#b8923a', font: 'serif' },
+  { id: 'orizzonte', name: 'Orizzonte', desc: 'Leggero e azzurro, ricerca a pillola e filtri rapidi', desc_en: 'Light and blue, pill search and quick filters', primary: '#3b5bdb', font: 'sans' },
+  { id: 'vista', name: 'Vista', desc: 'Pulito e deciso, riquadri con numeri e mappa', desc_en: 'Clean and bold, number boxes and a map', primary: '#111111', font: 'sans' },
+  { id: 'riviera', name: 'Riviera', desc: 'Agenzia di zona: barra contatti, ricerca avanzata, pagine per località', desc_en: 'Local agency: contact bar, advanced search, area pages', primary: '#5fc9bd', font: 'sans' },
 ]
 
 // Caratteri per i titoli (Google Fonts, caricati solo quando servono)
@@ -241,7 +242,7 @@ export const TEXTS: Record<string, string> = {
 }
 
 // order: testi e impostazioni mescolati nell'ordine in cui si vedono nella sezione (senza: prima i testi, poi le impostazioni)
-export type SectionDef = { id: string; label: string; texts?: string[]; hideable?: boolean; cfg?: (keyof SiteConfig)[]; note?: string; order?: string[] }
+export type SectionDef = { id: string; label: string; texts?: string[]; hideable?: boolean; cfg?: (keyof SiteConfig)[]; note?: string; note_en?: string; order?: string[] }
 export type PageId = 'home' | 'immobili' | 'immobile' | 'agente' | 'servizi' | 'contatti' | 'zona'
 
 export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
@@ -263,7 +264,7 @@ export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
     { id: 'footer', label: 'Piè di pagina', cfg: ['address', 'legal'] },
   ],
   immobile: [
-    { id: 'property.desc', label: 'Descrizione', hideable: true, texts: ['property.desc'], note: 'Il testo lo prendi dall’immobile.' },
+    { id: 'property.desc', label: 'Descrizione', hideable: true, texts: ['property.desc'], note: 'Il testo lo prendi dall’immobile.', note_en: 'The text comes from the listing.' },
     { id: 'property.details', label: 'Dettagli', hideable: true, texts: ['property.details'] },
     { id: 'property.features', label: 'Caratteristiche', hideable: true, texts: ['property.features'] },
     { id: 'property.zone', label: 'Nella zona', hideable: true, texts: ['property.zone'] },
@@ -321,4 +322,40 @@ export const FIELD_LABELS: Record<string, string> = {
   years: 'Anni di esperienza', sold: 'Immobili venduti', clients: 'Clienti seguiti', showStats: 'Mostra i numeri (anni, immobili, clienti)', whatsappButton: 'Pulsante WhatsApp', showPrices: 'Mostra i prezzi',
   reviews: 'Recensioni', zones: 'Pagine zona', services: 'Servizi', method: 'Il tuo metodo',
   phone: 'Telefono', whatsapp: 'WhatsApp', email: 'Email', address: 'Indirizzo dell’ufficio', legal: 'P.IVA, REA', instagram: 'Instagram (link)', facebook: 'Facebook (link)',
+}
+
+// Nomi delle sezioni e dei campi in inglese, per l'editor della piattaforma in inglese (il sito dei visitatori resta in italiano)
+export const SECTION_LABELS_EN: Record<string, string> = {
+  header: 'Top bar', 'home.hero': 'Hero', 'home.intro': 'After the hero', 'home.featured': 'Featured listings', 'home.about': 'About me',
+  'home.reviews': 'Reviews', 'home.zones': 'Areas', cta: 'Contact band', footer: 'Footer',
+  'listings.head': 'Page title',
+  'property.desc': 'Description', 'property.details': 'Details', 'property.features': 'Features', 'property.zone': 'Nearby', 'property.map': 'Map',
+  'property.agent': 'Agent card and form', 'property.similar': 'Similar listings',
+  'agent.top': 'Your profile', 'agent.listings': 'Your listings',
+  'services.head': 'Page title', 'services.list': 'Services', 'services.method': 'Your method', 'services.form': 'Free consultation',
+  'contact.head': 'Page title', 'contact.info': 'Your contact details', 'contact.form': 'Form',
+  'zone.page': 'Area pages',
+}
+export const FIELD_LABELS_EN: Record<string, string> = {
+  'hero.eyebrow': 'Text above the title', 'hero.cta': 'Main button', 'hero.cta2': 'Secondary button', 'search.button': 'Search button', 'search.more': '“More filters” link',
+  'intro.title': 'Title', 'intro.button': 'Button',
+  'feature.1.title': 'Point 1', 'feature.1.text': 'Point 1, text', 'feature.2.title': 'Point 2', 'feature.2.text': 'Point 2, text',
+  'feature.3.title': 'Point 3', 'feature.3.text': 'Point 3, text', 'feature.4.title': 'Point 4', 'feature.4.text': 'Point 4, text',
+  'featured.eyebrow': 'Text above the title', 'featured.title': 'Title', 'featured.sub': 'Subtitle', 'featured.link': '“See all” link',
+  'about.check.1': 'Bullet point 1', 'about.check.2': 'Bullet point 2', 'about.check.3': 'Bullet point 3', 'about.cta': 'Button',
+  'reviews.eyebrow': 'Text above the title', 'reviews.title': 'Title', 'zones.eyebrow': 'Text above the title', 'zones.title': 'Title',
+  'cta.title': 'Title', 'cta.text': 'Text',
+  'listings.eyebrow': 'Text above the title', 'listings.title': 'Title', 'listings.empty': 'No results message',
+  'property.details': 'Title', 'property.features': 'Title', 'property.zone': 'Title', 'property.map': 'Title', 'property.desc': 'Title',
+  'property.form': 'Form title', 'property.similar': 'Title', 'property.tour': 'Title', 'property.tourText': 'Text',
+  'agent.listingsEyebrow': 'Text above the title', 'agent.listingsTitle': 'Title',
+  'services.eyebrow': 'Text above the title', 'services.title': 'Title', 'services.sub': 'Subtitle', 'services.methodLabel': 'Label',
+  'services.formTitle': 'Title', 'services.formText': 'Text',
+  'contact.eyebrow': 'Text above the title', 'contact.title': 'Title', 'contact.sub': 'Subtitle', 'contact.formTitle': 'Form title',
+  'form.button': 'Form button', 'form.done': 'Message after sending', 'zone.eyebrow': 'Text above the title',
+  heroTitle: 'Title', heroSubtitle: 'Subtitle', city: 'City or area', heroImage: 'Cover photo', ctaLabel: 'Contact button', topBar: 'Bar with phone and email',
+  aboutTitle: 'Section name', aboutText: 'About you', aboutImage: 'Your photo', agentRole: 'Role', areas: 'Areas you work in', highlights: 'Highlights',
+  years: 'Years of experience', sold: 'Properties sold', clients: 'Clients served', showStats: 'Show the numbers (years, properties, clients)', whatsappButton: 'WhatsApp button', showPrices: 'Show prices',
+  reviews: 'Reviews', zones: 'Area pages', services: 'Services', method: 'Your method',
+  phone: 'Phone', whatsapp: 'WhatsApp', email: 'Email', address: 'Office address', legal: 'VAT no., REA', instagram: 'Instagram (link)', facebook: 'Facebook (link)',
 }

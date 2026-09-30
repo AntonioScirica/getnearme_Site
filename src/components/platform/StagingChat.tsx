@@ -25,6 +25,7 @@ import { uploadDataUrl } from '@/lib/imageUpload';
 import { videoDuration, videoFrame, videoGrid, videoThumbs } from '@/lib/videoFrames';
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing';
 import { isFurnishing, isRestyle } from '@/lib/stagingPrompts';
+import { pageLang, pageLocale, tr } from './i18n';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -33,32 +34,42 @@ import { isFurnishing, isRestyle } from '@/lib/stagingPrompts';
 type Scene = 'interno' | 'esterno' | 'giardino' | 'planimetria';
 const ROOM_LABEL: Record<string, string> = { openspace: 'un soggiorno con cucina', soggiorno: 'un soggiorno', cucina: 'una cucina', camera: 'una camera da letto', cameretta: 'una cameretta', bagno: 'un bagno', sala: 'una sala da pranzo', studio: 'uno studio', ingresso: 'un ingresso', corridoio: 'un corridoio', balcone: 'un balcone', cantina: 'una cantina', box: 'un box' };
 const SCENE_LABEL: Record<Scene, string> = { interno: 'un interno', esterno: 'una facciata', giardino: 'un giardino', planimetria: 'una planimetria' };
-const AGENT_ROOMS: [string, string][] = [['soggiorno', 'Soggiorno'], ['openspace', 'Soggiorno con cucina'], ['cucina', 'Cucina'], ['camera', 'Camera da letto'], ['cameretta', 'Cameretta'], ['studio', 'Studio'], ['sala', 'Sala da pranzo'], ['bagno', 'Bagno'], ['ingresso', 'Ingresso']];
+const AGENT_ROOMS: [string, string][] = [['soggiorno', tr('Soggiorno', 'Living room')], ['openspace', tr('Soggiorno con cucina', 'Living room with kitchen')], ['cucina', tr('Cucina', 'Kitchen')], ['camera', tr('Camera da letto', 'Bedroom')], ['cameretta', tr('Cameretta', 'Kids room')], ['studio', tr('Studio', 'Home office')], ['sala', tr('Sala da pranzo', 'Dining room')], ['bagno', tr('Bagno', 'Bathroom')], ['ingresso', tr('Ingresso', 'Entrance')]];
 // Cosa sembra la foto: correggibile dal menu nel messaggio ("room:cucina" oppure "scene:esterno")
-const SEEN_OPTIONS: DropdownOption<string>[] = [
+// SEEN_IT: etichette in italiano, sono quelle che vanno al server (room); SEEN_OPTIONS: le stesse nella lingua della pagina, solo da mostrare
+const SEEN_IT: DropdownOption<string>[] = [
   ...['openspace', 'soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box'].map(r => ({ value: `room:${r}`, label: ROOM_LABEL[r], group: 'Interno' })),
   ...(['esterno', 'giardino', 'planimetria'] as const).map(x => ({ value: `scene:${x}`, label: SCENE_LABEL[x], group: 'Altro' })),
   { value: 'other', label: 'Altro, lo scrivo io', group: 'Altro' },
 ];
+const SEEN_EN: Record<string, string> = {
+  'room:openspace': 'a living room with kitchen', 'room:soggiorno': 'a living room', 'room:cucina': 'a kitchen', 'room:camera': 'a bedroom', 'room:cameretta': 'a kids room',
+  'room:bagno': 'a bathroom', 'room:sala': 'a dining room', 'room:studio': 'a home office', 'room:ingresso': 'an entrance', 'room:corridoio': 'a hallway',
+  'room:balcone': 'a balcony', 'room:cantina': 'a cellar', 'room:box': 'a garage', 'scene:esterno': 'a facade', 'scene:giardino': 'a garden', 'scene:planimetria': 'a floor plan',
+  other: 'Other, I\'ll type it',
+};
+const SEEN_OPTIONS: DropdownOption<string>[] = SEEN_IT.map(o => ({ ...o, label: tr(o.label, SEEN_EN[o.value] ?? o.label), group: o.group === 'Interno' ? tr('Interno', 'Interior') : tr('Altro', 'Other') }));
 // Suggerimenti in base a cosa c'e' nella foto (la cucina non ha "Arreda nordico", la facciata non ha "Svuota la stanza")
 const S = (id: string, label: string, req: Suggestion['req']): Suggestion => ({ id, label, req });
-const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Luminoso', { angle: 'day' });
+const EMPTY = S('empty', tr('Svuota la stanza', 'Empty the room'), { style: 'empty' }), LIGHT = S('day', tr('Luminoso', 'Brighter'), { angle: 'day' });
 // Interni: gli stessi veri stili per ogni stanza (Moderno, Nordico, Luxury, Boho: ogni chip porta la descrizione completa
 // dello stile e il piano di Claude la adatta alla stanza). I chip "a parole" per stanza (letto, comodini, armadio...) davano
 // arredi poveri e incoerenti (27/09). Esterni e giardini hanno i loro.
 // interni (balcone compreso): solo questi quattro, in quest'ordine dopo Crea video (27/09). Nordico, Boho e disordine si chiedono scrivendo.
-const INDOOR: Suggestion[] = [EMPTY, S('modern', 'Moderno', { style: 'modern' }), S('industrial', 'Luxury', { style: 'industrial' }), LIGHT];
+const INDOOR: Suggestion[] = [EMPTY, S('modern', tr('Moderno', 'Modern'), { style: 'modern' }), S('industrial', 'Luxury', { style: 'industrial' }), LIGHT];
 function suggestionsFor(kind: string | null): Suggestion[] {
   switch (kind) {
-    case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-garden', 'Giardino curato', { prompt: 'Prato curato e piante ordinate intorno alla casa, senza cambiare l’edificio' })];
-    case 'scene:giardino': return [S('g-renew', 'Giardino curato', { style: 'empty' }), S('g-furnish', 'Arreda il giardino', { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', 'Giardino moderno', { style: 'modern' }), LIGHT];
+    case 'scene:esterno': return [S('f-renew', tr('Rinnova la facciata', 'Renew the facade'), { style: 'empty' }), S('f-modern', tr('Facciata moderna', 'Modern facade'), { style: 'modern' }), S('f-sky', tr('Cielo azzurro', 'Blue sky'), { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-garden', tr('Giardino curato', 'Tidy garden'), { prompt: 'Prato curato e piante ordinate intorno alla casa, senza cambiare l’edificio' })];
+    case 'scene:giardino': return [S('g-renew', tr('Giardino curato', 'Tidy garden'), { style: 'empty' }), S('g-furnish', tr('Arreda il giardino', 'Furnish the garden'), { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', tr('Giardino moderno', 'Modern garden'), { style: 'modern' }), LIGHT];
     // planimetria: stile dell'arredo (pianta 2D a colori), 3D dall'alto oppure in bianco e nero, da stampa
-    case 'scene:planimetria': { const PLAN = { planimetria: true }; return [S('p-modern', 'Moderno', PLAN), S('p-nordic', 'Nordico', PLAN), S('p-lux', 'Luxury', PLAN), S('p-boho', 'Boho', PLAN), S('p-3d', '3D dall’alto', PLAN), S('p-bw', 'Bianco e nero', PLAN)]; }
+    case 'scene:planimetria': { const PLAN = { planimetria: true }; return [S('p-modern', tr('Moderno', 'Modern'), PLAN), S('p-nordic', tr('Nordico', 'Nordic'), PLAN), S('p-lux', 'Luxury', PLAN), S('p-boho', 'Boho', PLAN), S('p-3d', tr('3D dall’alto', '3D top view'), PLAN), S('p-bw', tr('Bianco e nero', 'Black and white'), PLAN)]; }
     default: return INDOOR;
   }
 }
 // "custom:..." = scritto dall'agente quando nessuna voce va bene
-const seenLabel = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OPTIONS.find(o => o.value === k)?.label ?? 'un interno');
+// seenLabel va al server (sempre in italiano), seenShow e' quella mostrata
+const seenLabel = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_IT.find(o => o.value === k)?.label ?? 'un interno');
+const seenShow = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OPTIONS.find(o => o.value === k)?.label ?? tr('un interno', 'an interior'));
 
 // Crediti finiti: la chat lo dice nel messaggio (niente finestra sopra) e porta ai piani
 const NO_CREDITS = 'no_credits';
@@ -67,8 +78,8 @@ function ErrLine({ err, className = '' }: { err: string; className?: string }) {
   if (err !== NO_CREDITS) return <p className={`blur-in px-2 text-sm text-rose-600 ${className}`}>{err}</p>;
   return (
     <p className={`blur-in flex flex-wrap items-center gap-x-3 gap-y-2 px-2 text-sm ${className}`}>
-      <span>Hai finito i crediti: per arredare foto e creare video scegli un piano.</span>
-      <a href="#/piano?cambia=1" className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">Vedi i piani</a>
+      <span>{tr('Hai finito i crediti: per arredare foto e creare video scegli un piano.', 'You\'re out of credits: pick a plan to furnish photos and create videos.')}</span>
+      <a href="#/piano?cambia=1" className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">{tr('Vedi i piani', 'See plans')}</a>
     </p>
   );
 }
@@ -89,31 +100,31 @@ const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, du
 const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam' };
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
-  { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: VIDEO_SAMPLES.popup, anims: [
-    { id: 'popup', label: 'Popup', desc: 'I mobili spuntano uno alla volta', sample: VIDEO_SAMPLES.popup },
-    { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: VIDEO_SAMPLES.gravity },
+  { id: 'prima-dopo', label: tr('Prima e dopo', 'Before and after'), desc: tr('Dalla stanza vuota a quella arredata', 'From an empty room to a furnished one'), sample: VIDEO_SAMPLES.popup, anims: [
+    { id: 'popup', label: 'Popup', desc: tr('I mobili spuntano uno alla volta', 'Furniture pops up one piece at a time'), sample: VIDEO_SAMPLES.popup },
+    { id: 'gravity', label: tr('Dall’alto', 'From above'), desc: tr('I mobili cadono dall’alto e si posano', 'Furniture drops from above and settles'), sample: VIDEO_SAMPLES.gravity },
   ] },
   // un'animazione sola: dal template si passa subito alla scelta della stanza
-  { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere, anims: [
-    { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere },
+  { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Dal cantiere alla casa finita', 'From construction site to finished home'), sample: VIDEO_SAMPLES.cantiere, anims: [
+    { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Dal cantiere alla casa finita', 'From construction site to finished home'), sample: VIDEO_SAMPLES.cantiere },
   ] },
-  { id: 'volo-cantiere', label: 'Volo nel cantiere', desc: 'Un volo tra le fondamenta, poi il palazzo si svela finito', sample: VIDEO_SAMPLES.fpv, anims: [
-    { id: 'fpv', label: 'Volo nel cantiere', desc: 'Un volo tra le fondamenta, poi il palazzo si svela finito', sample: VIDEO_SAMPLES.fpv },
+  { id: 'volo-cantiere', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Un volo tra le fondamenta, poi il palazzo si svela finito', 'A flight over the foundations, then the finished building is revealed'), sample: VIDEO_SAMPLES.fpv, anims: [
+    { id: 'fpv', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Un volo tra le fondamenta, poi il palazzo si svela finito', 'A flight over the foundations, then the finished building is revealed'), sample: VIDEO_SAMPLES.fpv },
   ] },
-  { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight, anims: [
-    { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight },
+  { id: 'giorno-notte', label: tr('Giorno e notte', 'Day and night'), desc: tr('Scende la sera e si accendono le luci', 'Evening falls and the lights come on'), sample: VIDEO_SAMPLES.daynight, anims: [
+    { id: 'daynight', label: tr('Giorno e notte', 'Day and night'), desc: tr('Scende la sera e si accendono le luci', 'Evening falls and the lights come on'), sample: VIDEO_SAMPLES.daynight },
   ] },
-  { id: 'agente', label: 'Con te in video', desc: 'Parli in camera, esci e la stanza si arreda', sample: VIDEO_SAMPLES.agent, anims: [
-    { id: 'agent', label: 'Con te in video', desc: 'Parli in camera, esci e la stanza si arreda', sample: VIDEO_SAMPLES.agent },
+  { id: 'agente', label: tr('Con te in video', 'Starring you'), desc: tr('Parli in camera, esci e la stanza si arreda', 'You talk to camera, step out and the room gets furnished'), sample: VIDEO_SAMPLES.agent, anims: [
+    { id: 'agent', label: tr('Con te in video', 'Starring you'), desc: tr('Parli in camera, esci e la stanza si arreda', 'You talk to camera, step out and the room gets furnished'), sample: VIDEO_SAMPLES.agent },
   ] },
-  { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera, anims: [
-    { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera },
+  { id: 'camera', label: tr('Camminata', 'Walkthrough'), desc: tr('Entri nella stanza con una ripresa lenta', 'Walk into the room with a slow camera move'), sample: VIDEO_SAMPLES.camera, anims: [
+    { id: 'camera', label: tr('Camminata', 'Walkthrough'), desc: tr('Entri nella stanza con una ripresa lenta', 'Walk into the room with a slow camera move'), sample: VIDEO_SAMPLES.camera },
   ] },
 ];
 // anteprime degli stili per stanza (30/09, da foto Unsplash in public/staging/stili/<stanza>/); le altre stanze: il soggiorno
 const STYLE_ROOMS = new Set(['camera', 'cameretta', 'cucina', 'bagno', 'openspace']);
 const styleThumb = (style: string, kind?: string | null) => { const r = kind?.startsWith('room:') ? kind.slice(5) : ''; return STYLE_ROOMS.has(r) ? `/staging/stili/${r}/${style}.jpg` : `/staging/stili/${style}.jpg`; };
-const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
+const VIDEO_STYLES = [{ id: 'modern', label: tr('Moderno', 'Modern') }, { id: 'nordic', label: tr('Nordico', 'Nordic') }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
 
 // Crediti di un'azione, stessa regola del server (api/platform/photo-edit): luce gratis, svuota e arredo 5, modifica gratis
 // per le prime FREE_EDITS su una foto poi 1. Etichetta piccola accanto a ogni pulsante, cosi' l'agente sa cosa spende.
@@ -124,7 +135,7 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
 const videoCr = (anim?: VideoAnim) => anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : CREDIT_COST.video_render;
 // attesa tipica del video, misurata sulle prove del 29-30/09 (generazione su fal + foto GPT + montaggio, coda compresa)
-const waitFor = (anim?: VideoAnim) => anim === 'cantiere' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : 'circa 2 min';
+const waitFor = (anim?: VideoAnim) => anim === 'cantiere' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : tr('circa 2 min', 'about 2 min');
 const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera' || anim === 'fpv';
 // crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
 const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' ? 0 : CREDIT_COST.video_prep);
@@ -136,20 +147,34 @@ const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.
 function Cr({ n, dark, tight, still }: { n: number; dark?: boolean; tight?: boolean; still?: boolean }) {
   // icona moneta: i crediti si spendono (Sparkles e' gia' l'icona dell'AI); gratis: niente pill
   if (n === 0) return null;
-  return <span title={`${n} crediti`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : still ? 'bg-black/[.06] text-muted' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
+  return <span title={`${n} ${tr('crediti', 'credits')}`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : still ? 'bg-black/[.06] text-muted' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
+// testi fissi confrontati nel codice: stesso valore dove si scrivono e dove si leggono (la lingua non cambia senza ricaricare)
+const CREATE_VIDEO = tr('Crea un video', 'Create a video');
+const KEEP_ROOM = tr('Stanza com’è', 'Room as is');
+// richiesta mandata al server cosi' com'e' (in italiano), si traduce solo il testo mostrato
+const STYLE_FROM_PHOTO = 'Arreda nello stile della foto';
+// segnaposto del campo "Altro, lo scrivo io": serve anche per ritrovare il campo (vedi otherInput)
+const OTHER_PH = tr('es. una mansarda', 'e.g. an attic');
 // messaggio che non chiede niente sulla foto (saluto, grazie, domanda generica): nessuna parola da modifica o da stanza.
 // ponytail: regole semplici; nel dubbio il messaggio va a GPT come prima
 const EDIT_WORDS = /\b(togl|rimuov|elimin|lev[ai]|mett|aggiung|inser|arred|svuot|cambi|sostitu|spost|dipin|color|rend|fa[ir]|rifa|trasform|stil|modern|nordic|scandinav|luxury|luss|boho|industr|classic|minimal|paret|paviment|parquet|soffitt|luc|lumin|divan|lett|tavol|sedi|cucin|bagn|tend|quadr|piant|tappet|mobil|armad|finestr|port|bianc|ner|grig|legn|marm)\w*/i;
 const CHAT_WORDS = /^(ciao|salve|buongiorno|buonasera|hey|ehi|hello|hi|grazie|ok|okay|perfetto|bene|come va|chi sei|cosa sai fare|aiuto|help|test|prova)\b/i;
 // 1-2 parole senza parole da modifica ("cicaooo", tasti a caso) = non e' una richiesta; da 3 parole in su nel dubbio parte
-const isChatter = (t: string) => !EDIT_WORDS.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.split(/\s+/).length <= 2);
+// le stesse parole in inglese (piattaforma in inglese): "white walls", "brighter" sono richieste, non chiacchiere
+const EDIT_WORDS_EN = /\b(remov|delet|take (out|away)|add|put|furnish|empty|clear|chang|replac|move|paint|colou?r|make|turn|style|modern|nordic|scandi|luxury|boho|industrial|classic|minimal|wall|floor|parquet|ceiling|light|bright|sofa|couch|bed|table|chair|kitchen|bath|curtain|picture|painting|plant|rug|carpet|lamp|window|door|wardrobe|cabinet|tv|shelf|shelves|green|white|black|grey|gray|beige|blue|red|wood|oak|marble|tile|cushion|pillow|declutter|tidy|clean|stag)/i;
+const isChatter = (t: string) => !EDIT_WORDS.test(t) && !EDIT_WORDS_EN.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.split(/\s+/).length <= 2);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 // esempi del campo: il primo per tipo di stanza, poi ritocchi sul risultato (a rotazione)
 // Modifica di una zona: esempio nel campo secondo la stanza riconosciuta (cosa si trova di solito in quella foto)
-const ZONE_EX: Record<string, string> = {
+const ZONE_EX: Record<string, string> = pageLang() === 'en' ? {
+  openspace: 'remove the TV', soggiorno: 'remove the TV', cucina: 'change the cabinet color', camera: 'change the headboard',
+  cameretta: 'remove the toys', bagno: 'remove the shower enclosure', sala: 'add a chandelier', studio: 'remove the desk',
+  ingresso: 'add a console table', corridoio: 'hang some pictures', balcone: 'add some plants', cantina: 'remove the boxes',
+  box: 'remove the tools', esterno: 'repaint the facade', giardino: 'add a neat lawn', planimetria: 'remove the text',
+} : {
   openspace: 'togli la tv', soggiorno: 'togli la tv', cucina: 'cambia il colore delle ante', camera: 'cambia la testiera del letto',
   cameretta: 'togli i giochi', bagno: 'togli il box doccia', sala: 'metti un lampadario', studio: 'togli la scrivania',
   ingresso: 'metti una consolle', corridoio: 'appendi dei quadri', balcone: 'metti delle piante', cantina: 'togli gli scatoloni',
@@ -158,8 +183,17 @@ const ZONE_EX: Record<string, string> = {
 // Quantita' di arredo capita dalle parole della richiesta scritta (null = non detto: Normale)
 const detectDensity = (t: string): 'poco' | 'ricco' | null =>
   /\b(poch[ie]|pochissim[ie]|essenzial[ei]|minimal[ei]?|minimalist[aie]?|ariosa?|arios[io]|spoglia?|leggero|sobri[oa]|il minimo|solo l'essenziale)\b/i.test(t) ? 'poco'
-  : /\b(ricc[oa]|ricchissim[oa]|pien[oa]|tanti|tantissim[ie]|molt[ie] (mobili|oggetti)|da rivista|arredatissim[oa]|completo|completa|piena di)\b/i.test(t) ? 'ricco' : null
-const FIRST: Record<string, string> = {
+  : /\b(ricc[oa]|ricchissim[oa]|pien[oa]|tanti|tantissim[ie]|molt[ie] (mobili|oggetti)|da rivista|arredatissim[oa]|completo|completa|piena di)\b/i.test(t) ? 'ricco'
+  // in inglese
+  : /\b(minimal|few pieces|sparse|light(ly)? furnished|essential|airy)\b/i.test(t) ? 'poco'
+  : /\b(fully furnished|lots of|many (pieces|things)|rich|full|cosy|cozy|magazine)\b/i.test(t) ? 'ricco' : null
+const FIRST: Record<string, string> = pageLang() === 'en' ? {
+  openspace: 'white kitchen and living area with a sofa', soggiorno: 'furnish with a grey sofa and a coffee table', cucina: 'white cabinets and light wood countertop', camera: 'double bed and oak nightstands',
+  cameretta: 'small bed, desk and soft colors', bagno: 'light tiles and a glass shower', sala: 'dining table for six',
+  studio: 'desk and white bookcase', ingresso: 'shoe cabinet and mirror', corridoio: 'white walls and ceiling lights',
+  balcone: 'small table with two chairs and plants', cantina: 'tidy shelves and light', box: 'clean floor and shelves',
+  esterno: 'facade repainted white', giardino: 'neat lawn and an outdoor table', planimetria: 'furnish it in modern style',
+} : {
   openspace: 'cucina bianca e zona giorno con divano', soggiorno: 'arreda con un divano grigio e un tavolino', cucina: 'ante bianche e piano in legno chiaro', camera: 'letto matrimoniale e comodini in rovere',
   cameretta: 'lettino, scrivania e colori tenui', bagno: 'piastrelle chiare e doccia in vetro', sala: 'tavolo da pranzo per sei persone',
   studio: 'scrivania e libreria bianca', ingresso: 'mobile scarpiera e specchio', corridoio: 'pareti bianche e luci a soffitto',
@@ -167,7 +201,28 @@ const FIRST: Record<string, string> = {
   esterno: 'facciata ridipinta bianca', giardino: 'prato curato e un tavolo da esterno', planimetria: 'arredala in stile moderno',
 };
 // mentre genera: una frase a caso per ogni foto (scelta dall'id del messaggio, resta la stessa finche' lavora)
-const BUSY_HINTS = [
+const BUSY_HINTS = pageLang() === 'en' ? [
+  'Creating the photo, meanwhile write your next edit',
+  'Working on it, think about the next touch',
+  'A few seconds and it\'s here, tell me what to change next',
+  'Setting up the room, feel free to write your next idea',
+  'Almost ready, what do you want to tweak right after?',
+  'Furnishing now, jot down the next detail',
+  'The photo is in progress, get your next request ready',
+  'One moment and I\'ll show you, then what\'s next?',
+  'Shaping the room, think about the next step',
+  'On its way, meanwhile write what to improve',
+  'Polishing every detail, then it\'s your turn',
+  'Work in progress, write your next change',
+  'Finishing the photo, what do we add next?',
+  'Just a moment, meanwhile think about colors',
+  'Preparing the new version, think about the next touch',
+  'The room is changing, write what you want next',
+  'Placing the furniture, meanwhile write your next idea',
+  'Almost done, want to change something else?',
+  'Working on light and details, write the next step',
+  'Nearly there, meanwhile tell me what you\'re not sure about',
+] : [
   'Sto creando la foto, intanto scrivi la prossima modifica',
   'Ci lavoro su, tu pensa già al prossimo ritocco',
   'Qualche secondo e arriva, intanto dimmi cosa cambiare dopo',
@@ -219,7 +274,7 @@ const BUSY_HINTS = [
   'Sto sistemando tutto, intanto scrivi cosa ti piacerebbe',
   'Qualche istante e ci siamo, pensa al prossimo ritocco',
 ];
-const AFTER = ['cuscini verdi sul divano', 'togli il quadro', 'pavimento in rovere chiaro', 'più luce naturale', 'tende di lino bianche', 'una pianta vicino alla finestra'];
+const AFTER = pageLang() === 'en' ? ['green cushions on the sofa', 'remove the painting', 'light oak flooring', 'more natural light', 'white linen curtains', 'a plant by the window'] : ['cuscini verdi sul divano', 'togli il quadro', 'pavimento in rovere chiaro', 'più luce naturale', 'tende di lino bianche', 'una pianta vicino alla finestra'];
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
 
@@ -238,7 +293,7 @@ function loadSaved(): Saved | null {
     const d = JSON.parse(raw) as Saved;
     // lavori interrotti dalla ricarica: la foto non si puo' riprendere (e' comunque nella Galleria), il video si' (job)
     // foto interrotta dalla ricarica: resta in lavorazione e si va a riprendere il risultato dalla Galleria (vedi recover)
-    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? (m.at ? { ...m, recover: true } : { ...m, busy: false, err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' })
+    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? (m.at ? { ...m, recover: true } : { ...m, busy: false, err: tr('La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.', 'The page reloaded while working: you\'ll find the result in the Gallery.') })
       : m.role === 'video' && m.previews?.some(p => !p) ? { ...m, previews: m.previews.map(p => p ?? 'err') } : m));
     return d;
   } catch { return null; }
@@ -274,7 +329,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // campo "Altro, lo scrivo io" sotto la foto: si chiude solo se resta vuoto e il cursore e' uscito davvero
   // (mentre il messaggio si riscrive con l'animazione ci sono due copie del campo: la seconda rubava il cursore)
   const otherInput = (id: string) => (
-    <input autoFocus placeholder="es. una mansarda" maxLength={40} className="w-40 border-b border-ink/30 bg-transparent font-bold outline-none placeholder:font-normal placeholder:text-muted/60"
+    <input autoFocus placeholder={OTHER_PH} maxLength={40} className="w-40 border-b border-ink/30 bg-transparent font-bold outline-none placeholder:font-normal placeholder:text-muted/60"
       onKeyDown={e => {
         if (e.key === 'Escape') setOtherFor(null);
         if (e.key !== 'Enter') return;
@@ -282,7 +337,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         if (v) { setMsgs(ms => ms.map(x => (x.id === id && x.role === 'user' ? { ...x, seen: `custom:${v}` } : x))); setScene('interno'); setKind(null); }
         setOtherFor(null);
       }}
-      onBlur={e => { const el = e.currentTarget; setTimeout(() => { if (!el.value.trim() && !(document.activeElement as HTMLElement | null)?.matches?.('input[placeholder="es. una mansarda"]')) setOtherFor(null); }, 0); }} />
+      onBlur={e => { const el = e.currentTarget; setTimeout(() => { if (!el.value.trim() && !(document.activeElement as HTMLElement | null)?.matches?.(`input[placeholder="${OTHER_PH}"]`)) setOtherFor(null); }, 0); }} />
   );
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
@@ -353,7 +408,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const t = setTimeout(() => {
       const first = msgs.find(m => m.role === 'user' && m.text?.trim()) as { text?: string } | undefined;
       const imgs = json.match(/https:\/\/[^"\s]+?\.(?:jpe?g|png|webp)/gi);
-      const title = first?.text?.trim().slice(0, 80) || `Foto del ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}`;
+      const title = first?.text?.trim().slice(0, 80) || `${tr('Foto del', 'Photo from')} ${new Date().toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long' })}`;
       authFetch('/api/platform/chats', { method: 'PUT', body: JSON.stringify({ id: chatId, title, thumb: imgs?.[imgs.length - 1] ?? null, data }) })
         .then(r => { if (r.ok) lastSaved.current = json; }).catch(() => {});
     }, 2500);
@@ -422,7 +477,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         }
       }
       if (!left.size) return;
-      if (++tries >= 60) { lost.forEach(m => { if (left.has(m.id)) done(m, { err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' }); }); return; }
+      if (++tries >= 60) { lost.forEach(m => { if (left.has(m.id)) done(m, { err: tr('La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.', 'The page reloaded while working: you\'ll find the result in the Gallery.') }); }); return; }
       if (!stop) setTimeout(tick, 2000);
     };
     void tick();
@@ -494,8 +549,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     // una foto inutile; con la foto non riconosciuta si sceglie prima cos'e' (non si arreda uno sfondo del desktop)
     const note = (n: string) => { setText(''); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t }, { id: uid(), role: 'note', text: n }]); toBottom(); };
     const lastPhoto = [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image);
-    if (lastPhoto?.seen === 'unknown') { note('Prima dimmi che stanza è dal menu qui sopra, così la arredo giusta.'); return; }
-    if (!region && !styleRef && !pk && isChatter(t)) { note('Scrivimi cosa cambiare nella foto, per esempio: togli il divano, pareti bianche, arredala in stile nordico.'); return; }
+    if (lastPhoto?.seen === 'unknown') { note(tr('Prima dimmi che stanza è dal menu qui sopra, così la arredo giusta.', 'First tell me which room this is from the menu above, so I furnish it right.')); return; }
+    if (!region && !styleRef && !pk && isChatter(t)) { note(tr('Scrivimi cosa cambiare nella foto, per esempio: togli il divano, pareti bianche, arredala in stile nordico.', 'Tell me what to change in the photo, for example: remove the sofa, white walls, furnish it in Nordic style.')); return; }
     // stile da una foto: sempre Normale; scritta: quella delle pill sopra il campo; stili: l'ultima scelta nel popup
     const dens = styleRef ? 'normale' : given === undefined ? typedDensity : densityRef.current;
     setTextDensity(null);
@@ -513,12 +568,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
-        ? { planimetria: true, style: planStyle(t), ...(/bianco e nero|b\/n|in bianco/i.test(t) ? { plan: 'bw' as const } : /\b3d\b|tridimensional/i.test(t) ? { plan: '3d' as const } : {}) }
+        ? { planimetria: true, style: planStyle(t), ...(/bianco e nero|b\/n|in bianco|black and white/i.test(t) ? { plan: 'bw' as const } : /\b3d\b|tridimensional/i.test(t) ? { plan: '3d' as const } : {}) }
         : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
     // stile d'arredo scelto: nel messaggio anche quanto arredo (es. "Luxury · arredo ricco")
     const furnishing = scene === 'interno' && !!pk && t === pk.label && !!pk.req.style && pk.req.style !== 'empty';
-    const shown = furnishing ? `${t} · arredo ${({ poco: 'essenziale', normale: 'normale', ricco: 'ricco' } as const)[dens]}` : t;
+    // testo mostrato: la richiesta fissa "Arreda nello stile della foto" resta in italiano verso il server, si traduce solo qui
+    const shown = furnishing ? `${t} · ${tr('arredo', 'furniture')} ${({ poco: tr('essenziale', 'minimal'), normale: tr('normale', 'standard'), ricco: tr('ricco', 'full') })[dens]}` : styleRef && t === STYLE_FROM_PHOTO ? tr(t, 'Furnish in the style of this photo') : t;
     setMsgs(ms => [...ms, { id: uid(), role: 'user', text: shown, region: zone ?? undefined, ...(style ? { style } : {}) }, { id, role: 'ai', before, out: null, busy: true, at: Date.now(), reveal: null, text: t, req }]);
     await run(id, req, before);
   };
@@ -527,12 +583,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (!m.req || busy) return;
     touch();
     const id = uid();
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Stesso stile, un’altra versione' }, { id, role: 'ai', before: m.before, out: null, busy: true, at: Date.now(), reveal: null, text: m.text, req: m.req }]);
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: tr('Stesso stile, un’altra versione', 'Same style, another version') }, { id, role: 'ai', before: m.before, out: null, busy: true, at: Date.now(), reveal: null, text: m.text, req: m.req }]);
     // variante: palette e materiali diversi nello stesso stile, la sceglie il server (vedi variantText)
     await run(id, { ...m.req, variant: -1 }, m.before);
   };
   // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
-  const askVideo = (photo: string) => { touch(); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Crea un video' }, { id: uid(), role: 'video', step: 'template', photo, picks: [] }]); toBottom(); };
+  const askVideo = (photo: string) => { touch(); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: CREATE_VIDEO }, { id: uid(), role: 'video', step: 'template', photo, picks: [] }]); toBottom(); };
   type VideoMsg = Extract<Msg, { role: 'video' }>;
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
     setMsgs(ms => ms.map(m => {
@@ -544,7 +600,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // crediti non bastano per finire il video: si dice subito e si resta fermi (niente soldi spesi a meta')
   const short = (m: VideoMsg, need: number) => {
     if (!credits || credits.unlimited || credits.balance >= need) return false;
-    patchV(m.id, { err: `Per questo video servono ${need} crediti, ne hai ${credits.balance}. Ricarica per continuare.` });
+    patchV(m.id, { err: tr(`Per questo video servono ${need} crediti, ne hai ${credits.balance}. Ricarica per continuare.`, `This video needs ${need} credits, you have ${credits.balance}. Top up to continue.`) });
     window.dispatchEvent(new Event('agenteimmo:no-credits'));
     return true;
   };
@@ -562,7 +618,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const r = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).catch(() => null);
     const d = r?.ok ? await r.json().catch(() => ({})) as { url?: string } : null;
     if (r?.status === 402) { patchV(m.id, { err: NO_CREDITS }); return; }
-    if (!d?.url) { patchV(m.id, { err: 'Non sono riuscito ad arredare la stanza, riprova.' }); return; }
+    if (!d?.url) { patchV(m.id, { err: tr('Non sono riuscito ad arredare la stanza, riprova.', 'I couldn\'t furnish the room, please try again.') }); return; }
     await makeVideo({ ...m, picks }, m.photo, label, d.url);
   };
   // Video in due fasi (28/09): 1) il server fa Prima (stanza vuota, Nano Banana) e Dopo (foto vera o nel nuovo stile)
@@ -570,13 +626,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // styled: foto nel nuovo stile (fatta dietro le quinte): il Dopo e' quella
   const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled?: string) => {
     touch();
-    const picks: VideoPick[] = styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }];
+    const picks: VideoPick[] = styled ? m.picks : [...m.picks, pick === KEEP_ROOM ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }];
     if (m.anim === 'walk' && m.agent?.up && styled) {
       patchV(m.id, { step: 'render', picks, err: undefined, agent: { ...m.agent, styled } });
       const token = m.agent.token ?? await (agentUps.current.get(m.agent.up) ?? Promise.resolve(null));
-      if (!token) { patchV(m.id, { err: 'Il video non si è caricato, riprova.' }); return; }
+      if (!token) { patchV(m.id, { err: tr('Il video non si è caricato, riprova.', 'The video didn\'t upload, please try again.') }); return; }
       const d = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'walk', token, styled }) }).then(r => r.json()).catch(() => ({}));
-      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
+      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : tr('Video non riuscito, riprova.', 'Video failed, please try again.') }); return; }
       patchV(m.id, { job: d.job });
       await pollVideo(m.id, d.job);
       return;
@@ -585,9 +641,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       patchV(m.id, { step: 'render', picks, err: undefined, agent: { ...m.agent, styled } });
       // token del video convertito: gia' nel messaggio (anche dopo una ricarica) o dal caricamento in corso
       const token = m.agent.token ?? await (agentUps.current.get(m.agent.up) ?? Promise.resolve(null));
-      if (!token) { patchV(m.id, { err: 'Il video non si è caricato, riprova.' }); return; }
+      if (!token) { patchV(m.id, { err: tr('Il video non si è caricato, riprova.', 'The video didn\'t upload, please try again.') }); return; }
       const d = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'render', token, at: m.agent.at, styled, room: m.agent.room }) }).then(r => r.json()).catch(() => ({}));
-      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
+      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : tr('Video non riuscito, riprova.', 'Video failed, please try again.') }); return; }
       patchV(m.id, { job: d.job });
       await pollVideo(m.id, d.job);
       return;
@@ -599,7 +655,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       patchV(m.id, { step: 'render', anim: m.anim, photo, picks, err: undefined });
       const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src }), anim: m.anim, ...(kind?.startsWith('room:') ? { interior: true } : {}), ...(project ? { projectId: project } : {}) }) }).catch(() => null);
       const d = res ? await res.json().catch(() => ({})) : {};
-      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
+      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : tr('Video non riuscito, riprova.', 'Video failed, please try again.') }); return; }
       patchV(m.id, { job: d.job });
       await pollVideo(m.id, d.job);
       return;
@@ -608,7 +664,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     patchV(m.id, { step: 'render', frames: undefined, ...(styled ? {} : { photo }), picks, err: undefined });
     const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'frames', ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
-    if (!d.frames) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Non sono riuscito a preparare la stanza vuota, riprova.' }); return; }
+    if (!d.frames) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? tr('La GPU si sta avviando, riprova tra un minuto.', 'The GPU is starting up, try again in a minute.') : tr('Non sono riuscito a preparare la stanza vuota, riprova.', 'I couldn\'t prepare the empty room, please try again.') }); return; }
     // Prima e Dopo pronti: il video parte subito, senza chiedere conferma (29/09)
     const frames = { token: d.frames, before: d.before, after: d.after, src: photo, styled };
     patchV(m.id, { frames });
@@ -659,32 +715,32 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const agentContinue = async (m: VideoMsg, anim: VideoAnim) => {
     const ag = m.agent;
     if (!ag?.video) return;
-    const pick: VideoPick = anim === 'walk' ? { label: 'Cammina e cambia stile', icon: 'cam' } : { label: 'Con te in video', icon: 'agent' };
+    const pick: VideoPick = anim === 'walk' ? { label: tr('Cammina e cambia stile', 'Walk and change style'), icon: 'cam' } : { label: tr('Con te in video', 'Starring you'), icon: 'agent' };
     const picks = m.picks.length ? m.picks : [pick];
     if (anim === 'walk') {
-      patchV(m.id, { step: 'upload', anim, picks, err: undefined, agent: { ...ag, busy: 'Preparo la stanza…' } });
+      patchV(m.id, { step: 'upload', anim, picks, err: undefined, agent: { ...ag, busy: tr('Preparo la stanza…', 'Preparing the room…') } });
       const dur = await videoDuration(ag.video).catch(() => 0);
-      if (dur < 3) { patchV(m.id, { agent: undefined, err: 'Il video è troppo corto: cammina almeno 4-5 secondi.' }); return; }
+      if (dur < 3) { patchV(m.id, { agent: undefined, err: tr('Il video è troppo corto: cammina almeno 4-5 secondi.', 'The video is too short: walk for at least 4-5 seconds.') }); return; }
       const nm: VideoMsg = { ...m, anim, picks, agent: { ...ag, at: Math.min(dur, 15) / 2, duration: dur } };
       if (await agentRoom(nm)) patchV(m.id, { step: 'room' });
       return;
     }
-    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: 'Riconosco il punto di uscita…' } });
+    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: tr('Riconosco il punto di uscita…', 'Finding the exit point…') } });
     try {
       const g = await videoGrid(ag.video);
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
       if (e.at === undefined) throw new Error(e.error);
-      if (!e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' }); return; }
+      if (!e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: tr('Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.', 'I can\'t see the moment you leave the frame: at the end of the video step out and leave the room empty for 2-3 seconds.') }); return; }
       patchV(m.id, { agent: { ...ag, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady, landscape: g.tw > g.th } });
       setTimeout(toBottom, 80); // compare la timeline: la si porta in vista
     } catch {
-      patchV(m.id, { step: 'upload', agent: undefined, err: 'Non sono riuscito a leggere il video, riprova.' });
+      patchV(m.id, { step: 'upload', agent: undefined, err: tr('Non sono riuscito a leggere il video, riprova.', 'I couldn\'t read the video, please try again.') });
     }
   };
   // foto della stanza all'istante scelto, dal video che ha il browser (poi caricata come le altre foto)
   const agentRoom = async (m: VideoMsg): Promise<string | null> => {
     if (!m.agent?.video || m.agent.at === undefined) return null;
-    patchV(m.id, { agent: { ...m.agent, busy: 'Preparo la foto della stanza…' } });
+    patchV(m.id, { agent: { ...m.agent, busy: tr('Preparo la foto della stanza…', 'Preparing the room photo…') } });
     const url = await videoFrame(m.agent.video, m.agent.at).then(d => uploadDataUrl(d, 'properties')).catch(() => '');
     patchV(m.id, { ...(url ? { photo: url } : {}), agent: { ...m.agent, room: url || undefined, busy: undefined } });
     return url || null;
@@ -693,15 +749,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (!m.frames) return;
     touch();
     patchV(m.id, { step: 'render', err: undefined });
-    const fail = 'Video non riuscito, riprova.';
+    const fail = tr('Video non riuscito, riprova.', 'Video failed, please try again.');
     const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'render', frames: m.frames.token, anim: m.anim }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
-    if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
+    if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'nothing_to_animate' ? tr('Nella foto non ci sono mobili da animare.', 'There\'s no furniture to animate in this photo.') : fail }); return; }
     patchV(m.id, { job: d.job });
     await pollVideo(m.id, d.job);
   };
   const pollVideo = async (id: string, job: string) => {
-    const fail = 'Video non riuscito, riprova.';
+    const fail = tr('Video non riuscito, riprova.', 'Video failed, please try again.');
     // Kling ci mette ~9 min (prove del 28/09/2026), la camminata di 15 s anche di piu': si aspetta fino a 25
     for (let k = 0; k < 250; k++) {
       await wait(6000);
@@ -723,15 +779,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     for (const m of saved?.msgs ?? []) if (m.role === 'video' && m.job && !m.url && !m.err) void pollVideo(m.id, m.job);
     // pagina ricaricata a meta' (prima che il video partisse): niente lavoro da seguire, si ferma e si puo' riprovare
     for (const m of saved?.msgs ?? []) if (m.role === 'video' && !m.job && !m.url && !m.err && (m.step === 'render' || m.agent?.busy))
-      patchV(m.id, { err: 'La pagina si è ricaricata prima che il video partisse, riprova.', agent: m.agent && { ...m.agent, busy: undefined } });
+      patchV(m.id, { err: tr('La pagina si è ricaricata prima che il video partisse, riprova.', 'The page reloaded before the video started, please try again.'), agent: m.agent && { ...m.agent, busy: undefined } });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
     if (d.error === 'no_credits') { FINISHED.set(id, { err: NO_CREDITS }); patch(id, { busy: false, err: NO_CREDITS }); return; }
-    if (d.error === 'daily_limit') { FINISHED.set(id, { err: 'Hai raggiunto il limite di modifiche di oggi, riprova domani.' }); patch(id, { busy: false, err: 'Hai raggiunto il limite di modifiche di oggi, riprova domani.' }); return; }
+    if (d.error === 'daily_limit') { const err = tr('Hai raggiunto il limite di modifiche di oggi, riprova domani.', 'You\'ve reached today\'s edit limit, try again tomorrow.'); FINISHED.set(id, { err }); patch(id, { busy: false, err }); return; }
     if (AI_MOCK && res?.status === 401) { await wait(4000); d = { url: before }; } // anteprima senza login
-    if (!d.url) { const err = d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.'; FINISHED.set(id, { err }); patch(id, { busy: false, err }); return; }
+    if (!d.url) { const err = d.error === 'timeout' ? tr('La GPU si sta avviando, riprova tra un minuto.', 'The GPU is starting up, try again in a minute.') : tr('Modifica non riuscita, riprova.', 'Edit failed, please try again.'); FINISHED.set(id, { err }); patch(id, { busy: false, err }); return; }
     FINISHED.set(id, { out: d.url });
     patch(id, { busy: false, out: d.url, reveal: 'burst' });
     setBase(d.url); // la prossima richiesta continua da qui
@@ -757,15 +813,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // Suggerimento nel campo: segue quello che sta succedendo (foto, stanza riconosciuta, lavoro in corso, esito)
   const lastAi = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai');
   const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
-  const hint = !base ? 'Prima carica una foto, poi scrivi qui cosa cambiare'
+  const hint = !base ? tr('Prima carica una foto, poi scrivi qui cosa cambiare', 'Upload a photo first, then write here what to change')
     : busy && lastAi ? BUSY_HINTS[[...lastAi.id].reduce((h, c) => h + c.charCodeAt(0), 0) % BUSY_HINTS.length]
-    : lastAi?.err === NO_CREDITS ? 'Per continuare scegli un piano'
-    : lastAi?.err ? 'Non è andata: riprova o chiedilo in un altro modo'
-    : roomState === 'vuota' ? `La stanza è vuota: arredala? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'arreda in stile moderno'}`
-    : roomState === 'disordinata' ? 'Es. togli il disordine e gli oggetti personali, lascia i mobili'
-    : roomState === 'datata' ? 'Es. rinnova pavimento, pareti e mobili in stile moderno'
-    : done ? `Vuoi ritoccare qualcosa? Es. ${AFTER[(done - 1) % AFTER.length]}`
-    : `Cosa vuoi cambiare? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'togli il divano e metti un tavolo da pranzo'}`;
+    : lastAi?.err === NO_CREDITS ? tr('Per continuare scegli un piano', 'Pick a plan to continue')
+    : lastAi?.err ? tr('Non è andata: riprova o chiedilo in un altro modo', 'That didn\'t work: try again or ask in a different way')
+    : roomState === 'vuota' ? `${tr('La stanza è vuota: arredala? Es.', 'The room is empty: furnish it? E.g.')} ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || tr('arreda in stile moderno', 'furnish in modern style')}`
+    : roomState === 'disordinata' ? tr('Es. togli il disordine e gli oggetti personali, lascia i mobili', 'E.g. remove the clutter and personal items, keep the furniture')
+    : roomState === 'datata' ? tr('Es. rinnova pavimento, pareti e mobili in stile moderno', 'E.g. renew floor, walls and furniture in modern style')
+    : done ? `${tr('Vuoi ritoccare qualcosa? Es.', 'Want to tweak something? E.g.')} ${AFTER[(done - 1) % AFTER.length]}`
+    : `${tr('Cosa vuoi cambiare? Es.', 'What do you want to change? E.g.')} ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || tr('togli il divano e metti un tavolo da pranzo', 'remove the sofa and add a dining table')}`;
   // arrivo da un immobile (#/staging?photo=...&project=...): la foto entra subito in chat
   // ricarica della scheda: la foto dell'indirizzo e' gia' nella chat salvata, non si rimette. Se la chat salvata e' un'altra,
   // la foto dell'immobile apre una chat nuova (prima veniva ignorata e sembrava che il clic non facesse niente)
@@ -803,13 +859,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
   const videoChip = base && scene !== 'planimetria' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
-      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video</button>,
+      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> {tr('Crea video', 'Create video')}</button>,
   ] : [];
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
   const typedDensity = textDensity ?? detectDensity(text) ?? 'normale';
   const typingFurnish = !!base && scene === 'interno' && !!text.trim() && furnishes({ prompt: text, scene });
-  const densityPills = ([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
+  const densityPills = ([['poco', tr('Essenziale', 'Minimal')], ['normale', tr('Normale', 'Standard')], ['ricco', tr('Ricco', 'Full')]] as const).map(([d, l]) => (
     <button key={d} role="radio" aria-checked={typedDensity === d} onClick={() => setTextDensity(d)}
       className={`flex h-8 shrink-0 items-center rounded-full px-3.5 pb-px text-[13px] font-medium leading-none shadow-sm ease-smooth transition-colors ${typedDensity === d ? 'bg-ink text-white' : 'bg-white text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-canvas'}`}>{l}</button>
   ));
@@ -854,18 +910,18 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             <div className="flex min-h-[calc(100vh-22rem)] flex-col items-center justify-center">
               <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight md:text-5xl md:leading-[1.2]">
                 <span className="blur-in inline-block">Home staging</span>
-                <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Carica una foto e chiedi.</span>
+                <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>{tr('Carica una foto e chiedi.', 'Upload a photo and ask.')}</span>
               </h1>
               <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
-                <span className="text-lg font-semibold">Carica la foto della stanza</span>
-                <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.</span>
+                <span className="text-lg font-semibold">{tr('Carica la foto della stanza', 'Upload a photo of the room')}</span>
+                <span className="text-sm text-muted">{tr('Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.', 'Drag it here or click the button. A facade, a garden or a floor plan work too: I recognize it on my own. Or a video of you: you talk, step out and the room gets furnished.')}</span>
                 {/* il campo file deve stare prima del pulsante vetrina: la label attiva il primo controllo che contiene, e un <button> lo e' */}
                 {picker}
                 <span className="mt-1 flex flex-wrap items-center justify-center gap-2">
-                  <span className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><Monitor size={16} /> Dal computer</span>
+                  <span className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><Monitor size={16} /> {tr('Dal computer', 'From computer')}</span>
                   {/* dentro la label: senza preventDefault aprirebbe anche la scelta file */}
-                  <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><LayoutGrid size={16} /> Dalla tua vetrina</button>
+                  <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><LayoutGrid size={16} /> {tr('Dalla tua vetrina', 'From your showcase')}</button>
                 </span>
               </label>
             </div>
@@ -878,7 +934,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           ) : m.role === 'divider' ? (
             <div key={m.id} className="blur-in flex items-center gap-3 py-2 text-xs font-medium text-muted">
               <span className="h-px flex-1 bg-line" />
-              Ripreso da questa versione
+              {tr('Ripreso da questa versione', 'Continued from this version')}
               <span className="h-px flex-1 bg-line" />
             </div>
           ) : m.role === 'note' ? (
@@ -913,14 +969,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && m.step !== 'vchoice' && (
-                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'walk' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, picks: m.picks.slice(0, 1) }) : m.step === 'mode' && m.anim === 'agent' ? { step: 'room' } : m.step === 'room' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
+                      <button aria-label={tr('Indietro', 'Back')} onClick={() => patchV(m.id, m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'walk' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, picks: m.picks.slice(0, 1) }) : m.step === 'mode' && m.anim === 'agent' ? { step: 'room' } : m.step === 'room' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'upload' ? 'Aspetto il tuo video' : m.step === 'vchoice' ? 'Che video facciamo?' : m.step === 'exit' ? (m.agent?.busy ?? 'Da qui la stanza si trasforma') : m.step === 'room' ? 'Che stanza è?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? ((emptyFrom && emptyFrom === m.photo) || m.anim === 'agent' || m.anim === 'walk' ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
+                    <span className="font-medium">{m.step === 'template' ? tr('Che video vuoi creare?', 'What video do you want to create?') : m.step === 'upload' ? tr('Aspetto il tuo video', 'Waiting for your video') : m.step === 'vchoice' ? tr('Che video facciamo?', 'Which video shall we make?') : m.step === 'exit' ? (m.agent?.busy ?? tr('Da qui la stanza si trasforma', 'From here the room transforms')) : m.step === 'room' ? tr('Che stanza è?', 'Which room is it?') : m.step === 'anim' ? tr('Con quale animazione?', 'Which animation?') : m.step === 'mode' ? ((emptyFrom && emptyFrom === m.photo) || m.anim === 'agent' || m.anim === 'walk' ? tr('In che stile la arredo?', 'Which style should I furnish it in?') : tr('Com’è ora o in un nuovo stile?', 'As it is now or in a new style?')) : m.step === 'previews' ? (m.previews?.some(p => !p) ? tr('Preparo due proposte…', 'Preparing two options…') : tr('Scegli quella per il video', 'Pick the one for the video')) : m.step === 'frames' ? (m.err ? '' : m.frames ? tr('Ecco prima e dopo. Creo il video?', 'Here are before and after. Create the video?') : tr('Preparo prima e dopo…', 'Preparing before and after…')) : m.url ? tr('Ecco il video', 'Here is the video') : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? tr('Creo il video, circa 2 minuti', 'Creating the video, about 2 minutes') : tr('Creo il video, qualche minuto', 'Creating the video, a few minutes')}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
-                      <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
-                        className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink">Annulla</button>
+                      <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === CREATE_VIDEO)); })}
+                        className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink">{tr('Annulla', 'Cancel')}</button>
                     )}
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
@@ -933,10 +989,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className={`aspect-video w-full rounded-[20px] object-cover ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
-                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{/* prezzo intero del video: Prima e dopo 100 (1 alle foto + 99 al video) */}{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => fullCr(a.id))) : fullCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label="crediti" /></span>
+                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{/* prezzo intero del video: Prima e dopo 100 (1 alle foto + 99 al video) */}{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => fullCr(a.id))) : fullCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>
                               <span className="block px-3 pt-3 font-semibold">{t.label}</span>
                               <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
-                              {off && <span className="absolute left-4 top-4 z-30 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' ? 'Solo foto esterne' : 'Solo stanze'}</span>}
+                              {off && <span className="absolute left-4 top-4 z-30 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' ? tr('Solo foto esterne', 'Exterior photos only') : tr('Solo stanze', 'Rooms only')}</span>}
                             </button>
                           </div>
                           );
@@ -947,17 +1003,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       // messaggio: come girare il video, poi lo si manda in chat come una foto (trascinato o con il pulsante)
                       <div className="px-1">
                         <div className="max-w-xl rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm leading-relaxed">
-                          <p>{m.agent?.busy ?? 'Mandami un tuo video, qui in chat come una foto. Giralo così:'}</p>
+                          <p>{m.agent?.busy ?? tr('Mandami un tuo video, qui in chat come una foto. Giralo così:', 'Send me a video of yours, here in the chat like a photo. Shoot it like this:')}</p>
                           {!m.agent?.busy && (m.anim === 'walk'
                             ? <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted">
-                                <li><b className="font-semibold text-ink">Telefono in mano</b>, in verticale, senza inquadrarti</li>
-                                <li><b className="font-semibold text-ink">Cammina piano</b> nella stanza o gira lentamente su te stesso</li>
-                                <li><b className="font-semibold text-ink">Da 5 a 15 secondi</b>: oltre i 15 si usa solo l’inizio</li>
+                                <li><b className="font-semibold text-ink">{tr('Telefono in mano', 'Phone in hand')}</b>{tr(', in verticale, senza inquadrarti', ', vertical, without filming yourself')}</li>
+                                <li><b className="font-semibold text-ink">{tr('Cammina piano', 'Walk slowly')}</b> {tr('nella stanza o gira lentamente su te stesso', 'through the room or turn around slowly')}</li>
+                                <li><b className="font-semibold text-ink">{tr('Da 5 a 15 secondi', '5 to 15 seconds')}</b>{tr(': oltre i 15 si usa solo l’inizio', ': beyond 15 only the start is used')}</li>
                               </ol>
                             : <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted">
-                                <li><b className="font-semibold text-ink">Telefono fermo</b>, appoggiato o su un cavalletto, con la stanza intera</li>
-                                <li><b className="font-semibold text-ink">Parla in camera</b>, anche pochi secondi</li>
-                                <li><b className="font-semibold text-ink">Esci dall’inquadratura</b> e lascia la stanza sola 2-3 secondi: da lì si arreda</li>
+                                <li><b className="font-semibold text-ink">{tr('Telefono fermo', 'Phone steady')}</b>{tr(', appoggiato o su un cavalletto, con la stanza intera', ', propped up or on a tripod, with the whole room in frame')}</li>
+                                <li><b className="font-semibold text-ink">{tr('Parla in camera', 'Talk to camera')}</b>{tr(', anche pochi secondi', ', even just a few seconds')}</li>
+                                <li><b className="font-semibold text-ink">{tr('Esci dall’inquadratura', 'Step out of frame')}</b> {tr('e lascia la stanza sola 2-3 secondi: da lì si arreda', 'and leave the room empty for 2-3 seconds: that\'s where it gets furnished')}</li>
                               </ol>)}
                         </div>
                         {m.err && <ErrLine err={m.err} className="pt-3" />}
@@ -972,7 +1028,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className={`aspect-video w-full rounded-[20px] object-cover ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
-                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{videoCr(t.anims[0].id)}<Coins size={12} className="shrink-0" aria-label="crediti" /></span>
+                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{videoCr(t.anims[0].id)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>
                               <span className="block px-3 pt-3 font-semibold">{t.label}</span>
                               <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
                             </button>
@@ -992,16 +1048,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         <div className="mx-auto max-w-2xl px-1">
                           <div className="flex flex-col items-center justify-center gap-3 rounded-[28px] bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5">
                             <Loader2 size={24} className="animate-spin text-brand" />
-                            <p className="text-[15px] font-semibold">Sto riconoscendo il momento in cui esci dall’inquadratura</p>
-                            <p className="text-xs text-muted">Ci vogliono pochi secondi, poi potrai correggerlo</p>
+                            <p className="text-[15px] font-semibold">{tr('Sto riconoscendo il momento in cui esci dall’inquadratura', 'Finding the moment you step out of frame')}</p>
+                            <p className="text-xs text-muted">{tr('Ci vogliono pochi secondi, poi potrai correggerlo', 'It takes a few seconds, then you can adjust it')}</p>
                           </div>
                         </div>
                       );
                       return (
                         // anteprima sempre sopra in un riquadro 16:9 (il verticale intero, con lo sfondo sfocato), sotto la card
                         <div className="mx-auto grid max-w-2xl gap-4 px-1">
-                          {m.step === 'exit' && a?.exit === false && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Non ti vedo uscire dall’inquadratura in questo video: la stanza si arreda solo dopo che esci. Puoi usare una foto del video (freccia indietro) o mandarne un altro.</p>}
-                          {dead && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Il video non è più disponibile (la pagina è stata ricaricata mentre si caricava): premi Nuova chat e rimandalo.</p>}
+                          {m.step === 'exit' && a?.exit === false && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{tr('Non ti vedo uscire dall’inquadratura in questo video: la stanza si arreda solo dopo che esci. Puoi usare una foto del video (freccia indietro) o mandarne un altro.', 'I can\'t see you leaving the frame in this video: the room is furnished only after you step out. You can use a still from the video (back arrow) or send another one.')}</p>}
+                          {dead && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{tr('Il video non è più disponibile (la pagina è stata ricaricata mentre si caricava): premi Nuova chat e rimandalo.', 'The video is no longer available (the page reloaded while it was uploading): press New chat and send it again.')}</p>}
                           <div className="min-w-0 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
                             <div className="relative h-20 select-none">
                               <div className="absolute inset-0 flex overflow-hidden rounded-2xl bg-canvas">
@@ -1014,20 +1070,20 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.2)]" />
                                 <div className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.2)]" />
                               </div>
-                              {a?.at !== undefined && <input type="range" min={0} max={dur} step={1 / 30} value={at} aria-label="Momento in cui esci"
+                              {a?.at !== undefined && <input type="range" min={0} max={dur} step={1 / 30} value={at} aria-label={tr('Momento in cui esci', 'Moment you step out')}
                                 onChange={e => patchV(m.id, { agent: { ...a, at: Number(e.target.value) } })} className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0" />}
                             </div>
                             <div className="mt-4 flex items-center gap-3">
                               <div className="flex items-center rounded-full bg-canvas p-1">
-                                <button type="button" aria-label="Fotogramma prima" onClick={() => step(-1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Minus size={14} /></button>
-                                <span className="flex h-8 min-w-16 items-center justify-center px-1 pb-px text-sm font-semibold leading-none tabular-nums">{at.toFixed(2).replace('.', ',')} s</span>
-                                <button type="button" aria-label="Fotogramma dopo" onClick={() => step(1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Plus size={14} /></button>
+                                <button type="button" aria-label={tr('Fotogramma prima', 'Previous frame')} onClick={() => step(-1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Minus size={14} /></button>
+                                <span className="flex h-8 min-w-16 items-center justify-center px-1 pb-px text-sm font-semibold leading-none tabular-nums">{at.toFixed(2).replace('.', tr(',', '.'))} s</span>
+                                <button type="button" aria-label={tr('Fotogramma dopo', 'Next frame')} onClick={() => step(1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Plus size={14} /></button>
                               </div>
-                              <span className="hidden min-w-0 flex-1 truncate text-xs text-muted sm:block">Da qui la stanza si trasforma: non devi più vederti</span>
+                              <span className="hidden min-w-0 flex-1 truncate text-xs text-muted sm:block">{tr('Da qui la stanza si trasforma: non devi più vederti', 'From here the room transforms: you should no longer be visible')}</span>
                               <button disabled={!!a?.busy || a?.at === undefined || (m.step === 'exit' && a?.exit === false)} onClick={async () => { if (await agentRoom(m)) patchV(m.id, { step: 'room' }); }}
-                                className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a?.busy && <Loader2 size={14} className="animate-spin" />}Avanti</button>
+                                className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a?.busy && <Loader2 size={14} className="animate-spin" />}{tr('Avanti', 'Next')}</button>
                             </div>
-                            {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
+                            {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">{tr('Il telefono si muove nel video: la trasformazione può venire male.', 'The phone moves in the video: the transformation may not come out well.')}</p>}
                           </div>
                           <div className="relative -order-1 aspect-video w-full overflow-hidden rounded-3xl bg-ink shadow-sm ring-1 ring-black/5">
                             {list.length > 0 && <img src={list[Math.min(list.length - 1, Math.floor((pos / 100) * list.length))]} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />}
@@ -1047,7 +1103,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         ))}
                         {roomOther?.id === m.id ? (
                           // "Altro": la pill diventa il campo e si allunga col testo; Invio conferma, Esc annulla
-                          <input autoFocus value={roomOther.v} placeholder="es. mansarda" maxLength={40} size={Math.max(24, roomOther.v.length + 2)}
+                          <input autoFocus value={roomOther.v} placeholder={tr('es. mansarda', 'e.g. attic')} maxLength={40} size={Math.max(24, roomOther.v.length + 2)}
                             onChange={e => setRoomOther({ id: m.id, v: e.target.value })}
                             onKeyDown={e => {
                               if (e.key === 'Escape') setRoomOther(null);
@@ -1058,7 +1114,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink shadow-sm outline-none ring-2 ring-inset ring-brand/50 placeholder:text-muted/60" />
                         ) : (
                           <button onClick={() => setRoomOther({ id: m.id, v: '' })}
-                            className="rise rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white" style={{ animationDelay: `${0.03 + AGENT_ROOMS.length * 0.03}s` }}>Altro</button>
+                            className="rise rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white" style={{ animationDelay: `${0.03 + AGENT_ROOMS.length * 0.03}s` }}>{tr('Altro', 'Other')}</button>
                         )}
                       </div>
                     )}
@@ -1066,8 +1122,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         // scelta dello stile come le card dei modelli: foto vera per "Com'è ora", un soggiorno d'esempio per ogni stile
                         <div className="px-1">
                           <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${m.anim === 'agent' || m.anim === 'walk' || (emptyFrom && emptyFrom === m.photo) ? 'lg:grid-cols-4' : 'lg:grid-cols-5'}`}>
-                            {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...(!m.agent && (kind === 'scene:esterno' || kind === 'scene:giardino') ? [] : VIDEO_STYLES.map(x => ({ ...x, src: styleThumb(x.id, m.agent ? m.agent.kind : kind) })))].map((o, k) => (
-                              <button key={o.id} onClick={() => { if (short(m, fullCr(m.anim) + (o.id === 'keep' ? 0 : CREDIT_COST.arreda))) return; if (o.id === 'keep') void makeVideo(m, m.photo, 'Stanza com’è'); else void styleVideo(m, o.label, { style: o.id }); }} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
+                            {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: tr('Com’è ora', 'As it is now'), src: m.photo }] : []), ...(!m.agent && (kind === 'scene:esterno' || kind === 'scene:giardino') ? [] : VIDEO_STYLES.map(x => ({ ...x, src: styleThumb(x.id, m.agent ? m.agent.kind : kind) })))].map((o, k) => (
+                              <button key={o.id} onClick={() => { if (short(m, fullCr(m.anim) + (o.id === 'keep' ? 0 : CREDIT_COST.arreda))) return; if (o.id === 'keep') void makeVideo(m, m.photo, KEEP_ROOM); else void styleVideo(m, o.label, { style: o.id }); }} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
                                 <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>
                                 <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) || m.anim === 'agent' || m.anim === 'walk' ? videoCr(m.anim) : CREDIT_COST.video_prep)} tight still /></span>
                               </button>
@@ -1076,8 +1132,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           <form className={`mt-3 flex h-12 items-center gap-2 rounded-full bg-white pl-5 pr-1.5 ring-1 ring-inset ring-black/10 focus-within:ring-brand`}
                             onSubmit={e => { e.preventDefault(); const v = (new FormData(e.currentTarget).get('stile') as string ?? '').trim(); if (v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}>
                             <Palette size={16} className="shrink-0 text-muted" />
-                            <input name="stile" placeholder="Un altro stile, es. classico con legno scuro" maxLength={200} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
-                            <button aria-label="Usa questo stile" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-colors hover:bg-brand/90"><ArrowUp size={16} /></button>
+                            <input name="stile" placeholder={tr('Un altro stile, es. classico con legno scuro', 'Another style, e.g. classic with dark wood')} maxLength={200} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
+                            <button aria-label={tr('Usa questo stile', 'Use this style')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-colors hover:bg-brand/90"><ArrowUp size={16} /></button>
                           </form>
                         </div>
                     )}
@@ -1094,7 +1150,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                   <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full object-cover ${m.err ? 'opacity-40' : (k === 'after' && !m.picks.some(p => p.icon === 'style')) || (k === 'before' && m.anim === 'agent') ? '' : 'scale-105 blur-md'}`} />
                                   {!m.err && ((k === 'before' && m.anim !== 'agent') || (k === 'after' && m.picks.some(p => p.icon === 'style'))) && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
                                 </>}
-                              <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">{k === 'before' ? 'Prima' : 'Dopo'}</span>
+                              <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">{k === 'before' ? tr('Prima', 'Before') : tr('Dopo', 'After')}</span>
                             </div>
                           ))}
                         </div>
@@ -1102,13 +1158,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
-                            <button onClick={() => { if (!short(m, videoCr(m.anim))) void renderVideo(m); }} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
+                            <button onClick={() => { if (!short(m, videoCr(m.anim))) void renderVideo(m); }} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">{tr('Crea il video', 'Create the video')}<Cr n={videoCr(m.anim)} dark /></button>
                             {/* una sola seconda possibilita' sullo stile (poi si torna indietro): costa come una foto */}
-                            {m.restyle && !m.redone && <button onClick={() => { if (!short(m, CREDIT_COST.arreda + CREDIT_COST.video_prep + videoCr(m.anim))) void styleVideo(m, m.restyle!.label, m.restyle!.req, true); }} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda + CREDIT_COST.video_prep} /></button>}
+                            {m.restyle && !m.redone && <button onClick={() => { if (!short(m, CREDIT_COST.arreda + CREDIT_COST.video_prep + videoCr(m.anim))) void styleVideo(m, m.restyle!.label, m.restyle!.req, true); }} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">{tr('Rifai lo stile', 'Redo the style')}<Cr n={CREDIT_COST.arreda + CREDIT_COST.video_prep} /></button>}
                           </div>
                         )}
                         {m.err && !m.frames && (
-                          <div className="pt-3"><button onClick={() => patchV(m.id, { step: 'mode', picks: m.picks.slice(0, 2), err: undefined })} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">Riprova</button></div>
+                          <div className="pt-3"><button onClick={() => patchV(m.id, { step: 'mode', picks: m.picks.slice(0, 2), err: undefined })} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">{tr('Riprova', 'Try again')}</button></div>
                         )}
                       </div>
                     )}
@@ -1125,12 +1181,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" since={m.renderAt} /> · di solito {waitFor(m.anim)}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" since={m.renderAt} /> · {tr('di solito', 'usually')} {waitFor(m.anim)}</span>
                                 </div>
                               )}
                             </>}
                         </div>
-                        {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} />{/* foto nello stile gia' fatta (e pagata): Riprova rilancia solo il video */}<button onClick={() => { const st = m.anim === 'walk' || m.anim === 'agent' ? m.agent?.styled : undefined; if (st) { if (!short(m, videoCr(m.anim))) void makeVideo(m, m.photo, '', st); } else patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') }); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">Riprova</button></div>}
+                        {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} />{/* foto nello stile gia' fatta (e pagata): Riprova rilancia solo il video */}<button onClick={() => { const st = m.anim === 'walk' || m.anim === 'agent' ? m.agent?.styled : undefined; if (st) { if (!short(m, videoCr(m.anim))) void makeVideo(m, m.photo, '', st); } else patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') }); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">{tr('Riprova', 'Try again')}</button></div>}
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         <div className="flex items-center gap-2 pt-3">
                           <div className="flex min-w-0 flex-1 flex-wrap gap-2">
@@ -1145,7 +1201,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             })}
                           </div>
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
-                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> Scarica</a>
+                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
                         </div>
                       </div>
                     )}
@@ -1160,25 +1216,25 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 {m.video
                   ? <video src={m.video} autoPlay muted loop playsInline className={`max-h-56 max-w-[60%] rounded-3xl object-cover ${CARD_SHADOW}`} />
                   : m.image
-                  ? <button type="button" onClick={() => setViewer({ src: m.image! })} className="max-w-[60%] cursor-zoom-in"><img src={m.image} alt="Foto caricata" data-base-photo={base === m.image ? '' : undefined} className={`max-h-56 rounded-3xl object-cover ${CARD_SHADOW} ease-smooth transition-transform hover:scale-[1.01]`} /></button>
+                  ? <button type="button" onClick={() => setViewer({ src: m.image! })} className="max-w-[60%] cursor-zoom-in"><img src={m.image} alt={tr('Foto caricata', 'Uploaded photo')} data-base-photo={base === m.image ? '' : undefined} className={`max-h-56 rounded-3xl object-cover ${CARD_SHADOW} ease-smooth transition-transform hover:scale-[1.01]`} /></button>
                   : m.style
                     // stile da una foto: la foto di riferimento a tutta larghezza (raggio 18 = 24 - 6 di margine), sotto cosa si fa; il credito Unsplash (obbligatorio) sta nel tooltip della foto
                     ? <div className="w-64 max-w-[75%] rounded-3xl rounded-br-2xl bg-ink p-1.5 text-sm text-white">
-                        <img src={m.style.src} alt="Foto di stile" title={m.style.author ? `Foto di ${m.style.author} su Unsplash` : undefined} className="block aspect-[4/3] w-full rounded-[18px] object-cover" />
+                        <img src={m.style.src} alt={tr('Foto di stile', 'Style photo')} title={m.style.author ? tr(`Foto di ${m.style.author} su Unsplash`, `Photo by ${m.style.author} on Unsplash`) : undefined} className="block aspect-[4/3] w-full rounded-[18px] object-cover" />
                         <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-2.5"><Palette size={15} className="shrink-0 opacity-70" /><span className="min-w-0 flex-1">{m.text}</span></div>
                       </div>
-                  : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
+                  : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> {tr('zona', 'area')}</span>}{m.text}</div>}
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
                   <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
-                    <p>{m.seen === 'unknown' ? <>Non riesco a capire che stanza è:{' '}
+                    <p>{m.seen === 'unknown' ? <>{tr('Non riesco a capire che stanza è:', 'I can\'t tell which room this is:')}{' '}
                       {otherFor === m.id ? otherInput(m.id) : <Dropdown value="" options={SEEN_OPTIONS} className="font-bold text-brand" onChange={v => {
                         if (v === 'other') { setOtherFor(m.id); return; }
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
-                      }}>sceglila tu</Dropdown>}, così la arredo giusta.</> : m.seen ? <>Sembra{' '}
+                      }}>{tr('sceglila tu', 'pick it')}</Dropdown>}{tr(', così la arredo giusta.', ', so I furnish it right.')}</> : m.seen ? <>{tr('Sembra', 'Looks like')}{' '}
                       {otherFor === m.id ? (
                         // "Altro": campo al posto della voce, Invio conferma, Esc annulla
                         otherInput(m.id)
@@ -1187,8 +1243,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         if (v === 'other') { setOtherFor(m.id); return; }
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
-                      }}>{seenLabel(m.seen)}</Dropdown>
-                      )}. </> : 'Foto caricata. '}{m.seen === 'unknown' ? '' : 'Cosa vuoi cambiare?'}</p>
+                      }}>{seenShow(m.seen)}</Dropdown>
+                      )}. </> : tr('Foto caricata. ', 'Photo uploaded. ')}{m.seen === 'unknown' ? '' : tr('Cosa vuoi cambiare?', 'What do you want to change?')}</p>
                   </LightSwap></AutoSize>
                 </div>
               )}
@@ -1217,17 +1273,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         Niente didascalia: la richiesta e' gia' nel messaggio sopra. Foto verticale (card stretta): icona sopra e nome sotto */}
                                         {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-start'}`}>
-                      <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
+                      <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label={tr('Modifica', 'Edit')} onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
                       {!isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
                       {/* dalla planimetria nessun video (nessun modello adatto) */}
-                      {!m.req?.planimetria && <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Crea video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />}
+                      {!m.req?.planimetria && <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label={tr('Crea video', 'Create video')} tip={tr('I mobili compaiono uno alla volta', 'Furniture appears one piece at a time')} disabled={busy} onClick={() => askVideo(m.out!)} />}
                       {m.req && !isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
-                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Rifai" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
+                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label={tr('Rifai', 'Redo')} tip={tr('Stesso stile, un\'altra versione', 'Same style, another version')} disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
                       {base !== m.out && (
                         <>
                           <span className="ml-auto mr-1 h-4 w-px bg-line" aria-hidden />
-                          <Tooltip label="Ricomincia da qui">
-                            <button onClick={() => restartFrom(i, m.out!)} aria-label="Ricomincia da qui" className="flex h-8 w-8 items-center justify-center rounded-full text-brand hover:bg-brand/5"><RotateCcw size={15} /></button>
+                          <Tooltip label={tr('Ricomincia da qui', 'Start over from here')}>
+                            <button onClick={() => restartFrom(i, m.out!)} aria-label={tr('Ricomincia da qui', 'Start over from here')} className="flex h-8 w-8 items-center justify-center rounded-full text-brand hover:bg-brand/5"><RotateCcw size={15} /></button>
                           </Tooltip>
                         </>
                       )}
@@ -1260,9 +1316,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           {densityAsk && !busy && createPortal(
             <div data-density-pop className="blur-in fixed z-[250] -translate-x-1/2 -translate-y-full pb-2" style={{ left: densityAsk.x, top: densityAsk.y }}>
               <div className={`rounded-3xl bg-white p-1.5 ${CARD_SHADOW}`}>
-                <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-muted">Quanto arredo?</div>
-                <div className="flex gap-1" role="radiogroup" aria-label="Quantità di arredo">
-                  {([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
+                <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-muted">{tr('Quanto arredo?', 'How much furniture?')}</div>
+                <div className="flex gap-1" role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')}>
+                  {([['poco', tr('Essenziale', 'Minimal')], ['normale', tr('Normale', 'Standard')], ['ricco', tr('Ricco', 'Full')]] as const).map(([d, l]) => (
                     <button key={d} role="radio" aria-checked={density === d} onClick={() => { const sg = densityAsk.sug; setDensity(d); setDensityAsk(null); void send(sg.label, sg); }}
                       className={`flex h-8 min-w-[84px] items-center justify-center rounded-full px-3 pb-px text-[13px] font-medium leading-none ease-smooth transition-colors ${density === d ? 'bg-ink text-white hover:bg-brand' : 'bg-canvas text-ink/80 hover:bg-brand hover:text-white'}`}>{l}</button>
                   ))}
@@ -1277,18 +1333,18 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             </div>
           )}
           {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image)?.seen !== null && (
-            <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">Quanto arredo?</span><span role="radiogroup" aria-label="Quantità di arredo" className="flex gap-1.5">{densityPills}</span></> : chips}</div>
+            <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
-          <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send('Arreda nello stile della foto', null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
-          {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send('Arreda nello stile della foto', null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}
+          <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(STYLE_FROM_PHOTO, null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
+          {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send(STYLE_FROM_PHOTO, null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}
           <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* foto e zona vicine, come un gruppo di strumenti */}
             <div className="flex shrink-0 items-center">
-              <button type="button" onClick={() => setLibrary(true)} title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
+              <button type="button" onClick={() => setLibrary(true)} title={base ? tr('Carica un\'altra foto', 'Upload another photo') : tr('Carica una foto', 'Upload a photo')} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
                 <ImagePlus size={20} />
               </button>
-              <Tooltip label="Stile da una foto: cerca o carica dal computer">
-                <button type="button" onClick={() => setInspo(true)} disabled={!base || busy} aria-label="Stile da una foto" className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors enabled:hover:bg-canvas enabled:hover:text-ink disabled:opacity-40">
+              <Tooltip label={tr('Stile da una foto: cerca o carica dal computer', 'Style from a photo: search or upload from your computer')}>
+                <button type="button" onClick={() => setInspo(true)} disabled={!base || busy} aria-label={tr('Stile da una foto', 'Style from a photo')} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors enabled:hover:bg-canvas enabled:hover:text-ink disabled:opacity-40">
                   <Palette size={19} />
                 </button>
               </Tooltip>
@@ -1297,7 +1353,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               placeholder={hint}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
-            <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
+            <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label={tr('Invia', 'Send')}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
             </button>
@@ -1314,7 +1370,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
 type Tool = 'rect' | 'lasso';
 // Zona: rettangolo trascinato o forma libera (lazo) disegnata col mouse; la forma libera arriva come
 // poligono (poly) con il suo rettangolo di ingombro, cosi' il resto del flusso resta quello del rettangolo.
-function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, busy, onSubmit, onCancel, example = 'togli la tv' }: { example?: string; inline?: number; closing?: boolean; src: string; region: Region | null; onChange: (r: Region | null) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, busy, onSubmit, onCancel, example = tr('togli la tv', 'remove the TV') }: { example?: string; inline?: number; closing?: boolean; src: string; region: Region | null; onChange: (r: Region | null) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('rect');
@@ -1378,7 +1434,7 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
   const pts = (ps: { x: number; y: number }[]) => ps.map(p => `${p.x * 100},${p.y * 100}`).join(' ');
   // X della selezione a parte (nella card del risultato la X e' il pulsante Scarica stesso, in AiPhotoStage)
   const closeBtn = (
-    <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
+    <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label={tr('Annulla selezione', 'Cancel selection')} title={tr('Annulla', 'Cancel')}
       className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
   );
   const photo = (
@@ -1413,9 +1469,9 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
-            placeholder={ready ? `Cosa cambio qui? Es. ${example}` : tool === 'rect' ? 'Disegna sulla foto' : clicks.length ? 'Doppio clic per chiudere' : 'Disegna il contorno'}
+            placeholder={ready ? `${tr('Cosa cambio qui? Es.', 'What should I change here? E.g.')} ${example}` : tool === 'rect' ? tr('Disegna sulla foto', 'Draw on the photo') : clicks.length ? tr('Doppio clic per chiudere', 'Double-click to close') : tr('Disegna il contorno', 'Draw the outline')}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
-          {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['lasso', 'Forma: disegna il contorno o clicca i punti', Lasso]] as const).map(([id, l, I]) => (
+          {([['rect', tr('Rettangolo: trascina per disegnare la zona', 'Rectangle: drag to draw the area'), SquareDashed], ['lasso', tr('Forma: disegna il contorno o clicca i punti', 'Shape: draw the outline or click the points'), Lasso]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
               <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
                 className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><I size={15} /></button>
@@ -1423,7 +1479,7 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
           ))}
         </div>
         <button type="submit" disabled={!ready || !text.trim() || busy}
-          className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">Modifica</button>
+          className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">{tr('Modifica', 'Edit')}</button>
       </form>
   );
   // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
@@ -1502,28 +1558,28 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
         {state === 'ok' ? (
           <div className="blur-in flex flex-col items-center gap-3 py-6 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check size={26} /></span>
-            <div className="text-lg font-semibold">Salvata in {p?.titolo || p?.nome || 'immobile'}</div>
-            <p className="text-sm text-muted">{chosen === 'add' ? 'Sul sito la trovi con l’etichetta Prima / Dopo.' : 'Ha preso il posto della foto originale.'}</p>
+            <div className="text-lg font-semibold">{tr('Salvata in', 'Saved to')} {p?.titolo || p?.nome || tr('immobile', 'property')}</div>
+            <p className="text-sm text-muted">{chosen === 'add' ? tr('Sul sito la trovi con l’etichetta Prima / Dopo.', 'On the website you\'ll find it with the Before / After label.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
             <div className="flex gap-2 pt-2">
-              <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-canvas">Chiudi</button>
+              <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-canvas">{tr('Chiudi', 'Close')}</button>
               {p?.is_public && slug
-                ? <a href={`${portfolioUrl(slug)}/${pid}`} target="_blank" rel="noopener" className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">Vedi sul sito <ExternalLink size={14} /></a>
-                : <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">Vedi l’immobile</a>}
+                ? <a href={`${portfolioUrl(slug)}/${pid}`} target="_blank" rel="noopener" className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
+                : <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi l’immobile', 'View property')}</a>}
             </div>
           </div>
         ) : <>
           <div className="flex items-start justify-between gap-3">
-            <div><h2 className="text-lg font-semibold">Salva nell’immobile</h2><p className="text-sm text-muted">{projects?.length === 1 ? `In ${p?.titolo || p?.nome || 'immobile'}, scegli come.` : 'Scegli dove metterla e come.'}</p></div>
-            <button onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+            <div><h2 className="text-lg font-semibold">{tr('Salva nell’immobile', 'Save to property')}</h2><p className="text-sm text-muted">{projects?.length === 1 ? tr(`In ${p?.titolo || p?.nome || 'immobile'}, scegli come.`, `In ${p?.titolo || p?.nome || 'property'}, choose how.`) : tr('Scegli dove metterla e come.', 'Choose where to put it and how.')}</p></div>
+            <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
           </div>
           {projects?.length !== 1 && <div className="mt-4">
             {projects === null ? <div className="h-11 animate-pulse rounded-full bg-canvas" /> : (
-              <Dropdown value={pid} options={[{ value: '', label: 'Scegli l’immobile' }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
+              <Dropdown value={pid} options={[{ value: '', label: tr('Scegli l’immobile', 'Choose the property') }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
                 onChange={setPid} className="h-11 w-full justify-between rounded-full bg-canvas px-4 text-sm font-medium" />
             )}
           </div>}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            {option('add', 'Prima e dopo', 'Aggiunge la foto nuova: sul sito si confronta con l’originale.', <>
+            {option('add', tr('Prima e dopo', 'Before and after'), tr('Aggiunge la foto nuova: sul sito si confronta con l’originale.', 'Adds the new photo: on the website it\'s compared with the original.'), <>
               {/* un solo valore animato (--sv-p) muove insieme taglio, linea e maniglia; la vecchia in bianco e nero */}
               <span className="gnm-sv absolute inset-0" style={{ animation: 'gnm-sv-p 7s cubic-bezier(.65,0,.35,1) infinite' }}>
                 <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover grayscale" />
@@ -1531,23 +1587,23 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
                 <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(0,0,0,.35)]" style={{ left: 'var(--sv-p)' }} />
                 <span className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-md" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={14} /></span>
               </span>
-              <span className={`${tag} left-2`}>Prima</span><span className={`${tag} right-2`}>Dopo</span>
+              <span className={`${tag} left-2`}>{tr('Prima', 'Before')}</span><span className={`${tag} right-2`}>{tr('Dopo', 'After')}</span>
             </>)}
             {/* sempre visibile, spenta quando la foto di partenza non e' di quell'immobile: si capisce che esiste */}
-            {option('replace', 'Sostituisci', canReplace ? 'La foto nuova prende il posto dell’originale.' : 'Solo se parti da una foto di questo immobile.', <>
+            {option('replace', tr('Sostituisci', 'Replace'), canReplace ? tr('La foto nuova prende il posto dell’originale.', 'The new photo replaces the original.') : tr('Solo se parti da una foto di questo immobile.', 'Only if you start from a photo of this property.'), <>
               {/* la nuova scende dall'alto e copre l'originale, che arretra e si scurisce; poi ricomincia */}
               <span className="gnm-sv absolute inset-0">
                 <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-old 7s cubic-bezier(.65,0,.35,1) infinite' }} />
                 <img src={after} alt="" className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_-8px_24px_rgba(0,0,0,.25)]" style={{ animation: 'gnm-sv-drop 7s cubic-bezier(.65,0,.35,1) infinite' }} />
-                <span className={`${tag} left-2`} style={{ animation: 'gnm-sv-tagold 7s ease infinite' }}>Originale</span>
-                <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 7s ease infinite' }}>Nuova</span>
+                <span className={`${tag} left-2`} style={{ animation: 'gnm-sv-tagold 7s ease infinite' }}>{tr('Originale', 'Original')}</span>
+                <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 7s ease infinite' }}>{tr('Nuova', 'New')}</span>
               </span>
             </>, !canReplace)}
           </div>
           <div className="flex items-center justify-end gap-2 pt-5">
-            {state === 'err' && <span className="mr-auto text-xs text-rose-600">Non sono riuscito a salvarla, riprova.</span>}
-            <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas hover:text-ink">Annulla</button>
-            <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} Salva</button>
+            {state === 'err' && <span className="mr-auto text-xs text-rose-600">{tr('Non sono riuscito a salvarla, riprova.', 'I couldn\'t save it, please try again.')}</span>}
+            <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Annulla', 'Cancel')}</button>
+            <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} {tr('Salva', 'Save')}</button>
           </div>
         </>}
       </div>
@@ -1586,6 +1642,8 @@ const showImg = (el: HTMLImageElement) => { el.style.opacity = '1'; if (el.previ
 // "Cerca ispirazione": foto d'interni da Unsplash (ricerca sul server, /api/platform/inspiration). Scelta = foto di stile.
 type InspoPhoto = { id: string; thumb: string; url: string; author: string; authorUrl: string; download: string; alt: string };
 // ricerca di partenza: la stanza riconosciuta nella foto caricata
+// ricerca in italiano come prima (va al server); in inglese si mostra solo il segnaposto tradotto
+const ROOM_QUERY_EN: Record<string, string> = { 'cucina e soggiorno': 'kitchen and living room', 'soggiorno moderno': 'modern living room', 'cucina moderna': 'modern kitchen', 'camera da letto moderna': 'modern bedroom', cameretta: 'kids room', 'bagno moderno': 'modern bathroom', 'sala da pranzo moderna': 'modern dining room', 'studio in casa': 'home office', 'ingresso casa': 'home entrance', 'corridoio casa': 'home hallway', 'balcone arredato': 'furnished balcony' };
 const ROOM_QUERY: Record<string, string> = { openspace: 'cucina e soggiorno', soggiorno: 'soggiorno moderno', cucina: 'cucina moderna', camera: 'camera da letto moderna', cameretta: 'cameretta', bagno: 'bagno moderno', sala: 'sala da pranzo moderna', studio: 'studio in casa', ingresso: 'ingresso casa', corridoio: 'corridoio casa', balcone: 'balcone arredato' };
 function Inspiration({ room, onPick, onUpload, onClose }: { room: string | null; onPick: (url: string, credit: { author: string; url: string }) => void; onUpload: () => void; onClose: () => void }) {
   const base = ROOM_QUERY[room?.replace(/^room:/, '') ?? ''] ?? 'soggiorno moderno'
@@ -1618,27 +1676,27 @@ function Inspiration({ room, onPick, onUpload, onClose }: { room: string | null;
       <div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-[32px] bg-white p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between pb-4">
           <div>
-            <h3 className="font-display text-xl font-bold tracking-tight">Stile da una foto</h3>
-            <p className="text-sm text-muted">Scegli una foto che ti piace: la stanza verrà arredata con quello stile.</p>
+            <h3 className="font-display text-xl font-bold tracking-tight">{tr('Stile da una foto', 'Style from a photo')}</h3>
+            <p className="text-sm text-muted">{tr('Scegli una foto che ti piace: la stanza verrà arredata con quello stile.', 'Pick a photo you like: the room will be furnished in that style.')}</p>
           </div>
-          <button onClick={onClose} aria-label="Chiudi" className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+          <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
         <div className="flex items-center gap-2">
           <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full bg-canvas px-4">
             <Search size={16} className="shrink-0 text-muted" />
             <input autoFocus value={q} onChange={e => { setQ(e.target.value); setLoading(true); }}
-              placeholder={base} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
+              placeholder={tr(base, ROOM_QUERY_EN[base] ?? base)} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
           </label>
-          <button onClick={onUpload} className="flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-inset ring-line hover:bg-canvas"><ImagePlus size={16} /> Carica dal computer</button>
+          <button onClick={onUpload} className="flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-inset ring-line hover:bg-canvas"><ImagePlus size={16} /> {tr('Carica dal computer', 'Upload from computer')}</button>
         </div>
         <div className="mt-4 h-[55vh] overflow-y-auto">
           {/* scheletro della griglia mentre cerca */}
           {loading && <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">{Array.from({ length: 12 }, (_, i) => <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-canvas" />)}</div>}
-          {!loading && items && !items.length && <p className="py-10 text-center text-sm text-muted">Nessuna foto, prova con altre parole.</p>}
+          {!loading && items && !items.length && <p className="py-10 text-center text-sm text-muted">{tr('Nessuna foto, prova con altre parole.', 'No photos, try other words.')}</p>}
           {!loading && !!items?.length && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {items.map(p => (
-                <button key={p.id} title={`Foto di ${p.author}`} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas"
+                <button key={p.id} title={tr(`Foto di ${p.author}`, `Photo by ${p.author}`)} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas"
                   onClick={() => { authFetch('/api/platform/inspiration', { method: 'POST', body: JSON.stringify({ download: p.download }) }).catch(() => {}); onPick(p.url, { author: p.author, url: p.authorUrl }); }}>
                   {/* scheletro finche' la foto non e' scaricata, poi entra in dissolvenza */}
                   <span className="absolute inset-0 animate-pulse bg-canvas" />
@@ -1650,7 +1708,7 @@ function Inspiration({ room, onPick, onUpload, onClose }: { room: string | null;
             </div>
           )}
         </div>
-        {!!items?.length && <p className="pt-3 text-[11px] text-muted">Foto da <a href="https://unsplash.com/?utm_source=agenteimmo&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">Unsplash</a></p>}
+        {!!items?.length && <p className="pt-3 text-[11px] text-muted">{tr('Foto da', 'Photos from')} <a href="https://unsplash.com/?utm_source=agenteimmo&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">Unsplash</a></p>}
       </div>
     </div>,
     document.body,

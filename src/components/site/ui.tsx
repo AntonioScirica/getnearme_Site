@@ -4,7 +4,7 @@ import { Children, createContext, isValidElement, useContext, useEffect, useLayo
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
 import { Bath, BedDouble, Check, Star, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
-import { FONTS, fontCss, PAGE_SECTIONS, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FONTS, fontCss, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
@@ -284,7 +284,7 @@ export function Sec({ id, children }: { id: string; children: ReactNode }) {
   return (
     <div data-sec={id} className={`group/sec relative cursor-pointer outline-offset-[-3px] ${on ? 'outline outline-[3px] outline-[#3b82f6]' : 'hover:outline hover:outline-2 hover:outline-[#3b82f6]/70'}`}
       onClickCapture={e => e.preventDefault()} onClick={e => { e.stopPropagation(); onSelect?.(id); }}>
-      <span className={`pointer-events-none absolute left-3 top-3 z-[60] rounded-md bg-[#3b82f6] px-2.5 py-1 font-sans text-[13px] font-semibold text-white shadow ${on ? '' : 'opacity-0 group-hover/sec:opacity-100'}`}>{LABELS[id] ?? id}</span>
+      <span className={`pointer-events-none absolute left-3 top-3 z-[60] rounded-md bg-[#3b82f6] px-2.5 py-1 font-sans text-[13px] font-semibold text-white shadow ${on ? '' : 'opacity-0 group-hover/sec:opacity-100'}`}>{(typeof location !== 'undefined' && /^\/en(\/|$)/.test(location.pathname) ? SECTION_LABELS_EN[id] : null) ?? LABELS[id] ?? id}{/* etichetta dell'editor (solo in piattaforma): inglese su /en */}</span>
       {children}
     </div>
   );

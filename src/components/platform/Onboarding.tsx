@@ -8,6 +8,7 @@ import { slugify, useSlugCheck, type Profile } from './ProfileForm';
 import { Thumb } from './PortfolioView';
 import { SiteThumb } from '@/components/site/pages';
 import { cleanSite, TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
+import { tr } from './i18n';
 
 // Onboarding: l'AI "costruisce" il sito dell'agente davanti ai suoi occhi.
 // 0 logo al centro, poi sale e saluta > 1 solo il campo nome > 2 compare il finto sito col nome, lo slug si scrive da solo
@@ -16,22 +17,22 @@ import { cleanSite, TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
 type Step = 0 | 1 | 2 | 3 | 4;
 
 const TITLES: Record<Step, [string, string]> = {
-  0: ['Ciao, mi chiamo Immo.', 'Conosciamoci meglio.'],
-  1: ['Come ti chiami?', 'Il nome che vedranno i tuoi clienti.'],
-  2: ['Il tuo sito ha bisogno di un link.', 'Lo mandi ai clienti e ci trovano tutti i tuoi immobili.'],
-  3: ['Scegli lo stile del tuo sito.', 'Lo cambi quando vuoi, anche colori e caratteri.'],
-  4: ['Il tuo sito è pronto da pubblicare.', 'Lo metti online tu, quando vuoi. Intanto ecco cosa puoi fare.'],
+  0: [tr('Ciao, mi chiamo Immo.', 'Hi, I’m Immo.'), tr('Conosciamoci meglio.', 'Let’s get to know each other.')],
+  1: [tr('Come ti chiami?', 'What’s your name?'), tr('Il nome che vedranno i tuoi clienti.', 'The name your clients will see.')],
+  2: [tr('Il tuo sito ha bisogno di un link.', 'Your website needs a link.'), tr('Lo mandi ai clienti e ci trovano tutti i tuoi immobili.', 'Send it to clients and they’ll find all your properties there.')],
+  3: [tr('Scegli lo stile del tuo sito.', 'Choose your website style.'), tr('Lo cambi quando vuoi, anche colori e caratteri.', 'Change it anytime, colors and fonts too.')],
+  4: [tr('Il tuo sito è pronto da pubblicare.', 'Your website is ready to publish.'), tr('Lo metti online tu, quando vuoi. Intanto ecco cosa puoi fare.', 'You put it online whenever you want. Meanwhile, here’s what you can do.')],
 };
 
 // sfondo a puntini + curva ease-in-out per tutto l'onboarding (sovrascrive --gnm-ease del sito qui dentro)
 const DOTS_BG = { background: 'radial-gradient(rgba(0,0,0,0.09) 1.2px, transparent 1.2px) 0 0 / 18px 18px, #fff', '--gnm-ease': 'cubic-bezier(.65, 0, .35, 1)' } as React.CSSProperties;
 // ultimo passo: le tre card della home, ferme (scheletro + testo, non sembrano bottoni)
 const TOOLS = [
-  { kicker: 'Annuncio già online?', title: 'Miglioralo', img: '/immo/home/demo-1.webp', badge: null },
-  { kicker: 'Hai un nuovo immobile?', title: 'Mettilo in vetrina', img: '/immo/home/fan-2.webp', badge: Plus },
-  { kicker: 'Home staging', title: 'Hai una stanza vuota?', img: '/immo/home/staging-after.webp', badge: Wand2 },
+  { kicker: tr('Annuncio già online?', 'Listing already online?'), title: tr('Miglioralo', 'Improve it'), img: '/immo/home/demo-1.webp', badge: null },
+  { kicker: tr('Hai un nuovo immobile?', 'Got a new property?'), title: tr('Mettilo in vetrina', 'Put it on show'), img: '/immo/home/fan-2.webp', badge: Plus },
+  { kicker: 'Home staging', title: tr('Hai una stanza vuota?', 'Got an empty room?'), img: '/immo/home/staging-after.webp', badge: Wand2 },
 ];
-const LISTINGS = [['/immo/home/demo-1.webp', '245.000'], ['/immo/home/demo-2.webp', '189.000'], ['/immo/home/demo-3.webp', '320.000']];
+const LISTINGS = [['/immo/home/demo-1.webp', tr('245.000', '245,000')], ['/immo/home/demo-2.webp', tr('189.000', '189,000')], ['/immo/home/demo-3.webp', tr('320.000', '320,000')]];
 
 export default function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [step, setStep] = useState<Step>(0);
@@ -115,7 +116,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
       return onDone({ name: d.name, slug: d.slug });
     }
     if (d.error === 'slug_taken') { setResult({ slug, state: 'taken', suggestion: d.suggestion }); setStep(2); }
-    else setError('Salvataggio non riuscito, riprova.');
+    else setError(tr('Salvataggio non riuscito, riprova.', 'Saving failed, try again.'));
   };
 
   const [head, sub] = TITLES[shown];
@@ -143,9 +144,9 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
       <div inert={step !== 1} className={`grid w-full max-w-md transition-[grid-template-rows,opacity] duration-[900ms] ease-smooth ${step === 1 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className={`-mx-8 min-h-0 overflow-hidden px-8 transition-[padding] duration-[900ms] ease-smooth ${step === 1 ? 'pb-8' : 'pb-0'}`}>
           <div className={`mt-8 flex items-center rounded-full bg-white p-1.5 pl-6 ${CARD_SHADOW}`}>
-            <input ref={nameRef} value={name} onChange={e => onName(e.target.value)} onKeyDown={e => e.key === 'Enter' && next()} maxLength={80} placeholder="Mario Rossi"
+            <input ref={nameRef} value={name} onChange={e => onName(e.target.value)} onKeyDown={e => e.key === 'Enter' && next()} maxLength={80} placeholder={tr('Mario Rossi', 'John Smith')}
               className="min-w-0 flex-1 bg-transparent font-display text-xl font-bold tracking-tight outline-none placeholder:text-muted/40" />
-            <button type="button" disabled={!nameOk} onClick={next} className="btn-ink flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold">Continua <ArrowRight size={15} /></button>
+            <button type="button" disabled={!nameOk} onClick={next} className="btn-ink flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
           </div>
         </div>
       </div>
@@ -183,8 +184,8 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
               ))}
             </div>
             <div className="flex min-h-12 items-center justify-end gap-2 px-4 pb-2 pt-3">
-              <button type="button" onClick={() => setStep(2)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Indietro</button>
-              <button type="button" onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">Continua <ArrowRight size={15} /></button>
+              <button type="button" onClick={() => setStep(2)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">{tr('Indietro', 'Back')}</button>
+              <button type="button" onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
             </div>
             </>
               ) : (
@@ -200,7 +201,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
                       <span className="shrink-0 text-muted">{portfolioPrefix()}</span>
                                             {bar && !done && <span className="min-w-0 truncate font-medium">{slug.slice(0, typed)}<span className="animate-pulse">|</span></span>}
                       {done && <input autoFocus value={slug} onChange={e => { setSlugTouched(true); const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40); setSlug(v); setTyped(v.length); }}
-                        onKeyDown={e => e.key === 'Enter' && next()} placeholder="mario-rossi" className="min-w-0 flex-1 bg-transparent font-medium outline-none" />}
+                        onKeyDown={e => e.key === 'Enter' && next()} placeholder={tr('mario-rossi', 'john-smith')} className="min-w-0 flex-1 bg-transparent font-medium outline-none" />}
                       {done && <span className="ml-2 shrink-0">
                         {check.state === 'checking' && <Loader2 size={14} className="animate-spin text-muted" />}
                         {check.state === 'ok' && <Check size={14} className="text-green-600" />}
@@ -214,7 +215,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
               <div className="bg-white p-6">
                 <div className="flex items-center justify-between gap-4">
                   <span className="truncate font-display text-2xl font-bold tracking-tight">{name.trim()}</span>
-                  <nav className="hidden shrink-0 gap-4 text-sm text-muted sm:flex">{['Immobili', 'Servizi', 'Contatti'].map(l => <span key={l}>{l}</span>)}</nav>
+                  <nav className="hidden shrink-0 gap-4 text-sm text-muted sm:flex">{[tr('Immobili', 'Properties'), tr('Servizi', 'Services'), tr('Contatti', 'Contact')].map(l => <span key={l}>{l}</span>)}</nav>
                 </div>
                 <div className="mt-5 grid grid-cols-3 gap-3">
                   {LISTINGS.map(([src, price]) => (
@@ -235,13 +236,13 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             <div className="flex min-h-12 items-center justify-between gap-3 px-4 pb-2 pt-3">
               <span className="text-sm text-red-600">
                 {error}
-                {done && check.state === 'taken' && <>Già in uso.{check.suggestion && <> Prova <button type="button" className="font-medium underline" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
-                {done && check.state === 'invalid' && 'Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.'}
-                {done && check.state === 'bad' && 'Questo indirizzo contiene una parola che non possiamo usare.'}
+                {done && check.state === 'taken' && <>{tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
+                {done && check.state === 'invalid' && tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}
+                {done && check.state === 'bad' && tr('Questo indirizzo contiene una parola che non possiamo usare.', 'This address contains a word we can’t use.')}
               </span>
               <span className="flex items-center gap-2">
-                {step === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Indietro</button>}
-                <button type="button" disabled={ctaOff} onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">Continua <ArrowRight size={15} /></button>
+                {step === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">{tr('Indietro', 'Back')}</button>}
+                <button type="button" disabled={ctaOff} onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
               </span>
             </div>
                 </>
@@ -256,7 +257,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
         <div className="-mx-8 min-h-0 overflow-hidden px-8 pb-8">
           <div className="mt-6 flex flex-col items-center gap-2">
             <button type="button" disabled={saving} onClick={save} className={`btn-ink flex h-11 items-center gap-2 rounded-full px-6 text-sm font-semibold ${shown === 4 && settled ? 'pop' : 'scale-0 opacity-0'}`} style={{ animationDelay: '.45s' }}>
-              {saving ? <Loader2 size={15} className="animate-spin" /> : null} Inizia <ArrowRight size={15} />
+              {saving ? <Loader2 size={15} className="animate-spin" /> : null} {tr('Inizia', 'Start')} <ArrowRight size={15} />
             </button>
             {error && <span className="text-sm text-red-600">{error}</span>}
           </div>

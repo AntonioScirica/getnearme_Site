@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
   const { data } = await admin.auth.getUser(token)
   if (!data.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  let listing: ListingIn
-  try { ({ listing } = await req.json()) } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
+  let listing: ListingIn, lang: unknown
+  try { ({ listing, lang } = await req.json()) } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   if (!listing || typeof listing !== 'object') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   if (JSON.stringify(listing).length > 400_000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
 
@@ -40,5 +40,5 @@ export async function POST(req: NextRequest) {
   }
   const fields = await extractFields(listing, data.user.id)
   if (free) await admin.from('ai_usage').insert({ user_id: data.user.id, kind: 'analyze_free', provider: 'counter', model: 'analyze', duration_ms: 0, cost_usd: 0, ok: true } as never)
-  return NextResponse.json({ ...rulesAnalysis(fields), fields })
+  return NextResponse.json({ ...rulesAnalysis(fields, lang === 'en' ? 'en' : 'it'), fields })
 }

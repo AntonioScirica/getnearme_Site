@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { tr } from './i18n';
 
 // Tour dopo l'onboarding: velo scuro con una luce (riquadro illuminato) che passa sulle voci della piattaforma,
 // una card breve per ognuna, poi si torna alla home. Intanto dietro il velo si apre la pagina di cui parla (go),
@@ -9,16 +10,16 @@ import { ArrowRight } from 'lucide-react';
 // si spegne a fine giro o con Salta.
 // demo: Immobili mostra solo le case d'esempio. edit: chiede al Il mio sito di aprire l'editor del modello (evento 'agenteimmo:tour-edit'), per mostrare che si modifica
 const STEPS: { target: string; go: string; title: string; text: string; edit?: boolean; demo?: boolean }[] = [
-  { target: '/', go: '/', title: 'Home', text: 'Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.' },
-  { target: '/immobili', go: '/immobili', demo: true, title: 'Immobili', text: 'Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.' },
-  { target: '/portfolio', go: '/portfolio', title: 'Il mio sito', text: 'Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.' },
-  { target: 'site-gallery', go: '/portfolio', title: 'Scegli il modello', text: 'Template già pronti da usare, scegline uno e comincia a vendere i tuoi immobili.' },
-  { target: 'site-editor', go: '/portfolio', edit: true, title: 'Modifica tutto', text: 'Testi, foto, colori, caratteri e logo: tocchi un punto del sito e lo cambi, vedi subito come viene.' },
-  { target: 'site-link', go: '/portfolio', edit: true, title: 'Pubblica con il tuo link', text: 'Quando sei pronto lo accendi: il sito va online al tuo indirizzo, da mandare ai clienti.' },
-  { target: '/galleria', go: '/galleria', demo: true, title: 'Galleria', text: 'Le foto arredate e i video che hai creato, pronti da scaricare e pubblicare.' },
-  { target: 'crediti', go: '/', title: 'I tuoi crediti', text: 'Ogni foto e video usa dei crediti: qui vedi quanti te ne restano e scegli il piano.' },
-  { target: 'nuovo', go: '/', title: 'Metti in vetrina', text: 'Hai preso un incarico? Parti da qui: carichi le foto e la casa è pronta per portale, social e sito.' },
-  { target: 'profilo', go: '/', title: 'Il tuo profilo', text: 'Nome, indirizzo del sito e account. Buon lavoro!' },
+  { target: '/', go: '/', title: 'Home', text: tr('Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.', 'Your starting point: list a property, furnish a room, create a video.') },
+  { target: '/immobili', go: '/immobili', demo: true, title: tr('Immobili', 'Properties'), text: tr('Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.', 'All your properties in one place, with photos, description and reports to send to clients.') },
+  { target: '/portfolio', go: '/portfolio', title: tr('Il mio sito', 'My website'), text: tr('Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.', 'Pick a template, edit it and publish your website in 5 minutes.') },
+  { target: 'site-gallery', go: '/portfolio', title: tr('Scegli il modello', 'Choose a template'), text: tr('Template già pronti da usare, scegline uno e comincia a vendere i tuoi immobili.', 'Ready-made templates, pick one and start selling your properties.') },
+  { target: 'site-editor', go: '/portfolio', edit: true, title: tr('Modifica tutto', 'Edit everything'), text: tr('Testi, foto, colori, caratteri e logo: tocchi un punto del sito e lo cambi, vedi subito come viene.', 'Text, photos, colors, fonts and logo: tap any part of the website to change it and see the result right away.') },
+  { target: 'site-link', go: '/portfolio', edit: true, title: tr('Pubblica con il tuo link', 'Publish with your link'), text: tr('Quando sei pronto lo accendi: il sito va online al tuo indirizzo, da mandare ai clienti.', 'When you are ready, switch it on: your website goes live at your address, ready to send to clients.') },
+  { target: '/galleria', go: '/galleria', demo: true, title: tr('Galleria', 'Gallery'), text: tr('Le foto arredate e i video che hai creato, pronti da scaricare e pubblicare.', 'The furnished photos and videos you created, ready to download and publish.') },
+  { target: 'crediti', go: '/', title: tr('I tuoi crediti', 'Your credits'), text: tr('Ogni foto e video usa dei crediti: qui vedi quanti te ne restano e scegli il piano.', 'Every photo and video uses credits: here you see how many you have left and choose your plan.') },
+  { target: 'nuovo', go: '/', title: tr('Metti in vetrina', 'List a property'), text: tr('Hai preso un incarico? Parti da qui: carichi le foto e la casa è pronta per portale, social e sito.', 'Got a new listing? Start here: upload the photos and the property is ready for portals, social media and your website.') },
+  { target: 'profilo', go: '/', title: tr('Il tuo profilo', 'Your profile'), text: tr('Nome, indirizzo del sito e account. Buon lavoro!', 'Name, website address and account. Enjoy!') },
 ];
 export const TOUR_KEY = 'agenteimmo:tour';
 
@@ -89,7 +90,7 @@ export default function Tour({ onDone }: { onDone: () => void }) {
   // nome di transizione: durante una View Transition (onboarding -> home) le card della home vanno sopra a tutto,
   // il velo deve starci anche lui, e sopra
   return (
-    <div className={`fixed inset-0 z-[310] ${leaving ? 'tour-out pointer-events-none' : 'fade'}`} style={{ viewTransitionName: 'tour' }} role="dialog" aria-label="Tour della piattaforma">
+    <div className={`fixed inset-0 z-[310] ${leaving ? 'tour-out pointer-events-none' : 'fade'}`} style={{ viewTransitionName: 'tour' }} role="dialog" aria-label={tr('Tour della piattaforma', 'Platform tour')}>
       {/* la luce: un riquadro trasparente con un'ombra enorme che scurisce tutto il resto */}
       {light
         ? <div className="pointer-events-none absolute" style={{ ...light, borderRadius: Math.min(28, light.height / 2), boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />
@@ -99,14 +100,14 @@ export default function Tour({ onDone }: { onDone: () => void }) {
       {/* la card entra quando la luce e' quasi arrivata (o, aprendo l'editor, quando la miniatura e' diventata l'editor) */}
       <div key={i} className="blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl" style={{ ...cardStyle, transition: ease, animationDelay: step.edit && !STEPS[i - 1]?.edit ? '.7s' : i ? '.35s' : '0s' }}>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-muted">{i + 1} di {STEPS.length}</span>
-          <button type="button" onClick={finish} className="text-xs font-medium text-muted hover:text-ink">Salta</button>
+          <span className="text-xs font-semibold text-muted">{i + 1} {tr('di', 'of')} {STEPS.length}</span>
+          <button type="button" onClick={finish} className="text-xs font-medium text-muted hover:text-ink">{tr('Salta', 'Skip')}</button>
         </div>
         <div className="mt-2 font-display text-lg font-bold tracking-tight">{step.title}</div>
         <p className="mt-1 text-sm leading-relaxed text-muted">{step.text}</p>
         <div className="mt-4 flex items-center justify-between">
           <span className="flex gap-1">{STEPS.map((_, k) => <span key={k} className={`h-1.5 rounded-full ease-smooth transition-all ${k === i ? 'w-5 bg-ink' : 'w-1.5 bg-line'}`} />)}</span>
-          <button type="button" onClick={next} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-sm font-semibold text-white">{i < STEPS.length - 1 ? 'Avanti' : 'Iniziamo'} <ArrowRight size={15} /></button>
+          <button type="button" onClick={next} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-sm font-semibold text-white">{i < STEPS.length - 1 ? tr('Avanti', 'Next') : tr('Iniziamo', 'Let’s start')} <ArrowRight size={15} /></button>
         </div>
       </div>
     </div>
