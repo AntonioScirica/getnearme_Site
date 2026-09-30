@@ -369,6 +369,9 @@ function TryIt() {
               {after
                 ? video
                   ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
+                  // foto arredata: i modelli di video sono gia' nel riquadro, qui solo lo scarico della foto
+                  : !emptied
+                  ? <button type="button" onClick={() => keep(false)} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica solo la foto', "Download just the photo")}</button>
                   : <div className="grid w-full grid-cols-2 gap-2">
                       <button type="button" onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica', "Download")}</button>
                       {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
@@ -388,7 +391,7 @@ function TryIt() {
             </div>}
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : <>{emptied ? L('Ora fai il video in cui i mobili spariscono, gratis. Oppure', "Now make the video where the furniture disappears, free. Or") : L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? <>{L('Ora fai il video in cui i mobili spariscono, gratis. Oppure', "Now make the video where the furniture disappears, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</> : L('Scegli un modello e trasformala in un video per i social, gratis.', "Pick a template and turn it into a social video, free.")}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
     </>
   );
