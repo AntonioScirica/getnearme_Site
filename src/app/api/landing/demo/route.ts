@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     return (await q).count ?? 0
   }
   // dati della prova tenuti al massimo 12 mesi (privacy): a ogni prova si cancellano i contatori piu' vecchi (foto e video)
-  void admin.from('ai_usage').delete().in('kind', ['landing_demo', 'landing_demo_video']).in('provider', ['counter', 'counter-fp']).lt('created_at', new Date(Date.now() - 365 * 86_400_000).toISOString()).then(() => {}, () => {})
+  void admin.from('ai_usage').delete().in('kind', ['landing_demo', 'landing_demo_video', 'landing_demo_photo']).in('provider', ['counter', 'counter-fp']).lt('created_at', new Date(Date.now() - 365 * 86_400_000).toISOString()).then(() => {}, () => {})
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
   const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
   const [used, all] = free ? [0, 0] : await Promise.all([count(true), count(false)])
@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
   // scambia con la foto dopo il login (DemoDownload). In pagina solo la versione con la filigrana.
   const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.jpg`
   const saved = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), cleanKey).then(() => true, () => false)
+  // foto della prova legata all'account: la usano le email dopo la prova (api/cron/trial-emails), via entro 12 mesi
+  if (saved && user && !free) void admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo_photo', provider: 'counter', model: cleanKey, duration_ms: 0, cost_usd: 0, ok: true } as never).then(() => {}, () => {})
   const small = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 88 }).toBuffer()
   const out = small // niente filigrana: la prova si fa solo con l'account (30/09)
   return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, token: saved ? sealKey(cleanKey) : null, left: free ? 99 : PER_IP - used - 1 })
