@@ -516,7 +516,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         ? { planimetria: true, style: planStyle(t), ...(/bianco e nero|b\/n|in bianco/i.test(t) ? { plan: 'bw' as const } : /\b3d\b|tridimensional/i.test(t) ? { plan: '3d' as const } : {}) }
         : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined, ...(style ? { style } : {}) }, { id, role: 'ai', before, out: null, busy: true, at: Date.now(), reveal: null, text: t, req }]);
+    // stile d'arredo scelto: nel messaggio anche quanto arredo (es. "Luxury · arredo ricco")
+    const furnishing = scene === 'interno' && !!pk && t === pk.label && !!pk.req.style && pk.req.style !== 'empty';
+    const shown = furnishing ? `${t} · arredo ${({ poco: 'essenziale', normale: 'normale', ricco: 'ricco' } as const)[dens]}` : t;
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: shown, region: zone ?? undefined, ...(style ? { style } : {}) }, { id, role: 'ai', before, out: null, busy: true, at: Date.now(), reveal: null, text: t, req }]);
     await run(id, req, before);
   };
   // Stesso stile ma diverso: stessa richiesta sulla stessa foto di partenza, nuovo seme (lo sceglie il server)

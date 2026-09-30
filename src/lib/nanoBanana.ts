@@ -13,7 +13,7 @@ const USD_PER_IMAGE_1K = 0.067
 
 export type StageTask = 'furnish' | 'empty' | 'edit'
 
-const FRAMING = 'photographed from the identical camera position, with the same lens and framing. The result must line up with the original photo: every corner, wall edge, window and door stays at the same position in the frame (do not move, rotate, zoom out, widen or crop the view).'
+const FRAMING = 'photographed from the identical camera position, with the same lens and framing. The result must line up with the original photo: every corner, wall edge, window and door stays at the same position in the frame (do not move, rotate, zoom out, widen or crop the view). The room keeps exactly its size and proportions: the walls do not move apart, the floor does not get longer or wider, the camera never steps back; if something does not fit, use fewer or smaller pieces.'  // 30/09: aggiunta la stanza che non si allunga (Svuota l'aveva resa piu' profonda, poi l'arredo partiva da li')
 const ARCHITECTURE = 'Same architecture: every wall (including half-height walls, low partition walls, counter walls and ledges, which are masonry and must stay), window, door, beam, column, staircase, radiator and fireplace stays exactly where it is, with the same shape and size. Keep the existing window and door frames. Never add or remove windows, doors or rooms, and never invent a kitchen, stairs or other spaces that are not visible in the photo.'
 const LIGHT = 'Light: bright natural daylight through the windows, soft interior lights on, balanced exposure, no burnt highlights, straight vertical lines.'
 const OUTPUT = 'Output one photorealistic photo, believable and magazine-quality, no text, no watermark.'
