@@ -438,7 +438,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
             // Passando sopra: velo leggero sulla miniatura e i due pulsanti che salgono (la miniatura resta ferma,
             // cosi' diventa l'editor dalla stessa immagine)
             // tour: la luce va sulla card del modello in uso, da cui poi nasce l'editor
-            <div key={t.id} data-tour={used ? 'site-gallery' : undefined}
+            <div key={t.id}
               className={`group rise rounded-3xl bg-white p-2 text-left ease-smooth transition-[opacity,transform,filter,box-shadow] ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
               <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>
