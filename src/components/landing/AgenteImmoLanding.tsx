@@ -14,6 +14,14 @@ import { Credits, SiteIncluded } from '@/components/PlanParts';
 import { deviceId } from '@/lib/deviceId';
 import { supabase } from '@/lib/supabase';
 import ConsentGate from '@/components/platform/ConsentGate';
+import ProgressiveBlur from '@/components/ProgressiveBlur';
+
+// pagina scorsa oltre pochi pixel: per accendere la sfocatura sotto la barra
+function useScrolled() {
+  const [on, setOn] = useState(false);
+  useEffect(() => { const f = () => setOn(window.scrollY > 8); f(); window.addEventListener('scroll', f, { passive: true }); return () => window.removeEventListener('scroll', f); }, []);
+  return on;
+}
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
@@ -551,6 +559,7 @@ export default function AgenteImmoLanding({ lang = 'it', faq }: { lang?: Landing
 
 function Landing({ faq }: { faq: [string, string][] }) {
   const L = useL(), en = useEn();
+  const scrolled = useScrolled();
   const [logged, setLogged] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setLogged(!!session?.user));
@@ -568,6 +577,8 @@ function Landing({ faq }: { faq: [string, string][] }) {
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
       {/* barra: pillola fissa, vetro */}
       <header className="sticky top-0 z-40 pt-4">
+        {/* scorrendo: sfocatura progressiva sotto la barra */}
+        <ProgressiveBlur show={scrolled} fade={40} />
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
@@ -791,6 +802,7 @@ export function TrialPage({ lang = 'it' }: { lang?: LandingLang }) {
 
 function Trial() {
   const L = useL();
+  const scrolled = useScrolled();
   const [ok, setOk] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/accedi?next=${TRIAL}`)));
@@ -800,6 +812,8 @@ function Trial() {
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
       <ConsentGate />
       <header className="sticky top-0 z-40 pt-4">
+        {/* scorrendo: sfocatura progressiva sotto la barra */}
+        <ProgressiveBlur show={scrolled} fade={40} />
         <div className="mx-auto max-w-6xl px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>

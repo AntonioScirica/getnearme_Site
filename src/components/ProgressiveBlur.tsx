@@ -9,10 +9,11 @@ const LAYERS = [
   { blur: 8, solid: 25, clear: 50 },
 ];
 
-export default function ProgressiveBlur({ side = 'top', fade = 32 }: { side?: 'top' | 'bottom'; fade?: number }) {
+// show: si accende e spegne in dissolvenza (es. solo quando la pagina e' scorsa)
+export default function ProgressiveBlur({ side = 'top', fade = 32, show = true }: { side?: 'top' | 'bottom'; fade?: number; show?: boolean }) {
   const dir = side === 'top' ? 'to bottom' : 'to top';
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-x-0 -z-10" style={side === 'top' ? { top: 0, bottom: -fade } : { bottom: 0, top: -fade }}>
+    <div aria-hidden className={`pointer-events-none absolute inset-x-0 -z-10 ease-smooth transition-opacity duration-[600ms] ${show ? 'opacity-100' : 'opacity-0'}`} style={side === 'top' ? { top: 0, bottom: -fade } : { bottom: 0, top: -fade }}>
       {LAYERS.map(l => {
         const mask = `linear-gradient(${dir}, #000 ${l.solid}%, transparent ${l.clear}%)`;
         return <div key={l.blur} className="absolute inset-0" style={{ backdropFilter: `blur(${l.blur}px)`, WebkitBackdropFilter: `blur(${l.blur}px)`, maskImage: mask, WebkitMaskImage: mask }} />;
