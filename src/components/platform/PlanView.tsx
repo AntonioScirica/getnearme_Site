@@ -238,7 +238,7 @@ function CodeBox() {
       {!info.used && (
         <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-semibold"><Gift size={16} className="text-brand" /> {tr('Codice promozionale', 'Promo code')}</div>
+          <div className="flex items-center gap-2 font-semibold"><Gift size={20} className="text-brand" /> {tr('Codice promozionale', 'Promo code')}</div>
           <div className="flex w-full gap-2 sm:w-auto sm:min-w-[420px]">
             <input value={code} onChange={e => { setCode(e.target.value.slice(0, 40)); setMsg(null); }} onKeyDown={e => e.key === 'Enter' && void send()} placeholder={tr('Es. MARIO-IMMO', 'e.g. MARIO-IMMO')} autoCapitalize="characters" spellCheck={false}
               className="h-11 min-w-0 flex-1 rounded-full bg-canvas px-4 text-sm font-semibold uppercase tracking-wide outline-none ring-1 ring-black/5 placeholder:font-normal placeholder:normal-case placeholder:tracking-normal focus:bg-white focus:ring-2 focus:ring-brand" />
