@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   const { fresh, id, ...r } = await pollVideo(userId, req.nextUrl.searchParams.get('job') ?? '')
   // il lavoro firmato dice che video era: cantiere = due clip Kling (nome che finisce con -kc), Giorno e notte = una (-k)
   const job = req.nextUrl.searchParams.get('job') ?? ''
-  const action = /-kf\./.test(job) ? 'video_fpv' : /-kc\./.test(job) ? 'video_cantiere' : /-km\./.test(job) ? 'video_camera' : /-ka\./.test(job) ? 'video_agent' : /-kw\./.test(job) ? 'video_walk' : /-k\./.test(job) ? 'video_daynight' : 'video_render' // Prima e dopo: 1 credito gia' scalato ai fotogrammi
+  const action = /-k[fh]\./.test(job) ? 'video_fpv' : /-kc\./.test(job) ? 'video_cantiere' : /-km\./.test(job) ? 'video_camera' : /-ka\./.test(job) ? 'video_agent' : /-kw\./.test(job) ? 'video_walk' : /-k\./.test(job) ? 'video_daynight' : 'video_render' // Prima e dopo: 1 credito gia' scalato ai fotogrammi
   if (fresh && id) return NextResponse.json({ url: r.url, credits: await spendOnce(userId, action, id) })
   return reply(r)
 }
