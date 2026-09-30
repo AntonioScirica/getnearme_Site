@@ -196,9 +196,10 @@ function Compare() {
 // Si vede il prima/dopo; per scaricarla serve l'account.
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
 const VIDEO_TEMPLATES = [
-  ['popup', 'Popup', 'Pop-up', 'I mobili spuntano uno alla volta', 'Furniture pops in piece by piece', VIDEO_SAMPLES.popup],
-  ['gravity', 'Dall\'alto', 'From above', 'I mobili cadono dall\'alto e si posano', 'Furniture drops in from above', VIDEO_SAMPLES.gravity],
-  ['cantiere', 'Cantiere', 'Construction', 'Dal cantiere alla casa finita', 'From building site to finished home', VIDEO_SAMPLES.cantiere],
+  // gli stessi modelli della chat della piattaforma; nella prova gratis si fa solo Prima e dopo, gli altri portano ai prezzi
+  ['popup', 'Prima e dopo', 'Before and after', 'Dalla stanza vuota a quella arredata', 'From the empty room to the furnished one', VIDEO_SAMPLES.popup],
+  ['cantiere', 'Cantiere', 'Building site', 'Dal cantiere alla casa finita', 'From building site to finished home', VIDEO_SAMPLES.cantiere],
+  ['fpv', 'Volo nel cantiere', 'Site fly-through', 'Un volo tra le fondamenta, poi la casa finita', 'A fly-through the site, then the finished home', VIDEO_SAMPLES.fpv],
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', VIDEO_SAMPLES.daynight],
   ['camera', 'Camminata', 'Walkthrough', 'Entri nella stanza con una ripresa lenta', 'A slow walk into the room', VIDEO_SAMPLES.camera],
 ] as const;
@@ -258,7 +259,7 @@ function TryIt() {
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
-    if (d?.image) { setPhotoToken(d.token ?? null); setEmptied(style === 'empty' && !text.trim()); return setAfter(d.image); }
+    if (d?.image) { setPhotoToken(d.token ?? null); const em = style === 'empty' && !text.trim(); setEmptied(em); if (!em) setPicking(true); return setAfter(d.image); } // foto pronta: subito i modelli di video nel riquadro, come in chat
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
@@ -301,7 +302,7 @@ function TryIt() {
                     {/* stesse card della chat della piattaforma: video d'esempio, nome, descrizione */}
                     <div className="grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3">
                       {VIDEO_TEMPLATES.map(([k, it, eng, dIt, dEn, sample], n) => {
-                        const free = k === 'popup' || k === 'gravity';
+                        const free = k === 'popup';
                         const body = <>
                           <span className="sheen pointer-events-none absolute inset-0 z-20" />
                           <span className="relative block">
