@@ -118,7 +118,13 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
   );
 }
 
+// Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
+// Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
+const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
 function EditProperty({ project, onClose, onSaved, onDraft }: { project: ProjectData; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void }) {
+  // all'apertura la barra sale in cima (sotto l'intestazione): alta quanto la finestra, altrimenti Salva restava fuori schermo
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => { panel.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, []);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -127,34 +133,43 @@ function EditProperty({ project, onClose, onSaved, onDraft }: { project: Project
   const set = (k: string, x: string) => setV(o => { const nv = { ...o, [k]: x }; onDraft(toUp(nv)); return nv; });
   const save = async () => {
     setBusy(true); setErr('');
-    const up = toUp(v);
-    const r = await updateProject(project.id, up);
+    const r = await updateProject(project.id, toUp(v));
     setBusy(false);
     if (r) onSaved(); else setErr('Salvataggio non riuscito, riprova.');
   };
-  const input = 'mt-1.5 h-11 w-full rounded-full bg-canvas px-4 text-sm outline-none ease-smooth transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15';
+  const input = 'mt-1 h-10 w-full rounded-xl bg-canvas px-3 text-sm outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand';
+  const field = (k: keyof ProjectData) => {
+    const f = FIELDS.find(x => x.k === k)!;
+    return (
+      <label key={k} className={`block text-xs font-medium text-muted ${f.wide ? 'col-span-2' : ''}`}>{f.label}
+        <input value={v[k]} onChange={e => set(k, e.target.value)} inputMode={f.num ? 'numeric' : undefined} placeholder={f.ph} maxLength={k === 'titolo' ? 120 : 200} className={input} />
+      </label>
+    );
+  };
   return (
-    // pannello a sinistra della pagina del sito (non piu' finestra sopra): si scrive e la pagina accanto cambia
-    <div className="blur-in flex max-h-[calc(100vh-8rem)] flex-col rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24">
-        <div className="flex items-center justify-between px-6 pt-6">
-          <h2 className="font-display text-xl font-bold">Modifica immobile</h2>
-          <button type="button" onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
-        </div>
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto px-6 py-5">
-          {FIELDS.map(f => (
-            <label key={f.k} className={`block text-xs font-medium text-ink/70 ${f.wide ? 'col-span-2' : ''}`}>{f.label}
-              <input value={v[f.k]} onChange={e => set(f.k, e.target.value)} inputMode={f.num ? 'numeric' : undefined} placeholder={f.ph} maxLength={f.k === 'titolo' ? 120 : 200} className={input} />
-            </label>
-          ))}
-          <label className="block text-xs font-medium text-ink/70 col-span-2">Descrizione
-            <textarea value={v.descrizione} onChange={e => set('descrizione', e.target.value)} rows={8} maxLength={8000} className="mt-1.5 w-full rounded-[20px] bg-canvas px-4 py-3 text-sm leading-relaxed outline-none ease-smooth transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15" />
-          </label>
-        </div>
-        <div className="flex items-center justify-end gap-2 border-t border-line px-6 py-4">
-          {err && <span className="mr-auto text-sm text-rose-600">{err}</span>}
-          <button type="button" onClick={onClose} disabled={busy} className="h-11 rounded-full px-5 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
-          <button type="button" onClick={save} disabled={busy} className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black disabled:opacity-50">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
-        </div>
+    <div ref={panel} className="blur-in flex max-h-[calc(100vh-8rem)] scroll-mt-24 flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24">
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <h2 className="font-display text-lg font-bold">Modifica immobile</h2>
+        <button type="button" onClick={onClose} aria-label="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
+      </div>
+      <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+        {GROUPS.map(([title, keys]) => (
+          <section key={title}>
+            <h3 className="text-sm font-semibold">{title}</h3>
+            <div className="mt-2 grid grid-cols-2 gap-3">{keys.map(field)}</div>
+            {title === 'Annuncio' && (
+              <label className="mt-3 block text-xs font-medium text-muted">Descrizione
+                <textarea value={v.descrizione} onChange={e => set('descrizione', e.target.value)} rows={7} maxLength={8000} className="mt-1 w-full rounded-xl bg-canvas px-3 py-2.5 text-sm leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
+              </label>
+            )}
+          </section>
+        ))}
+      </div>
+      <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
+        {err && <span className="mr-auto text-sm text-rose-600">{err}</span>}
+        <button type="button" onClick={onClose} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
+        <button type="button" onClick={save} disabled={busy} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
+      </div>
     </div>
   );
 }
