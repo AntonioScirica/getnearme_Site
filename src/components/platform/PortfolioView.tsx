@@ -503,16 +503,20 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
-        <div className="ml-3 flex rounded-full bg-canvas p-0.5">
-          {PAGES.map(([id, l]) => (
-            <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(pageOf(id, firstId, zone))}
-              className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
-          ))}
-        </div>
+        {/* menu a tendina delle pagine (le pillole non stavano piu' nella barra) */}
+        <label className="relative ml-3 flex items-center">
+          <span className="sr-only">Pagina del sito</span>
+          <select value={page.page} onChange={e => onPage(pageOf(e.target.value as (typeof PAGES)[number][0], firstId, zone))}
+            className="h-8 cursor-pointer appearance-none rounded-full bg-canvas pl-3.5 pr-8 text-xs font-semibold text-ink outline-none ring-1 ring-transparent ease-smooth transition-shadow hover:ring-black/10 focus:ring-brand">
+            {PAGES.map(([id, l]) => <option key={id} value={id} disabled={id === 'immobile' && !firstId}>{l}</option>)}
+            {!PAGES.some(([id]) => id === page.page) && <option value={page.page} hidden>{page.page}</option>}
+          </select>
+          <ChevronDown size={14} className="pointer-events-none absolute right-2.5 text-muted" />
+        </label>
         {/* stesse misure di prima, piu' visibile: icone e colore pieno su quello attivo (Modifica in blu) */}
         <div className="ml-auto flex items-center rounded-full bg-canvas p-0.5">
           {([[false, 'Naviga', Eye], [true, 'Modifica', Pencil]] as const).map(([v, l, I]) => (
-            <button key={l} onClick={() => setEditMode(v)} className={`flex items-center gap-1 rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
+            <button key={l} onClick={() => setEditMode(v)} className={`flex items-center gap-1.5 rounded-full px-4 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
           ))}
         </div>
       </div>
