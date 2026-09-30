@@ -2,7 +2,7 @@
 
 import ConsentGate from './ConsentGate';
 import { useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { Home, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
@@ -537,7 +537,8 @@ function DeleteAccount() {
   return (
     <>
       <button onClick={() => setOpen(true)} className="rounded-full px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">Elimina account</button>
-      {open && (
+      {/* nel body: dentro la pagina un antenato con transform limitava il velo al solo contenuto */}
+      {open && createPortal(
         <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => !busy && setOpen(false)}>
           <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-[32px] bg-white p-6 shadow-2xl">
             <h2 className="text-lg font-semibold">Eliminare l’account?</h2>
@@ -551,7 +552,8 @@ function DeleteAccount() {
               <button disabled={busy || word.trim() !== 'ELIMINA'} onClick={run} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />} Elimina per sempre</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

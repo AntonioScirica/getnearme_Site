@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     // video della chat: il binario di ffmpeg-static (montaggio del video Veo)
     "/api/platform/video": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
+  // login con un indirizzo da login (la pagina e' quella del checkout, che senza piano scelto fa solo l'accesso)
+  async rewrites() {
+    return [{ source: "/:locale/accedi", destination: "/:locale/checkout/agency" }];
+  },
   async redirects() {
     return [
       { source: "/:locale/home", destination: "/:locale", permanent: true },

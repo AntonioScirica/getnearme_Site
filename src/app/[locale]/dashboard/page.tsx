@@ -190,7 +190,7 @@ export default function DashboardPage() {
         return;
       }
       // si torna qui (anche #/piano?buy=...) dopo l'accesso
-      window.location.replace(`/${locale}/checkout/agency?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`);
+      window.location.replace(`/${locale}/accedi?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`);
     }
   }, [loading, userData, locale, unavailable]);
 

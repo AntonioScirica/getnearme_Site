@@ -257,7 +257,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     try { localStorage.setItem(TRIAL_KEY, JSON.stringify({ image, style, text: text.trim(), go })); } catch { /* spazio pieno: si riparte dall'esempio */ }
     // senza accesso dritti al login (niente passaggio visibile dalla pagina della prova)
     const { data: { session } } = await supabase.auth.getSession();
-    window.location.href = session ? TRIAL : `/it/checkout/agency?next=${TRIAL}`;
+    window.location.href = session ? TRIAL : `/it/accedi?next=${TRIAL}`;
   };
   // foto ridotta nel browser a 1600 px (upload veloce anche da telefono), in JPEG
   const load = (src: string, done: (url: string) => void) => {
@@ -296,7 +296,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
-    if (d?.error === 'login') return window.location.replace(`/it/checkout/agency?next=${TRIAL}`); // sessione scaduta
+    if (d?.error === 'login') return window.location.replace(`/it/accedi?next=${TRIAL}`); // sessione scaduta
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
     if (d?.image) { setPhotoToken(d.token ?? null); const em = st === 'empty' && !tx; setEmptied(em); if (!em) setPicking(true); return setAfter(d.image); } // foto pronta: subito i modelli di video nel riquadro, come in chat
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
@@ -750,7 +750,7 @@ function Trial() {
   const L = useL();
   const [ok, setOk] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/checkout/agency?next=${TRIAL}`)));
+    supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/accedi?next=${TRIAL}`)));
   }, []);
   if (!ok) return <div className="dots-bg min-h-screen" />; // finche' non si sa se c'e' l'accesso: niente pagina (poi login o prova)
   return (
