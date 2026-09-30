@@ -156,7 +156,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
       <DemoDownload />
-      {tour && !chat && <Tour onDone={() => setTour(false)} />}
+      {tour && !chat && credits && <Tour noPlan={noPlan} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-md:flex'}`}>

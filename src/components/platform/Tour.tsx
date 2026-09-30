@@ -9,7 +9,7 @@ import { tr } from './i18n';
 // cosi' la si vede. Si accende con localStorage 'agenteimmo:tour' = '1' (lo mette l'onboarding) o aprendo #/tour;
 // si spegne a fine giro o con Salta.
 // demo: Immobili mostra solo le case d'esempio. edit: chiede al Il mio sito di aprire l'editor del modello (evento 'agenteimmo:tour-edit'), per mostrare che si modifica
-const STEPS: { target: string; go: string; title: string; text: string; edit?: boolean; demo?: boolean }[] = [
+const ALL_STEPS: { target: string; go: string; title: string; text: string; edit?: boolean; demo?: boolean }[] = [
   { target: '/', go: '/', title: 'Home', text: tr('Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.', 'Your starting point: list a property, furnish a room, create a video.') },
   // la chat si indica nel menu senza entrarci: in chat il tour non c'e' (la chat ha tutto lo schermo)
   { target: '/staging', go: '/', title: 'Chat', text: tr('Carichi una foto e scrivi cosa vuoi: l\'AI arreda, svuota o rinnova la stanza e ne fa un video per i social.', 'Upload a photo and say what you want: the AI furnishes, empties or restyles the room and turns it into a social video.') },
@@ -18,13 +18,16 @@ const STEPS: { target: string; go: string; title: string; text: string; edit?: b
   { target: 'site-editor', go: '/portfolio', edit: true, title: tr('Modifica tutto', 'Edit everything'), text: tr('Testi, foto, colori, caratteri e logo: tocchi un punto del sito e lo cambi, vedi subito come viene.', 'Text, photos, colors, fonts and logo: tap any part of the website to change it and see the result right away.') },
   { target: 'site-link', go: '/portfolio', edit: true, title: tr('Pubblica con il tuo link', 'Publish with your link'), text: tr('Quando sei pronto lo accendi: il sito va online al tuo indirizzo, da mandare ai clienti.', 'When you are ready, switch it on: your website goes live at your address, ready to send to clients.') },
   { target: '/galleria', go: '/galleria', demo: true, title: tr('Galleria', 'Gallery'), text: tr('Le foto arredate e i video che hai creato, pronti da scaricare e pubblicare.', 'The furnished photos and videos you created, ready to download and publish.') },
-  { target: 'crediti', go: '/', title: tr('I tuoi crediti', 'Your credits'), text: tr('Ogni foto e video usa dei crediti: qui vedi quanti te ne restano e scegli il piano.', 'Every photo and video uses credits: here you see how many you have left and choose your plan.') },
   { target: 'nuovo', go: '/', title: tr('Metti in vetrina', 'List a property'), text: tr('Hai preso un incarico? Parti da qui: carichi le foto e la casa è pronta per portale, social e sito.', 'Got a new listing? Start here: upload the photos and the property is ready for portals, social media and your website.') },
+  { target: 'crediti', go: '/', title: tr('Crediti e profilo', 'Credits and profile'), text: tr('Ogni foto e video usa dei crediti: qui vedi quanti te ne restano e cambi piano. Accanto il tuo profilo: nome, indirizzo del sito e account. Buon lavoro!', 'Every photo and video uses credits: here you see how many you have left and change plan. Next to it, your profile: name, website address and account. Enjoy!') },
   { target: 'profilo', go: '/', title: tr('Il tuo profilo', 'Your profile'), text: tr('Nome, indirizzo del sito e account. Buon lavoro!', 'Name, website address and account. Enjoy!') },
 ];
 export const TOUR_KEY = 'agenteimmo:tour';
 
-export default function Tour({ onDone }: { onDone: () => void }) {
+export default function Tour({ onDone, noPlan = false }: { onDone: () => void; noPlan?: boolean }) {
+  // col piano crediti e profilo stanno in una pillola sola (un passo per entrambi); senza piano niente crediti
+  // ne' Metti in vetrina in alto: si passa dritti al profilo
+  const STEPS = ALL_STEPS.filter(s => (noPlan ? s.target !== 'crediti' && s.target !== 'nuovo' : s.target !== 'profilo'));
   const [i, setI] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
   // all'inizio niente finche' la prima voce non e' trovata (o 1 s, se non si vede: card al centro); la luce
