@@ -51,6 +51,9 @@ function guardUserCache(uid: string): void {
   } catch { /* private mode */ }
 }
 
+// primo caricamento senza rete: si entra comunque (come prima), il profilo si ricarica al primo focus
+const blankProfile = (id: string, email: string, avatarUrl: string | null): UserData => ({ id, email, credits: 0, subscriptionType: 'free', stripeCustomerId: null, totalEarned: 0, totalSpent: 0, avatarUrl, onboardingCompleted: false, agencySeats: null });
+
 async function fetchProfile(userId: string, email: string, avatarUrl: string | null = null): Promise<UserData> {
   // NB: la colonna e' `stripe_agency_subscription_id` (NON `stripe_customer_id`).
   // Selezionare una colonna inesistente faceva fallire l'INTERA query -> data
@@ -60,7 +63,9 @@ async function fetchProfile(userId: string, email: string, avatarUrl: string | n
     .select('credits, subscription_type, stripe_agency_subscription_id, total_earned, total_spent, onboarding_completed, agency_seats')
     .eq('user_id', userId)
     .single();
-  if (error) console.error('fetchProfile error:', error.message);
+  // errore vero (rete giu', es. al ritorno dallo stop del Mac): si lancia, cosi' chi chiama tiene il profilo che ha
+  // invece di sostituirlo con quello vuoto (0 crediti, piano free). Nessuna riga (PGRST116) = utente nuovo: profilo vuoto.
+  if (error && error.code !== 'PGRST116') throw new Error(error.message);
   return {
     id: userId,
     email,
@@ -112,7 +117,7 @@ export default function DashboardPage() {
           }
           const u = userRes?.user ?? session.user;
           guardUserCache(u.id);
-          const profile = await withTimeout(fetchProfile(u.id, u.email || '', avatarFromUser(u)));
+          const profile = await withTimeout(fetchProfile(u.id, u.email || '', avatarFromUser(u)).catch(e => { console.warn('fetchProfile', e); return blankProfile(u.id, u.email || '', avatarFromUser(u)); }));
           setUserData(profile);
         }
       } catch (e) {
