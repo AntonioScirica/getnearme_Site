@@ -366,7 +366,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                         const body = <>
                           <span className="sheen pointer-events-none absolute inset-0 z-20" />
                           <span className="relative block">
-                            <video src={sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[16px] bg-canvas object-cover" />
+                            <video src={sample} autoPlay loop muted playsInline className={`aspect-video w-full rounded-[16px] bg-canvas object-cover ${sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />{/* Prima e dopo: quasi quadrato, in 16:9 si tiene la parte bassa (i mobili) */}
                             {!free && <span className="absolute inset-0 flex items-center justify-center rounded-[16px] bg-white/30"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><Lock size={14} /></span></span>}
                           </span>
                           <span className="flex items-center justify-between gap-1 px-2 pt-2 text-sm font-semibold">{L(it, eng)}</span>
