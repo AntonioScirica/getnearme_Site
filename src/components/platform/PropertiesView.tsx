@@ -202,7 +202,6 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
           {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{tr('In vetrina', 'Live')}</span>}
           {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>
-        {typeof score === 'number' && <span className="absolute right-14 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{score}/100</span>}
         <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
         <span className="absolute bottom-3 right-3 flex h-9 w-9 translate-y-1 items-center justify-center rounded-full bg-white text-ink opacity-0 shadow ease-smooth transition-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100"><ArrowUpRight size={17} /></span>
       </div>
