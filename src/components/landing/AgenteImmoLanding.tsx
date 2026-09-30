@@ -812,6 +812,7 @@ function Trial() {
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
         <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.6))' }}><TryIt /></div>
       </section>
+      <div className="h-16 md:h-24" />{/* spazio prima della fascia grigia dei prezzi */}
       <Pricing />
     </div>
   );
