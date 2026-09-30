@@ -167,6 +167,29 @@ export function NoCreditsModal() {
     return () => window.removeEventListener('agenteimmo:no-credits', on);
   }, []);
   if (!open) return null;
+  // senza piano: foto arredata in alto, cosa si sblocca e un solo pulsante verso i piani
+  if (!hasPlan) return (
+    <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => setOpen(false)}>
+      <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-2 shadow-2xl">
+        <div className="relative overflow-hidden rounded-[24px]">
+          <img src="/immo/home/demo-after.webp" alt="" className="aspect-[16/9] w-full object-cover" />
+          <span className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur"><Sparkles size={12} className="text-brand" /> Arredata con l’AI</span>
+          <button type="button" onClick={() => setOpen(false)} aria-label="Chiudi" className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur hover:bg-white"><X size={16} /></button>
+        </div>
+        <div className="px-5 pb-5 pt-5">
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">Scegli un piano per iniziare</h2>
+          <p className="mt-1.5 text-sm text-muted">Da {PRICING.starter} € al mese, disdici quando vuoi.</p>
+          <ul className="mt-5 space-y-2.5 text-[15px]">
+            {['Foto arredate e svuotate in pochi secondi', 'Video per i social dalle tue foto', 'Il tuo sito con i tuoi immobili (Plus e Pro)'].map(t => (
+              <li key={t} className="flex items-center gap-3"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} strokeWidth={3} /></span>{t}</li>
+            ))}
+          </ul>
+          <a href="#/piano" onClick={() => setOpen(false)} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Vedi i piani</a>
+          <button type="button" onClick={() => setOpen(false)} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-muted hover:text-ink">Più tardi</button>
+        </div>
+      </div>
+    </div>
+  );
   return (
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => setOpen(false)}>
       <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-7 text-center shadow-2xl">

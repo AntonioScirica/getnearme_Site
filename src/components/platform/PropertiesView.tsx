@@ -118,9 +118,9 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
         <div className="blur-in mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5">
           <div>
             <div className="font-semibold">{demo ? 'Queste sono case di esempio' : 'Non hai ancora immobili'}</div>
-            <p className="mt-0.5 text-sm text-muted">Metti in vetrina il tuo primo immobile: qui e sulla mappa vedrai le tue.</p>
+            <p className="mt-0.5 text-sm text-muted">Aggiungi il tuo primo immobile: qui e sulla mappa vedrai i tuoi.</p>
           </div>
-          <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Metti in vetrina</a>
+          <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Aggiungi immobile</a>
         </div>
       )}
       {!projects ? (
