@@ -3,7 +3,7 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
-import { Bath, BedDouble, Check, Star, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
+import { Bath, BedDouble, Check, Star, Wand2, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
 import { FONTS, fontCss, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
@@ -148,21 +148,20 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
   const preview = useContext(Ctx)?.preview;
   const pe = useContext(Ctx)?.propEdit;
   const shown = src || (preview ? pick(alt + className) : '');
-  // scheda della piattaforma: sulle foto dell'immobile le azioni (span e non button: le gallerie hanno gia' un button intorno)
+  // scheda della piattaforma: sulle foto dell'immobile due icone in basso a sinistra, Migliora con l'AI e Copertina
+  // (span e non button: le gallerie hanno gia' un button intorno). Niente velo: la foto resta visibile.
+  const act = (action: 'ai' | 'cover') => (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); pe!.onPhoto(src!, action); };
   const acts = pe && src && !noActions && pe.photos.includes(src) ? (
     pe.busy === src ? <span className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 text-sm font-semibold text-neutral-900">Un attimo…</span> : (
-      // in modifica: velo sempre sopra e i due pulsanti grandi uno sotto l'altro; fuori, copertina e togli al passaggio
-      <span className={`absolute inset-0 z-20 flex items-center justify-center bg-black/35 transition-opacity ${pe.editing ? 'flex-col gap-3' : 'gap-2 opacity-0 group-hover/ph:opacity-100'}`} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
-        {pe.editing && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'ai')} className="flex h-14 min-w-56 items-center justify-center rounded-full bg-[#537eec] px-7 text-lg font-semibold text-white shadow-lg transition-transform hover:scale-105">Migliora con l’AI</span>}
-        {src !== pe.cover && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'cover')} className={`flex items-center justify-center rounded-full bg-white font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-105 ${pe.editing ? 'h-14 min-w-56 px-7 text-lg' : 'h-10 px-4 text-sm'}`}>Copertina</span>}
+      <span className="absolute bottom-3 left-3 z-30 flex gap-2">
+        <span role="button" tabIndex={0} title="Migliora con l’AI" aria-label="Migliora con l’AI" onClick={act('ai')} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#537eec] text-white shadow-lg transition-transform hover:scale-110"><Wand2 size={16} /></span>
+        {src !== pe.cover && <span role="button" tabIndex={0} title="Metti come copertina" aria-label="Metti come copertina" onClick={act('cover')} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg transition-transform hover:scale-110"><Star size={16} /></span>}
       </span>
     )
   ) : null;
-  // Migliora con l'AI sempre in vista sulla foto (copertina e togli al passaggio del mouse)
-  const ai = acts && pe?.busy !== src && !pe?.editing ? <span role="button" tabIndex={0} onClick={e => { e.preventDefault(); e.stopPropagation(); pe!.onPhoto(src!, 'ai'); }} className="absolute bottom-4 left-4 z-30 flex h-10 items-center gap-1.5 rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105">Migliora con l’AI</span> : null;
   return (
     <div className={`overflow-hidden bg-[var(--soft)] ${fit || acts ? 'relative' : ''} ${acts ? 'group/ph' : ''} ${className}`}>
-      {acts}{ai}
+      {acts}
       {/* scheda in piattaforma: la foto di copertina ha la sua etichetta */}
       {acts && src === pe?.cover && <span className="pointer-events-none absolute left-4 top-4 z-30 flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-sm font-semibold text-neutral-900 shadow-lg"><Star size={14} className="fill-amber-400 text-amber-400" /> Copertina</span>}
       {shown && fit && <FitImage src={shown} alt={alt} imgClassName={zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''} />}
