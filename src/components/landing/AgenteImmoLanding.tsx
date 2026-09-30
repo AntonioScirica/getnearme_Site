@@ -376,6 +376,7 @@ function TryIt() {
                 ? video
                   ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
                   // foto arredata: i modelli di video sono gia' nel riquadro, qui solo lo scarico della foto
+                  : vBusy ? null // mentre si crea il video niente scarico della sola foto
                   : !emptied
                   ? <button type="button" onClick={() => keep(false)} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica solo la foto', "Download just the photo")}</button>
                   : <div className="grid w-full grid-cols-2 gap-2">
