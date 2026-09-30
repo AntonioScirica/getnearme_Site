@@ -98,15 +98,19 @@ function BeforeAfter({ before, after, className = '', auto = true, contain = fal
     const loop = setInterval(() => { dir = -dir; setP(dir > 0 ? 78 : 22); }, 2600);
     return () => { clearTimeout(first); clearInterval(loop); };
   }, [auto, idle]);
-  const move = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!drag) return;
+  // trascinamento in un ref: al clic la posizione va subito sotto il dito (con lo stato, il primo evento era ancora
+  // "non trascino" e il cursore restava a meta' dell'animazione automatica, poi scattava)
+  const dragging = useRef(false);
+  const at = (e: React.PointerEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     setP(Math.max(4, Math.min(96, ((e.clientX - r.left) / r.width) * 100)));
   };
+  const move = (e: React.PointerEvent<HTMLDivElement>) => { if (dragging.current) at(e); };
+  const stop = () => { dragging.current = false; setDrag(false); };
   const t = drag ? 'none' : idle ? 'clip-path 2.2s cubic-bezier(.65,0,.35,1), left 2.2s cubic-bezier(.65,0,.35,1)' : 'clip-path var(--gnm-dur) var(--gnm-ease), left var(--gnm-dur) var(--gnm-ease)';
   return (
-    <div className={`relative select-none overflow-hidden ${className}`} onPointerDown={e => { setIdle(false); setDrag(true); e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
-      onPointerMove={move} onPointerUp={() => setDrag(false)} onPointerCancel={() => setDrag(false)} style={{ cursor: 'ew-resize', touchAction: 'none' }}>
+    <div className={`relative select-none overflow-hidden ${className}`} onPointerDown={e => { dragging.current = true; setIdle(false); setDrag(true); e.currentTarget.setPointerCapture(e.pointerId); at(e); }}
+      onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} style={{ cursor: 'ew-resize', touchAction: 'none' }}>
       {contain && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" draggable={false} />}
       <img src={after} alt={L('Dopo il home staging', "After virtual staging")} className={`absolute inset-0 h-full w-full ${contain ? 'object-contain' : 'object-cover'}`} draggable={false} />
       <img src={before} alt={L('Prima', "Before")} className={`absolute inset-0 h-full w-full ${contain ? 'object-contain' : 'object-cover'}`} draggable={false} style={{ clipPath: `inset(0 ${100 - p}% 0 0)`, transition: t }} />
@@ -219,13 +223,15 @@ function TryIt() {
   useEffect(() => {
     const force = new URLSearchParams(location.search).has('piani');
     let mark = false; try { mark = !!localStorage.getItem('agenteimmo:demo-used'); } catch { /* niente storage */ }
-    if (force || mark) { setUsed(true); setLeft(0); return; }
+    if (force || mark) { void Promise.resolve().then(() => { setUsed(true); setLeft(0); }); return; } // dopo il render (niente setState sincrono nell'effetto)
     fetch('/api/landing/demo').then(r => r.json()).then((d: { left?: number }) => { if (d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
   }, []);
   const [msg, setMsg] = useState('');
   // secondo passo: la foto arredata diventa un video (1 al giorno, vedi /api/landing/demo-video)
   const [video, setVideo] = useState<string | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null); // foto intera su R2, da scaricare dopo la registrazione
+  // gettoni cifrati di foto e video puliti (senza filigrana): la piattaforma li scambia con i file dopo il login
+  const [photoToken, setPhotoToken] = useState<string | null>(null);
+  const [videoToken, setVideoToken] = useState<string | null>(null);
   const [vBusy, setVBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const pick = (f?: File) => {
@@ -245,16 +251,16 @@ function TryIt() {
     if (!before || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
     const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim(), mock: simulate() }) }).catch(() => null);
-    const d = await r?.json().catch(() => null) as { image?: string; url?: string; left?: number; error?: string } | null;
+    const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
-    if (d?.image) { setPhotoUrl(d.url ?? null); setEmptied(style === 'empty' && !text.trim()); return setAfter(d.image); }
+    if (d?.image) { setPhotoToken(d.token ?? null); setEmptied(style === 'empty' && !text.trim()); return setAfter(d.image); }
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
   const keep = (withVideo: boolean) => {
-    try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photo: photoUrl, video: withVideo ? video : null })); } catch { /* spazio pieno: si entra comunque */ }
+    try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photoToken, videoToken: withVideo ? videoToken : null })); } catch { /* spazio pieno: si entra comunque */ }
     window.location.href = APP;
   };
   const [picking, setPicking] = useState(false); // scelta del template del video
@@ -269,8 +275,8 @@ function TryIt() {
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
     for (let i = 0; i < 60; i++) {
       await new Promise(res => setTimeout(res, 5000));
-      const g = await fetch(`/api/landing/demo-video?job=${encodeURIComponent(d.job)}`).then(x => x.json()).catch(() => null) as { url?: string; status?: string; error?: string } | null;
-      if (g?.url) { setVBusy(false); return setVideo(g.url); }
+      const g = await fetch(`/api/landing/demo-video?job=${encodeURIComponent(d.job)}`).then(x => x.json()).catch(() => null) as { url?: string; token?: string; status?: string; error?: string } | null;
+      if (g?.url) { setVBusy(false); setVideoToken(g.token ?? null); return setVideo(g.url); }
       if (g?.error) return fail(g.error);
     }
     fail();
@@ -278,9 +284,10 @@ function TryIt() {
   return (
     <>
         <div className="rounded-[28px] bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:rounded-[32px] sm:p-2">
-          <div className="relative overflow-hidden rounded-[22px] bg-canvas sm:rounded-[24px]">
+          <div onContextMenu={e => e.preventDefault()} className="relative overflow-hidden rounded-[22px] bg-canvas sm:rounded-[24px]">
+            {/* sul risultato della prova niente tasto destro (in pagina c'e' comunque solo la versione con la filigrana) */}
             {video ? (
-              <div className={`relative overflow-hidden ${BOX}`}>{after && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />}<video src={video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" /></div>
+              <div onContextMenu={e => e.preventDefault()} className={`relative select-none overflow-hidden ${BOX}`}>{after && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />}<video src={video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" /></div>
             ) : after && before ? (
               <div className="relative">
                 <BeforeAfter before={before} after={after} auto={false} contain className={BOX} />
@@ -509,7 +516,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <h2 className={H2}>{L('Chi scorre non si ferma su una stanza vuota.', "Nobody stops scrolling for an empty room.")}</h2>
             <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Vuota, una casa sembra piccola e fredda. Arredata, chi guarda ci si immagina dentro e ti chiama.', "Empty, a home looks small and cold. Staged, buyers picture themselves there and call you.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('Quattro stili per ogni stanza: Moderno, Nordico, Luxury, Boho', "Four styles for every room: Modern, Nordic, Luxury, Boho"), L('Svuoti la stanza o cambi un dettaglio scrivendolo, come in chat', "Empty the room or change a detail just by typing it, like in a chat"), L('Anche le planimetrie: a colori, in 3D dall\'alto o in bianco e nero', "Floor plans too: in colour, 3D from above or black and white"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('Stili già pronti per ogni stanza', "Ready-made styles for every room"), L('Svuoti la stanza o cambi un dettaglio scrivendolo, come in chat', "Empty the room or change a detail just by typing it, like in a chat"), L('Anche le planimetrie: a colori, in 3D dall\'alto o in bianco e nero', "Floor plans too: in colour, 3D from above or black and white"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <span className="hidden md:block"><Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
           </Reveal>

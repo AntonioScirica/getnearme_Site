@@ -186,14 +186,21 @@ export function NoCreditsModal() {
 
 // La prova fatta sulla landing (foto arredata e video): dopo l'accesso si scarica da qui, poi l'onboarding.
 // onDone = agente nuovo: il bottone "Conosci Immo e scarica" scarica e poi apre l'onboarding.
-export const hasDemo = () => { try { const d = JSON.parse(localStorage.getItem('agenteimmo:demo') ?? 'null'); return !!(d?.photo || d?.video); } catch { return false; } };
+export const hasDemo = () => { try { const d = JSON.parse(localStorage.getItem('agenteimmo:demo') ?? 'null'); return !!(d?.photo || d?.video || d?.photoToken || d?.videoToken); } catch { return false; } };
 export function DemoDownload({ onDone }: { onDone?: () => void }) {
   // letto una volta al montaggio (solo client: la piattaforma non si renderizza sul server)
-  const [demo, setDemo] = useState<{ photo?: string | null; video?: string | null } | null>(() => {
-    try { const d = JSON.parse(localStorage.getItem('agenteimmo:demo') ?? 'null'); return d?.photo || d?.video ? d : null; } catch { return null; }
+  // la landing salva gettoni cifrati (foto e video puliti, senza filigrana): si scambiano con i file ora che si e' dentro
+  const [demo, setDemo] = useState<{ photo?: string | null; video?: string | null; photoToken?: string | null; videoToken?: string | null } | null>(() => {
+    try { const d = JSON.parse(localStorage.getItem('agenteimmo:demo') ?? 'null'); return d?.photo || d?.video || d?.photoToken || d?.videoToken ? d : null; } catch { return null; }
   });
+  useEffect(() => {
+    if (!demo || (!demo.photoToken && !demo.videoToken) || demo.photo || demo.video) return;
+    authFetch('/api/platform/demo-claim', { method: 'POST', body: JSON.stringify({ photo: demo.photoToken, video: demo.videoToken }) })
+      .then(r => (r.ok ? r.json() : null)).then((u: { photo?: string | null; video?: string | null } | null) => { if (u?.photo || u?.video) setDemo(d => d && { ...d, photo: u.photo, video: u.video }); })
+      .catch(() => {});
+  }, [demo]);
   const [busy, setBusy] = useState(false);
-  if (!demo) return null;
+  if (!demo || (!demo.photo && !demo.video)) return null;
   const close = () => { localStorage.removeItem('agenteimmo:demo'); setDemo(null); onDone?.(); };
   const save = async (url: string, name: string) => {
     try {

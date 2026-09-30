@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
 import { uploadJpeg } from '@/lib/r2'
+import { sealKey, watermarkImage } from '@/lib/demoProtect'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
 import { stagePrompt } from '@/lib/nanoBanana'
@@ -63,10 +64,13 @@ export async function POST(req: NextRequest) {
   if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()
   const done = await finish(Buffer.from(staged, 'base64'))
-  // foto intera su R2 (chiave casuale): dopo la registrazione la piattaforma la fa scaricare (DemoDownload)
-  const url = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), `landing/${Date.now()}-${randomBytes(6).toString('hex')}.jpg`).catch(() => null)
-  const out = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
-  return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, url, left: free ? 99 : PER_IP - used - 1 })
+  // foto pulita su R2 a una chiave casuale che il browser non vede: riceve solo un gettone cifrato, che la piattaforma
+  // scambia con la foto dopo il login (DemoDownload). In pagina solo la versione con la filigrana.
+  const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.jpg`
+  const saved = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), cleanKey).then(() => true, () => false)
+  const small = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 88 }).toBuffer()
+  const out = await watermarkImage(small)
+  return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, token: saved ? sealKey(cleanKey) : null, left: free ? 99 : PER_IP - used - 1 })
 }
 
 // Stato della prova per chi torna sulla pagina: left = foto gratis rimaste oggi (0 = prova gia' usata, si mostrano i piani).
