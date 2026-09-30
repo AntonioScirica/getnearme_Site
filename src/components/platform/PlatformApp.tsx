@@ -24,7 +24,7 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
-import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal } from './PlanView';
+import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal, useCredits } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 
@@ -67,6 +67,7 @@ export default function PlatformApp(props: { userData: UserData }) {
 }
 
 function PlatformInner({ userData }: { userData: UserData }) {
+  const credits = useCredits(); // senza piano niente Metti in vetrina in alto
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
@@ -141,7 +142,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
           </nav>
           <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
-            <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
+            {/* senza piano solo Scegli un piano (in blu): Metti in vetrina appare col piano */}
+            {credits && (credits.unlimited || credits.plan !== 'none') && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>}
           </div>
           </>}
         </div>
