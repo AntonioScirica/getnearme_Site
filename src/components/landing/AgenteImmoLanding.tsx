@@ -13,6 +13,7 @@ import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
 import { deviceId } from '@/lib/deviceId';
 import { supabase } from '@/lib/supabase';
+import ConsentGate from '@/components/platform/ConsentGate';
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
@@ -24,6 +25,9 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 // ponytail: le guide per chi inizia (come diventare, provvigione) restano online ma non si linkano da qui: la landing parla ad agenti gia' in attivita'
 const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
 
+const TRIAL = '/it/prova'; // pagina della prova, solo con l'account
+const TRIAL_KEY = 'agenteimmo:prova'; // foto e richiesta messe da parte prima del login
+const EXAMPLE = '/immo/home/demo-before.webp';
 const APP = '/it/dashboard'; // ponytail: la piattaforma per ora e' solo in italiano, anche dalla landing inglese
 
 // Lingua della landing (it su /it, en su /en): L('testo italiano', "English text") accanto nel codice.
@@ -216,7 +220,8 @@ const simulate = () => { const q = new URLSearchParams(location.search); return 
 // riquadro della prova: sempre le stesse dimensioni, qualunque sia la foto
 const BOX = 'aspect-[4/3] md:aspect-[16/10]';
 
-function TryIt() {
+// gate (landing): la foto d'esempio c'e' gia', ogni azione (invio, Arreda, carica) porta al login e poi alla pagina /prova
+function TryIt({ gate = false }: { gate?: boolean }) {
   const L = useL();
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
@@ -232,7 +237,9 @@ function TryIt() {
     // in locale (sviluppo) nessun limite: il segno nel browser non conta
     let mark = false; try { mark = process.env.NODE_ENV !== 'development' && !!localStorage.getItem('agenteimmo:demo-used'); } catch { /* niente storage */ }
     if (force || mark) { void Promise.resolve().then(() => { setUsed(true); setLeft(0); }); return; } // dopo il render (niente setState sincrono nell'effetto)
-    void deviceId().then(dv => { device.current = dv; return fetch(`/api/landing/demo?d=${dv}`); }).then(r => r.json()).then(r => r.json()).then((d: { left?: number }) => { if (d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
+    void deviceId().then(async dv => { device.current = dv; return fetch(`/api/landing/demo?d=${dv}`, { headers: await auth() }); }).then(r => r.json()).then((d: { left?: number }) => {
+      if (d.left === 0) { setUsed(true); setLeft(0); } else if (!gate) restore();
+    }).catch(() => { if (!gate) restore(); });
   }, []);
   const [msg, setMsg] = useState('');
   const device = useRef(''); // impronta del dispositivo (lib/deviceId), inviata con la prova
@@ -243,28 +250,53 @@ function TryIt() {
   const [videoToken, setVideoToken] = useState<string | null>(null);
   const [vBusy, setVBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  const pick = (f?: File) => {
-    if (!f || !f.type.startsWith('image/')) return;
+  // token dell'account: le API della prova rispondono solo a chi ha fatto l'accesso
+  const auth = async (): Promise<Record<string, string>> => { const { data: { session } } = await supabase.auth.getSession(); return session ? { Authorization: `Bearer ${session.access_token}` } : {}; };
+  // landing: foto e richiesta messe da parte, poi la pagina della prova (che manda al login se serve)
+  const toTrial = (image: string | null, go: boolean) => {
+    try { localStorage.setItem(TRIAL_KEY, JSON.stringify({ image, style, text: text.trim(), go })); } catch { /* spazio pieno: si riparte dall'esempio */ }
+    window.location.href = TRIAL;
+  };
+  // foto ridotta nel browser a 1600 px (upload veloce anche da telefono), in JPEG
+  const load = (src: string, done: (url: string) => void) => {
     const img = new Image();
     img.onload = () => {
-      // ridotta nel browser a 1600 px: upload veloce anche da telefono
       const k = Math.min(1, 1600 / Math.max(img.width, img.height));
       const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
-      setBefore(c.toDataURL('image/jpeg', 0.88)); setAfter(null); setVideo(null); setMsg('');
-      URL.revokeObjectURL(img.src);
+      done(c.toDataURL('image/jpeg', 0.88));
     };
-    img.src = URL.createObjectURL(f);
+    img.src = src;
   };
-  const run = async () => {
-    if (!before || busy) return;
+  const pick = (f?: File) => {
+    if (!f || !f.type.startsWith('image/')) return;
+    const u = URL.createObjectURL(f);
+    load(u, url => { URL.revokeObjectURL(u); if (gate) return toTrial(url, false); setBefore(url); setAfter(null); setVideo(null); setMsg(''); });
+  };
+  // pagina /prova: si riparte dalla foto caricata sulla landing o da quella d'esempio; con invio o Arreda si arreda subito
+  const restored = useRef(false); // una volta sola (in sviluppo l'effetto parte due volte)
+  const restore = () => {
+    if (restored.current) return;
+    restored.current = true;
+    let p: { image?: string | null; style?: string; text?: string; go?: boolean } = {};
+    try { p = JSON.parse(localStorage.getItem(TRIAL_KEY) ?? '{}'); localStorage.removeItem(TRIAL_KEY); } catch { /* niente storage */ }
+    const st = DEMO_STYLES.find(x => x[0] === p.style)?.[0] ?? style;
+    const tx = (p.text ?? '').slice(0, 200);
+    setStyle(st); setText(tx);
+    const start = (url: string) => { setBefore(url); if (p.go) void run(url, st, tx); };
+    if (p.image?.startsWith('data:image/')) start(p.image); else load(EXAMPLE, start);
+  };
+  const run = async (img = before, st = style, tx = text.trim()) => {
+    if (gate) return toTrial(null, true);
+    if (!img || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
-    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim(), device: device.current || undefined, mock: simulate() }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ image: img, style: st, prompt: tx, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
+    if (d?.error === 'login') return window.location.replace(`/it/checkout/agency?next=${TRIAL}`); // sessione scaduta
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
-    if (d?.image) { setPhotoToken(d.token ?? null); const em = style === 'empty' && !text.trim(); setEmptied(em); if (!em) setPicking(true); return setAfter(d.image); } // foto pronta: subito i modelli di video nel riquadro, come in chat
+    if (d?.image) { setPhotoToken(d.token ?? null); const em = st === 'empty' && !tx; setEmptied(em); if (!em) setPicking(true); return setAfter(d.image); } // foto pronta: subito i modelli di video nel riquadro, come in chat
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
@@ -279,7 +311,7 @@ function TryIt() {
     if (!after || vBusy) return;
     setPicking(false); setAnims(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova. Crea l\'account per farne altri.', "You've made your free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
-    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, device: device.current || undefined, mock: simulate() } : { image: after, anim, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, device: device.current || undefined, mock: simulate() } : { image: after, anim, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
@@ -369,7 +401,7 @@ function TryIt() {
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 focus-within:bg-white focus-within:ring-2 focus-within:ring-ai sm:flex-nowrap">
               {!after && <>
               <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
-              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
+              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && void run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
               </>}
               {after
@@ -384,7 +416,7 @@ function TryIt() {
                       {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
                       <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
                     </div>
-                : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
+                : <button type="button" disabled={busy || left <= 0} onClick={() => (before || gate ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before || gate ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
             {/* stili solo prima dell'arredo: nel passo del video non servono */}
             {!after && <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
@@ -458,7 +490,7 @@ function Pricing() {
           <Cta href={buyHref(yearly ? 'pro_yearly' : 'pro_quarterly')} onClick={buyClick(yearly ? 'pro_yearly' : 'pro_quarterly')} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>
       </div>
-      <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href="#prova" className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L(', senza registrarti. Prezzi finali, senza IVA aggiunta.', ", no sign-up needed. Final prices, no VAT added.")}</p>
+      <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href="#prova" className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L('. Prezzi finali, senza IVA aggiunta.', ". Final prices, no VAT added.")}</p>
     </Band>
   );
 }
@@ -525,11 +557,11 @@ function Landing({ faq }: { faq: [string, string][] }) {
 
         {/* prova in pagina al posto dello slider: prima dell'upload scorre l'esempio, poi e' la foto dell'agente */}
         <div id="prova" className="mx-auto mt-10 max-w-4xl scroll-mt-24 md:mt-14">
-          <Reveal delay={800} anim="rise"><TryIt /></Reveal>
+          <Reveal delay={800} anim="rise"><TryIt gate /></Reveal>
         </div>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il proprietario vede subito cosa farai per lui', "Owners see right away what you'll do for them"), L('1 foto e 1 video gratis, senza registrarti', "1 photo and 1 video free, no sign-up")].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il proprietario vede subito cosa farai per lui', "Owners see right away what you'll do for them"), L('1 foto e 1 video gratis per provare', "1 photo and 1 video free to try")].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
 
@@ -659,7 +691,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(600px circle at 20% 0%, rgba(83,126,236,.8), transparent 60%), radial-gradient(500px circle at 90% 100%, rgba(110,86,248,.7), transparent 60%)' }} />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">{L('Il prossimo incarico, vincilo così.', "Win your next listing like this.")}</h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica una foto e guarda il risultato. Gratis, senza registrarti.', "Upload a photo and see the result. Free, no sign-up.")}</p>
+            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica una foto e guarda il risultato. Gratis.', "Upload a photo and see the result. Free.")}</p>
             <a href="#prova" className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
           </div>
         </Reveal>
@@ -703,6 +735,38 @@ function Landing({ faq }: { faq: [string, string][] }) {
           </span>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// Pagina della prova (/prova): ci si arriva dalla landing dopo il login, solo la prova e sotto i prezzi.
+export function TrialPage({ lang = 'it' }: { lang?: LandingLang }) {
+  return <Lang.Provider value={lang}><Trial /></Lang.Provider>;
+}
+
+function Trial() {
+  const L = useL();
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/checkout/agency?next=${TRIAL}`)));
+  }, []);
+  return (
+    <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
+      {ok && <ConsentGate />}
+      <header className="sticky top-0 z-40 pt-4">
+        <div className="mx-auto max-w-6xl px-4">
+          <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
+            <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
+            <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">Dashboard</Cta>
+          </nav>
+        </div>
+      </header>
+      <section id="prova" className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pb-24 md:pt-16">
+        <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
+        <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
+        <div className="mt-10">{ok ? <TryIt /> : <div className={`rounded-[28px] bg-white ${BOX}`} />}</div>
+      </section>
+      <Pricing />
     </div>
   );
 }

@@ -470,7 +470,7 @@ function CheckoutAgencyContent() {
   const nextParam = searchParams.get('next') ?? '';
   // ?plan= dei vecchi piani GetNearMe: niente prezzi vecchi, dopo l'accesso si va ai piani di Agente Immo
   const oldPlan = !!searchParams.get('plan');
-  const dest = /^\/(it|en)\/dashboard(?![^#?/])/.test(nextParam) ? nextParam : `/${locale}/dashboard${oldPlan ? '#/piano' : ''}`;
+  const dest = /^\/(it|en)\/(dashboard|prova)(?![^#?/])/.test(nextParam) ? nextParam : `/${locale}/dashboard${oldPlan ? '#/piano' : ''}`;
   // ?buy= (piano scelto sulla landing): dopo l'accesso dritti a Stripe; se non riesce, pagina dei piani
   const buyParam = searchParams.get('buy');
   const buy = isBuy(buyParam) ? buyParam : null;

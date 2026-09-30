@@ -7,13 +7,14 @@ import sharp from 'sharp'
 import { deleteKeys, uploadFile } from '@/lib/r2'
 import { sealKey, watermarkPng } from '@/lib/demoProtect'
 import { createClient } from '@supabase/supabase-js'
+import { authUser } from '@/lib/platformAuth'
 import { alertCapReached } from '@/lib/landingAlert'
 import { ffmpeg, pollVideo, startVideo } from '@/lib/videoJob'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
-// Prova anonima dalla landing, secondo passo: la foto appena arredata diventa un video (ricetta "i mobili compaiono",
+// Prova dalla pagina /prova, secondo passo (serve l'account): la foto appena arredata diventa un video (ricetta "i mobili compaiono",
 // la stessa della piattaforma). ~0,9 $ a video con Veo 3.1 fast a 8 s (~1,7 $ standard) (Nano Banana 2 vuota + Sonnet elenco + Veo 8 s).
 // Limiti come la prova foto (riga contatore in ai_usage): 1 video al giorno per IP, tetto globale giornaliero.
 const PER_IP = 1
@@ -33,10 +34,15 @@ export async function POST(req: NextRequest) {
   const since = new Date(Date.now() - 86_400_000).toISOString()
   // impronta del dispositivo (lib/deviceId): la prova vale una volta anche cambiando IP (VPN) o in incognito
   const dev = typeof body?.device === 'string' && /^[a-f0-9]{32}$/.test(body.device) ? `fp:${createHash('sha256').update(`${body.device}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)}` : null
+  // la prova si fa solo con l'account (30/09): vale una volta per account, IP e dispositivo
+  const user = await authUser(req)
+  if (!user) return NextResponse.json({ error: 'login' }, { status: 401 })
+  const acc = `u:${user.id}`
+  const keys = [who, acc, ...(dev ? [dev] : [])]
   const count = async (mine: boolean) => {
     // la prova e' una sola per IP, per sempre (30/09); il tetto di tutti resta giornaliero
     let q = admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo_video')
-    q = mine ? q.in('model', dev ? [who, dev] : [who]) : q.eq('provider', 'counter').gte('created_at', since)
+    q = mine ? q.in('model', keys) : q.eq('provider', 'counter').gte('created_at', since)
     return (await q).count ?? 0
   }
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
@@ -46,15 +52,16 @@ export async function POST(req: NextRequest) {
   if (body?.mock === true) return free ? NextResponse.json({ job: 'mock' }) : NextResponse.json({ error: 'bad_image' }, { status: 400 })
   if (used >= PER_IP) return NextResponse.json({ error: 'limit' }, { status: 429 })
   if (all >= PER_DAY) { await alertCapReached(admin, 'video', PER_DAY); return NextResponse.json({ error: 'busy' }, { status: 429 }) }
-  const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
+  const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
   // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)
   if (!free && slot && dev) await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter-fp', model: dev, duration_ms: 0, cost_usd: 0, ok: true } as never)
+  if (!free && slot) await admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo_video', provider: 'counter-fp', model: acc, duration_ms: 0, cost_usd: 0, ok: true } as never)
 
   // Svuota: image = foto originale, empty = stanza svuotata dalla prova; video in avanti, i mobili spariscono
   const empty = typeof body?.empty === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.empty) && body.empty.length < 4_000_000 ? body.empty : undefined
   const { status, ...r } = await startVideo(OWNER, '', { imageUrl: '', imageBase64: image, anim: body?.anim === 'gravity' ? 'gravity' : 'popup', empty }) // nella prova solo Popup e Dall'alto
   // non partito: la prova si restituisce
-  if (!r.job && slot) { await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); if (dev) await admin.from('ai_usage').delete().eq('kind', 'landing_demo_video').eq('provider', 'counter-fp').eq('model', dev) }
+  if (!r.job && slot) { await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); await admin.from('ai_usage').delete().eq('kind', 'landing_demo_video').eq('provider', 'counter-fp').in('model', dev ? [dev, acc] : [acc]) }
   return NextResponse.json(r, typeof status === 'number' ? { status } : undefined)
 }
 
