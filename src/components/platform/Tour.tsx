@@ -99,7 +99,7 @@ export default function Tour({ onDone }: { onDone: () => void }) {
       {/* lo sfondo blocca i clic sulla pagina ma non manda avanti: un clic durante la dissolvenza saltava la Home */}
       <div className="absolute inset-0" />
       {/* la card entra quando la luce e' quasi arrivata (o, aprendo l'editor, quando la miniatura e' diventata l'editor) */}
-      <div key={i} className="blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl" style={{ ...cardStyle, transition: ease, animationDelay: step.edit && !STEPS[i - 1]?.edit ? '.7s' : i ? '.35s' : '0s' }}>
+      <div key={i} className={`blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl ${step.edit ? 'ring-1 ring-black/10' : ''}`} style={{ ...cardStyle, transition: ease, animationDelay: step.edit && !STEPS[i - 1]?.edit ? '.7s' : i ? '.35s' : '0s' }}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-muted">{i + 1} {tr('di', 'of')} {STEPS.length}</span>
           <button type="button" onClick={finish} className="text-xs font-medium text-muted hover:text-ink">{tr('Salta', 'Skip')}</button>
