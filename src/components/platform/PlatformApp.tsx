@@ -1,9 +1,10 @@
 'use client';
 
 import ConsentGate from './ConsentGate';
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown, Gift } from 'lucide-react';
+import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown, Gift, Lock } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -120,6 +121,9 @@ function PlatformInner({ userData }: { userData: UserData }) {
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
   const news = useGalleryNews(userData.id, route === '/galleria');
+  // abbonamento finito senza rinnovo (e niente crediti): foto, immobili e sito si vedono sfocati col lucchetto.
+  // Chi non ha mai pagato no: puo' entrare e provare come sempre.
+  const lapsed = !!credits && !!credits.lapsed && !credits.unlimited && credits.balance <= 0;
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
@@ -247,17 +251,17 @@ function PlatformInner({ userData }: { userData: UserData }) {
               <StagingView initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
             </div>
           ) : route === '/galleria' ? (
-            <MediaView />
+            <Locked on={lapsed} what="gallery"><MediaView /></Locked>
           ) : route === '/importa' ? (
             <ImportView onDone={reload} />
           ) : route === '/nuovo' ? (
             <NewPropertyWizard onCreated={(p) => { reload(); go(`/immobile/${p.id}`); }} />
           ) : detailId ? (
-            <PropertyDetail project={detail} loading={projects === null || (!detail && checkedId !== detailId)} onChange={reload} />
+            <Locked on={lapsed} what="properties"><PropertyDetail project={detail} loading={projects === null || (!detail && checkedId !== detailId)} onChange={reload} /></Locked>
           ) : route === '/immobili' ? (
-            <PropertiesView projects={projects} onChange={reload} />
+            <Locked on={lapsed} what="properties"><PropertiesView projects={projects} onChange={reload} /></Locked>
           ) : route === '/portfolio' ? (
-            <PortfolioView projects={projects} onChange={reload} />
+            <Locked on={lapsed} what="site"><PortfolioView projects={projects} onChange={reload} /></Locked>
           ) : (
             <HomeView name={profile?.name ?? undefined} onSaved={reload} morph={morph} />
           )}
@@ -629,6 +633,32 @@ function Guides() {
               <a key={g.slug} href={`/it/${g.slug}`} target="_blank" rel="noopener" className="flex h-11 items-center justify-between gap-2 rounded-[20px] px-4 text-sm ease-smooth transition-colors hover:bg-canvas"><span className="truncate">{g.label}</span><ExternalLink size={14} className="shrink-0 text-muted" /></a>
             ))}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Abbonamento scaduto: la pagina resta visibile ma sfocata e non si tocca, sopra la card per riattivare.
+// ponytail: blocco solo nell'interfaccia (i file su R2 restano ai loro indirizzi); il sito pubblico va gia' offline
+// senza piano col sito (lib/sitePlan).
+const LOCK_TEXT = {
+  gallery: [tr('Le tue foto e i tuoi video sono in pausa', 'Your photos and videos are paused'), tr('Il tuo abbonamento è scaduto. Riattiva un piano e ritrovi qui tutto quello che hai creato: niente è stato cancellato.', 'Your subscription has ended. Reactivate a plan to get back everything you created: nothing has been deleted.')],
+  properties: [tr('I tuoi immobili sono in pausa', 'Your listings are paused'), tr('Il tuo abbonamento è scaduto. Riattiva un piano e ritrovi immobili, foto e report come li hai lasciati.', 'Your subscription has ended. Reactivate a plan to get your listings, photos and reports back as you left them.')],
+  site: [tr('Il tuo sito è offline', 'Your website is offline'), tr('Il tuo abbonamento è scaduto e il sito non è più visibile ai clienti. Riattiva Plus o Pro e torna online con tutte le tue case.', 'Your subscription has ended and your website is no longer visible to clients. Reactivate Plus or Pro to go back online with all your listings.')],
+} as const;
+function Locked({ on, what, children }: { on: boolean; what: keyof typeof LOCK_TEXT; children: ReactNode }) {
+  if (!on) return <>{children}</>;
+  const [t, d] = LOCK_TEXT[what];
+  return (
+    <div className="relative">
+      <div inert aria-hidden className="pointer-events-none max-h-[calc(100vh-7rem)] select-none overflow-hidden blur-md">{children}</div>
+      <div className="absolute inset-0 flex items-start justify-center pt-[12vh]">
+        <div className="blur-in w-full max-w-md rounded-[32px] bg-white p-8 text-center shadow-[0_40px_100px_-30px_rgba(0,0,0,.35)] ring-1 ring-black/5">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand/10 text-brand"><Lock size={24} /></span>
+          <h2 className="mt-5 font-display text-2xl font-extrabold tracking-tight">{t}</h2>
+          <p className="mt-2 text-[15px] text-muted">{d}</p>
+          <a href="#/piano?cambia=1" className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-brand px-7 text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Riattiva un piano', 'Reactivate a plan')}</a>
         </div>
       </div>
     </div>

@@ -8,7 +8,8 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SU
 export type Action = keyof typeof CREDIT_COST
 export const PLAN_CREDITS: Record<string, number> = { starter: 600, plus: 1500, pro: 2500 }
 
-export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean }
+// lapsed: aveva un abbonamento ed e' finito senza rinnovo (chi non ha mai pagato non e' lapsed)
+export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean; lapsed?: boolean }
 
 // Account admin (i nostri): crediti illimitati, niente scalare
 // (tranne l'account di test, che scala crediti veri per provare saldo e costi come un cliente)
@@ -54,7 +55,7 @@ export async function getCredits(userId: string): Promise<Credits> {
       return { plan: data.plan, balance: fresh, monthly: data.monthly_credits, renews: next.toISOString(), until: data.subscription_until }
     }
   }
-  return { plan: data.plan, balance: data.balance, monthly: data.monthly_credits, renews: data.period_end, until: data.subscription_until }
+  return { plan: data.plan, balance: data.balance, monthly: data.monthly_credits, renews: data.period_end, until: data.subscription_until, lapsed: data.plan === 'none' && !!data.subscription_until }
 }
 
 // true se ha i crediti per l'azione (senza scalarli)

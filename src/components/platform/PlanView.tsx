@@ -9,7 +9,7 @@ export { isBuy };
 import { PRICING, PACKS, photosFor, videosFor, type PackId } from '@/lib/pricing';
 import { tr, pageLang, pageLocale } from './i18n';
 
-export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
+export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean; lapsed?: boolean };
 const en = pageLang() === 'en';
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, en ? ',' : '.');
 const eur = (n: number) => (en ? `€${n}` : `${n} €`);
