@@ -246,16 +246,16 @@ function CodeBox({ onReady, canRedeem }: { onReady?: () => void; canRedeem: bool
             <div className="min-w-0">
               <div className="flex items-center gap-2 font-semibold"><Gift size={20} className="text-brand" /> {tr('Il tuo codice affiliato', 'Your affiliate code')}</div>
               <p className="mt-1 text-sm text-muted">{tr(`Condividilo: chi lo inserisce riceve ${fmt(info.mine.gives)} crediti, tu ${fmt(info.mine.each)} per ogni persona.`, `Share it: whoever enters it gets ${fmt(info.mine.gives)} credits, you get ${fmt(info.mine.each)} per person.`)}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                <span className="rounded-full bg-canvas px-3 py-1.5"><strong>{info.mine.uses}</strong> {info.mine.uses === 1 ? tr('persona l’ha usato', 'person used it') : tr('persone l’hanno usato', 'people used it')}</span>
+                <span className="rounded-full bg-canvas px-3 py-1.5"><strong>{fmt(info.mine.uses * info.mine.each)}</strong> {tr('crediti ricevuti', 'credits received')}</span>
+              </div>
             </div>
             <button type="button" onClick={() => { void navigator.clipboard.writeText(info.mine!.code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label={tr('Copia il codice', 'Copy the code')}
               className="flex h-12 items-center gap-3 rounded-full bg-canvas pl-5 pr-2 ring-1 ring-black/5 ease-smooth transition-colors hover:bg-white hover:ring-brand">
               <span className="font-display text-lg font-extrabold tracking-wide">{info.mine.code}</span>
               <span className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${copied ? 'bg-green-600 text-white' : 'bg-brand text-white'}`}>{copied ? <><Check size={13} /> {tr('Copiato', 'Copied')}</> : <><Copy size={13} /> {tr('Copia', 'Copy')}</>}</span>
             </button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            <span className="rounded-full bg-canvas px-3 py-1.5"><strong>{info.mine.uses}</strong> {info.mine.uses === 1 ? tr('persona l’ha usato', 'person used it') : tr('persone l’hanno usato', 'people used it')}</span>
-            <span className="rounded-full bg-canvas px-3 py-1.5"><strong>{fmt(info.mine.uses * info.mine.each)}</strong> {tr('crediti ricevuti', 'credits received')}</span>
           </div>
         </div>
       )}
