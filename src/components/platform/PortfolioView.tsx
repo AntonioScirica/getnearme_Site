@@ -50,7 +50,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   // null = galleria dei modelli; altrimenti editor del modello scelto
   const [editing, setEditing] = useState<TemplateId | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(true);
+  const [editMode, setEditMode] = useState(false); // di base Naviga: si guarda il sito, Modifica per cambiarlo
 
   // tour: apre l'editor del modello attuale e ne cambia il colore ogni poco, per far vedere che si modifica.
   // Solo in anteprima: il tour finisce in home, la pagina si smonta e le modifiche non salvate si perdono.
