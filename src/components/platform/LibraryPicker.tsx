@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Loader2, Monitor, X } from 'lucide-react';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
-import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Scelta della foto per la chat: dalla vetrina (gli immobili dell'agente, poi le foto di quello scelto) o dal computer.
@@ -28,7 +27,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
   const [loading, setLoading] = useState<string | null>(null);
   const [err, setErr] = useState(false);
   useEffect(() => {
-    fetchProjects().then(ps => setProjects(ps.length || process.env.NODE_ENV !== 'development' ? ps : FAKE_PROPERTIES));
+    fetchProjects().then(setProjects); // solo gli immobili dell'account, mai esempi
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', k);
     return () => document.removeEventListener('keydown', k);

@@ -100,10 +100,10 @@ export default function MediaView() {
     let stale = false; // il tour parte mentre si carica: la risposta vecchia non deve coprire gli esempi
     Promise.all([fetchMedia(), fetchProjects()]).then(([m, p]) => {
       if (stale) return;
-      const empty = !m.length;
-      setDemo(empty && !dev);
-      setItems(dev || empty ? [...m, ...fake].sort((a, b) => b.at - a.at) : m);
-      setProjects(dev || empty ? [...p, ...fakeP] : p);
+      // solo foto e video dell'account (esempi solo nel tour guidato)
+      setDemo(false);
+      setItems(m);
+      setProjects(p);
     });
     return () => { stale = true; };
   }, [dev, tour]);

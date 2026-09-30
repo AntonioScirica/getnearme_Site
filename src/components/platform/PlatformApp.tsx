@@ -3,7 +3,7 @@
 import ConsentGate from './ConsentGate';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { Home, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
+import { Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -57,6 +57,7 @@ export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0
 
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
+  { path: '/staging', label: 'Chat', icon: MessageSquare },
   { path: '/immobili', label: 'Immobili', icon: Building2 },
   { path: '/portfolio', label: 'Il mio sito', icon: Globe },
   { path: '/galleria', label: 'Galleria', icon: Images },
