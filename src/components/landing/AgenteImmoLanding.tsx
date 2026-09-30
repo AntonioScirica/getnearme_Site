@@ -227,7 +227,7 @@ function FakeBar({ secs }: { secs: number }) {
     const id = setInterval(() => setP(95 * (1 - Math.exp(-((Date.now() - t0) / 1000) / (secs * 0.6)))), 250);
     return () => clearInterval(id);
   }, [secs]);
-  return <div className="h-1.5 w-56 overflow-hidden rounded-full bg-white/70 shadow"><div className="h-full rounded-full bg-ai transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>;
+  return <div className="h-1.5 w-56 overflow-hidden rounded-full bg-white/70 shadow"><div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>;
 }
 
 // riquadro della prova: sempre le stesse dimensioni, qualunque sia la foto
@@ -456,7 +456,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                   : <div className="grid w-full grid-cols-2 gap-2">
                       <button type="button" disabled={saving} onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica foto', "Download photo")}</button>
                       {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
-                      <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Crea video', "Create video")}</button>
+                      <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-brand px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Crea video', "Create video")}</button>
                     </div>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before || gate ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before || gate ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
