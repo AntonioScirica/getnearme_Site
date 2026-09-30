@@ -212,8 +212,9 @@ function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wra
   const inner = (
     <>
       <span className="sheen pointer-events-none absolute inset-0 z-20" />
-      <span className="par-1 text-sm text-muted">{kicker}</span>
-      <span className="par-1 mt-1 text-2xl font-bold leading-tight tracking-tight">{title}</span>
+      {/* titolo in piccolo sopra, la domanda in grande */}
+      <span className="par-1 text-sm text-muted">{title}</span>
+      <span className="par-1 mt-1 text-2xl font-bold leading-tight tracking-tight">{kicker}</span>
       <div className="flex flex-1 items-center justify-center pt-4"><div className="relative h-40 w-full scale-110">{children}</div></div>
     </>
   );
@@ -295,8 +296,8 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
 
         {/* Titolo della card: svanisce e si chiude */}
         <div className={`overflow-hidden transition-all ease-smooth ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
-          <span className="par-1 block text-sm text-muted">Hai già un annuncio online?</span>
-          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Miglioralo</span>
+          <span className="par-1 block text-sm text-muted">Miglioralo</span>
+          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Hai già un annuncio online?</span>
         </div>
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}

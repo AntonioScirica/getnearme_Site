@@ -159,8 +159,8 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             <div className="grid gap-2 sm:grid-cols-3">
               {TOOLS.map(({ kicker, title, img, badge: Badge }, i) => (
                 <div key={title} className={`flex flex-col rounded-[20px] bg-canvas p-5 ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
-                  <span className="text-xs text-muted">{kicker}</span>
-                  <span className="mt-1 text-lg font-bold leading-tight tracking-tight">{title}</span>
+                  <span className="text-xs text-muted">{title}</span>
+                  <span className="mt-1 text-lg font-bold leading-tight tracking-tight">{kicker}</span>
                   <div className="relative mt-4">
                     <img src={img} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
                     {Badge && <span className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-ink text-white shadow-md"><Badge size={14} /></span>}
