@@ -45,7 +45,8 @@ const useEn = () => useContext(Lang) === 'en';
 // (solo con l'account), TRIAL_LOGIN = Prova gratis: dritti al login e poi alla prova (se gia' dentro, l'accesso rimanda li')
 const useLinks = () => {
   const l = useEn() ? 'en' : 'it';
-  return { l, APP: `/${l}/dashboard`, TRIAL: `/${l}/prova`, TRIAL_LOGIN: `/${l}/accedi?next=/${l}/prova` };
+  // SIGNUP: pulsanti delle sezioni, dopo l'accesso dritti in piattaforma (onboarding per chi e' nuovo), non alla prova
+  return { l, APP: `/${l}/dashboard`, TRIAL: `/${l}/prova`, TRIAL_LOGIN: `/${l}/accedi?next=/${l}/prova`, SIGNUP: `/${l}/accedi?next=/${l}/dashboard` };
 };
 // i modelli di video della piattaforma (stessi esempi della chat)
 const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Camminata', 'Walk-in'], ['agent', 'Con te in video', 'You on camera']];
@@ -567,7 +568,7 @@ export default function AgenteImmoLanding({ lang = 'it', faq }: { lang?: Landing
 
 function Landing({ faq }: { faq: [string, string][] }) {
   const L = useL(), en = useEn();
-  const { l, APP, TRIAL_LOGIN } = useLinks();
+  const { l, APP, TRIAL_LOGIN, SIGNUP } = useLinks();
   const scrolled = useScrolled();
   const [logged, setLogged] = useState(false);
   useEffect(() => {
@@ -637,7 +638,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Stili già pronti per ogni stanza', "Ready-made styles for every room"), L('Svuoti la stanza o cambi un dettaglio scrivendolo, come in chat', "Empty the room or change a detail just by typing it, like in a chat"), L('Anche le planimetrie: a colori, in 3D dall\'alto o in bianco e nero', "Floor plans too: in colour, 3D from above or black and white"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <span className="hidden md:block"><Cta href={TRIAL_LOGIN} className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
+            <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right">
             <div className="parallax">
@@ -649,7 +650,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             </div>
           </Reveal>
           {/* su telefono i bottoni vanno sotto le immagini */}
-          <div className="flex justify-center pt-6 md:hidden"><Cta href={TRIAL_LOGIN}>{L('Prova gratis', "Try it free")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP}>{L('Prova gratis', "Try it free")}</Cta></div>
         </div>
       </Band>
 
@@ -663,7 +664,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Stanze che si arredano, cantieri che diventano case', "Rooms that furnish themselves, sites that become homes"), L('Con te in video: parli, esci e la stanza si arreda', "You on camera: talk, walk out, the room gets furnished"), L('Musica inclusa, niente montaggio', "Music included, no editing")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <span className="hidden md:block"><Cta href={TRIAL_LOGIN} className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
+            <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
             {/* i sei modelli della piattaforma, con i loro esempi (si scaricano solo quando la sezione e' in vista) */}
@@ -676,7 +677,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
               ))}
             </div>
           </Reveal>
-          <div className="mt-14 flex justify-center md:hidden"><Cta href={TRIAL_LOGIN}>{L('Crea video', "Create a video")}</Cta></div>
+          <div className="mt-14 flex justify-center md:hidden"><Cta href={SIGNUP}>{L('Crea video', "Create a video")}</Cta></div>
         </div>
       </Band>
 
@@ -691,10 +692,10 @@ function Landing({ faq }: { faq: [string, string][] }) {
               {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             {/* su telefono il bottone va sotto i modelli */}
-            <span className="hidden md:block"><Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta></span>
+            <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right" className="mt-6 md:mt-0"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
-          <div className="flex justify-center pt-6 md:hidden"><Cta href={APP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
         </div>
       </Band>
 
