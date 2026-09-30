@@ -136,7 +136,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
           {/* interruttore solo con un piano che include il sito (senza, c'e' l'avviso Plus e Pro) */}
           {sitePlan && <PublicSwitch on={online} onClick={publish} labels={['Pubblico', 'Non pubblico']} right />}
-          <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'opacity-50'}`}>
+          <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'pointer-events-none select-none opacity-50'}`} aria-disabled={!online}>{/* sito non online: indirizzo solo da vedere, niente link, copia o apri */}
             <Globe size={15} className="shrink-0 text-muted" />
             <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
             <Tooltip label={copied ? 'Copiato' : 'Copia il link'}>
