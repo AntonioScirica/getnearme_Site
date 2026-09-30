@@ -17,7 +17,7 @@ const EXAMPLE = { before: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/l
 const shell = (inner: string, uid: string) => `<!doctype html><html><body style="margin:0;background:#f7f7f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#222">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f7;padding:32px 12px"><tr><td align="center">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:28px;overflow:hidden">
-<tr><td style="padding:28px 32px 8px"><img src="https://agenteimmo.me/immo/logo-mark.png" width="36" height="36" alt="Agente Immo" style="vertical-align:middle"> <span style="font-size:18px;font-weight:800;vertical-align:middle">Agente <span style="color:#537eec">Immo</span></span></td></tr>
+<tr><td align="center" style="padding:28px 32px 8px;text-align:center"><img src="https://agenteimmo.me/immo/logo-mark.png" width="36" height="36" alt="Agente Immo" style="vertical-align:middle"> <span style="font-size:18px;font-weight:800;vertical-align:middle">Agente <span style="color:#537eec">Immo</span></span></td></tr>
 ${inner}
 </table>
 <p style="font-size:12px;color:#999;max-width:560px;line-height:1.5;margin:18px auto 0">Ricevi questa email perché hai fatto la prova gratis su agenteimmo.me e hai accettato di ricevere novità e promozioni. <a href="${unsubUrl(uid)}" style="color:#999">Non voglio più ricevere queste email</a>.</p>
@@ -29,14 +29,14 @@ function email1(name: string, photo: string | null, uid: string) {
 <tr><td style="padding:16px 32px 0"><h1 style="font-size:26px;line-height:1.2;margin:0">La tua stanza arredata ti aspetta</h1></td></tr>
 <tr><td style="padding:14px 32px 0;font-size:16px;line-height:1.6;color:#444">Ciao ${name}, con la prova gratis hai arredato una stanza con Agente Immo in pochi secondi. Immagina di farlo per tutte le case che hai in vendita: foto arredate, video per i social e il tuo sito, da ${PRICING.starter} € al mese.</td></tr>
 ${photo ? `<tr><td style="padding:22px 32px 0"><img src="${photo}" width="496" alt="La tua stanza arredata" style="width:100%;border-radius:20px;display:block"></td></tr>` : ''}
-<tr><td style="padding:26px 32px 32px">${button('https://agenteimmo.me/it/dashboard#/piano?cambia=1', 'Scegli il tuo piano')}</td></tr>`, uid)
+<tr><td align="center" style="padding:26px 32px 32px;text-align:center">${button('https://agenteimmo.me/it/dashboard#/piano?cambia=1', 'Scegli il tuo piano')}</td></tr>`, uid)
 }
 function email3(name: string, photo: string | null, uid: string) {
   return shell(`
 <tr><td style="padding:16px 32px 0"><h1 style="font-size:26px;line-height:1.2;margin:0">Le case arredate si vendono prima</h1></td></tr>
 <tr><td style="padding:14px 32px 0;font-size:16px;line-height:1.6;color:#444">Ciao ${name}, un annuncio con le stanze arredate si fa notare di più sui portali. Con Agente Immo trasformi una stanza vuota in pochi secondi e ne fai un video pronto per Instagram. Il tuo account è già pronto: ti basta scegliere un piano.</td></tr>
 ${photo ? `<tr><td style="padding:22px 32px 0"><img src="${photo}" width="496" alt="La tua prova" style="width:100%;border-radius:20px;display:block"></td></tr>` : ''}
-<tr><td style="padding:26px 32px 0">${button('https://agenteimmo.me/it/dashboard#/piano?cambia=1', 'Riprendi da dove eri rimasto')}</td></tr>
+<tr><td align="center" style="padding:26px 32px 0;text-align:center">${button('https://agenteimmo.me/it/dashboard#/piano?cambia=1', 'Riprendi da dove eri rimasto')}</td></tr>
 <tr><td style="padding:28px 32px 32px"><p style="font-size:13px;color:#888;margin:0 0 10px">Un altro esempio, prima e dopo:</p>
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td width="50%" style="padding-right:5px"><img src="${EXAMPLE.before}" width="243" alt="Prima" style="width:100%;border-radius:14px;display:block"></td><td width="50%" style="padding-left:5px"><img src="${EXAMPLE.after}" width="243" alt="Dopo" style="width:100%;border-radius:14px;display:block"></td></tr></table></td></tr>`, uid)
 }
