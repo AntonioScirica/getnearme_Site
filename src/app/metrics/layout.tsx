@@ -1,20 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "../globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-jetbrains",
-  display: "swap",
-});
+// file nel repo (src/fonts): niente Google Fonts alla build
+const inter = localFont({ src: "../../fonts/Inter-normal.woff2", weight: "100 900", variable: "--font-inter", display: "swap" });
+const jetbrains = localFont({ src: "../../fonts/JetBrainsMono-normal.woff2", weight: "100 800", variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Agente Immo Metrics",

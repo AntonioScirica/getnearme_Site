@@ -1,10 +1,10 @@
-import { Figtree } from 'next/font/google';
+import localFont from 'next/font/local';
 import { platformFontVars } from '@/lib/platformFonts';
 import type { ReactNode } from 'react';
 
 // Figtree is the design's typeface. Scope it to the dashboard so the marketing
 // site (Satoshi) is untouched.
-const figtree = Figtree({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap' });
+const figtree = localFont({ src: '../../../fonts/Figtree-normal.woff2', weight: '300 900', display: 'swap' }); // file nel repo: niente Google Fonts alla build
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
