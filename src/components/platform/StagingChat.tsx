@@ -890,17 +890,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       const a = m.agent, raw = a?.video ? thumbs[a.video] ?? [] : [], dead = raw[0] === 'dead', list = dead ? [] : raw, dur = a?.duration ?? 10, at = a?.at ?? 0;
                       const pos = Math.min(100, Math.max(0, (at / dur) * 100));
                       const step = (d: number) => patchV(m.id, { agent: { ...a, at: Math.min(dur, Math.max(0, Math.round((at + d) * 100) / 100)) } });
-                      // passo a parte mentre si cerca l'uscita: il video che gira e cosa sta succedendo (poi la scelta del momento)
+                      // passo a parte mentre si cerca l'uscita: solo cosa sta succedendo (poi la scelta del momento)
                       if (a?.busy && a.at === undefined) return (
                         <div className="mx-auto max-w-2xl px-1">
-                          <div className="relative aspect-video overflow-hidden rounded-[28px] bg-ink shadow-sm">
-                            {a.video && <video src={a.video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-xl" />}
-                            {a.video && <video src={a.video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" />}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/35 px-6 text-center text-white">
-                              <Loader2 size={26} className="animate-spin" />
-                              <p className="text-[15px] font-semibold">Sto riconoscendo il momento in cui esci dall’inquadratura</p>
-                              <p className="text-xs text-white/75">Ci vogliono pochi secondi, poi potrai correggerlo</p>
-                            </div>
+                          <div className="flex flex-col items-center justify-center gap-3 rounded-[28px] bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5">
+                            <Loader2 size={24} className="animate-spin text-brand" />
+                            <p className="text-[15px] font-semibold">Sto riconoscendo il momento in cui esci dall’inquadratura</p>
+                            <p className="text-xs text-muted">Ci vogliono pochi secondi, poi potrai correggerlo</p>
                           </div>
                         </div>
                       );
