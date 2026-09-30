@@ -161,7 +161,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
         <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-md:flex'}`}>
           {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro e i crediti (la chat ha tutto lo spazio) */}
           {chat ? (<>
-            <button type="button" onClick={() => (history.length > 1 ? history.back() : (location.hash = '#/'))}
+            {/* Indietro dalla chat porta sempre alla home (non alla pagina precedente) */}
+            <button type="button" onClick={() => { location.hash = '#/'; }}
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             <div className="ml-auto flex items-center gap-2">
