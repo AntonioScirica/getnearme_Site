@@ -304,7 +304,24 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
-  const keep = (withVideo: boolean) => {
+  const [saving, setSaving] = useState(false);
+  const keep = async (withVideo: boolean) => {
+    // pagina /prova (gia' dentro): si scaricano subito i file puliti a piena risoluzione (gettone -> indirizzo)
+    if (!gate) {
+      setSaving(true);
+      const u = photoToken || videoToken ? await fetch('/api/platform/demo-claim', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ photo: photoToken, video: withVideo ? videoToken : null }) }).then(r => (r.ok ? r.json() : null)).catch(() => null) as { photo?: string | null; video?: string | null } | null : null;
+      const save = async (url: string, name: string) => {
+        try {
+          const a = document.createElement('a');
+          a.href = url.startsWith('data:') ? url : URL.createObjectURL(await (await fetch(url)).blob()); a.download = name; a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        } catch { window.open(url, '_blank'); } // ponytail: se il download diretto non va, si apre il file
+      };
+      const photo = u?.photo ?? after, vid = withVideo ? u?.video ?? video : null; // senza gettone (simulazione): l'anteprima
+      if (photo) await save(photo, 'agenteimmo-foto.jpg');
+      if (vid) await save(vid, 'agenteimmo-video.mp4');
+      return setSaving(false);
+    }
     try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photoToken, videoToken: withVideo ? videoToken : null })); } catch { /* spazio pieno: si entra comunque */ }
     window.location.href = APP;
   };
@@ -412,11 +429,11 @@ function TryIt({ gate = false }: { gate?: boolean }) {
               </>}
               {after
                 ? video
-                  ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
+                  ? <button type="button" disabled={saving} onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
                   // foto arredata: si guarda, poi Scarica o Crea video (che apre i modelli nel riquadro)
                   : vBusy ? null // mentre si crea il video niente scarico della sola foto
                   : <div className="grid w-full grid-cols-2 gap-2">
-                      <button type="button" onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica foto', "Download photo")}</button>
+                      <button type="button" disabled={saving} onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica foto', "Download photo")}</button>
                       {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
                       <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Crea video', "Create video")}</button>
                     </div>
@@ -434,7 +451,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
             </div>}
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? <>{L('Ora fai il video in cui i mobili spariscono, gratis. Oppure', "Now make the video where the furniture disappears, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</> : L('Guarda il risultato, poi trasformala in un video per i social, gratis.', "Check the result, then turn it into a social video, free.")}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social.', "Photo and video ready for your listing and socials.") : emptied ? L('Ora fai il video in cui i mobili spariscono, gratis.', "Now make the video where the furniture disappears, free.") : L('Guarda il risultato, poi trasformala in un video per i social, gratis.', "Check the result, then turn it into a social video, free.")}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
     </>
   );
@@ -758,10 +775,11 @@ function Trial() {
   return (
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
       <ConsentGate />
-      <section id="prova" className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pb-24 md:pt-16">
-        <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
-        <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
-        <div className="mt-10"><TryIt /></div>
+      {/* prova compatta: sotto, nel primo schermo, si vede che iniziano i prezzi */}
+      <section id="prova" className="mx-auto max-w-2xl px-4 pb-4 pt-8 md:pt-10">
+        <h1 className="text-center font-display text-3xl font-extrabold leading-[1.05] tracking-tight md:text-4xl">{L('La tua prova gratis', "Your free try")}</h1>
+        <p className="mx-auto mt-3 max-w-xl text-center text-base text-muted">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
+        <div className="mt-6"><TryIt /></div>
       </section>
       <Pricing />
     </div>
