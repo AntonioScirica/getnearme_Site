@@ -1177,7 +1177,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               </div>
             </div>, document.body)}
           {/* dopo un video niente pill: non si capirebbe che valgono per la foto sopra */}
-          {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && (
+          {/* foto appena caricata, non ancora riconosciuta: pill finte al posto dei suggerimenti (Crea video su una planimetria arrivava prima di sapere che non si puo') */}
+          {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image)?.seen === null && (
+            <div className="-mx-1 mb-2 flex gap-1.5 overflow-hidden px-1 pb-1">
+              {[104, 88, 120, 96].map((w, k) => <span key={k} className="h-8 shrink-0 animate-pulse rounded-full bg-black/[.06]" style={{ width: w }} />)}
+            </div>
+          )}
+          {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image)?.seen !== null && (
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">Quanto arredo?</span><span role="radiogroup" aria-label="Quantità di arredo" className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send('Arreda nello stile della foto', null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
