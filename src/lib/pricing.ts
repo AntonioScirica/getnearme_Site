@@ -27,12 +27,10 @@ export const PACKS = [{ id: 'pack300', credits: 300, eur: 10 }, { id: 'pack500',
 export type PackId = (typeof PACKS)[number]['id'];
 export const FREE_EDITS = 3;
 // Tre piani (28/09/2026): Starter foto e video; Plus foto, video e sito; Pro come Plus con piu' crediti, a trimestre o anno.
-// 30/09: Starter a 19 € con 900 crediti = 300 foto o da 4 a 9 video (piano d'ingresso, lookup Stripe ai_starter_monthly)
-export const PRICING = { starter: 19, starterCredits: 900, plus: 49, plusCredits: 1500, quarterly: 69, yearly: 59, credits: 2500 };
+// 30/09: Starter a 19 € con 600 crediti (piano d'ingresso; Stripe price_1ULLFbFzCo1FYIKToWZ64ZfW, lookup ai_starter_monthly)
+export const PRICING = { starter: 19, starterCredits: 600, plus: 49, plusCredits: 1500, quarterly: 69, yearly: 59, credits: 2500 };
 export const photosFor = (credits: number) => Math.floor(credits / CREDIT_COST.arreda);
 export const videosFor = (credits: number) => Math.floor(credits / CREDIT_COST.video);
-// video da ... a ...: i piu' cari (Cantiere e Volo nel cantiere, 200) e Prima e dopo (100)
-export const videosRange = (credits: number) => { const lo = Math.floor(credits / CREDIT_COST.video_cantiere), hi = videosFor(credits); return lo === hi ? `${hi}` : `${lo}-${hi}`; };
 
 // Dicitura del forfettario sulle fatture Stripe: sul cliente gia' prima del pagamento, cosi' c'e' anche sulla prima fattura
 export const FORFETTARIO_FOOTER = 'Operazione senza applicazione dell\'IVA ai sensi dell\'art. 1, commi 54-89, L. 190/2014 (regime forfettario). Imposta di bollo assolta sull\'originale per importi superiori a 77,47 euro.'

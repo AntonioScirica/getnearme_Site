@@ -1,5 +1,5 @@
 import { Globe, MessageCircle, Pencil, Search, Sparkles } from 'lucide-react';
-import { photosFor, videosRange } from '@/lib/pricing';
+import { photosFor, videosFor } from '@/lib/pricing';
 
 // Pezzi delle card dei piani, uguali su landing e piattaforma: crediti in grande con cosa ci fai, e il sito (Plus e Pro dal 28/09).
 const thousands = (n: number, en?: boolean) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, en ? ',' : '.');
@@ -10,7 +10,7 @@ export function Credits({ n, en }: { n: number; en?: boolean }) {
       <div className="font-display text-xl font-extrabold tracking-tight">{thousands(n, en)} {en ? 'credits a month' : 'crediti al mese'}</div>
       <div className="mt-2 space-y-1 text-[15px] text-muted">
         <div>= {photosFor(n)} {en ? 'staged photos' : 'foto arredate'}</div>
-        <div>{en ? 'or' : 'o'} {videosRange(n)} {en ? 'videos' : 'video'}</div>
+        <div>~ {videosFor(n)} {en ? 'videos' : 'video'}</div>
       </div>
     </div>
   );
