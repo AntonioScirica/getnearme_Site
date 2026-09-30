@@ -8,7 +8,8 @@ const isUrl = (v: unknown): v is string => typeof v === 'string' && /^https:\/\/
 // Foto di un immobile: aggiungi una foto AI accanto all'originale (o al posto suo), togli una foto, scegli la
 // copertina. Le foto stanno in import_data.photos; import_data.prima ricorda per ogni foto AI la sua originale,
 // cosi' il sito puo' mostrare il prima/dopo. Niente tabelle nuove.
-type Body = { projectId?: string; mode?: 'add' | 'replace' | 'remove' | 'cover'; before?: string; after?: string; photo?: string }
+// order: nuovo ordine delle foto (le stesse foto, solo spostate); la prima diventa la copertina
+type Body = { projectId?: string; mode?: 'add' | 'replace' | 'remove' | 'cover' | 'order'; before?: string; after?: string; photo?: string; order?: unknown }
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -47,6 +48,11 @@ export async function POST(req: NextRequest) {
     if (!isUrl(b.photo) || !photos.includes(b.photo)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     cover = b.photo
     photos = [b.photo, ...photos.filter(x => x !== b.photo)] // la copertina diventa anche la prima foto della galleria
+  } else if (b.mode === 'order') {
+    const order = Array.isArray(b.order) ? b.order.filter(isUrl) : []
+    if (order.length !== photos.length || new Set(order).size !== order.length || order.some(x => !photos.includes(x))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+    photos = order
+    cover = order[0] ?? cover
   }
   // solo coppie ancora presenti
   for (const k of Object.keys(prima)) if (!photos.includes(k)) delete prima[k]

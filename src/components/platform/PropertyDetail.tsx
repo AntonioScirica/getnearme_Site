@@ -48,6 +48,13 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const extra = (project.import_data ?? {}) as { score?: number; suggerimenti?: string[]; photos?: unknown };
   // la pagina del sito e' anche il posto dove si modifica: testi al clic, azioni sulle foto (AI, copertina, togli)
   const photos = Array.isArray(extra.photos) ? extra.photos.filter((x): x is string => typeof x === 'string') : project.cover ? [project.cover] : [];
+  // nuovo ordine delle foto (dalla barra): si vede subito sulla pagina, poi si salva
+  const reorder = async (order: string[]) => {
+    if (order.join() === photos.join()) return;
+    setDraft(d => ({ ...d, cover: order[0], import_data: { ...(project.import_data ?? {}), photos: order } }));
+    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'order', order }) }).catch(() => null);
+    if (r?.ok) onChange(); else alert('Non sono riuscito a cambiare l’ordine delle foto, riprova.');
+  };
   const propEdit: PropEdit = {
     photos, cover: project.cover, busy, editing, // in modifica le foto hanno il velo e i pulsanti sempre in vista
     onPhoto: async (src, action) => {
@@ -92,7 +99,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
-        {editing && <EditProperty project={project} onBusy={setSavingProp} onDraft={setDraft} onClose={() => { setEditing(false); setDraft(null); }} onSaved={() => { setEditing(false); setDraft(null); onChange(); }} />}
+        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onBusy={setSavingProp} onDraft={setDraft} onClose={() => { setEditing(false); setDraft(null); }} onSaved={() => { setEditing(false); setDraft(null); onChange(); }} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
       {!editing && typeof extra.score === 'number' && (
@@ -138,7 +145,12 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 // Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
-function EditProperty({ project, onClose, onSaved, onDraft, onBusy }: { project: ProjectData; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; onBusy: (b: boolean) => void }) {
+function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, onBusy }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; onBusy: (b: boolean) => void }) {
+  const [order, setOrder] = useState(photos);
+  const [drag, setDrag] = useState<string | null>(null);
+  // foto cambiate da fuori (copertina, togli, salvataggio): si riallinea l'ordine (aggiornamento in render, niente effetto)
+  const [seen, setSeen] = useState(photos.join());
+  if (!drag && photos.join() !== seen) { setSeen(photos.join()); setOrder(photos); }
   const panel = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
@@ -174,6 +186,24 @@ function EditProperty({ project, onClose, onSaved, onDraft, onBusy }: { project:
         <button type="button" onClick={onClose} aria-label="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+        {/* ordine delle foto: si trascinano; la prima e' la copertina */}
+        {photos.length > 1 && (
+          <section className="rounded-2xl bg-canvas p-3">
+            <h3 className="text-sm font-semibold">Ordine delle foto</h3>
+            <p className="text-xs text-muted">Trascinale per cambiare l’ordine. La prima è la copertina.</p>
+            <ul className="mt-3 grid grid-cols-4 gap-2">
+              {order.map((src, i) => (
+                <li key={src} draggable onDragStart={() => setDrag(src)} onDragEnd={() => setDrag(null)}
+                  onDragOver={e => { e.preventDefault(); if (drag && drag !== src) setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(src) + (o.indexOf(drag) < o.indexOf(src) ? 1 : 0), 0, drag); return n; }); }}
+                  onDrop={e => { e.preventDefault(); onReorder(order); }}
+                  className={`relative aspect-square cursor-grab overflow-hidden rounded-xl bg-white ring-1 ease-smooth transition-[opacity,box-shadow] active:cursor-grabbing ${drag === src ? 'opacity-40 ring-brand' : 'ring-black/5'}`}>
+                  <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
+                  <span className="absolute left-1 top-1 rounded-full bg-white/90 px-1.5 text-[10px] font-semibold">{i === 0 ? 'Copertina' : i + 1}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {GROUPS.map(([title, keys]) => (
           <section key={title}>
             <h3 className="text-sm font-semibold">{title}</h3>
@@ -185,6 +215,10 @@ function EditProperty({ project, onClose, onSaved, onDraft, onBusy }: { project:
             )}
           </section>
         ))}
+      </div>
+      <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
+        <button type="button" onClick={onClose} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
+        <button type="button" onClick={save} disabled={busy} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
       </div>
     </div>
   );
