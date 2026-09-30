@@ -131,6 +131,8 @@ export default async function LocaleLayout({ children, params }: Props) {
         {/* Satoshi servito da noi (niente IP dei visitatori a fontshare, vale anche per i siti degli agenti) */}
         <link href="/fonts/satoshi/satoshi.css" rel="stylesheet" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        {/* icona grande per i risultati di Google (preferisce 48 px o multipli; la .ico arriva a 48) */}
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#3B82F6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
