@@ -88,7 +88,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
         </div>
         {check.state === 'taken' && (
           <p className="mt-2 text-sm text-red-600">
-            {tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}
+            {tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline text-brand" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}
           </p>
         )}
         {check.state === 'invalid' && <p className="mt-2 text-sm text-red-600">{tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}</p>}

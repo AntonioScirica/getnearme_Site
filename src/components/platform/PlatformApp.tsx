@@ -180,7 +180,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           {chat ? (<>
             {/* Indietro dalla chat porta sempre alla home (non alla pagina precedente) */}
             <button type="button" onClick={() => { location.hash = '#/'; }}
-              className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> {tr('Indietro', 'Back')}</button>
+              className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-brand ease-smooth transition-colors hover:bg-brand/10"><ArrowLeft size={18} /> {tr('Indietro', 'Back')}</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
             {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
@@ -627,7 +627,7 @@ function DeleteAccount() {
             </label>
             {err && <p className="pt-3 text-sm text-rose-600">{err}</p>}
             <div className="flex justify-end gap-2 pt-6">
-              <button disabled={busy} onClick={() => setOpen(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">{tr('Annulla', 'Cancel')}</button>
+              <button disabled={busy} onClick={() => setOpen(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
               <button disabled={busy || word.trim() !== CONFIRM} onClick={run} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Elimina per sempre', 'Delete forever')}</button>
             </div>
           </div>

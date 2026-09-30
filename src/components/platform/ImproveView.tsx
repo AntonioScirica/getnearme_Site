@@ -194,7 +194,7 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
             <div className={`mt-1 text-5xl font-bold leading-none tracking-tight ${tone.text}`}><CountUp value={a.score} delay={400} duration={1200} /><span className="text-xl text-muted">/100</span>
               {a.score_potenziale > a.score && <span className="ml-3 text-sm font-semibold tracking-normal text-emerald-600">→ {a.score_potenziale} {tr('sistemando tutto', 'once everything is fixed')}</span>}</div>
           </div>
-          <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> {tr('Originale', 'Original')}</a>
+          <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-brand hover:text-brand/70"><ExternalLink size={12} /> {tr('Originale', 'Original')}</a>
         </div>
         <div className="blur-in relative mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.5s' }}>
           <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-emerald-500/25" style={{ width: `${a.score_potenziale}%` }} />

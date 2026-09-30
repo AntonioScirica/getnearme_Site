@@ -31,7 +31,7 @@ export default function ConsentGate() {
           <label className="flex cursor-pointer items-center gap-3">
             <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} className="sr-only" />
             <span className={box(terms)}>{terms && tick}</span>
-            <span className="text-sm leading-snug text-muted">{tr('Accetto i', 'I accept the')} <a href={lp('/termini')} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline underline-offset-4">{tr('Termini di Servizio', 'Terms of Service')}</a> {tr('e la', 'and the')} <a href={lp('/privacy')} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline underline-offset-4">Privacy Policy</a> *</span>
+            <span className="text-sm leading-snug text-muted">{tr('Accetto i', 'I accept the')} <a href={lp('/termini')} target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-4 text-brand">{tr('Termini di Servizio', 'Terms of Service')}</a> {tr('e la', 'and the')} <a href={lp('/privacy')} target="_blank" rel="noopener noreferrer" className="font-medium underline underline-offset-4 text-brand">Privacy Policy</a> *</span>
           </label>
           <label className="flex cursor-pointer items-center gap-3">
             <input type="checkbox" checked={mkt} onChange={e => setMkt(e.target.checked)} className="sr-only" />

@@ -201,7 +201,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
               ))}
             </div>
             <div className="flex min-h-12 items-center justify-end gap-2 px-4 pb-2 pt-3">
-              <button type="button" onClick={() => setStep(2)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">{tr('Indietro', 'Back')}</button>
+              <button type="button" onClick={() => setStep(2)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>
               <button type="button" onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
             </div>
             </>
@@ -253,12 +253,12 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             <div className="flex min-h-12 items-center justify-between gap-3 px-4 pb-2 pt-3">
               <span className="text-sm text-red-600">
                 {error}
-                {done && check.state === 'taken' && <>{tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
+                {done && check.state === 'taken' && <>{tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline text-brand" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
                 {done && check.state === 'invalid' && tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}
                 {done && check.state === 'bad' && tr('Questo indirizzo contiene una parola che non possiamo usare.', 'This address contains a word we can’t use.')}
               </span>
               <span className="flex items-center gap-2">
-                {step === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">{tr('Indietro', 'Back')}</button>}
+                {step === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>}
                 <button type="button" disabled={ctaOff} onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
               </span>
             </div>

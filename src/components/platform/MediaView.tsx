@@ -258,7 +258,7 @@ export default function MediaView() {
             <h2 className="text-lg font-semibold">{tr(`Eliminare ${sel.size} foto?`, `Delete ${sel.size} ${sel.size === 1 ? 'photo' : 'photos'}?`)}</h2>
             <p className="pt-1 text-sm text-muted">{tr('Si cancellano anche il prima e tutti i passaggi. Non si può annullare.', 'The original and all steps will be deleted too. This cannot be undone.')}</p>
             <div className="flex justify-end gap-2 pt-6">
-              <button type="button" disabled={deleting} onClick={() => setConfirm(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">{tr('Annulla', 'Cancel')}</button>
+              <button type="button" disabled={deleting} onClick={() => setConfirm(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
               <button type="button" disabled={deleting} onClick={remove} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60">{deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />} {tr('Elimina', 'Delete')}</button>
             </div>
           </div>

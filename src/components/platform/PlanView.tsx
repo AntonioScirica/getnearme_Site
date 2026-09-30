@@ -286,7 +286,7 @@ export function NoCreditsModal() {
             ))}
           </ul>
           <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Vedi i piani', 'See plans')}</a>
-          <button type="button" onClick={() => setOpen(false)} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-muted hover:text-ink">{tr('Più tardi', 'Later')}</button>
+          <button type="button" onClick={() => setOpen(false)} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-brand hover:text-brand/70">{tr('Più tardi', 'Later')}</button>
         </div>
       </div>
     </div>
@@ -358,7 +358,7 @@ export function DemoDownload({ onDone }: { onDone?: () => void }) {
         <button type="button" disabled={busy} onClick={go} className="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white disabled:opacity-70">
           {busy && <Loader2 size={16} className="animate-spin" />}{onDone ? tr(`Conosci Immo e scarica ${what}`, `Meet Immo and download ${what}`) : tr(`Scarica ${what}`, `Download ${what}`)}
         </button>
-        {!onDone && <p className="mt-5 text-sm text-muted">{tr('Per arredare le tue case, fare video e pubblicare il sito', 'To furnish your properties, make videos and publish your website,')} <a href="#/piano" onClick={close} className="font-medium text-ink underline underline-offset-4">{tr('scegli un piano', 'choose a plan')}</a>.</p>}
+        {!onDone && <p className="mt-5 text-sm text-muted">{tr('Per arredare le tue case, fare video e pubblicare il sito', 'To furnish your properties, make videos and publish your website,')} <a href="#/piano" onClick={close} className="font-medium underline underline-offset-4 text-brand">{tr('scegli un piano', 'choose a plan')}</a>.</p>}
       </div>
     </div>
   );

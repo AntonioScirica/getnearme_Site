@@ -976,7 +976,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
                       <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === CREATE_VIDEO)); })}
-                        className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink">{tr('Annulla', 'Cancel')}</button>
+                        className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-brand ease-smooth transition-colors hover:bg-brand/10">{tr('Annulla', 'Cancel')}</button>
                     )}
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
@@ -1561,7 +1561,7 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
             <div className="text-lg font-semibold">{tr('Salvata in', 'Saved to')} {p?.titolo || p?.nome || tr('immobile', 'property')}</div>
             <p className="text-sm text-muted">{chosen === 'add' ? tr('Sul sito la trovi con l’etichetta Prima / Dopo.', 'On the website you\'ll find it with the Before / After label.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
             <div className="flex gap-2 pt-2">
-              <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-canvas">{tr('Chiudi', 'Close')}</button>
+              <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Chiudi', 'Close')}</button>
               {p?.is_public && slug
                 ? <a href={`${portfolioUrl(slug)}/${pid}`} target="_blank" rel="noopener" className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
                 : <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi l’immobile', 'View property')}</a>}
@@ -1602,7 +1602,7 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
           </div>
           <div className="flex items-center justify-end gap-2 pt-5">
             {state === 'err' && <span className="mr-auto text-xs text-rose-600">{tr('Non sono riuscito a salvarla, riprova.', 'I couldn\'t save it, please try again.')}</span>}
-            <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Annulla', 'Cancel')}</button>
+            <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
             <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} {tr('Salva', 'Save')}</button>
           </div>
         </>}

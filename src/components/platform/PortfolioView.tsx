@@ -766,7 +766,7 @@ export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId
             se non si chiude (aperta a mano) si va ai modelli */}
         <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">
           <button type="button" onClick={() => { window.close(); setTimeout(() => { location.hash = '#/portfolio'; }, 150); }} aria-label={tr('Torna ai modelli', 'Back to templates')}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={16} /> {tr('Indietro', 'Back')}</button>
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium text-brand ease-smooth transition-colors hover:bg-brand/10"><ArrowLeft size={16} /> {tr('Indietro', 'Back')}</button>
           <span className="truncate"><span className="text-muted">{tr('Anteprima del modello', 'Template preview')}</span> <b>{t.name}</b></span>
         </span>
         <div className="flex rounded-full bg-canvas p-1">

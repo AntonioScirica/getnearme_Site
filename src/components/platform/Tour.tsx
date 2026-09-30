@@ -108,7 +108,7 @@ export default function Tour({ onDone, noPlan = false, noSite = false }: { onDon
       <div key={i} className={`blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl ${step.edit ? 'ring-1 ring-black/10' : ''}`} style={{ ...cardStyle, transition: ease, animationDelay: step.edit && !STEPS[i - 1]?.edit ? '.7s' : i ? '.35s' : '0s' }}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-muted">{i + 1} {tr('di', 'of')} {STEPS.length}</span>
-          <button type="button" onClick={finish} className="text-xs font-medium text-muted hover:text-ink">{tr('Salta', 'Skip')}</button>
+          <button type="button" onClick={finish} className="text-xs font-medium text-brand hover:text-brand/70">{tr('Salta', 'Skip')}</button>
         </div>
         <div className="mt-2 font-display text-lg font-bold tracking-tight">{step.title}</div>
         <p className="mt-1 text-sm leading-relaxed text-muted">{step.text}</p>

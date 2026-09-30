@@ -365,7 +365,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             <div className="pointer-events-auto relative mx-auto flex max-w-3xl items-center justify-between gap-3 px-6">
             <span />
             <div className="flex items-center gap-3">
-              {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">{tr('Salta', 'Skip')}</button>}
+              {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-brand hover:text-brand/70">{tr('Salta', 'Skip')}</button>}
               {back && ai && <button onClick={() => { setBack(false); go(STEPS.length); }} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Torna all\'annuncio', 'Back to the listing')} <ArrowRight size={16} /></button>}
               {back && ai ? null : step < STEPS.length - 1
                 ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">{tr('Avanti', 'Next')} <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">{tr('Invio', 'Enter')}</span></button>

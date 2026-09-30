@@ -93,7 +93,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   return (
     <>
       <div className="mb-5 flex items-center justify-between">
-        <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> {tr('Immobili', 'Listings')}</a>
+        <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Immobili', 'Listings')}</a>
       </div>
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
       <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
@@ -101,7 +101,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
         <span className="min-w-0 flex-1 truncate text-muted">{!planKnown ? '' : !sitePlan ? tr('Non è online.', 'Not online yet.') : project.is_public ? tr('Sul tuo sito si vede', 'Live on your website') : tr('Non è sul tuo sito. Online si vedrà', 'Not on your website yet. It will show')}{sitePlan && <> {tr('con lo stile del modello', 'with the template')} {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : tr('scelto', 'you picked')}.</>}</span>
-        <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">{tr('Cambia modello', 'Change template')}</a>
+        <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-brand/10 text-brand">{tr('Cambia modello', 'Change template')}</a>
         <span className="h-5 w-px bg-line" aria-hidden />
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
@@ -205,7 +205,7 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
           ))}
         </ul>
         <div className="flex items-center justify-end gap-2 border-t border-line px-7 py-4">
-          <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-sm font-medium text-muted hover:bg-canvas">{tr('Annulla', 'Cancel')}</button>
+          <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
           <button type="button" onClick={() => onSave(order)} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black">{tr('Salva ordine', 'Save order')}</button>
         </div>
       </div>
@@ -286,7 +286,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
         {report}
-        <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas disabled:opacity-40 disabled:hover:bg-transparent">{tr('Annulla', 'Cancel')}</button>
+        <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 disabled:opacity-40 disabled:hover:bg-transparent text-brand">{tr('Annulla', 'Cancel')}</button>
         <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Salva', 'Save')}</button>
       </div>
     </div>

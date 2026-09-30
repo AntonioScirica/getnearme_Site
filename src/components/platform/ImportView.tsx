@@ -119,7 +119,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> {tr('Nuovo immobile nella tua vetrina', 'New property in your showcase')}</a>
+      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Nuovo immobile nella tua vetrina', 'New property in your showcase')}</a>
       <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">{tr('Importa i tuoi immobili', 'Import your properties')}</h1>
       <p className="mt-1 text-muted">{mode === 'link' ? tr('Incolla i link degli annunci: leggiamo dati e foto dal portale e li mettiamo in vetrina.', 'Paste the listing links: we read the details and photos from the portal and add them to your showcase.') : tr('Carica l\u2019export del tuo gestionale: riconosciamo le colonne da soli, tu controlli e confermi.', 'Upload the export from your CRM: we recognise the columns, you check and confirm.')}</p>
       <div className="mt-5 flex w-fit rounded-full bg-canvas p-1">
@@ -211,7 +211,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex items-center justify-between gap-4">
-            <button onClick={() => { setRawRows([]); setFileName(''); }} className="text-sm text-muted hover:text-ink">{tr('Cambia file', 'Change file')}</button>
+            <button onClick={() => { setRawRows([]); setFileName(''); }} className="text-sm text-brand hover:text-brand/70">{tr('Cambia file', 'Change file')}</button>
             <span className="min-w-0 flex-1 truncate text-right text-xs text-muted">{progress}</span>
             <button onClick={runImport} disabled={importing || !rows.length} className="flex shrink-0 items-center gap-2 btn-ink rounded-xl px-6 py-2.5 text-sm font-semibold">
               {importing && <Loader2 size={16} className="animate-spin" />}
