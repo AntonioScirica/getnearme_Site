@@ -491,13 +491,14 @@ function Pricing() {
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
   const billed = en ? (yearly ? `€${PRICING.yearly * 12} billed yearly` : `€${PRICING.quarterly * 3} billed every 3 months`) : yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
   return (
-    <Band id="prezzi" tone="canvas">
+    <Band tone="canvas">
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>{L('Prezzi', "Pricing")}</Pill>
         <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L(`Tutto quello che ti serve, da ${PRICING.starter} € al mese.`, `Everything you need, from €${PRICING.starter} a month.`)}</h2>
         <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', "Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.")}</p>
       </Reveal>
-      <div className="mx-auto mt-12 grid max-w-6xl items-stretch gap-5 md:grid-cols-3">
+      {/* #prezzi porta dritto ai pacchetti (non al titolo della sezione) */}
+      <div id="prezzi" className="mx-auto mt-12 grid max-w-6xl scroll-mt-28 items-stretch gap-5 md:grid-cols-3">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
