@@ -3,7 +3,7 @@
 import ConsentGate from './ConsentGate';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown } from 'lucide-react';
+import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown, Gift } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -15,6 +15,7 @@ import type { TemplateId } from '@/lib/siteTemplates';
 import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import CostsView from './CostsView';
+import AffiliatesView from './AffiliatesView';
 import StagingView from './StagingView';
 import MediaView, { useGalleryNews } from './MediaView';
 import PropertiesView from './PropertiesView';
@@ -236,6 +237,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
             <PlanView key={query} change={new URLSearchParams(query).get('cambia') === '1'} ok={new URLSearchParams(query).get('ok') === '1'} buy={(b => (isBuy(b) ? b : undefined))(new URLSearchParams(query).get('buy'))} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
+          ) : route === '/affiliati' && isPlatformAdmin(userData.email) ? (
+            <AffiliatesView />
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
@@ -581,11 +584,14 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
       </div>
       {/* Costi AI: solo per gli amministratori, qui invece che nel menu */}
-      {admin && (
+      {admin && (<>
         <a href="#/costi" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
           <Gauge size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Costi AI', 'AI costs')}</span><span className="block text-sm text-muted">{tr('Spesa per le foto e i video generati', 'Spend on generated photos and videos')}</span></span>
         </a>
-      )}
+        <a href="#/affiliati" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
+          <Gift size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Affiliati', 'Affiliates')}</span><span className="block text-sm text-muted">{tr('Codici, crediti dati e utilizzi', 'Codes, credits given and uses')}</span></span>
+        </a>
+      </>)}
       <Guides />
       {/* documenti legali */}
       <div className={`mt-4 rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>

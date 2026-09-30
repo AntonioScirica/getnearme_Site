@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 
 // Copia un'immagine remota su R2, ridimensionata (lato lungo maxDim) e in JPEG.
@@ -58,4 +58,9 @@ export async function deleteKeys(keys: string[]) {
   for (let i = 0; i < keys.length; i += 1000) {
     await s3.send(new DeleteObjectsCommand({ Bucket: process.env.R2_BUCKET_NAME, Delete: { Objects: keys.slice(i, i + 1000).map(Key => ({ Key })), Quiet: true } }))
   }
+}
+
+// Testo di un file (null se non c'e')
+export async function readText(key: string): Promise<string | null> {
+  try { return (await (await s3.send(new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }))).Body?.transformToString()) ?? null } catch { return null }
 }
