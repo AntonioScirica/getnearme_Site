@@ -35,7 +35,8 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   const own = useCredits();
   const c = given !== undefined ? given : own;
   // mentre si caricano: un posto della stessa misura, cosi' arrivando non sposta gli altri pulsanti
-  if (!c) return <span className="flex h-10 w-[136px] rounded-full bg-white ring-1 ring-line" aria-hidden />;
+  // posto vuoto e invisibile (niente bordo da solo): la pillola arriva intera, bordo e crediti insieme
+  if (!c) return <span className="flex h-10 w-[136px]" aria-hidden />;
   const low = isLow(c);
   const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
