@@ -16,7 +16,8 @@
 // Starter 1000 crediti = 333 foto o 10 video; Plus 1500 = 500 foto o 15 video; Pro 2500 = 833 foto o 25 video.
 // Video Prima e dopo (29/09): 1 credito quando si preparano Prima e Dopo (le foto GPT, pagate anche se poi si annulla),
 // il resto (video_render = 99) quando si consegna il video: chi arriva in fondo paga sempre 100 (video).
-export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, riscrivi: 1 };
+export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, video_fpv: 90, riscrivi: 1 };
+// Volo nel cantiere (30/09): 1 GPT (quasi finito) + 2 Kling Turbo da 5 s (~0,72 $), intro fissa gia' pagata -> 90.
 // Camminata che cambia stile (29/09, da provare): Kling o3 modifica video ~0,14 $/s, fino a 15 s = ~2,1 $ -> 150.
 // Con te in video (29/09): Kling 2.5 Turbo 5 s (0,35 $) + Haiku e montaggio, la foto nello stile si paga a parte (3) -> 40.
 // 29/09: Giorno e notte con Kling 2.5 Turbo Pro (0,35 $ + 1 GPT, ~0,37 $) -> 40; Movimento camera con Kling 1.6 standard (0,28 $) -> 30.

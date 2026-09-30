@@ -65,7 +65,14 @@ const NEG_REVERSE = `${NEG_VEO}, falling objects, flying objects, new furniture 
 // Particelle (invertito: le scie dorate entrano e formano i mobili, come nel reel di GetNearMe): niente divieti su scie e bagliori
 const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, different camera angle, cross-fade, double exposure, ghosting, transparent walls, morphing, duplicated furniture, extra furniture, new furniture appearing, replaced furniture, objects sliding, falling objects, people, hands, tripod, camera equipment, text, letters, captions, watermark, exposure change, flicker, smoke, fire, flames, explosion, large debris'
 // template con i flussi Kling di GetNearMe (vedi gnmVideoPrompts); Popup, Dall'alto e Particelle su Veo
-const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true }
+const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true }
+// Volo nel cantiere (30/09, prove in ~/Desktop/prove-video-template/costruzione-fpv, versione 21): intro FPV fissa nel
+// cantiere fino allo scavo (templates/volo-cantiere su R2, fatta una volta), poi la camera esce dallo scavo e si ribalta
+// scoprendo il palazzo dell'agente quasi finito, che si completa fino alla foto vera. Sempre verticale.
+const FPV_ASSETS = `${process.env.R2_PUBLIC_URL}/templates/volo-cantiere`
+const FPV_ALMOST = 'Show this exact same building, same camera position, same framing, same sky, street, trees and neighbouring buildings, but almost finished: the last steel scaffolding still on part of the facade, a few details missing (some shutters, railings and plants), a construction site fence at the base, a little dust. Photorealistic, sharp.'
+const FPV_FLIP = 'First-person camera view only, no drone visible: the camera shoots up out of the foundation trench and the whole picture rolls over backwards, the sky sweeping through the frame, until the view comes down facing this building almost finished with the last scaffolding on it, seen from the street. One continuous take, constant speed, never stops. Sharp, photorealistic.'
+const FPV_FINISH = 'Construction time-lapse with a slow steady push-in: the last shutters, railings, windows and plants appear and the scaffolding and the fence disappear, until the building is identical to the final image. The street, the trees and the neighbouring buildings never change. Photorealistic.'
 const KLING_URL = 'https://queue.fal.run/fal-ai/kling-video/o3/standard/image-to-video'
 // Giorno e notte: Kling 2.5 Turbo Pro con foto finale (0,07 $/s = 0,35 $, meta' dell'o3); Movimento camera: Kling 1.6
 // standard da una foto, la "passeggiata" dei video di GetNearMe (0,056 $/s = 0,28 $, prompt e negativi uguali)
@@ -81,7 +88,7 @@ const VANISH: Record<Anim, string> = {
   particles: 'Each object dissolves on the spot into a cloud of fine, soft golden dust particles that drift slightly upward and fade away, leaving the bare floor and walls exactly as in the last image. Objects never slide or fly. ',
   // invertito: i mobili compaiono a scatti, uno per volta, come in stop-motion
   stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
-  cantiere: '', daynight: '', camera: '',
+  cantiere: '', daynight: '', camera: '', fpv: '',
 }
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
@@ -128,8 +135,8 @@ export const fal = async (url: string, body?: { duration?: unknown } & Record<st
 }
 
 export type VideoResult = { job?: string; url?: string; id?: string; status?: number | 'working'; error?: string }
-export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera'
-export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera'] as const).find(x => x === a) ?? 'popup'
+export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv'
+export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv'] as const).find(x => x === a) ?? 'popup'
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
@@ -143,7 +150,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     // 1. formato dalla foto, ritaglio centrale
     const src = imageBase64 ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
     const { width = 0, height = 0 } = await sharp(src).rotate().metadata()
-    const landscape = width >= height
+    const landscape = anim === 'fpv' ? false : width >= height // il volo nel cantiere e' sempre verticale (intro fissa 9:16)
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
     const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'popup' ? '-p' : anim === 'particles' ? '-d' : KLING[anim] ? '' : '-g'}` // Kling: il suffisso (-k, -kc, -km) si aggiunge dopo
@@ -177,6 +184,15 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       } else if (anim === 'camera') {
         // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
         ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_camera' })).request_id]
+      } else if (anim === 'fpv') {
+        // il palazzo quasi finito (dalla foto), poi insieme: flip dallo scavo dell'intro al palazzo, e chiusura fino alla foto
+        const almost = await frame(FPV_ALMOST, 'quasi')
+        if (!almost) return { error: 'ai_failed', status: 502 }
+        const [a, b] = await Promise.all([
+          fal(KLING_TURBO_URL, { image_url: `${FPV_ASSETS}/scavo.jpg`, tail_image_url: almost, prompt: FPV_FLIP, negative_prompt: 'a drone visible in the picture, flying object, fisheye, distortion, blur, pause, cut, flying far away, people, text', duration: '5' }, { userId: logUser, kind: 'video_fpv' }),
+          fal(KLING_TURBO_URL, { image_url: almost, tail_image_url: fullUrl, prompt: FPV_FINISH, negative_prompt: 'camera shake, morphing into a different building, people, text', duration: '5' }, { userId: logUser, kind: 'video_fpv' }),
+        ])
+        ids = [a.request_id, b.request_id]
       } else {
         // stop-motion: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
@@ -186,7 +202,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         ids = [(await kling(empty, fullUrl, GNM_STOPMOTION)).request_id]
       }
       if (ids.some(x => !x)) { console.error('video kling submit', ids); return { error: 'ai_failed', status: 502 } }
-      const kname = `${name}${ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : '-k'}`
+      const kname = `${name}${anim === 'fpv' ? '-kf' : ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : '-k'}`
       const id = ids.join('+')
       const job = `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}`
       await markPending(owner, kname, job)
@@ -299,6 +315,18 @@ export async function renderVideo(owner: string, logUser: string, frames: string
 
 // Segnaposto del video in lavorazione (videos/<owner>/<nome>.job.json): la Galleria lo lista come "in lavorazione" e
 // ne segue il lavoro anche se la chat e' andata persa; sparisce a video montato (o dopo 30 minuti, se e' fallito).
+// Volo nel cantiere: intro fissa, flip (2,2x), chiusura (1,6x) di seguito senza dissolvenze, poi la foto ferma
+async function montageFpv(o: { intro: string; flip: string; finish: string; music: string; final: string }) {
+  const HOLD = 1.5
+  const INTRO = 5.1 // durata dell'intro fissa su R2 (templates/volo-cantiere/intro.mp4)
+  const total = INTRO + 5 / 2.2 + 5 / 1.6 + HOLD
+  const norm = 'fps=30,scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,format=yuv420p,settb=1/30'
+  await ffmpeg(['-y', '-i', o.intro, '-i', o.flip, '-i', o.finish, '-i', o.music, '-filter_complex',
+    `[0:v]${norm}[a];[1:v]setpts=PTS/2.2,${norm}[b];[2:v]setpts=PTS/1.6,${norm}[c];[a][b][c]concat=n=3:v=1:a=0,tpad=stop_mode=clone:stop_duration=${HOLD}[v];` +
+    `[3:a]atrim=end=${total.toFixed(2)},afade=t=in:d=0.2,afade=t=out:st=${(total - 1).toFixed(2)}:d=1[au]`,
+    '-map', '[v]', '-map', '[au]', '-c:v', 'libx264', '-crf', '20', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-t', total.toFixed(2), '-movflags', '+faststart', o.final])
+}
+
 export async function markPending(owner: string, name: string, job: string) {
   await uploadFile(Buffer.from(JSON.stringify({ job, at: Date.now() })), `videos/${owner}/${name}.job.json`, 'application/json').catch(e => console.error('video segnaposto', e))
 }
@@ -308,7 +336,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-ka|-kw|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-ka|-kw|-kf|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -317,7 +345,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   // Kling (flussi GetNearMe): una clip, o due per il cantiere (scavo -> struttura, struttura -> casa).
   // Dall'alto (-g) e' su Kling con l'id k_...: clip in avanti, poi dissolvenza sulla foto vera come i video Veo.
   const gk = id.startsWith('k_')
-  const kling = /-k[cmaw]?$/.test(name) || gk
+  const kling = /-k[cmawf]?$/.test(name) || gk
   const base = kling ? KLING_BASE : FAL
   const ids = id.replace(/^k_/, '').split('+')
   const st = await Promise.all(ids.map(r => fal(`${base}/requests/${r}/status`)))
@@ -336,6 +364,15 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
       ...outs.map((o, k) => fetch(o.video.url).then(r => r.arrayBuffer()).then(b => writeFile(parts[k], Buffer.from(b)))),
       fetch(`https://pub-cd3d5947375c4207af2dc57da61686ee.r2.dev/music/property-reveal/${encodeURIComponent(track)}`).then(r => r.arrayBuffer()).then(b => writeFile(music, Buffer.from(b))),
     ])
+    // Volo nel cantiere (-kf): intro fissa + flip + chiusura, montaggio suo
+    if (/-kf$/.test(name)) {
+      const intro = join(dir, 'intro.mp4')
+      await writeFile(intro, Buffer.from(await (await fetch(`${FPV_ASSETS}/intro.mp4`)).arrayBuffer()))
+      await montageFpv({ intro, flip: parts[0], finish: parts[1], music, final })
+      await uploadFile(await readFile(final), key, 'video/mp4')
+      await deleteKeys([`${key.replace(/\.mp4$/, '')}.job.json`]).catch(() => {})
+      return { url, id, fresh: true }
+    }
     // due clip del cantiere una dopo l'altra (ricodifica leggera, crf 14)
     if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
