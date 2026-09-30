@@ -7,6 +7,7 @@ import { authFetch, portfolioPrefix, CARD_SHADOW } from './api';
 import { slugify, useSlugCheck, type Profile } from './ProfileForm';
 import { Thumb } from './PortfolioView';
 import { SiteThumb } from '@/components/site/pages';
+import { PLACEHOLDER_PHOTOS } from '@/components/site/ui';
 import { cleanSite, TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
 import { tr } from './i18n';
 import { useCredits } from './PlanView';
@@ -83,6 +84,10 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   const [tpl, setTpl] = useState<TemplateId>(TEMPLATES[0].id); // modello del sito scelto al passo 3
   const [hover, setHover] = useState<TemplateId | null>(null); // mouse sopra: la pagina del modello scorre
 
+  // tutte le foto dei passi dopo si scaricano subito, durante il saluto: arrivando al passo ci sono gia' (prima
+  // comparivano una alla volta, a caso)
+  useEffect(() => { [...TOOLS.map(t => t.img), ...LISTINGS.map(([src]) => src), ...PLACEHOLDER_PHOTOS].forEach(src => { new Image().src = src; }); }, []);
+
   // Saluto breve, poi il nome (precompilato da Google se c'e').
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -95,10 +100,10 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     return () => { clearTimeout(a); clearTimeout(b); };
   }, []);
 
-  // Starter non ha il sito: dal nome si va dritti alla fine (niente link ne' modello; il link resta scelto in automatico,
-  // serve se poi passa a Plus o Pro)
+  // Link e modello solo con un piano che ha il sito (Plus, Pro, admin). Starter, senza piano o piano non ancora arrivato da
+  // Stripe: dal nome si va dritti alla fine; il link resta scelto in automatico e serve se poi passa a Plus o Pro.
   const credits = useCredits();
-  const noSite = credits?.plan === 'starter';
+  const noSite = !(credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'));
   const onName = (v: string) => { setName(v); if (!slugTouched) setSlug(slugify(v)); };
   const nameOk = name.trim().length >= 2;
   const next = () => {

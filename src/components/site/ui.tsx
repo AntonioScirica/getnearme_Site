@@ -140,8 +140,9 @@ export function Btn({ children, href, onClick, variant = 'solid', size = 'md', c
 
 // Foto segnaposto solo nell'anteprima dell'editor: finche' l'agente non mette le sue, i riquadri vuoti
 // mostrano una casa di esempio (scelta in modo fisso dal punto della pagina). Sul sito vero restano vuoti.
-const PLACEHOLDERS = ['/staging/1.jpg', '/staging/2.jpg', '/staging/3.jpg', '/staging/4.jpg', '/staging/5.jpg', '/staging/6.jpg'];
-const pick = (key: string) => PLACEHOLDERS[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PLACEHOLDERS.length];
+// webp leggeri (~60 KB, prima jpg da 1 MB: nell'onboarding e nell'editor le foto arrivavano a caso)
+export const PLACEHOLDER_PHOTOS = ['/staging/ph-1.webp', '/staging/ph-2.webp', '/staging/ph-3.webp', '/staging/ph-4.webp', '/staging/ph-5.webp', '/staging/ph-6.webp'];
+const pick = (key: string) => PLACEHOLDER_PHOTOS[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PLACEHOLDER_PHOTOS.length];
 // fit: foto verticali intere con lo sfondo sfocato (gallerie della scheda) invece che ritagliate
 export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean; noActions?: boolean }) {
   const preview = useContext(Ctx)?.preview;
