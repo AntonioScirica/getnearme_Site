@@ -130,12 +130,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
           <p className="pt-1 text-sm text-muted">Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.</p>
-          {!sitePlan && <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>}
+          {credits && !sitePlan && <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>}
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
           {/* interruttore solo con un piano che include il sito (senza, c'e' l'avviso Plus e Pro) */}
-          {sitePlan && <PublicSwitch on={online} onClick={publish} labels={['Pubblico', 'Non pubblico']} right />}
+          {credits && sitePlan && <PublicSwitch on={online} onClick={publish} labels={['Pubblico', 'Non pubblico']} right />}
           <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'pointer-events-none select-none opacity-50'}`} aria-disabled={!online}>{/* sito non online: indirizzo solo da vedere, niente link, copia o apri */}
             <Globe size={15} className="shrink-0 text-muted" />
             <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>

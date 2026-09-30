@@ -37,7 +37,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     window.addEventListener('scroll', fit, true);
     return () => { clearTimeout(t); window.removeEventListener('resize', fit); window.removeEventListener('scroll', fit, true); };
   }, [editing]);
-  const sitePlan = !credits || credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'; // come in Il mio sito // foto su cui si sta lavorando (copertina, togli) // dati in modifica: la pagina del sito si aggiorna mentre si scrive
+  const planKnown = !!credits; // finche' non si sa il piano, niente interruttore ne' invito (niente salto)
+  const sitePlan = !!credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'); // come in Il mio sito
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
   const downloadReport = async (id: string) => {
@@ -87,10 +88,10 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <Info size={16} className="shrink-0 text-brand" />
         {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
-        <span className="min-w-0 flex-1 truncate text-muted">{!sitePlan ? 'Non è online.' : project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'}{sitePlan && <> con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</>}</span>
+        <span className="min-w-0 flex-1 truncate text-muted">{!planKnown ? '' : !sitePlan ? 'Non è online.' : project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'}{sitePlan && <> con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</>}</span>
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
         <span className="h-5 w-px bg-line" aria-hidden />
-        {sitePlan
+        {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} right onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
           : <a href="#/piano" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">Passa a Plus o Pro per pubblicare</a>}
         {sitePlan && project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
