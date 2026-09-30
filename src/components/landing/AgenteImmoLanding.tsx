@@ -248,6 +248,7 @@ const BOX = 'aspect-[4/3] md:aspect-[16/10]';
 // gate (landing): la foto d'esempio c'e' gia', ogni azione (invio, Arreda, carica) porta al login e poi alla pagina /prova
 function TryIt({ gate = false }: { gate?: boolean }) {
   const L = useL();
+  const isEnPage = useEn();
   const { APP, TRIAL, TRIAL_LOGIN } = useLinks();
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
@@ -265,7 +266,8 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (force || mark) { void Promise.resolve().then(() => { setUsed(true); setLeft(0); }); return; } // dopo il render (niente setState sincrono nell'effetto)
     // pagina /prova: foto e richiesta subito (niente foto d'esempio che poi cambia); se la prova e' gia' usata si tolgono
     if (!gate) void Promise.resolve().then(restore);
-    void deviceId().then(async dv => { device.current = dv; return fetch(`/api/landing/demo?d=${dv}`, { headers: await auth() }); }).then(r => r.json()).then((d: { left?: number }) => {
+    // all'apertura solo account e IP: l'impronta del dispositivo si calcola solo quando si avvia la prova (consenso con l'avviso sotto)
+    void auth().then(h => fetch('/api/landing/demo', { headers: h })).then(r => r.json()).then((d: { left?: number }) => {
       if (d.left === 0) { setUsed(true); setLeft(0); setBefore(null); setBusy(false); }
     }).catch(() => {});
   }, []);
@@ -321,6 +323,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (gate) return toTrial(null, true);
     if (!img || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
+    if (!device.current) device.current = await deviceId().catch(() => ''); // avviare la prova = consenso all'impronta (avviso sotto il campo)
     const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ image: img, style: st, prompt: tx, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
@@ -361,6 +364,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (!after || vBusy) return;
     setPicking(false); setAnims(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova. Crea l\'account per farne altri.', "You've made your free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
+    if (!device.current) device.current = await deviceId().catch(() => '');
     const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, device: device.current || undefined, mock: simulate() } : { image: after, anim, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
@@ -483,6 +487,8 @@ function TryIt({ gate = false }: { gate?: boolean }) {
               <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
               <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova gratis usata', "Free try used") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>}
+            {/* consenso all'impronta del dispositivo: avviando la prova (Arreda) la si accetta; prima non si calcola */}
+            {!gate && !after && <p className="mt-3 px-1 text-center text-xs text-muted/80 sm:text-left">{L('Avviando la prova accetti che usiamo un codice anonimo del dispositivo per farla valere una sola volta.', 'By starting the free try you agree that we use an anonymous device code so it can be used only once.')} <a href={`/${isEnPage ? 'en' : 'it'}/privacy`} target="_blank" rel="noopener" className="underline underline-offset-2">Privacy</a></p>}
           </div>
           </div></div>
         </div>

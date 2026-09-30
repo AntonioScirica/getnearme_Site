@@ -29,7 +29,7 @@ const privacyIt: LegalPage = {
   blocks: [
     { type: "h2", text: "1. Titolare del trattamento" },
     { type: "p", text: "Questa informativa spiega come vengono trattati i dati personali di chi visita il sito agenteimmo.me e di chi usa la piattaforma Agente Immo (il \"Servizio\"), ai sensi del Regolamento (UE) 2016/679 (GDPR), del D.Lgs. 196/2003 (Codice Privacy) come modificato dal D.Lgs. 101/2018 e della Direttiva 2002/58/CE (ePrivacy)." },
-    { type: "p", text: "Titolare del trattamento: Antonio Scirica, operante commercialmente con il nome \"Agente Immo\"\nSede e partita IVA: [DA COMPLETARE]\nEmail: as.scirica@gmail.com" },
+    { type: "p", text: "Titolare del trattamento: Antonio Scirica, operante commercialmente con il nome \"Agente Immo\"\nSede: Viale Pretoriano 3, Roma (RM), Italia\nPartita IVA: 16096461005\nEmail: as.scirica@gmail.com" },
     { type: "h2", text: "2. A chi si applica" },
     { type: "ul", items: [
       "Agli utenti registrati della piattaforma (agenti e agenzie immobiliari) e a chi prova il Servizio dalla pagina iniziale.",
@@ -59,7 +59,7 @@ const privacyIt: LegalPage = {
     { type: "h3", text: "3.5. Pagamenti e fatturazione" },
     { type: "p", text: "I pagamenti sono gestiti da Stripe. Noi conserviamo l'identificativo cliente e dell'abbonamento, il piano, le date di rinnovo e i dati di fatturazione che inserisci (per esempio ragione sociale, partita IVA, codice destinatario o PEC). Non vediamo né conserviamo i numeri completi delle carte." },
     { type: "h3", text: "3.6. Prova gratuita" },
-    { type: "p", text: "La prova gratuita dalla pagina iniziale (1 foto e 1 video) richiede un account e vale una sola volta per account, per indirizzo IP e per dispositivo. Per applicare il limite conserviamo, insieme all'account, un codice cifrato (hash) dell'indirizzo IP e un hash dell'impronta del dispositivo. L'impronta è calcolata nel tuo browser a partire da caratteristiche tecniche (per esempio schermo, scheda grafica, fuso orario, lingua): al nostro server arriva solo l'hash, da cui non si possono ricostruire queste informazioni. Trattiamo anche la foto che carichi per la prova e il risultato generato." },
+    { type: "p", text: "La prova gratuita dalla pagina iniziale (1 foto e 1 video) richiede un account e vale una sola volta per account, per indirizzo IP e per dispositivo. Per applicare il limite conserviamo, insieme all'account, un codice cifrato (hash) dell'indirizzo IP e un hash dell'impronta del dispositivo. L'impronta è calcolata nel tuo browser a partire da caratteristiche tecniche (per esempio schermo, scheda grafica, fuso orario, lingua): al nostro server arriva solo l'hash, da cui non si possono ricostruire queste informazioni. L'impronta si calcola solo quando avvii la prova: prima del pulsante ti avvisiamo, e avviando la prova dai il tuo consenso (art. 122 Codice privacy). Se non vuoi, puoi non usare la prova e scegliere direttamente un piano. Trattiamo anche la foto che carichi per la prova e il risultato generato." },
     { type: "h3", text: "3.7. Dati tecnici e di sicurezza" },
     { type: "p", text: "Indirizzo IP, tipo di browser, data e ora delle richieste e registri tecnici, usati per far funzionare il Servizio, prevenire abusi e correggere errori. Registriamo inoltre le operazioni AI eseguite e i crediti consumati, per il calcolo dei crediti e dei costi." },
     { type: "h3", text: "3.8. Cookie e strumenti simili" },
@@ -68,7 +68,7 @@ const privacyIt: LegalPage = {
     { type: "ul", items: [
       "Creare e gestire l'account, fornire le funzioni richieste (home staging, video, import degli annunci, gestione immobili, sito personale, inoltro delle richieste di contatto), gestire piani, crediti e pagamenti, fornire assistenza: esecuzione del contratto (art. 6.1.b GDPR).",
       "Emettere fatture, tenere la contabilità e adempiere agli obblighi fiscali: obbligo legale (art. 6.1.c GDPR).",
-      "Proteggere il Servizio, prevenire frodi e abusi, applicare i limiti della prova gratuita (hash di IP e dispositivo), correggere errori: legittimo interesse del titolare (art. 6.1.f GDPR), bilanciato con i tuoi diritti tramite l'uso di soli codici cifrati e di tempi di conservazione limitati.",
+      "Proteggere il Servizio, prevenire frodi e abusi, applicare i limiti della prova gratuita (hash dell'IP), correggere errori: legittimo interesse del titolare (art. 6.1.f GDPR), bilanciato con i tuoi diritti tramite l'uso di soli codici cifrati e di tempi di conservazione limitati. Impronta del dispositivo per la prova gratuita: il tuo consenso, dato avviando la prova dopo l'avviso (art. 6.1.a GDPR e art. 122 Codice privacy).",
       "Statistiche di utilizzo del sito e misurazione delle campagne pubblicitarie: consenso (art. 6.1.a GDPR), revocabile in ogni momento."
     ]},
     { type: "p", text: "Non vendiamo i tuoi dati e non li usiamo per addestrare modelli di intelligenza artificiale." },
@@ -137,7 +137,7 @@ const privacyEn: LegalPage = {
   blocks: [
     { type: "h2", text: "1. Data Controller" },
     { type: "p", text: "This policy explains how personal data is processed for people who visit agenteimmo.me and use the Agente Immo platform (the \"Service\"), in accordance with Regulation (EU) 2016/679 (GDPR), Italian Legislative Decree 196/2003 (Italian Privacy Code) as amended by Legislative Decree 101/2018, and Directive 2002/58/EC (ePrivacy)." },
-    { type: "p", text: "Data Controller: Antonio Scirica, acting commercially under the trade name \"Agente Immo\"\nRegistered address and VAT number: [TO BE COMPLETED]\nEmail: as.scirica@gmail.com" },
+    { type: "p", text: "Data Controller: Antonio Scirica, acting commercially under the trade name \"Agente Immo\"\nRegistered address: Viale Pretoriano 3, Rome (RM), Italy\nVAT number: IT16096461005\nEmail: as.scirica@gmail.com" },
     { type: "h2", text: "2. Scope" },
     { type: "ul", items: [
       "Registered users of the platform (real estate agents and agencies) and people who try the Service from the home page.",
@@ -167,7 +167,7 @@ const privacyEn: LegalPage = {
     { type: "h3", text: "3.5. Payments and Invoicing" },
     { type: "p", text: "Payments are handled by Stripe. We keep the customer and subscription IDs, the plan, the renewal dates and the billing details you enter (for example company name, VAT number, e-invoicing recipient code or certified email). We never see or store full card numbers." },
     { type: "h3", text: "3.6. Free Trial" },
-    { type: "p", text: "The free trial on the home page (1 photo and 1 video) requires an account and can be used only once per account, per IP address and per device. To enforce this limit we store, together with the account, an encrypted code (hash) of the IP address and a hash of the device fingerprint. The fingerprint is computed in your browser from technical characteristics (for example screen, graphics card, time zone, language): only the hash reaches our server, and these characteristics cannot be reconstructed from it. We also process the photo you upload for the trial and the generated result." },
+    { type: "p", text: "The free trial on the home page (1 photo and 1 video) requires an account and can be used only once per account, per IP address and per device. To enforce this limit we store, together with the account, an encrypted code (hash) of the IP address and a hash of the device fingerprint. The fingerprint is computed in your browser from technical characteristics (for example screen, graphics card, time zone, language): only the hash reaches our server, and these characteristics cannot be reconstructed from it. The fingerprint is only computed when you start the trial: we tell you next to the button, and by starting the trial you give your consent (art. 122 of the Italian Privacy Code). If you prefer not to, you can skip the trial and choose a plan directly. We also process the photo you upload for the trial and the generated result." },
     { type: "h3", text: "3.7. Technical and Security Data" },
     { type: "p", text: "IP address, browser type, date and time of requests and technical logs, used to run the Service, prevent abuse and fix errors. We also record the AI operations performed and the credits used, to calculate credits and costs." },
     { type: "h3", text: "3.8. Cookies and Similar Technologies" },
@@ -176,7 +176,7 @@ const privacyEn: LegalPage = {
     { type: "ul", items: [
       "Creating and managing your account, providing the features you request (home staging, videos, listing import, property management, personal website, forwarding of contact requests), managing plans, credits and payments, providing support: performance of a contract (Art. 6(1)(b) GDPR).",
       "Issuing invoices, bookkeeping and tax compliance: legal obligation (Art. 6(1)(c) GDPR).",
-      "Protecting the Service, preventing fraud and abuse, enforcing free trial limits (IP and device hashes), fixing errors: legitimate interest of the controller (Art. 6(1)(f) GDPR), balanced against your rights by using only hashed codes and limited retention periods.",
+      "Protecting the Service, preventing fraud and abuse, enforcing free trial limits (IP hash), fixing errors: legitimate interest of the controller (Art. 6(1)(f) GDPR), balanced against your rights by using only hashed codes and limited retention periods. Device fingerprint for the free trial: your consent, given by starting the trial after the notice (Art. 6(1)(a) GDPR and art. 122 of the Italian Privacy Code).",
       "Website usage statistics and measurement of advertising campaigns: consent (Art. 6(1)(a) GDPR), which can be withdrawn at any time."
     ]},
     { type: "p", text: "We do not sell your data and we do not use it to train artificial intelligence models." },
@@ -257,7 +257,7 @@ const termsIt: LegalPage = {
   description: "Termini di Servizio della piattaforma Agente Immo per agenti immobiliari.",
   blocks: [
     { type: "h2", text: "1. Chi siamo e accettazione dei Termini" },
-    { type: "p", text: "Agente Immo è un servizio di Antonio Scirica, operante commercialmente con il nome \"Agente Immo\" (sede e partita IVA: [DA COMPLETARE]; email: as.scirica@gmail.com), disponibile su agenteimmo.me (il \"Servizio\")." },
+    { type: "p", text: "Agente Immo è un servizio di Antonio Scirica, operante commercialmente con il nome \"Agente Immo\" (sede: Viale Pretoriano 3, Roma (RM); partita IVA: 16096461005; email: as.scirica@gmail.com), disponibile su agenteimmo.me (il \"Servizio\")." },
     { type: "p", text: "Creando un account o usando il Servizio accetti questi Termini di Servizio (\"Termini\") e dichiari di avere almeno 18 anni. Se usi il Servizio per conto di un'agenzia o di un'impresa, dichiari di avere il potere di vincolarla. Se non accetti i Termini, non usare il Servizio." },
     { type: "h2", text: "2. Il Servizio" },
     { type: "p", text: "Agente Immo è una piattaforma web per agenti immobiliari che permette di:" },
@@ -367,7 +367,7 @@ const termsEn: LegalPage = {
   description: "Terms of Service of the Agente Immo platform for real estate agents.",
   blocks: [
     { type: "h2", text: "1. About Us and Acceptance of the Terms" },
-    { type: "p", text: "Agente Immo is a service provided by Antonio Scirica, acting commercially under the trade name \"Agente Immo\" (registered address and VAT number: [TO BE COMPLETED]; email: as.scirica@gmail.com), available at agenteimmo.me (the \"Service\")." },
+    { type: "p", text: "Agente Immo is a service provided by Antonio Scirica, acting commercially under the trade name \"Agente Immo\" (registered address: Viale Pretoriano 3, Rome (RM), Italy; VAT number: IT16096461005; email: as.scirica@gmail.com), available at agenteimmo.me (the \"Service\")." },
     { type: "p", text: "By creating an account or using the Service you accept these Terms of Service (\"Terms\") and confirm that you are at least 18 years old. If you use the Service on behalf of an agency or business, you confirm that you are authorized to bind it. If you do not accept the Terms, do not use the Service." },
     { type: "h2", text: "2. The Service" },
     { type: "p", text: "Agente Immo is a web platform for real estate agents that lets you:" },
