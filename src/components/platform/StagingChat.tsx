@@ -79,7 +79,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest; at?: number; recover?: boolean }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'exit' | 'room' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
+  | { id: string; role: 'video'; renderAt?: number; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'exit' | 'room' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv';
@@ -516,7 +516,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const askVideo = (photo: string) => { touch(); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Crea un video' }, { id: uid(), role: 'video', step: 'template', photo, picks: [] }]); toBottom(); };
   type VideoMsg = Extract<Msg, { role: 'video' }>;
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
-    setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
+    setMsgs(ms => ms.map(m => {
+      if (m.id !== id || m.role !== 'video') return m;
+      const q = typeof p === 'function' ? p(m) : p;
+      // partenza del video: per il timer (uscendo e rientrando non riparte da 0)
+      return { ...m, ...q, ...(q.step === 'render' && m.step !== 'render' ? { renderAt: Date.now() } : {}) };
+    }));
   // crediti non bastano per finire il video: si dice subito e si resta fermi (niente soldi spesi a meta')
   const short = (m: VideoMsg, need: number) => {
     if (!credits || credits.unlimited || credits.balance >= need) return false;
@@ -1100,7 +1105,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {waitFor(m.anim)}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" since={m.renderAt} /> · di solito {waitFor(m.anim)}</span>
                                 </div>
                               )}
                             </>}
@@ -1181,7 +1186,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     if (!m.out || m.busy || (e.target as HTMLElement).closest('button, a')) return;
                     if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
                     setViewer({ src: m.out, before: m.before });
-                  }}><AiPhotoStage parked={i === zoneOwner && !zoneClosing} onUnpark={cancelZone} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className="h-full" onSave={() => setSaveOpen(v => (v === m.id ? null : m.id))} saveActive={saveOpen === m.id} />
+                  }}><AiPhotoStage since={m.at} parked={i === zoneOwner && !zoneClosing} onUnpark={cancelZone} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className="h-full" onSave={() => setSaveOpen(v => (v === m.id ? null : m.id))} saveActive={saveOpen === m.id} />
                 </div>
                 {/* Modifica: la foto sotto resta montata e ferma, la selezione ci si appoggia sopra; sotto cambiano solo i controlli */}
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>

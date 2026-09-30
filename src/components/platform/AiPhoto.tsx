@@ -13,9 +13,11 @@ import { authFetch, CARD_SHADOW } from './api';
 // stato della generazione, riquadro con alone mentre lavora e slider prima/dopo alla fine.
 
 // Tempo trascorso (m:ss): analisi e modifiche su GPU durano da secondi a minuti, cosi' si vede che va avanti.
-export function Elapsed({ className = 'text-muted' }: { className?: string }) {
-  const [s, setS] = useState(0);
-  useEffect(() => { const t = setInterval(() => setS(x => x + 1), 1000); return () => clearInterval(t); }, []);
+// since: ora di partenza del lavoro (ms). Uscendo e rientrando il tempo continua da li', non riparte da 0
+export function Elapsed({ className = 'text-muted', since }: { className?: string; since?: number }) {
+  const [start] = useState(() => since ?? Date.now());
+  const [s, setS] = useState(() => Math.max(0, Math.floor((Date.now() - start) / 1000)));
+  useEffect(() => { const t = setInterval(() => setS(Math.max(0, Math.floor((Date.now() - start) / 1000))), 1000); return () => clearInterval(t); }, [start]);
   return <span className={`tabular-nums ${className}`}>{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
 }
 
@@ -60,7 +62,8 @@ export function useAiPhoto() {
 }
 
 // Riquadro foto: originale con alone blu mentre lavora, poi slider prima/dopo con Scarica.
-export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, onSave, saveActive, className = 'aspect-[3/2] max-h-[60vh]' }: {
+export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, onSave, saveActive, since, className = 'aspect-[3/2] max-h-[60vh]' }: {
+  since?: number;
   src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; onUnpark?: () => void; onSave?: () => void; saveActive?: boolean; className?: string;
 }) {
   const [saved, setSaved] = useState(false);
@@ -95,7 +98,7 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
             <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-black/55 px-5 py-2.5 backdrop-blur-xl">
               <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               <span key={msg} className="blur-in bg-clip-text text-xs font-bold text-transparent" style={{ backgroundImage: 'linear-gradient(to right, #dbe5fb 20%, #537eec 50%, #dbe5fb 80%)', backgroundSize: '200% auto', animation: 'gnm-shimmer-text 2.5s linear infinite' }}>{MSGS[msg]}...</span>
-              <Elapsed className="text-xs font-bold text-white/70" />
+              <Elapsed className="text-xs font-bold text-white/70" since={since} />
             </div>
           )}
         </div>
