@@ -253,9 +253,11 @@ function TryIt({ gate = false }: { gate?: boolean }) {
   // token dell'account: le API della prova rispondono solo a chi ha fatto l'accesso
   const auth = async (): Promise<Record<string, string>> => { const { data: { session } } = await supabase.auth.getSession(); return session ? { Authorization: `Bearer ${session.access_token}` } : {}; };
   // landing: foto e richiesta messe da parte, poi la pagina della prova (che manda al login se serve)
-  const toTrial = (image: string | null, go: boolean) => {
+  const toTrial = async (image: string | null, go: boolean) => {
     try { localStorage.setItem(TRIAL_KEY, JSON.stringify({ image, style, text: text.trim(), go })); } catch { /* spazio pieno: si riparte dall'esempio */ }
-    window.location.href = TRIAL;
+    // senza accesso dritti al login (niente passaggio visibile dalla pagina della prova)
+    const { data: { session } } = await supabase.auth.getSession();
+    window.location.href = session ? TRIAL : `/it/checkout/agency?next=${TRIAL}`;
   };
   // foto ridotta nel browser a 1600 px (upload veloce anche da telefono), in JPEG
   const load = (src: string, done: (url: string) => void) => {
@@ -750,9 +752,10 @@ function Trial() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/checkout/agency?next=${TRIAL}`)));
   }, []);
+  if (!ok) return <div className="dots-bg min-h-screen" />; // finche' non si sa se c'e' l'accesso: niente pagina (poi login o prova)
   return (
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
-      {ok && <ConsentGate />}
+      <ConsentGate />
       <header className="sticky top-0 z-40 pt-4">
         <div className="mx-auto max-w-6xl px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
@@ -764,7 +767,7 @@ function Trial() {
       <section id="prova" className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pb-24 md:pt-16">
         <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
-        <div className="mt-10">{ok ? <TryIt /> : <div className={`rounded-[28px] bg-white ${BOX}`} />}</div>
+        <div className="mt-10"><TryIt /></div>
       </section>
       <Pricing />
     </div>
