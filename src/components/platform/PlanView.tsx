@@ -40,7 +40,7 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   const low = isLow(c);
   const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
-  if (c.plan === 'none' && !c.unlimited) return (
+  if (c.plan === 'none' && !c.unlimited && c.balance <= 0) return (
     <span className="blur-in flex items-center gap-2">
       <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">{tr('Scegli un piano', 'Choose a plan')}</a>
       <span className="flex h-10 items-center rounded-full bg-white px-1 ring-1 ring-line">{profile}</span>

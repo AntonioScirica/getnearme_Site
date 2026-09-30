@@ -107,7 +107,8 @@ export default function PlatformApp(props: { userData: UserData }) {
 
 function PlatformInner({ userData }: { userData: UserData }) {
   const credits = useCredits(); // senza piano niente Metti in vetrina in alto
-  const noPlan = !!credits && credits.plan === 'none' && !credits.unlimited;
+  // senza piano ma con crediti da pacchetto (pagati, non scadono): si usa tutto come con un piano
+  const noPlan = !!credits && credits.plan === 'none' && !credits.unlimited && credits.balance <= 0;
   const [homeOpen, setHomeOpen] = useState(false); // Miglioralo aperto in home: niente pillola Importa immobile
   useEffect(() => {
     const on = (e: Event) => setHomeOpen(!!(e as CustomEvent<boolean>).detail);
@@ -209,7 +210,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
             {/* senza piano solo Scegli un piano (in nero): Metti in vetrina appare col piano */}
-            {credits && (credits.unlimited || credits.plan !== 'none') && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">{tr('Metti in vetrina', 'List a property')}</a>}
+            {credits && !noPlan && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">{tr('Metti in vetrina', 'List a property')}</a>}
           </div>
           </>}
         </div>

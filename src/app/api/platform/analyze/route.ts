@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   if (await overDailyCap(data.user.id, ['extract'], Number(process.env.ANALYZE_DAILY_LIMIT) || 100)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
   // senza piano: 5 analisi gratis in tutto (righe contatore in ai_usage, kind analyze_free), poi si sceglie un piano
   const c = await getCredits(data.user.id)
-  const free = c.plan === 'none' && !c.unlimited
+  const free = c.plan === 'none' && !c.unlimited && c.balance <= 0
   if (free) {
     const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', data.user.id).eq('kind', 'analyze_free')
     if ((count ?? 0) >= FREE_ANALYSES) return NextResponse.json({ error: 'free_limit' }, { status: 402 })

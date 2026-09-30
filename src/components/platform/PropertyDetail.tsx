@@ -73,7 +73,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     onPhoto: async (src, action) => {
       if (action === 'ai') {
         // senza piano: subito il popup dei piani (in chat non si potrebbe fare niente); con il piano la foto va in chat
-        if (credits && credits.plan === 'none' && !credits.unlimited) { window.dispatchEvent(new Event('agenteimmo:no-credits')); return; }
+        if (credits && credits.plan === 'none' && !credits.unlimited && credits.balance <= 0) { window.dispatchEvent(new Event('agenteimmo:no-credits')); return; }
         window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return;
       }
       // togliere una foto si fa solo dalla finestra Le foto (che chiede conferma)
