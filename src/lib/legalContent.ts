@@ -15,7 +15,7 @@ interface LegalPage {
 
 // Testi legali di Agente Immo (piattaforma web per agenti immobiliari). Aggiornati il 30/09/2026.
 // 30/09: segnaposto completati (sede, P.IVA, prova 12 mesi, pacchetti che non scadono).
-// riempite o confermate dal titolare prima della pubblicazione. es, fr, ru, uk: il sito le porta all'inglese,
+// es, fr, ru, uk: il sito le porta all inglese,
 // quindi usano lo stesso testo inglese.
 
 // ---------------------------------------------------------------------------------------------------------------
