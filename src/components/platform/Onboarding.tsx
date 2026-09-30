@@ -27,7 +27,7 @@ const TITLES: Record<Step, [string, string]> = {
 const DOTS_BG = { background: 'radial-gradient(rgba(0,0,0,0.09) 1.2px, transparent 1.2px) 0 0 / 18px 18px, #fff', '--gnm-ease': 'cubic-bezier(.65, 0, .35, 1)' } as React.CSSProperties;
 // ultimo passo: le tre card della home, ferme (scheletro + testo, non sembrano bottoni)
 const TOOLS = [
-  { kicker: 'Hai già un annuncio online?', title: 'Miglioralo', img: '/immo/home/demo-1.webp', badge: null },
+  { kicker: 'Annuncio già online?', title: 'Miglioralo', img: '/immo/home/demo-1.webp', badge: null },
   { kicker: 'Hai un nuovo immobile?', title: 'Mettilo in vetrina', img: '/immo/home/fan-2.webp', badge: Plus },
   { kicker: 'Hai una stanza vuota?', title: 'Home staging', img: '/immo/home/staging-after.webp', badge: Wand2 },
 ];

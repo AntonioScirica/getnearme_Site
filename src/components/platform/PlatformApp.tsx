@@ -297,7 +297,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         {/* Titolo della card: svanisce e si chiude */}
         <div className={`overflow-hidden transition-all ease-smooth ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
           <span className="par-1 block text-sm text-muted">Miglioralo</span>
-          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Hai già un annuncio online?</span>
+          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Annuncio già online?</span>
         </div>
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
