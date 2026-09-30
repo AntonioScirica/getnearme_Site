@@ -92,9 +92,10 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
   return (
     <div className="pb-16">
       {/* Mappa a tutta larghezza, anche sotto la navbar; in basso sfuma nello sfondo */}
-      <PropertyMap projects={shown} geo={geo} hover={hover} loading={!projects} />
+      {/* senza immobili niente mappa: la sua sfumatura dietro la card vuota sembrava un'ombra sporca */}
+      {!empty && <PropertyMap projects={shown} geo={geo} hover={hover} loading={!projects} />}
 
-      <div className="relative z-10 mx-auto -mt-24 max-w-6xl px-6">
+      <div className={`relative z-10 mx-auto max-w-6xl px-6 ${empty ? 'pt-32' : '-mt-24'}`}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="blur-in font-display text-4xl font-bold leading-[1.2] tracking-tight">
           Immobili{projects && !demo && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
