@@ -221,8 +221,9 @@ function Gallery({ p }: { p: SiteProperty }) {
         </>}
         {all}
       </div>
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-        {photos.map((src, k) => <button key={k} onClick={() => setCur(k)} className={`h-20 w-28 shrink-0 overflow-hidden rounded-[calc(var(--r)*0.6)] transition-opacity ${k === cur ? 'ring-2 ring-[var(--c)] ring-offset-2' : 'opacity-60 hover:opacity-100'}`}><Photo src={src} alt={alt(k)} className="h-full" /></button>)}
+      {/* miniature: spazio intorno per l'anello della selezionata (lo scorrimento orizzontale lo tagliava); niente azioni, troppo piccole */}
+      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto p-1 [scrollbar-width:none]">
+        {photos.map((src, k) => <button key={k} onClick={() => setCur(k)} className={`h-20 w-28 shrink-0 overflow-hidden rounded-[calc(var(--r)*0.6)] transition-opacity ${k === cur ? 'ring-2 ring-[var(--c)] ring-offset-2' : 'opacity-60 hover:opacity-100'}`}><Photo src={src} alt={alt(k)} className="h-full" noActions /></button>)}
       </div>
     </div>
   );

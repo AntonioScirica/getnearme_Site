@@ -142,12 +142,12 @@ export function Btn({ children, href, onClick, variant = 'solid', size = 'md', c
 const PLACEHOLDERS = ['/staging/1.jpg', '/staging/2.jpg', '/staging/3.jpg', '/staging/4.jpg', '/staging/5.jpg', '/staging/6.jpg'];
 const pick = (key: string) => PLACEHOLDERS[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PLACEHOLDERS.length];
 // fit: foto verticali intere con lo sfondo sfocato (gallerie della scheda) invece che ritagliate
-export function Photo({ src, alt = '', className = '', zoom, fit }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean }) {
+export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean; noActions?: boolean }) {
   const preview = useContext(Ctx)?.preview;
   const pe = useContext(Ctx)?.propEdit;
   const shown = src || (preview ? pick(alt + className) : '');
   // scheda della piattaforma: sulle foto dell'immobile le azioni (span e non button: le gallerie hanno gia' un button intorno)
-  const acts = pe && src && pe.photos.includes(src) ? (
+  const acts = pe && src && !noActions && pe.photos.includes(src) ? (
     pe.busy === src ? <span className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 text-sm font-semibold text-neutral-900">Un attimo…</span> : (
       <span className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-black/35 opacity-0 transition-opacity group-hover/ph:opacity-100" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
         <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'ai')} className="flex h-10 items-center gap-1.5 rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg">Migliora con l’AI</span>
