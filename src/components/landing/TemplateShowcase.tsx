@@ -22,24 +22,29 @@ const N = TEMPLATES.length;
 const DEPTH = 3; // finestre visibili dietro quella davanti
 
 // solo il sito e' pesante: memo su modello e scala, cosi' spostare le finestre non lo ridisegna
-const Site = memo(function Site({ id, k }: { id: (typeof TEMPLATES)[number]['id']; k: number }) {
+// scroll: il mouse sopra ferma il mazzo e la pagina del modello scorre fino in fondo, cosi' si vede tutto il sito
+const Site = memo(function Site({ id, k, scroll }: { id: (typeof TEMPLATES)[number]['id']; k: number; scroll: boolean }) {
   const t = TEMPLATES.find(x => x.id === id)!;
   const name = AGENTS[TEMPLATES.indexOf(t) % AGENTS.length];
   const cfg = withPlaceholders({ ...BASE, template: t.id, primary: t.primary, font: t.font });
+  const page = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(0);
+  useEffect(() => { if (scroll && page.current) setH(page.current.offsetHeight); }, [scroll]);
+  const max = Math.max(0, h * k - 1280 * k * 0.75); // quanto la pagina esce dal riquadro 4:3
   return (
     <div className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden>
-      <div style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>
+      <div ref={page} style={{ width: 1280, transform: `translateY(${scroll ? -max : 0}px) scale(${k})`, transformOrigin: 'top left', transition: scroll ? `transform ${Math.max(4, max / 260)}s linear` : 'transform .8s cubic-bezier(.65,0,.35,1)' }}>
         <SiteThumb ctx={{ cfg, name, logo: null, properties: PROPS, base: '', preview: true }} />
       </div>
     </div>
   );
 });
 
-function Window({ id, k, front, label }: { id: (typeof TEMPLATES)[number]['id']; k: number; front: boolean; label: string }) {
+function Window({ id, k, front, label, scroll }: { id: (typeof TEMPLATES)[number]['id']; k: number; front: boolean; label: string; scroll: boolean }) {
   return (
     <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)] ring-1 ring-black/5">
       <Bar name={front ? TEMPLATES.find(x => x.id === id)!.name : ''} agent={AGENTS[TEMPLATES.findIndex(x => x.id === id) % AGENTS.length]} label={label} />
-      <Site id={id} k={k} />
+      <Site id={id} k={k} scroll={scroll} />
     </div>
   );
 }
@@ -56,13 +61,14 @@ function Bar({ name, agent = AGENTS[0], label = 'Modello' }: { name: string; age
 
 export default function TemplateShowcase({ active, en = false }: { active: boolean; en?: boolean }) {
   const [i, setI] = useState(0);
+  const [hover, setHover] = useState(false);
   const sizer = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.4);
   useEffect(() => {
-    if (!active) return;
+    if (!active || hover) return; // mouse sopra: il mazzo si ferma
     const id = setInterval(() => setI(v => v + 1), 3500);
     return () => clearInterval(id);
-  }, [active]);
+  }, [active, hover]);
   useEffect(() => {
     const ro = new ResizeObserver(() => sizer.current && setK(sizer.current.clientWidth / 1280));
     if (sizer.current) ro.observe(sizer.current);
@@ -71,7 +77,7 @@ export default function TemplateShowcase({ active, en = false }: { active: boole
   // posizione -1 = quella appena uscita (a sinistra, invisibile), 0 = davanti, 1..DEPTH-1 dietro, DEPTH e oltre = in fondo, invisibile
   const cards = TEMPLATES.map((t, idx) => { const rel = (((idx - i) % N) + N) % N; return { id: t.id, p: rel === N - 1 ? -1 : Math.min(rel, DEPTH) }; });
   return (
-    <div className="relative pr-12 pt-12 sm:pr-[72px] sm:pt-16">
+    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} className="relative pr-12 pt-12 sm:pr-[72px] sm:pt-16">
       {/* dà l'altezza al mazzo */}
       <div ref={sizer} className="invisible"><Bar name="" /><div className="aspect-[4/3]" /></div>
       {cards.map(({ p, id }) => {
@@ -80,7 +86,7 @@ export default function TemplateShowcase({ active, en = false }: { active: boole
           : { transform: `translate(${p * 36}px, ${-p * 32}px) scale(${1 - p * 0.05})`, opacity: p >= DEPTH ? 0 : 1 - p * 0.15, zIndex: 10 - p };
         return (
           <div key={id} className="absolute bottom-0 left-0 right-12 origin-top-right sm:right-[72px]" style={{ ...style, transition: 'transform 1s cubic-bezier(.65,0,.35,1), opacity 1s cubic-bezier(.65,0,.35,1)' }}>
-            <Window id={id} k={k} front={p === 0} label={en ? 'Template' : 'Modello'} />
+            <Window id={id} k={k} front={p === 0} label={en ? 'Template' : 'Modello'} scroll={hover && p === 0} />
           </div>
         );
       })}
