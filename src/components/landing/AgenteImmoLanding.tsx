@@ -203,6 +203,11 @@ const VIDEO_TEMPLATES = [
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', VIDEO_SAMPLES.daynight],
   ['camera', 'Camminata', 'Walkthrough', 'Entri nella stanza con una ripresa lenta', 'A slow walk into the room', VIDEO_SAMPLES.camera],
 ] as const;
+// Prima e dopo: le due animazioni tra cui scegliere, come nella chat
+const PRIMA_DOPO = [
+  ['popup', 'Popup', 'Pop-up', 'I mobili spuntano uno alla volta', 'Furniture pops in piece by piece', VIDEO_SAMPLES.popup],
+  ['gravity', 'Dall\'alto', 'From above', 'I mobili cadono dall\'alto e si posano', 'Furniture drops in from above', VIDEO_SAMPLES.gravity],
+] as const;
 const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['empty', 'Svuota', 'Empty it']] as const;
 // ?simula=1: prova senza AI e senza costi (il server la accetta solo dagli IP senza limiti e in sviluppo).
 // In sviluppo e' sempre attiva; ?vero=1 per la prova vera.
@@ -268,10 +273,11 @@ function TryIt() {
     window.location.href = APP;
   };
   const [picking, setPicking] = useState(false); // scelta del template del video
+  const [anims, setAnims] = useState(false); // secondo passo di Prima e dopo: Popup o Dall'alto (come in chat)
   const [emptied, setEmptied] = useState(false); // stanza svuotata: il video va dalla foto originale alla vuota (i mobili spariscono)
   const toVideo = async (anim: 'popup' | 'gravity', vanish = false) => {
     if (!after || vBusy) return;
-    setPicking(false); setVBusy(true); setMsg('');
+    setPicking(false); setAnims(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova. Crea l\'account per farne altri.', "You've made your free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
     const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, device: device.current || undefined, mock: simulate() } : { image: after, anim, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
@@ -298,11 +304,11 @@ function TryIt() {
                 {/* template del video dentro la foto: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
                 {picking && !vBusy && (
                   <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md sm:justify-center sm:p-6">
-                    <div className="mb-3 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{L('Scegli l\'animazione del video', "Pick the video animation")}</div>
+                    <div className="mb-3 flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{anims && <button type="button" onClick={() => setAnims(false)} aria-label={L('Indietro', "Back")} className="-ml-1 text-muted hover:text-ink"><ChevronLeft size={16} /></button>}{anims ? L('Con quale animazione?', "Which animation?") : L('Che video vuoi creare?', "Which video do you want?")}</div>
                     {/* stesse card della chat della piattaforma: video d'esempio, nome, descrizione */}
                     <div className="grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3">
-                      {VIDEO_TEMPLATES.map(([k, it, eng, dIt, dEn, sample], n) => {
-                        const free = k === 'popup';
+                      {(anims ? PRIMA_DOPO : VIDEO_TEMPLATES).map(([k, it, eng, dIt, dEn, sample], n) => {
+                        const free = k === 'popup' || k === 'gravity';
                         const body = <>
                           <span className="sheen pointer-events-none absolute inset-0 z-20" />
                           <span className="relative block">
@@ -316,7 +322,7 @@ function TryIt() {
                         return (
                           <div key={k} className="rise" style={{ animationDelay: `${0.05 + n * 0.06}s` }}>
                             {free
-                              ? <button type="button" onClick={() => toVideo(k)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className={cls}>{body}</button>
+                              ? <button type="button" onClick={() => (anims ? toVideo(k as 'popup' | 'gravity') : setAnims(true))} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className={cls}>{body}</button>
                               : <a href="#prezzi" onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className={cls}>{body}</a>}
                           </div>
                         );
