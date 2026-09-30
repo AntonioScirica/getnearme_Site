@@ -131,7 +131,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         {/* Satoshi servito da noi (niente IP dei visitatori a fontshare, vale anche per i siti degli agenti) */}
         <link href="/fonts/satoshi/satoshi.css" rel="stylesheet" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#3B82F6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
