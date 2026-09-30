@@ -509,8 +509,11 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
               className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
           ))}
         </div>
-        <div className="ml-auto flex rounded-full bg-canvas p-0.5">
-          {([[true, 'Modifica'], [false, 'Naviga']] as const).map(([v, l]) => <button key={l} onClick={() => setEditMode(v)} className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${editMode === v ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>)}
+        {/* interruttore ben visibile: icone, Modifica in blu quando attivo */}
+        <div className="ml-auto flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/10">
+          {([[false, 'Naviga', Eye], [true, 'Modifica', Pencil]] as const).map(([v, l, I]) => (
+            <button key={l} onClick={() => setEditMode(v)} className={`flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:bg-canvas hover:text-ink'}`}><I size={15} /> {l}</button>
+          ))}
         </div>
       </div>
       <div ref={box} data-morph-content key={JSON.stringify(page)} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"
