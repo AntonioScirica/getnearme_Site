@@ -5,17 +5,22 @@ import { ArrowRight, Check, Globe, Loader2, X, Plus, Wand2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase';
 import { authFetch, portfolioPrefix, CARD_SHADOW } from './api';
 import { slugify, useSlugCheck, type Profile } from './ProfileForm';
+import { Thumb } from './PortfolioView';
+import { SiteThumb } from '@/components/site/pages';
+import { cleanSite, TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
 
 // Onboarding: l'AI "costruisce" il sito dell'agente davanti ai suoi occhi.
 // 0 logo al centro, poi sale e saluta > 1 solo il campo nome > 2 compare il finto sito col nome, lo slug si scrive da solo
-// nella barra indirizzi e si puo' correggere > 3 la home vera con le sue card: un click ovunque salva ed entra.
-type Step = 0 | 1 | 2 | 3;
+// nella barra indirizzi e si puo' correggere > 3 si sceglie il modello del sito (anteprime vere col suo nome)
+// > 4 la home vera con le sue card: un click ovunque salva ed entra.
+type Step = 0 | 1 | 2 | 3 | 4;
 
 const TITLES: Record<Step, [string, string]> = {
   0: ['Ciao, mi chiamo Immo.', 'Conosciamoci meglio.'],
   1: ['Come ti chiami?', 'Il nome che vedranno i tuoi clienti.'],
   2: ['Il tuo sito ha bisogno di un link.', 'Lo mandi ai clienti e ci trovano tutti i tuoi immobili.'],
-  3: ['Il tuo sito è pronto da pubblicare.', 'Lo metti online tu, quando vuoi. Intanto ecco cosa puoi fare.'],
+  3: ['Scegli lo stile del tuo sito.', 'Lo cambi quando vuoi, anche colori e caratteri.'],
+  4: ['Il tuo sito è pronto da pubblicare.', 'Lo metti online tu, quando vuoi. Intanto ecco cosa puoi fare.'],
 };
 
 // sfondo a puntini + curva ease-in-out per tutto l'onboarding (sovrascrive --gnm-ease del sito qui dentro)
@@ -73,6 +78,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   }, []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tpl, setTpl] = useState<TemplateId>(TEMPLATES[0].id); // modello del sito scelto al passo 3
 
   // Saluto breve, poi il nome (precompilato da Google se c'e').
   useEffect(() => {
@@ -91,6 +97,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   const next = () => {
     if (step === 1 && nameOk) { if (!slug) setSlug(slugify(name)); setTyped(0); setBar(false); setStep(2); setTimeout(() => setBar(true), 900); }
     else if (step === 2 && done && check.state === 'ok') setStep(3);
+    else if (step === 3) setStep(4);
   };
 
   const save = async () => {
@@ -99,14 +106,21 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     const res = await authFetch('/api/platform/portfolio', { method: 'PUT', body: JSON.stringify({ name: name.trim(), slug }) });
     const d = await res.json().catch(() => ({}));
     setSaving(false);
-    if (res.ok) return onDone({ name: d.name, slug: d.slug });
+    if (res.ok) {
+      // modello scelto: colori e carattere del modello sulla configurazione di partenza (best effort, si cambia dal sito)
+      const t = TEMPLATES.find(x => x.id === tpl)!;
+      const site = await authFetch('/api/platform/site').then(r => r.json()).catch(() => null) as { config?: object } | null;
+      if (site?.config) await authFetch('/api/platform/site', { method: 'PUT', body: JSON.stringify({ ...site.config, template: t.id, primary: t.primary, font: t.font }) }).catch(() => {});
+      return onDone({ name: d.name, slug: d.slug });
+    }
     if (d.error === 'slug_taken') { setResult({ slug, state: 'taken', suggestion: d.suggestion }); setStep(2); }
     else setError('Salvataggio non riuscito, riprova.');
   };
 
   const [head, sub] = TITLES[shown];
   const words = head.split(' ');
-  const ctaOff = !done || check.state !== 'ok';
+  const ctaOff = step === 2 && (!done || check.state !== 'ok');
+  const base = cleanSite(null, name.trim(), ''); // configurazione di partenza per le anteprime dei modelli
 
   return (
     <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-10 font-body text-ink" style={DOTS_BG}>
@@ -136,11 +150,11 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
       </div>
 
       {/* passi 2 e 3: UN solo contenitore. Il contenuto vecchio sfuma, il box si adatta (altezza e larghezza), entra il nuovo */}
-      <div inert={step < 2} className={`grid w-full transition-[grid-template-rows,opacity,max-width] duration-[900ms] ease-smooth ${shown === 3 ? 'max-w-3xl' : 'max-w-2xl'} ${step >= 2 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+      <div inert={step < 2} className={`grid w-full transition-[grid-template-rows,opacity,max-width] duration-[900ms] ease-smooth ${shown === 4 ? 'max-w-3xl' : shown === 3 ? 'max-w-4xl' : 'max-w-2xl'} ${step >= 2 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className={`-mx-8 min-h-0 overflow-hidden px-8 transition-[padding] duration-[900ms] ease-smooth ${step >= 2 ? 'pb-8' : 'pb-0'}`}>
           <div className={`mt-8 overflow-hidden rounded-[28px] bg-white transition-[height] duration-[900ms] ease-smooth ${CARD_SHADOW}`} style={{ height: boxH }}>
             <div ref={boxRef} className={`p-2 transition-[opacity,filter] duration-[450ms] ease-smooth ${shown !== step || !settled ? 'opacity-0 blur-[6px]' : ''}`}>
-              {shown === 3 ? (
+              {shown === 4 ? (
             <div className="grid gap-2 sm:grid-cols-3">
               {TOOLS.map(({ kicker, title, img, badge: Badge }, i) => (
                 <div key={title} className={`flex flex-col rounded-[20px] bg-canvas p-5 ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
@@ -155,6 +169,23 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
                 </div>
               ))}
             </div>
+              ) : shown === 3 ? (
+            <>
+            {/* modelli del sito: anteprima vera della home col nome dell'agente, si sceglie con un click */}
+            <div className="grid max-h-[52vh] grid-cols-2 gap-2 overflow-y-auto p-1 sm:grid-cols-3">
+              {TEMPLATES.map((t, i) => (
+                // div e non button: l'anteprima del sito ha dentro i suoi bottoni
+                <div key={t.id} role="button" tabIndex={0} aria-pressed={tpl === t.id} onClick={() => setTpl(t.id)} onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setTpl(t.id)} className={`cursor-pointer rounded-[20px] bg-canvas p-1.5 text-left ease-smooth transition-shadow ${tpl === t.id ? 'ring-2 ring-brand' : 'ring-1 ring-black/5 hover:ring-black/20'} ${settled ? 'rise' : 'opacity-0'}`} style={{ animationDelay: `${i * 0.04}s` }}>
+                  <div className="overflow-hidden rounded-2xl bg-white"><Thumb><SiteThumb ctx={{ cfg: { ...base, template: t.id, primary: t.primary, font: t.font }, name: name.trim(), logo: null, properties: [], base: '', preview: true }} /></Thumb></div>
+                  <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2 text-sm font-semibold">{t.name}{tpl === t.id && <Check size={14} className="text-brand" />}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex min-h-12 items-center justify-end gap-2 px-4 pb-2 pt-3">
+              <button type="button" onClick={() => setStep(2)} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Indietro</button>
+              <button type="button" onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">Continua <ArrowRight size={15} /></button>
+            </div>
+            </>
               ) : (
                 <>
             <div className="overflow-hidden rounded-[20px] ring-1 ring-black/5">
@@ -220,10 +251,10 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
       </div>
 
       {/* CTA finale: lo spazio si apre col box, il bottone entra a scatto elastico (pop) dopo le card */}
-      <div inert={step !== 3} className={`grid transition-[grid-template-rows] duration-[900ms] ease-smooth ${step === 3 ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+      <div inert={step !== 4} className={`grid transition-[grid-template-rows] duration-[900ms] ease-smooth ${step === 4 ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
         <div className="-mx-8 min-h-0 overflow-hidden px-8 pb-8">
           <div className="mt-6 flex flex-col items-center gap-2">
-            <button type="button" disabled={saving} onClick={save} className={`btn-ink flex h-11 items-center gap-2 rounded-full px-6 text-sm font-semibold ${shown === 3 && settled ? 'pop' : 'scale-0 opacity-0'}`} style={{ animationDelay: '.45s' }}>
+            <button type="button" disabled={saving} onClick={save} className={`btn-ink flex h-11 items-center gap-2 rounded-full px-6 text-sm font-semibold ${shown === 4 && settled ? 'pop' : 'scale-0 opacity-0'}`} style={{ animationDelay: '.45s' }}>
               {saving ? <Loader2 size={15} className="animate-spin" /> : null} Inizia <ArrowRight size={15} />
             </button>
             {error && <span className="text-sm text-red-600">{error}</span>}

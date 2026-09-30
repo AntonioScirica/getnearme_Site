@@ -462,7 +462,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
 // che la pagina finisse di caricare (immagini), valeva 0 e alcune card non scorrevano.
 
 // Miniatura della home del modello, in scala sulla larghezza della card
-function Thumb({ children }: { children: ReactNode }) {
+export function Thumb({ children }: { children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.3);
   useEffect(() => {
