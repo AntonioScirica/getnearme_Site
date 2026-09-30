@@ -75,7 +75,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   }, [demo]);
   const credits = useCredits();
   useEffect(() => {
-    authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
+    authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); setEditing(d.config.template); }); // si entra dritti nell'editor del modello in uso (scelto nell'onboarding); Tutti i modelli per cambiarlo
   }, []);
 
   // caricamento: scheletro con la stessa forma della pagina (titolo, indirizzo, schede, card dei modelli)
