@@ -26,6 +26,7 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
 
 const TRIAL = '/it/prova'; // pagina della prova, solo con l'account
+const TRIAL_LOGIN = `/it/accedi?next=/it/prova`; // Prova gratis: dritti al login e poi alla pagina della prova (se gia' dentro, l'accesso rimanda li')
 const TRIAL_KEY = 'agenteimmo:prova'; // foto e richiesta messe da parte prima del login
 const EXAMPLE = '/immo/home/demo-before.webp';
 const APP = '/it/dashboard'; // ponytail: la piattaforma per ora e' solo in italiano, anche dalla landing inglese
@@ -578,7 +579,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
               ? <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">Dashboard</Cta>
               : <>
                   <a href={APP} className="ml-auto hidden px-3 text-sm font-semibold text-ink sm:block md:ml-0">{L('Registrati', "Sign up")}</a>
-                  <Cta className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">{L('Prova gratis', "Try it free")}</Cta>
+                  <Cta href={TRIAL_LOGIN} className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">{L('Prova gratis', "Try it free")}</Cta>
                 </>}
           </nav>
         </div>
@@ -619,7 +620,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Stili già pronti per ogni stanza', "Ready-made styles for every room"), L('Svuoti la stanza o cambi un dettaglio scrivendolo, come in chat', "Empty the room or change a detail just by typing it, like in a chat"), L('Anche le planimetrie: a colori, in 3D dall\'alto o in bianco e nero', "Floor plans too: in colour, 3D from above or black and white"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <span className="hidden md:block"><Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
+            <span className="hidden md:block"><Cta href={TRIAL_LOGIN} className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right">
             <div className="parallax">
@@ -631,7 +632,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             </div>
           </Reveal>
           {/* su telefono i bottoni vanno sotto le immagini */}
-          <div className="flex justify-center pt-6 md:hidden"><Cta>{L('Prova gratis', "Try it free")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={TRIAL_LOGIN}>{L('Prova gratis', "Try it free")}</Cta></div>
         </div>
       </Band>
 
@@ -736,7 +737,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">{L('Il prossimo incarico, vincilo così.', "Win your next listing like this.")}</h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica una foto e guarda il risultato. Gratis.', "Upload a photo and see the result. Free.")}</p>
-            <a href="#prova" className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
+            <a href={TRIAL_LOGIN} className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
           </div>
         </Reveal>
       </section>
@@ -755,7 +756,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <div>
             <a href="#top" className="flex items-center justify-center gap-2 md:justify-start"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
             <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0 leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
-            <Cta className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
+            <Cta href={TRIAL_LOGIN} className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
           </div>
           {([
             [L('Prodotto', "Product"), [['#staging', 'Home staging'], ['#video', L('Video per i social', "Social videos")], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")], ['#domande', L('Domande frequenti', "FAQ")]]],
