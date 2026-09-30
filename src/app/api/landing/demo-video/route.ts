@@ -24,8 +24,9 @@ export async function POST(req: NextRequest) {
   const who = createHash('sha256').update(`${ip}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)
   const since = new Date(Date.now() - 86_400_000).toISOString()
   const count = async (mine: boolean) => {
-    let q = admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo_video').gte('created_at', since)
-    if (mine) q = q.eq('model', who)
+    // la prova e' una sola per IP, per sempre (30/09); il tetto di tutti resta giornaliero
+    let q = admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo_video')
+    q = mine ? q.eq('model', who) : q.gte('created_at', since)
     return (await q).count ?? 0
   }
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore

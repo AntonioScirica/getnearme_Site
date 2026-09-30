@@ -213,11 +213,14 @@ function TryIt() {
   const [text, setText] = useState(''); // richiesta scritta: se c'e', vince sullo stile
   const [busy, setBusy] = useState(false);
   const [left, setLeft] = useState(1);
-  // chi torna dopo aver usato la prova di oggi: al posto dell'esempio, i piani (?piani=1 per vederla in sviluppo)
+  // chi torna dopo aver usato la prova (una sola, per sempre): al posto dell'esempio, i piani (?piani=1 per vederla in sviluppo).
+  // Oltre al limite per IP del server, un segno nel browser: da un'altra rete sullo stesso computer non si riprova
   const [used, setUsed] = useState(false);
   useEffect(() => {
     const force = new URLSearchParams(location.search).has('piani');
-    fetch('/api/landing/demo').then(r => r.json()).then((d: { left?: number }) => { if (force || d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
+    let mark = false; try { mark = !!localStorage.getItem('agenteimmo:demo-used'); } catch { /* niente storage */ }
+    if (force || mark) { setUsed(true); setLeft(0); return; }
+    fetch('/api/landing/demo').then(r => r.json()).then((d: { left?: number }) => { if (d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
   }, []);
   const [msg, setMsg] = useState('');
   // secondo passo: la foto arredata diventa un video (1 al giorno, vedi /api/landing/demo-video)
@@ -245,8 +248,9 @@ function TryIt() {
     const d = await r?.json().catch(() => null) as { image?: string; url?: string; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
+    if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
     if (d?.image) { setPhotoUrl(d.url ?? null); setEmptied(style === 'empty' && !text.trim()); return setAfter(d.image); }
-    setMsg(d?.error === 'limit' ? L('Hai già fatto la prova di oggi. Crea l\'account per continuare.', "You've used today's free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
+    setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
   const keep = (withVideo: boolean) => {
@@ -258,7 +262,7 @@ function TryIt() {
   const toVideo = async (anim: 'popup' | 'gravity', vanish = false) => {
     if (!after || vBusy) return;
     setPicking(false); setVBusy(true); setMsg('');
-    const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova oggi. Crea l\'account per farne altri.', "You've made today's free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
+    const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova. Crea l\'account per farne altri.', "You've made your free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
     const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, mock: simulate() } : { image: after, anim, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
@@ -332,7 +336,7 @@ function TryIt() {
                 <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className={BOX} />
                 {used && (
                   <div className="blur-in absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/40 p-6 text-center backdrop-blur-md">
-                    <div className="max-w-md font-display text-2xl font-extrabold tracking-tight text-white md:text-3xl">{L('Hai già usato la prova gratis di oggi', "You've used today's free try")}</div>
+                    <div className="max-w-md font-display text-2xl font-extrabold tracking-tight text-white md:text-3xl">{L('Hai già usato la prova gratis', "You've used your free try")}</div>
                     <p className="max-w-sm text-sm text-white/80">{L('Con un piano arredi tutte le tue case, fai i video e pubblichi il tuo sito.', "With a plan you stage all your homes, make videos and publish your website.")}</p>
                     <a href="#prezzi" className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03]">{L('Vedi i piani', "See the plans")} <ArrowRight size={16} /></a>
                   </div>
@@ -369,7 +373,7 @@ function TryIt() {
               ))}
               {/* ci sono altri stili (nella piattaforma): la pillola non fa nulla */}
               <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
-              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
+              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova gratis usata', "Free try used") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>}
           </div>
         </div>
