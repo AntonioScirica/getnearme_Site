@@ -323,6 +323,7 @@ function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void
     // pagina /prova (gia' dentro): si scaricano subito i file puliti a piena risoluzione (gettone -> indirizzo)
     if (!gate) {
       setSaving(true);
+      const t0 = Date.now();
       const u = photoToken || videoToken ? await fetch('/api/platform/demo-claim', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ photo: photoToken, video: withVideo ? videoToken : null }) }).then(r => (r.ok ? r.json() : null)).catch(() => null) as { photo?: string | null; video?: string | null } | null : null;
       const save = async (url: string, name: string) => {
         try {
@@ -334,6 +335,7 @@ function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void
       const photo = u?.photo ?? after, vid = withVideo ? u?.video ?? video : null; // senza gettone (simulazione): l'anteprima
       if (photo) await save(photo, 'agenteimmo-foto.jpg');
       if (vid) await save(vid, 'agenteimmo-video.mp4');
+      await new Promise(r => setTimeout(r, Math.max(0, 1200 - (Date.now() - t0)))); // la barra si chiude e riapre per intero (600 + 600 ms)
       return setSaving(false);
     }
     try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photoToken, videoToken: withVideo ? videoToken : null })); } catch { /* spazio pieno: si entra comunque */ }
@@ -434,8 +436,9 @@ function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void
             )}
             <input ref={input} type="file" accept="image/*" className="hidden" onChange={e => { pick(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
-          {/* mentre l'AI arreda o fa il video niente campo, stili e bottoni */}
-          {!busy && !vBusy && <div className="px-1.5 pb-2 pt-3 sm:p-3">
+          {/* mentre l'AI arreda o fa il video niente campo, stili e bottoni (inert: non si scrive) */}
+          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${busy || vBusy || saving ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]'}`}><div inert={busy || vBusy || saving} className="min-h-0 overflow-hidden">{/* si chiude (e riapre) con un movimento, il riquadro si stringe piano */}
+          <div className="px-1.5 pb-2 pt-3 sm:p-3">
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 [&:has(input:focus)]:bg-white [&:has(input:focus)]:ring-2 [&:has(input:focus)]:ring-ai sm:flex-nowrap">
               {!after && <>
               <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
@@ -467,7 +470,8 @@ function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void
               <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
               <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova gratis usata', "Free try used") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>}
-          </div>}
+          </div>
+          </div></div>
         </div>
         {after && (video || emptied) && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social.', "Photo and video ready for your listing and socials.") : emptied ? L('Ora fai il video in cui i mobili spariscono, gratis.', "Now make the video where the furniture disappears, free.") : null}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
