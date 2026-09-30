@@ -4,7 +4,7 @@
 const R2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
 const REELS = 'https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/content';
 export const VIDEO_SAMPLES = {
-  popup: `${REELS}/social-videos/2026-07-09_stopmotion_story.mp4`,
+  popup: '/staging/videos/prima-dopo.mp4', // reel del salotto ritagliato: senza la scritta STOP MOTION e il marchio GetNearMe (30/09)
   gravity: `${R2}/F9_gravity.mp4`,
   particles: `${REELS}/social-frames/90917b29-e0ff-425b-b3f0-45fa303c6f9d/reveal.mp4`,
   stopmotion: '/staging/videos/stopmotion_room_v2.mp4',
