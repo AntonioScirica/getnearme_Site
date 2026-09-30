@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
-import { mkdtemp, readFile, rm, writeFile } from 'fs/promises'
-import { tmpdir } from 'os'
-import { join } from 'path'
-import sharp from 'sharp'
 import { deleteKeys, uploadFile } from '@/lib/r2'
-import { sealKey, watermarkPng } from '@/lib/demoProtect'
+import { sealKey } from '@/lib/demoProtect'
 import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
 import { alertCapReached } from '@/lib/landingAlert'
-import { ffmpeg, pollVideo, startVideo } from '@/lib/videoJob'
+import { pollVideo, startVideo } from '@/lib/videoJob'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -78,24 +74,15 @@ export async function GET(req: NextRequest) {
   if (ready?.url) return NextResponse.json(ready)
   const { status, fresh: _f, id: _i, ...r } = await pollVideo(OWNER, job)
   if (status === 'working' || !r.url) return NextResponse.json(status === 'working' ? { status } : r, typeof status === 'number' ? { status } : undefined)
-  // montato: copia con la filigrana (quella che si vede), il pulito a una chiave casuale (dopo il login, DemoDownload)
-  const dir = await mkdtemp(join(tmpdir(), 'demo-wm-'))
-  try {
-    const src = join(dir, 'in.mp4'), wm = join(dir, 'wm.png'), out = join(dir, 'out.mp4')
+  // montato: niente filigrana (la prova si fa solo con l'account, 30/09); il video a una chiave casuale, il gettone per
+  // lo scarico dalla piattaforma (DemoDownload) resta uguale
+  {
     const clean = Buffer.from(await (await fetch(r.url)).arrayBuffer())
-    await writeFile(src, clean)
-    const probe = await ffmpeg(['-i', src, '-frames:v', '1', '-f', 'image2', '-c:v', 'png', '-'])
-    const { width = 1280, height = 720 } = await sharp(probe).metadata()
-    await writeFile(wm, await watermarkPng(width, height))
-    await ffmpeg(['-y', '-i', src, '-i', wm, '-filter_complex', '[0:v][1:v]overlay=0:0,format=yuv420p[v]', '-map', '[v]', '-map', '0:a?', '-c:v', 'libx264', '-crf', '23', '-preset', 'veryfast', '-c:a', 'copy', '-movflags', '+faststart', out])
     const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.mp4`
-    await uploadFile(clean, cleanKey, 'video/mp4')
-    const url = await uploadFile(await readFile(out), `videos/${OWNER}/${name}-wm-${randomBytes(4).toString('hex')}.mp4`, 'video/mp4')
+    const url = await uploadFile(clean, cleanKey, 'video/mp4')
     const res = { url, token: sealKey(cleanKey) }
     await uploadFile(Buffer.from(JSON.stringify(res)), meta, 'application/json')
     await deleteKeys([`videos/${OWNER}/${name}.mp4`]).catch(() => {})
     return NextResponse.json(res)
-  } finally {
-    rm(dir, { recursive: true, force: true }).catch(() => {})
   }
 }

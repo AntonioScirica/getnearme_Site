@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
 import { uploadJpeg } from '@/lib/r2'
-import { sealKey, watermarkImage } from '@/lib/demoProtect'
+import { sealKey } from '@/lib/demoProtect'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import sharp from 'sharp'
@@ -58,9 +58,8 @@ export async function POST(req: NextRequest) {
   // simulazione (?simula=1 sulla landing, solo IP senza limiti o sviluppo): nessuna AI, foto d'esempio dopo 3 s
   if (free && body?.mock === true) {
     await new Promise(r => setTimeout(r, 3000))
-    // anche la simulazione con la filigrana, come la prova vera
     const ex = await sharp(await readFile(join(process.cwd(), 'public/immo/home/demo-after.webp'))).jpeg({ quality: 88 }).toBuffer()
-    return NextResponse.json({ image: `data:image/jpeg;base64,${(await watermarkImage(ex)).toString('base64')}`, token: null, left: 99 })
+    return NextResponse.json({ image: `data:image/jpeg;base64,${ex.toString('base64')}`, token: null, left: 99 })
   }
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) { await alertCapReached(admin, 'foto', PER_DAY); return NextResponse.json({ error: 'busy' }, { status: 429 }) }
@@ -87,7 +86,7 @@ export async function POST(req: NextRequest) {
   const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.jpg`
   const saved = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), cleanKey).then(() => true, () => false)
   const small = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 88 }).toBuffer()
-  const out = await watermarkImage(small)
+  const out = small // niente filigrana: la prova si fa solo con l'account (30/09)
   return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, token: saved ? sealKey(cleanKey) : null, left: free ? 99 : PER_IP - used - 1 })
 }
 
