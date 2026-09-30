@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { locales } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
 import { GUIDES, guideBySlug } from '@/lib/guides';
+import ProvvigioneCalc from '@/components/ProvvigioneCalc';
 
 // Guide SEO su /it/<slug> (pilastro "agente immobiliare" + satelliti), solo in italiano.
 // Le rotte statiche sotto [locale] hanno la precedenza: qui arrivano solo gli slug delle guide.
@@ -68,7 +69,9 @@ export default async function Page({ params }: Props) {
       { '@type': 'FAQPage', mainEntity: g.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
     ],
   };
-  const related = GUIDES.filter(x => x.slug !== g.slug);
+  // le 6 guide che seguono nell'elenco (a giro): ogni guida ne linka altre, tutte ricevono link senza liste infinite
+  const at = GUIDES.indexOf(g);
+  const related = Array.from({ length: Math.min(6, GUIDES.length - 1) }, (_, i) => GUIDES[(at + 1 + i) % GUIDES.length]);
 
   return (
     <div className={`${platformFontVars} min-h-screen bg-white font-body text-ink`}>
@@ -106,6 +109,7 @@ export default async function Page({ params }: Props) {
             <section key={s.id} id={s.id} className="scroll-mt-8">
               <h2>{s.title}</h2>
               <div dangerouslySetInnerHTML={{ __html: s.html }} />
+              {g.slug === 'provvigione-agente-immobiliare' && s.id === 'calcolo' && <ProvvigioneCalc />}
               {/* a meta' guida (dopo la 2a e la 4a sezione) un invito a provare sulla home */}
               {(i === 1 || i === 3) && i < g.sections.length - 1 && <TryCard compact />}
             </section>

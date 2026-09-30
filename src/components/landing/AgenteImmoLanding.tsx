@@ -34,7 +34,7 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
 
 const TRIAL_KEY = 'agenteimmo:prova'; // foto e richiesta messe da parte prima del login
-const EXAMPLE = '/immo/home/demo-before.webp';
+const EXAMPLE = '/immo/home/demo-after.webp'; // si modifica la stanza finita dell'esempio, non il cantiere
 
 // Lingua della landing (it su /it, en su /en): L('testo italiano', "English text") accanto nel codice.
 export type LandingLang = 'it' | 'en';
@@ -233,18 +233,32 @@ const simulate = () => { const q = new URLSearchParams(location.search); return 
 // Barra di avanzamento finta: sale veloce e rallenta, a secs (tempo tipico) e' a ~80%, non arriva mai a 100 da sola
 // (quando il risultato e' pronto la barra sparisce). Tempi veri da ai_usage: foto GPT 14-17 s (+ caricamento),
 // video Prima e dopo ~2 min (come in chat).
-function FakeBar({ secs }: { secs: number }) {
+export function FakeBar({ secs, title, sub }: { secs: number; title: string; sub: string }) {
   const [p, setP] = useState(0);
   useEffect(() => {
     const t0 = Date.now();
     const id = setInterval(() => setP(95 * (1 - Math.exp(-((Date.now() - t0) / 1000) / (secs * 0.6)))), 250);
     return () => clearInterval(id);
   }, [secs]);
-  return <div className="h-1.5 w-56 overflow-hidden rounded-full bg-white/70 shadow"><div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>;
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-white/30 p-4 backdrop-blur-[3px]">
+      <div className="blur-in w-full max-w-[20rem] rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_rgba(0,0,0,.04),0_24px_60px_-20px_rgba(0,0,0,.35)]">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand"><Sparkles size={18} className="animate-pulse" /></span>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-ink">{title}</div>
+            <div className="text-xs text-muted">{sub}</div>
+          </div>
+          <span className="text-xs font-semibold tabular-nums text-muted">{Math.round(p)}%</span>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>
+      </div>
+    </div>
+  );
 }
 
 // riquadro della prova: sempre le stesse dimensioni, qualunque sia la foto
-const BOX = 'aspect-[4/3] md:aspect-[16/10]';
+const BOX = 'aspect-[4/3] md:aspect-video'; // 16:9 come le foto d'esempio: il riquadro e' alto quanto la foto
 
 // gate (landing): la foto d'esempio c'e' gia', ogni azione (invio, Arreda, carica) porta al login e poi alla pagina /prova
 function TryIt({ gate = false }: { gate?: boolean }) {
@@ -339,7 +353,6 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     // pagina /prova (gia' dentro): si scaricano subito i file puliti a piena risoluzione (gettone -> indirizzo)
     if (!gate) {
       setSaving(true);
-      const t0 = Date.now();
       const u = photoToken || videoToken ? await fetch('/api/platform/demo-claim', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ photo: photoToken, video: withVideo ? videoToken : null }) }).then(r => (r.ok ? r.json() : null)).catch(() => null) as { photo?: string | null; video?: string | null } | null : null;
       const save = async (url: string, name: string) => {
         try {
@@ -351,8 +364,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
       const photo = u?.photo ?? after, vid = withVideo ? u?.video ?? video : null; // senza gettone (simulazione): l'anteprima
       if (photo) await save(photo, 'agenteimmo-foto.jpg');
       if (vid) await save(vid, 'agenteimmo-video.mp4');
-      await new Promise(r => setTimeout(r, Math.max(0, 1200 - (Date.now() - t0)))); // la barra si chiude e riapre per intero (600 + 600 ms)
-      return setSaving(false);
+            return setSaving(false);
     }
     try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photoToken, videoToken: withVideo ? videoToken : null })); } catch { /* spazio pieno: si entra comunque */ }
     window.location.href = APP;
@@ -416,23 +428,13 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                     </div>
                   </div>
                 )}
-                {vBusy && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
-                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">{L('Stiamo facendo il video, circa 2 minuti', "Making your video, about 2 minutes")}</span>
-                    <FakeBar secs={120} />
-                  </div>
-                )}
+                {vBusy && <FakeBar secs={120} title={L('Stiamo facendo il video', "Making your video")} sub={L('Circa 2 minuti, puoi restare qui', "About 2 minutes, stay on this page")} />}
               </div>
             ) : before ? (
               <div className={`relative overflow-hidden ${BOX}`}>
                 <img src={before} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />
                 <img src={before} alt={L('La tua foto', "Your photo")} className="absolute inset-0 h-full w-full object-contain" />
-                {busy && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
-                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">{L('L\'AI sta arredando la stanza, circa 20 secondi', "AI is staging the room, about 20 seconds")}</span>
-                    <FakeBar secs={22} />
-                  </div>
-                )}
+                {busy && <FakeBar secs={22} title={L('L\'AI sta arredando la stanza', "AI is staging the room")} sub={L('Circa 20 secondi', "About 20 seconds")} />}
               </div>
             ) : !gate && !used ? (
               <div className={BOX} /> // pagina /prova: la foto arriva tra un attimo, niente esempio nel frattempo
@@ -454,7 +456,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
             <input ref={input} type="file" accept="image/*" className="hidden" onChange={e => { pick(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
           {/* mentre l'AI arreda o fa il video niente campo, stili e bottoni (inert: non si scrive) */}
-          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${busy || vBusy || saving ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]'}`}><div inert={busy || vBusy || saving} className="min-h-0 overflow-hidden">{/* si chiude (e riapre) con un movimento, il riquadro si stringe piano */}
+          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${busy || vBusy ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]'}`}><div inert={busy || vBusy} className="min-h-0 overflow-hidden">{/* si chiude (e riapre) con un movimento, il riquadro si stringe piano */}
           <div className="px-1.5 pb-2 pt-3 sm:p-3">
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 [&:has(input:focus)]:bg-white [&:has(input:focus)]:ring-2 [&:has(input:focus)]:ring-ai sm:flex-nowrap">
               {!after && <>
@@ -465,13 +467,13 @@ function TryIt({ gate = false }: { gate?: boolean }) {
               {after
                 ? video
                   ? <div className="grid w-full grid-cols-2 gap-2">{/* video fatto: si scarica o si compra */}
-                      <button type="button" disabled={saving} onClick={() => keep(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica tutto', "Download all")}</button>
+                      <button type="button" disabled={saving} onClick={() => keep(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{saving ? <Loader2 size={15} className="animate-spin" /> : L('Scarica tutto', "Download all")}</button>
                       <a href="#prezzi" className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ink px-4 text-sm font-semibold text-white hover:bg-black">{L('Acquista ora', "Buy now")}</a>
                     </div>
                   // foto arredata: si guarda, poi Scarica o Crea video (che apre i modelli nel riquadro)
                   : vBusy ? null // mentre si crea il video niente scarico della sola foto
                   : <div className="grid w-full grid-cols-2 gap-2">
-                      <button type="button" disabled={saving} onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica foto', "Download photo")}</button>
+                      <button type="button" disabled={saving} onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{saving ? <Loader2 size={15} className="animate-spin" /> : L('Scarica foto', "Download photo")}</button>
                       {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
                       <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-brand px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Crea video', "Create video")}</button>
                     </div>
@@ -833,7 +835,7 @@ function Trial() {
       <section id="prova" className="mx-auto flex min-h-[calc(100svh-4.5rem)] max-w-4xl flex-col justify-center px-4 py-6">
         <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
-        <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.6))' }}><TryIt /></div>
+        <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.78))' }}><TryIt /></div>
       </section>
       <div className="h-16 md:h-24" />{/* spazio prima della fascia grigia dei prezzi */}
       <Pricing />

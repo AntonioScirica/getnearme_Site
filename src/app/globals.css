@@ -527,6 +527,8 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .guide ul, .guide ol { margin-top: 1rem; padding-left: 1.25rem; font-size: 1.0625rem; line-height: 1.7; color: #333; }
 .guide ul { list-style: disc; } .guide ol { list-style: decimal; }
 .guide li { margin-top: .5rem; } .guide strong { color: #222; font-weight: 600; }
+.guide p a, .guide li a { color: var(--color-brand); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.guide table { margin-top: 1rem; }
 
 /* Landing: testo che entra dal suo lato, foto in parallasse mentre si scorre (solo dove il browser lo sa fare) */
 .in-left { animation: gnm-in-left var(--gnm-dur) var(--gnm-ease) both; }

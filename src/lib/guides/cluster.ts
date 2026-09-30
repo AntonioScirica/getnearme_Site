@@ -69,11 +69,11 @@ export const comeDiventare: Guide = {
 export const provvigione: Guide = {
   slug: 'provvigione-agente-immobiliare',
   label: 'Provvigione dell\'agente immobiliare',
-  title: 'Provvigione agente immobiliare: quanto è, quando si paga, chi la paga',
-  description: 'La provvigione dell\'agente immobiliare spiegata semplice: quanto vale di solito, quando matura secondo il Codice civile, chi la paga, IVA ed esempi di calcolo.',
+  title: 'Provvigione agente immobiliare: quanto è e calcolo (con IVA)',
+  description: 'Provvigione dell\'agente immobiliare: quanto vale di solito, quando matura, chi la paga e un calcolatore gratuito con IVA per venditore e acquirente.',
   h1: 'Provvigione dell\'agente immobiliare: quanto è, quando matura e chi la paga',
   intro: 'Come funziona il compenso dell\'agente immobiliare: percentuali più comuni, il momento in cui la provvigione è dovuta, cosa succede se l\'affare salta e come si calcola.',
-  updated: '2026-09-27',
+  updated: '2026-09-30',
   sections: [
     {
       id: 'quanto',
