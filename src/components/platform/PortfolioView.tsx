@@ -509,10 +509,10 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
               className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
           ))}
         </div>
-        {/* interruttore ben visibile: icone, Modifica in blu quando attivo */}
-        <div className="ml-auto flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/10">
+        {/* stesse misure di prima, piu' visibile: icone e colore pieno su quello attivo (Modifica in blu) */}
+        <div className="ml-auto flex items-center rounded-full bg-canvas p-0.5">
           {([[false, 'Naviga', Eye], [true, 'Modifica', Pencil]] as const).map(([v, l, I]) => (
-            <button key={l} onClick={() => setEditMode(v)} className={`flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:bg-canvas hover:text-ink'}`}><I size={15} /> {l}</button>
+            <button key={l} onClick={() => setEditMode(v)} className={`flex items-center gap-1 rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
           ))}
         </div>
       </div>
