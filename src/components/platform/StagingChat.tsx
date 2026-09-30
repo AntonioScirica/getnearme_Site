@@ -577,7 +577,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       if (await agentRoom(nm)) patchV(m.id, { step: 'room' });
       return;
     }
-    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: 'Cerco il momento in cui esci dall’inquadratura…' } });
+    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: 'Riconosco il punto di uscita…' } });
     try {
       const g = await videoGrid(ag.video);
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
@@ -890,6 +890,20 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       const a = m.agent, raw = a?.video ? thumbs[a.video] ?? [] : [], dead = raw[0] === 'dead', list = dead ? [] : raw, dur = a?.duration ?? 10, at = a?.at ?? 0;
                       const pos = Math.min(100, Math.max(0, (at / dur) * 100));
                       const step = (d: number) => patchV(m.id, { agent: { ...a, at: Math.min(dur, Math.max(0, Math.round((at + d) * 100) / 100)) } });
+                      // passo a parte mentre si cerca l'uscita: il video che gira e cosa sta succedendo (poi la scelta del momento)
+                      if (a?.busy && a.at === undefined) return (
+                        <div className="mx-auto max-w-2xl px-1">
+                          <div className="relative aspect-video overflow-hidden rounded-[28px] bg-ink shadow-sm">
+                            {a.video && <video src={a.video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-xl" />}
+                            {a.video && <video src={a.video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" />}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/35 px-6 text-center text-white">
+                              <Loader2 size={26} className="animate-spin" />
+                              <p className="text-[15px] font-semibold">Sto riconoscendo il momento in cui esci dall’inquadratura</p>
+                              <p className="text-xs text-white/75">Ci vogliono pochi secondi, poi potrai correggerlo</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
                       return (
                         // anteprima sempre sopra in un riquadro 16:9 (il verticale intero, con lo sfondo sfocato), sotto la card
                         <div className="mx-auto grid max-w-2xl gap-4 px-1">
