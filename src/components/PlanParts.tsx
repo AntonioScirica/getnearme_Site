@@ -22,7 +22,7 @@ export function SiteIncluded({ en, slug }: { en?: boolean; slug?: string | null 
   return (
     <div className="mt-6 border-t border-line pt-6">
       <div className="font-display text-xl font-extrabold tracking-tight">{en ? 'Your website included' : 'Il tuo sito incluso'}</div>
-      <div className="mt-1 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">{slug || (en ? 'yourname' : 'tuonome')}</span>, {en ? 'ready-made' : 'già pronto'}</div>
+      <div className="mt-1 text-[15px] text-muted">agenteimmo.me/<span className="font-medium text-ink">{slug || (en ? 'yourname' : 'tuonome')}</span>, {en ? 'ready-made' : 'già pronto'}</div>
       <ul className="mt-4 list-disc space-y-2.5 pl-5 text-[15px] marker:text-muted">
         {SITE_PERKS.map(([, l, e]) => <li key={l}>{en ? e : l}</li>)}
       </ul>
