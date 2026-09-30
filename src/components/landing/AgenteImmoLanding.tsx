@@ -494,7 +494,7 @@ function Pricing() {
     <Band tone="canvas">
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>{L('Prezzi', "Pricing")}</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L(`Tutto quello che ti serve, da ${PRICING.starter} € al mese.`, `Everything you need, from €${PRICING.starter} a month.`)}</h2>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Tutto quello che ti serve,', 'Everything you need,')}<br />{L(`da ${PRICING.starter} € al mese.`, `from €${PRICING.starter} a month.`)}</h2>
         <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', "Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.")}</p>
       </Reveal>
       {/* #prezzi porta dritto ai pacchetti (non al titolo della sezione) */}
