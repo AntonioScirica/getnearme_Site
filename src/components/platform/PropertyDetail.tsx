@@ -229,14 +229,14 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
         {photos.length > 0 && (
           <section className="rounded-2xl bg-canvas p-3">
-            <div className="flex items-baseline justify-between"><h3 className="text-sm font-semibold">Foto</h3><span className="text-xs text-muted">{photos.length}</span></div>
-            {/* tutte le foto sempre in vista (alcuni modelli ne mostrano una sola): la prima grande, sotto le altre a scorrimento */}
-            <div className="relative mt-2 overflow-hidden rounded-xl">
-              <img src={photos[0]} alt="" className="aspect-[16/10] w-full object-cover" />
-              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold shadow"><Star size={11} className="fill-amber-400 text-amber-400" /> Copertina</span>
-            </div>
-            <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
-              {photos.slice(1).map(src => <img key={src} src={src} alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover ring-1 ring-black/5" />)}
+            <div className="flex items-center gap-3">
+              <span className="flex shrink-0 -space-x-3">
+                {photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className="h-12 w-12 rounded-xl object-cover ring-2 ring-canvas" style={{ zIndex: 3 - i }} />)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">Le foto</span>
+                <span className="block text-xs text-muted">{photos.length} foto · ordine, copertina e AI</span>
+              </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> Riordina</button>
