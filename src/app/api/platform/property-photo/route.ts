@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
   } else if (b.mode === 'cover') {
     if (!isUrl(b.photo) || !photos.includes(b.photo)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     cover = b.photo
+    photos = [b.photo, ...photos.filter(x => x !== b.photo)] // la copertina diventa anche la prima foto della galleria
   }
   // solo coppie ancora presenti
   for (const k of Object.keys(prima)) if (!photos.includes(k)) delete prima[k]

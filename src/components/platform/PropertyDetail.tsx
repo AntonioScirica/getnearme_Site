@@ -20,6 +20,19 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const [draft, setDraft] = useState<Partial<ProjectData> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const credits = useCredits();
+  const [savingProp, setSavingProp] = useState(false);
+  const grid = useRef<HTMLDivElement>(null);
+  const [gridH, setGridH] = useState<number>();
+  useEffect(() => {
+    if (!editing) return;
+    grid.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // la zona di modifica sale sotto l'intestazione
+    const fit = () => { const el = grid.current; if (el) setGridH(Math.max(420, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
+    fit();
+    const t = setTimeout(fit, 700); // dopo lo scorrimento
+    window.addEventListener('resize', fit);
+    window.addEventListener('scroll', fit, true);
+    return () => { clearTimeout(t); window.removeEventListener('resize', fit); window.removeEventListener('scroll', fit, true); };
+  }, [editing]);
   const sitePlan = !credits || credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'; // come in Il mio sito // foto su cui si sta lavorando (copertina, togli) // dati in modifica: la pagina del sito si aggiorna mentre si scrive
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
@@ -43,7 +56,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       setBusy(src);
       const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: action, photo: src }) }).catch(() => null);
       setBusy(null);
-      if (r?.ok) onChange();
+      if (r?.ok) onChange(); else alert(action === 'cover' ? 'Non sono riuscito a mettere la copertina, riprova.' : 'Non sono riuscito a togliere la foto, riprova.');
     },
     onField: async (k, v) => {
       const val = k === 'prezzo' ? Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) : v.trim();
@@ -57,7 +70,10 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Immobili</a>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ease-smooth transition-colors hover:bg-canvas disabled:opacity-60 ${report === 'err' ? 'ring-rose-300 text-rose-700' : 'ring-black/10'}`}>{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} {report === 'busy' ? 'Preparo il report…' : 'Scarica report'}</button>
-          <button type="button" onClick={() => setEditing(true)} className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><Pencil size={14} /> Modifica</button>
+          {/* in modifica il pulsante diventa Salva (salva la barra a sinistra); la X della barra annulla */}
+          {editing
+            ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:save-property'))} className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">{savingProp && <Loader2 size={14} className="animate-spin" />} Salva</button>
+            : <button type="button" onClick={() => setEditing(true)} className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><Pencil size={14} /> Modifica</button>}
         </div>
       </div>
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
@@ -74,11 +90,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         {sitePlan && project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
       </div>
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
-      <div className={`mt-8 grid items-start gap-6 ${editing ? 'lg:grid-cols-[360px_minmax(0,1fr)]' : ''}`}>
-        {editing && <EditProperty project={project} onDraft={setDraft} onClose={() => { setEditing(false); setDraft(null); }} onSaved={() => { setEditing(false); setDraft(null); onChange(); }} />}
-        {site?.config ? <SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
+      {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
+      <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
+        {editing && <EditProperty project={project} onBusy={setSavingProp} onDraft={setDraft} onClose={() => { setEditing(false); setDraft(null); }} onSaved={() => { setEditing(false); setDraft(null); onChange(); }} />}
+        {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
-      {typeof extra.score === 'number' && (
+      {!editing && typeof extra.score === 'number' && (
         <section className="mt-10 card p-6">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Qualità dell&apos;annuncio</h2><span className="font-display text-2xl font-bold text-ai">{extra.score}/100</span></div>
           {!!extra.suggerimenti?.length && <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">{extra.suggerimenti.map(s => <li key={s}>{s}</li>)}</ul>}
@@ -121,18 +138,8 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 // Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
-function EditProperty({ project, onClose, onSaved, onDraft }: { project: ProjectData; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void }) {
+function EditProperty({ project, onClose, onSaved, onDraft, onBusy }: { project: ProjectData; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; onBusy: (b: boolean) => void }) {
   const panel = useRef<HTMLDivElement>(null);
-  // altezza = dal punto in cui sta la barra fino al fondo dello schermo (meno 24 px): i bottoni sono sempre in vista.
-  // Si ricalcola scorrendo (la barra e' ferma in alto solo dopo un po') e ridimensionando la finestra.
-  const [maxH, setMaxH] = useState<number>();
-  useEffect(() => {
-    const fit = () => { const el = panel.current; if (el) setMaxH(Math.max(320, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
-    fit();
-    window.addEventListener('scroll', fit, true);
-    window.addEventListener('resize', fit);
-    return () => { window.removeEventListener('scroll', fit, true); window.removeEventListener('resize', fit); };
-  }, []);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -140,11 +147,16 @@ function EditProperty({ project, onClose, onSaved, onDraft }: { project: Project
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
   const set = (k: string, x: string) => setV(o => { const nv = { ...o, [k]: x }; onDraft(toUp(nv)); return nv; });
   const save = async () => {
-    setBusy(true); setErr('');
+    if (busy) return;
+    setBusy(true); onBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
-    setBusy(false);
+    setBusy(false); onBusy(false);
     if (r) onSaved(); else setErr('Salvataggio non riuscito, riprova.');
   };
+  // Salva in alto (al posto di Modifica)
+  const saveRef = useRef(save);
+  useEffect(() => { saveRef.current = save; });
+  useEffect(() => { const on = () => void saveRef.current(); window.addEventListener('agenteimmo:save-property', on); return () => window.removeEventListener('agenteimmo:save-property', on); }, []);
   const input = 'mt-1 h-10 w-full rounded-xl bg-canvas px-3 text-sm outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand';
   const field = (k: keyof ProjectData) => {
     const f = FIELDS.find(x => x.k === k)!;
@@ -155,9 +167,10 @@ function EditProperty({ project, onClose, onSaved, onDraft }: { project: Project
     );
   };
   return (
-    <div ref={panel} style={{ maxHeight: maxH }} className="blur-in flex flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:sticky lg:top-24">
+    <div ref={panel} className="blur-in flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-bold">Modifica immobile</h2>
+        {err && <span className="ml-auto mr-2 text-sm text-rose-600">{err}</span>}
         <button type="button" onClick={onClose} aria-label="Chiudi" className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
@@ -167,16 +180,11 @@ function EditProperty({ project, onClose, onSaved, onDraft }: { project: Project
             <div className="mt-2 grid grid-cols-2 gap-3">{keys.map(field)}</div>
             {title === 'Annuncio' && (
               <label className="mt-3 block text-xs font-medium text-muted">Descrizione
-                <textarea value={v.descrizione} onChange={e => set('descrizione', e.target.value)} rows={7} maxLength={8000} className="mt-1 w-full rounded-xl bg-canvas px-3 py-2.5 text-sm leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
+                <textarea value={v.descrizione} onChange={e => set('descrizione', e.target.value)} rows={7} maxLength={8000} className="mt-1 w-full resize-none rounded-xl bg-canvas px-3 py-2.5 text-sm leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
               </label>
             )}
           </section>
         ))}
-      </div>
-      <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
-        {err && <span className="mr-auto text-sm text-rose-600">{err}</span>}
-        <button type="button" onClick={onClose} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
-        <button type="button" onClick={save} disabled={busy} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:opacity-50">{busy && <Loader2 size={15} className="animate-spin" />} Salva</button>
       </div>
     </div>
   );
