@@ -141,7 +141,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
                   <div className="font-display text-2xl font-extrabold tracking-tight">{fmt(p.credits)} {tr('crediti', 'credits')}</div>
                   <div className="text-sm text-muted">{tr(`${photosFor(p.credits)} foto o ${videosFor(p.credits)} video`, `${photosFor(p.credits)} photos or ${videosFor(p.credits)} videos`)}</div>
                 </div>
-                <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {eur(p.eur)}</button>
+                <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {eur(p.eur)}</button>
               </div>
             ))}
           </div>
