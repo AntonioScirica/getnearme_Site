@@ -6,6 +6,7 @@ import { readFile } from 'fs/promises'
 import { join } from 'path'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
+import { alertCapReached } from '@/lib/landingAlert'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
 import { STYLE_LOOK } from '@/lib/stagingPrompts'
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ image: `data:image/jpeg;base64,${(await watermarkImage(ex)).toString('base64')}`, token: null, left: 99 })
   }
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
-  if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
+  if (all >= PER_DAY) { await alertCapReached(admin, 'foto', PER_DAY); return NextResponse.json({ error: 'busy' }, { status: 429 }) }
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
   const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
   // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)

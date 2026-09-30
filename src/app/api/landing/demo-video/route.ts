@@ -7,6 +7,7 @@ import sharp from 'sharp'
 import { deleteKeys, uploadFile } from '@/lib/r2'
 import { sealKey, watermarkPng } from '@/lib/demoProtect'
 import { createClient } from '@supabase/supabase-js'
+import { alertCapReached } from '@/lib/landingAlert'
 import { ffmpeg, pollVideo, startVideo } from '@/lib/videoJob'
 
 export const runtime = 'nodejs'
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
   // simulazione (solo IP senza limiti o sviluppo): nessuna AI, il GET risponde con un video d'esempio
   if (body?.mock === true) return free ? NextResponse.json({ job: 'mock' }) : NextResponse.json({ error: 'bad_image' }, { status: 400 })
   if (used >= PER_IP) return NextResponse.json({ error: 'limit' }, { status: 429 })
-  if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
+  if (all >= PER_DAY) { await alertCapReached(admin, 'video', PER_DAY); return NextResponse.json({ error: 'busy' }, { status: 429 }) }
   const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
   // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)
   if (!free && slot && dev) await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter-fp', model: dev, duration_ms: 0, cost_usd: 0, ok: true } as never)
