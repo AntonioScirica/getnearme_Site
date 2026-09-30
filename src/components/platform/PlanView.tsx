@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Coins, Loader2, Sparkles, X } from 'lucide-react';
+import { Check, Coins, Loader2, Sparkles, UserRound, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
@@ -26,15 +26,28 @@ export function useCredits(): Credits | null {
 // Pillola in alto: crediti rimasti, porta alla pagina del piano
 // pochi crediti: sotto il 15% del mese o sotto il costo di un video (con un piano attivo)
 export const isLow = (c: Credits) => !c.unlimited && c.plan !== 'none' && (c.balance < Math.max(75, Math.round(c.monthly * 0.15)));
+// Pillola in alto: crediti (porta alla pagina del piano) e, attaccata, l'icona del profilo (porta a Il mio profilo)
 export function CreditsPill() {
   const c = useCredits();
   if (!c) return null;
   const low = isLow(c);
+  const profile = <a href="#/profilo" aria-label="Il mio profilo" title="Il mio profilo" className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
+  // senza piano: Scegli un piano in nero, il profilo accanto
+  if (c.plan === 'none' && !c.unlimited) return (
+    <span className="flex items-center gap-2">
+      <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">Scegli un piano</a>
+      <span className="flex h-10 items-center rounded-full bg-white px-1 ring-1 ring-line">{profile}</span>
+    </span>
+  );
   return (
-    <a href="#/piano" title={c.unlimited || c.plan === 'none' ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 ease-smooth transition-shadow hover:shadow-md ${c.plan === 'none' && !c.unlimited ? 'bg-ink text-white ring-ink hover:bg-black' : low ? 'bg-white ring-amber-300 text-amber-700' : 'bg-white ring-line'}`}>{/* senza piano: Scegli un piano in nero (e Metti in vetrina sparisce, PlatformApp) */}
-      {/* numero e moneta, senza la parola "crediti" */}
-      {c.unlimited ? <><Coins size={15} className="text-ai" /> Illimitati</> : c.plan === 'none' ? 'Scegli un piano' : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
-    </a>
+    <span className={`flex h-10 items-center rounded-full bg-white pr-1 ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
+      <a href="#/piano" title={c.unlimited ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
+        {/* numero e moneta, senza la parola "crediti" */}
+        {c.unlimited ? <><Coins size={15} className="text-ai" /> Illimitati</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
+      </a>
+      <span className="mr-1 h-5 w-px bg-line" aria-hidden />
+      {profile}
+    </span>
   );
 }
 

@@ -226,7 +226,7 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 // (risparmio memoria) la chat torna com'era. Cambiando pagina della piattaforma si cancella (la chat riparte vuota, come prima).
 // Legata all'account (uid): nella stessa scheda un altro account (o uno nuovo dopo l'eliminazione) parte da vuota.
 const SAVE_KEY = 'gnm-staging-chat';
-type Saved = { uid?: string; msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null; emptyFrom?: string | null };
+type Saved = { uid?: string; chatId?: string; msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null; emptyFrom?: string | null };
 function loadSaved(): Saved | null {
   try {
     const raw = sessionStorage.getItem(SAVE_KEY);
@@ -282,6 +282,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
+  const [chatId, setChatId] = useState(() => saved?.chatId ?? crypto.randomUUID()); // id della chat nello storico
   const credits = useCredits();
   const [base, setBase] = useState<string | null>(saved?.base ?? null); // immagine su cui lavora la prossima richiesta
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
@@ -334,8 +335,39 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   }, [busy]);
 
   useEffect(() => {
-    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ uid: owner.current, msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
-  }, [msgs, base, kind, scene, roomState, project, origin, emptyFrom]);
+    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ uid: owner.current, chatId, msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
+  }, [chatId, msgs, base, kind, scene, roomState, project, origin, emptyFrom]);
+  // Storico (api/platform/chats): la chat si salva anche sul server 2,5 s dopo l'ultimo cambio, a lavori finiti.
+  // Titolo = prima richiesta scritta, anteprima = ultima foto. Oltre ~4 MB (tante foto caricate) non si salva.
+  const lastSaved = useRef('');
+  useEffect(() => {
+    if (!msgs.length || busy) return;
+    const data = { msgs, base, kind, scene, roomState, project, origin, emptyFrom };
+    const json = JSON.stringify(data);
+    if (json === lastSaved.current || json.length > 3_900_000) return;
+    const t = setTimeout(() => {
+      const first = msgs.find(m => m.role === 'user' && m.text?.trim()) as { text?: string } | undefined;
+      const imgs = json.match(/https:\/\/[^"\s]+?\.(?:jpe?g|png|webp)/gi);
+      const title = first?.text?.trim().slice(0, 80) || `Foto del ${new Date().toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}`;
+      authFetch('/api/platform/chats', { method: 'PUT', body: JSON.stringify({ id: chatId, title, thumb: imgs?.[imgs.length - 1] ?? null, data }) })
+        .then(r => { if (r.ok) lastSaved.current = json; }).catch(() => {});
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [chatId, msgs, base, kind, scene, roomState, project, origin, emptyFrom, busy]);
+  // chat riaperta dallo storico (PlatformApp): si ricarica com'era e si continua da li'
+  useEffect(() => {
+    const open = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      authFetch(`/api/platform/chats?id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.json() : null)).then((d: Omit<Saved, 'uid' | 'chatId'> | null) => {
+        if (!d) return;
+        lastSaved.current = JSON.stringify(d);
+        setChatId(id); setMsgs(d.msgs ?? []); setBase(d.base ?? null); setKind(d.kind ?? null); setScene(d.scene ?? 'interno'); setRoomState(d.roomState ?? null);
+        setProject(d.project ?? null); setOrigin(d.origin ?? null); setEmptyFrom(d.emptyFrom ?? null); clearZone(); setSelecting(false); setText('');
+      }).catch(() => {});
+    };
+    window.addEventListener('agenteimmo:open-chat', open);
+    return () => window.removeEventListener('agenteimmo:open-chat', open);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // chat di un altro account nella stessa scheda: si riparte da vuota
   const owner = useRef(saved?.uid);
   useEffect(() => {
@@ -349,7 +381,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   useEffect(() => {
     const reset = () => {
       setMsgs([]); setBase(null); setKind(null); setScene('interno'); setRoomState(null); setProject(null); setOrigin(null); setEmptyFrom(null);
-      clearZone(); setSelecting(false); setText('');
+      clearZone(); setSelecting(false); setText(''); setChatId(crypto.randomUUID()); lastSaved.current = '';
       try { sessionStorage.removeItem(SAVE_KEY); } catch { /* niente */ }
     };
     window.addEventListener('agenteimmo:new-chat', reset);

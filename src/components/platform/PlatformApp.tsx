@@ -3,7 +3,7 @@
 import ConsentGate from './ConsentGate';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
+import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -62,6 +62,44 @@ const NAV = [
   { path: '/portfolio', label: 'Il mio sito', icon: Globe },
   { path: '/galleria', label: 'Galleria', icon: Images },
 ];
+
+// Storico delle chat (api/platform/chats): elenco con anteprima, titolo e data; un clic riapre la chat e si continua.
+// Le chat piu' vecchie di 30 giorni si cancellano da sole.
+function ChatHistory() {
+  const [open, setOpen] = useState(false);
+  const [list, setList] = useState<{ id: string; title: string; thumb: string | null; at: number; days: number }[] | null>(null);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    authFetch('/api/platform/chats').then(r => (r.ok ? r.json() : { chats: [] })).then((d: { chats?: { id: string; title: string; thumb: string | null; at: number }[] }) => { const now = Date.now(); setList((d.chats ?? []).map(c => ({ ...c, days: Math.floor((now - c.at) / 86_400_000) }))); }).catch(() => setList([]));
+    const out = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', out); document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc); };
+  }, [open]);
+  const when = (d: number) => (d === 0 ? 'Oggi' : d === 1 ? 'Ieri' : `${d} giorni fa`);
+  return (
+    <div ref={box} className="relative">
+      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 ease-smooth transition-colors ${open ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:shadow-md'}`}><History size={15} className={open ? '' : 'text-muted'} /> Storico</button>
+      {open && (
+        <div className="blur-in absolute right-0 top-12 z-50 w-80 rounded-[24px] bg-white p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
+          <div className="px-3 pb-2 pt-1.5 text-xs text-muted">Le chat restano 30 giorni. Foto e video li trovi sempre in Galleria.</div>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {!list ? <div className="flex h-20 items-center justify-center"><Loader2 size={18} className="animate-spin text-muted" /></div>
+              : !list.length ? <p className="px-3 py-6 text-center text-sm text-muted">Ancora nessuna chat.</p>
+              : list.map(c => (
+                <button key={c.id} type="button" onClick={() => { window.dispatchEvent(new CustomEvent('agenteimmo:open-chat', { detail: c.id })); setOpen(false); }}
+                  className="flex w-full items-center gap-3 rounded-2xl p-2 text-left ease-smooth transition-colors hover:bg-canvas">
+                  {c.thumb ? <img src={c.thumb} alt="" className="h-11 w-14 shrink-0 rounded-xl object-cover" /> : <span className="flex h-11 w-14 shrink-0 items-center justify-center rounded-xl bg-canvas text-muted"><Wand2 size={16} /></span>}
+                  <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{c.title}</span><span className="block text-xs text-muted">{when(c.days)}</span></span>
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PlatformApp(props: { userData: UserData }) {
   return <><ConsentGate /><PlatformInner {...props} /></>;
@@ -127,6 +165,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             <div className="ml-auto flex items-center gap-2">
+              {!noPlan && <ChatHistory />}
               {!noPlan && <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
                 className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md"><SquarePen size={15} className="text-muted" /> Nuova chat</button>}
               <CreditsPill />
