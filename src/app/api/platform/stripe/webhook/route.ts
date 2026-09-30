@@ -4,7 +4,8 @@ import { activatePlan, endPlan, extendPaid, grantPack, userForSubscription } fro
 import { FORFETTARIO_FOOTER as FOOTER } from '@/lib/pricing'
 
 export const runtime = 'nodejs'
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// chiave mancante al build (raccolta dati delle pagine su Vercel): non si crea l'errore qui, le chiamate falliscono solo a runtime
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing')
 
 // Fine del periodo pagato: nelle API recenti sta sulla voce dell'abbonamento
 const paidUntil = (s: Stripe.Subscription) => new Date(((s as unknown as { current_period_end?: number }).current_period_end ?? s.items.data[0]?.current_period_end ?? 0) * 1000)

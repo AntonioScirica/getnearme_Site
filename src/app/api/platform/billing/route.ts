@@ -3,7 +3,8 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// chiave mancante al build (raccolta dati delle pagine su Vercel): non si crea l'errore qui, le chiamate falliscono solo a runtime
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing')
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const SITE = 'https://agenteimmo.me'
 const siteOf = (req: NextRequest) => { const o = req.nextUrl.origin; return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(o) ? o : SITE }

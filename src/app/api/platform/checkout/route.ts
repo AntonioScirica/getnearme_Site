@@ -4,7 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
 import { FORFETTARIO_FOOTER, PACKS } from '@/lib/pricing'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// chiave mancante al build (raccolta dati delle pagine su Vercel): non si crea l'errore qui, le chiamate falliscono solo a runtime
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_missing')
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const PRICES = { starter: 'ai_starter_monthly', plus: 'ai_plus_monthly', pro_yearly: 'ai_pro_yearly', pro_quarterly: 'ai_pro_quarterly' } as const
 const SITE = 'https://agenteimmo.me'
