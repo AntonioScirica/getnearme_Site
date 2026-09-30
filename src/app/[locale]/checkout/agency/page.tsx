@@ -468,6 +468,7 @@ function CheckoutAgencyContent() {
 
   // Dopo l'accesso si torna dove si era (es. /it/dashboard#/piano?buy=pro_yearly). Solo pagine della piattaforma.
   const nextParam = searchParams.get('next') ?? '';
+  const fromTrial = /^\/(it|en)\/prova/.test(nextParam); // dalla prova della landing: il perche' del login
   // ?plan= dei vecchi piani GetNearMe: niente prezzi vecchi, dopo l'accesso si va ai piani di Agente Immo
   const oldPlan = !!searchParams.get('plan');
   const dest = /^\/(it|en)\/(dashboard|prova)(?![^#?/])/.test(nextParam) ? nextParam : `/${locale}/dashboard${oldPlan ? '#/piano' : ''}`;
@@ -889,8 +890,8 @@ function CheckoutAgencyContent() {
             </>
           ) : !user ? (
             <>
-              <h1 className="text-center font-display text-2xl font-extrabold tracking-tight">{isSignup ? (en ? 'Create your account' : 'Crea il tuo account') : (en ? 'Welcome back' : 'Bentornato')}</h1>
-              <p className="mt-2 text-center text-sm text-muted">{isSignup ? (en ? 'Free, no credit card needed.' : 'Gratis, senza carta di credito.') : (en ? 'Sign in to Agente Immo.' : 'Accedi ad Agente Immo.')}</p>
+              <h1 className="text-center font-display text-2xl font-extrabold tracking-tight">{fromTrial ? (en ? 'Sign in to try it free' : 'Accedi per fare la prova gratis') : isSignup ? (en ? 'Create your account' : 'Crea il tuo account') : (en ? 'Welcome back' : 'Bentornato')}</h1>
+              <p className="mt-2 text-center text-sm text-muted">{fromTrial ? (en ? 'The free try needs an account. Right after, you\'re back to your photo. No credit card.' : 'Per la prova gratis serve un account. Subito dopo torni alla tua foto. Senza carta di credito.') : isSignup ? (en ? 'Free, no credit card needed.' : 'Gratis, senza carta di credito.') : (en ? 'Sign in to Agente Immo.' : 'Accedi ad Agente Immo.')}</p>
 
               <button onClick={handleGoogleLogin} disabled={isLoading || isEmailLoading} className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-full bg-white text-[15px] font-semibold text-ink ring-1 ring-black/10 ease-smooth transition-shadow hover:ring-ink disabled:opacity-50">
                 {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}<span>{t.loginButton}</span>
