@@ -16,13 +16,30 @@ export const button = (href: string, label: string, sub?: string) => `<tr><td al
 ${sub ? `<div style="padding-top:12px;font-family:${FONT};font-size:13px;color:#8a8a8f">${sub}</div>` : ''}</td></tr>`
 // righe con numero nel cerchio blu, titolo e descrizione
 export const features = (rows: [string, string][]) => `<tr><td style="padding:26px 40px 0"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;border-radius:22px">${rows.map(([t, d], i) => `
-<tr><td width="56" valign="top" style="padding:${i ? 14 : 20}px 0 ${i === rows.length - 1 ? 20 : 0}px 20px"><div style="width:32px;height:32px;line-height:32px;border-radius:999px;background:${BLUE};color:#fff;text-align:center;font-family:${FONT};font-weight:800;font-size:14px">${i + 1}</div></td>
-<td valign="top" style="padding:${i ? 14 : 20}px 20px ${i === rows.length - 1 ? 20 : 0}px 8px;font-family:${FONT}"><div style="font-size:15px;font-weight:700;color:${INK}">${t}</div><div style="font-size:14px;line-height:1.5;color:#6b6b70;padding-top:2px">${d}</div></td></tr>`).join('')}</table></td></tr>`
+<tr><td width="52" valign="middle" style="padding:${i ? 14 : 20}px 0 ${i === rows.length - 1 ? 20 : 0}px 20px"><div style="width:32px;height:32px;line-height:32px;border-radius:999px;background:${BLUE};color:#fff;text-align:center;font-family:${FONT};font-weight:800;font-size:14px">${i + 1}</div></td>
+<td valign="middle" style="padding:${i ? 14 : 20}px 20px ${i === rows.length - 1 ? 20 : 0}px 0;font-family:${FONT}"><div style="font-size:15px;font-weight:700;color:${INK}">${t}</div><div style="font-size:14px;line-height:1.5;color:#6b6b70;padding-top:2px">${d}</div></td></tr>`).join('')}</table></td></tr>`
 export const beforeAfter = (before: string, after: string, label: string) => `<tr><td style="padding:28px 40px 0"><div style="font-family:${FONT};font-size:13px;font-weight:700;color:#8a8a8f;padding-bottom:10px">${label}</div>
 <table width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="50%" style="padding-right:5px"><img src="${before}" width="235" alt="Prima" style="display:block;width:100%;border-radius:16px"><div style="padding-top:6px;font-family:${FONT};font-size:12px;color:#8a8a8f;text-align:center">Prima</div></td>
 <td width="50%" style="padding-left:5px"><img src="${after}" width="235" alt="Dopo" style="display:block;width:100%;border-radius:16px"><div style="padding-top:6px;font-family:${FONT};font-size:12px;color:${BLUE};font-weight:700;text-align:center">Dopo, con Agente Immo</div></td>
 </tr></table></td></tr>`
+// prima e dopo grande, affiancato, con le etichette sopra (niente testo sulle foto: alcuni client lo perdono)
+export const beforeAfterHero = (before: string, after: string) => `<tr><td style="padding:26px 28px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td width="50%" valign="top" style="padding-right:6px"><div style="padding:0 0 8px;font-family:${FONT};font-size:11px;font-weight:800;letter-spacing:.1em;color:#8a8a8f">PRIMA</div><img src="${before}" width="246" alt="La stanza prima" style="display:block;width:100%;height:auto;border-radius:18px;border:0"></td>
+<td width="50%" valign="top" style="padding-left:6px"><div style="padding:0 0 8px;font-family:${FONT};font-size:11px;font-weight:800;letter-spacing:.1em;color:${BLUE}">DOPO, CON AGENTE IMMO</div><img src="${after}" width="246" alt="La stanza arredata" style="display:block;width:100%;height:auto;border-radius:18px;border:0"></td>
+</tr></table></td></tr>`
+// blocco blu con tre numeri grandi
+export const stats = (heading: string, items: [string, string][]) => `<tr><td style="padding:28px 28px 0"><table width="100%" cellpadding="0" cellspacing="0" style="background:${BLUE};background-image:linear-gradient(135deg,#5f8af2,#4a6fe0);border-radius:24px"><tr><td colspan="${items.length}" style="padding:22px 24px 4px;font-family:${FONT};font-size:13px;font-weight:700;color:rgba(255,255,255,.8)">${heading}</td></tr><tr>${items.map(([n, l]) => `<td valign="top" style="padding:6px 24px 24px;font-family:${FONT}"><div style="font-size:30px;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1">${n}</div><div style="font-size:13px;color:rgba(255,255,255,.85);padding-top:4px">${l}</div></td>`).join('')}</tr></table></td></tr>`
+// firma personale: chi scrive e che si puo' rispondere (reply-to info@agenteimmo.me)
+export const signature = (name: string, role: string) => `<tr><td style="padding:32px 40px 0;font-family:${FONT}"><div style="border-top:1px solid #eeeeec;padding-top:22px;font-size:15px;line-height:1.6;color:#55555a">Se hai una domanda rispondi pure a questa email: la leggo io.</div><div style="padding-top:12px;font-size:15px;font-weight:800;color:${INK}">${name}</div><div style="font-size:13px;color:#8a8a8f">${role}</div></td></tr>`
+export const ps = (t: string) => `<tr><td style="padding:18px 40px 0;font-family:${FONT};font-size:14px;line-height:1.6;color:#6b6b70"><strong style="color:${INK}">P.S.</strong> ${t}</td></tr>`
+// versione solo testo (va sempre insieme all'HTML: aiuta a non finire in spam)
+export const toText = (html: string) => html
+  .replace(/<div style="display:none[\s\S]*?<\/div>/, '')
+  .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g, (_m, h: string, t: string) => `${t.replace(/<[^>]+>/g, '').replace(/&nbsp;|&rarr;/g, ' ').trim()}: ${h}`)
+  .replace(/<br\s*\/?>|<\/(tr|div|p|h1)>/g, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&rarr;/g, '').replace(/&amp;/g, '&')
+  .replace(/&#8199;|&#847;/g, '').split('\n').map(l => l.trim()).filter((l, i, a) => l || (a[i - 1] ?? '') !== '').join('\n').trim()
+
 // link di riserva sotto il bottone (se il bottone non si apre, es. alcuni client aziendali)
 export const fallback = (href: string) => `<tr><td style="padding:22px 40px 0;font-family:${FONT};font-size:12px;line-height:1.5;color:#9a9a9f">Se il bottone non funziona, copia questo indirizzo nel browser:<br><a href="${href}" style="color:${BLUE};word-break:break-all">${href}</a></td></tr>`
 

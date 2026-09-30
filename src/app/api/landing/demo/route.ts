@@ -88,6 +88,8 @@ export async function POST(req: NextRequest) {
   const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.jpg`
   const saved = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), cleanKey).then(() => true, () => false)
   // foto della prova legata all'account: la usano le email dopo la prova (api/cron/trial-emails), via entro 12 mesi
+  // anche la foto di partenza, per il prima e dopo nelle email (stessa chiave con -prima)
+  if (saved && user && !free) void uploadJpeg(src, cleanKey.replace(/\.jpg$/, '-prima.jpg')).catch(() => {})
   if (saved && user && !free) void admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo_photo', provider: 'counter', model: cleanKey, duration_ms: 0, cost_usd: 0, ok: true } as never).then(() => {}, () => {})
   const small = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 88 }).toBuffer()
   const out = small // niente filigrana: la prova si fa solo con l'account (30/09)
