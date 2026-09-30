@@ -75,11 +75,14 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   // arrivando da un invito (?cambia=1): la pagina scorre fino ai piani, una volta sola quando le card ci sono
   const plansRef = useRef<HTMLHeadingElement>(null);
   const scrolled = useRef(false);
+  // con un piano il codice promozionale arriva dopo e spinge giu' i piani: si scorre quando c'e' anche lui
+  const [codeReady, setCodeReady] = useState(false);
   useEffect(() => {
     if (!change || scrolled.current || !c || !plansRef.current) return;
+    if (c.plan !== 'none' || c.unlimited) { if (!codeReady) return; }
     scrolled.current = true;
     setTimeout(() => plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
-  }, [c, change]); // con un piano attivo: card dei piani aperte per cambiarlo (?cambia=1: arrivando da un invito a passare di piano, gia' aperte)
+  }, [c, change, codeReady]); // con un piano attivo: card dei piani aperte per cambiarlo (?cambia=1: arrivando da un invito a passare di piano, gia' aperte)
   const go = async (p: Buy | PackId) => {
     setBusy(p); setPortalError(null);
     const d = await checkout(p);
@@ -147,7 +150,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           </div>
         </>
       )}
-      {c && (c.plan !== 'none' || c.unlimited) && <CodeBox />}
+      {c && (c.plan !== 'none' || c.unlimited) && <CodeBox onReady={() => setCodeReady(true)} />}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
       {c && (c.plan === 'none' || c.unlimited || changing) && (<>
       <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? tr('Cambia piano', 'Change plan') : tr('Scegli il piano', 'Choose your plan')}</h2>
@@ -196,13 +199,13 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
 
 // Codice affiliato (lib/affiliates.ts): chi ha un piano lo inserisce e riceve crediti; l'affiliato vede il suo codice
 // e quante persone l'hanno usato. Chi ha gia' usato un codice non vede piu' il campo.
-function CodeBox() {
+function CodeBox({ onReady }: { onReady?: () => void }) {
   const [info, setInfo] = useState<{ used: string | null; gives: number; mine: { code: string; uses: number; each: number; gives: number } | null } | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [copied, setCopied] = useState(false);
-  useEffect(() => { authFetch('/api/platform/code').then(r => (r.ok ? r.json() : null)).then(setInfo).catch(() => {}); }, []);
+  useEffect(() => { authFetch('/api/platform/code').then(r => (r.ok ? r.json() : null)).then(setInfo).catch(() => {}).finally(() => onReady?.()); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   if (!info) return null;
   const send = async () => {
     if (!code.trim() || busy) return;
