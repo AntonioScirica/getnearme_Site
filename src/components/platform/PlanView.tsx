@@ -6,7 +6,7 @@ import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
 export { isBuy };
-import { PRICING, PACKS, photosFor, videosFor, type PackId } from '@/lib/pricing';
+import { PRICING, PACKS, photosFor, videosRange, type PackId } from '@/lib/pricing';
 
 export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -82,7 +82,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
             <div className="text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
             {portalError && <p className="text-sm text-rose-600">{portalError}</p>}
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
-            <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
+            <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosRange(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setChanging(v => !v)} aria-expanded={changing}
@@ -101,7 +101,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
               <div key={p.id} className={`flex items-center justify-between gap-4 rounded-[24px] bg-white p-5 ${CARD_SHADOW}`}>
                 <div>
                   <div className="font-display text-2xl font-extrabold tracking-tight">{fmt(p.credits)} crediti</div>
-                  <div className="text-sm text-muted">{photosFor(p.credits)} foto o {videosFor(p.credits)} video</div>
+                  <div className="text-sm text-muted">{photosFor(p.credits)} foto o {videosRange(p.credits)} video</div>
                 </div>
                 <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {p.eur} €</button>
               </div>
