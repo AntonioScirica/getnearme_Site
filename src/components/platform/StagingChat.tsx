@@ -2,6 +2,7 @@
 
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
 import { Anvil, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
@@ -223,8 +224,9 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 
 // Conversazione salvata nella memoria della scheda (sessionStorage): se Chrome ricarica una scheda rimasta in background
 // (risparmio memoria) la chat torna com'era. Cambiando pagina della piattaforma si cancella (la chat riparte vuota, come prima).
+// Legata all'account (uid): nella stessa scheda un altro account (o uno nuovo dopo l'eliminazione) parte da vuota.
 const SAVE_KEY = 'gnm-staging-chat';
-type Saved = { msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null; emptyFrom?: string | null };
+type Saved = { uid?: string; msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null; emptyFrom?: string | null };
 function loadSaved(): Saved | null {
   try {
     const raw = sessionStorage.getItem(SAVE_KEY);
@@ -332,8 +334,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   }, [busy]);
 
   useEffect(() => {
-    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
+    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ uid: owner.current, msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
   }, [msgs, base, kind, scene, roomState, project, origin, emptyFrom]);
+  // chat di un altro account nella stessa scheda: si riparte da vuota
+  const owner = useRef(saved?.uid);
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      const me = session?.user.id;
+      if (saved && saved.uid !== me) window.dispatchEvent(new Event('agenteimmo:new-chat')); // anche le chat salvate prima dell'uid
+      owner.current = me;
+    });
+  }, [saved]);
   // Nuova chat (pulsante in alto, PlatformApp): si ricomincia da zero; foto e video fatti restano nella Galleria
   useEffect(() => {
     const reset = () => {

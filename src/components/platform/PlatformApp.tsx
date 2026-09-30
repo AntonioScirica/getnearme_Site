@@ -513,7 +513,7 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         ))}
       </div>
       <div className="mt-6 flex items-center justify-between gap-3">
-        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
+        <button onClick={() => { try { sessionStorage.clear(); } catch { /* niente */ } void supabase.auth.signOut(); }} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
         <DeleteAccount />
       </div>
     </div>
@@ -531,6 +531,7 @@ function DeleteAccount() {
     setBusy(true); setErr('');
     const r = await authFetch('/api/account/delete', { method: 'DELETE' }).catch(() => null);
     if (!r?.ok) { setBusy(false); setErr('Non sono riuscito a eliminare l’account, riprova o scrivici.'); return; }
+    try { sessionStorage.clear(); } catch { /* niente */ } // la chat e le altre memorie della scheda non passano al prossimo account
     await supabase.auth.signOut();
     window.location.href = '/';
   };
