@@ -736,28 +736,18 @@ function CheckoutAgencyContent() {
           setIsEmailLoading(false);
           return;
         }
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.href,
-            data: {
-              marketing_consent: marketingAccepted,
-              terms_accepted_at: new Date().toISOString(),
-              signup_source: 'site',
-            },
-          },
-        });
-        if (error) throw error;
-
-        const needsConfirmation = !data.session;
-
-        if (needsConfirmation) {
-          // Email confirmation required - show "check your email" message
-          setEmailSent(true);
-          setIsEmailLoading(false);
-          return;
+        // account creato dal server gia' confermato, poi login subito (niente attesa della mail di conferma)
+        const r = await fetch('/api/platform/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, marketing: marketingAccepted }) });
+        const res = await r.json().catch(() => ({})) as { error?: string };
+        if (!r.ok) {
+          throw new Error(res.error === 'exists' ? (en ? 'This email already has an account. Sign in.' : 'Questa email ha già un account. Accedi.')
+            : res.error === 'password' ? (en ? 'Password must be at least 6 characters.' : 'La password deve avere almeno 6 caratteri.')
+            : res.error === 'disposable' ? (en ? 'Please use a real email address: temporary emails are not allowed.' : 'Usa un indirizzo email reale: le email temporanee non sono ammesse.')
+            : res.error === 'rate' ? (en ? 'Too many sign-ups, try again later.' : 'Troppe registrazioni, riprova più tardi.')
+            : t.errorDefault as string);
         }
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
 
         if (data.user) {
           setUser({ id: data.user.id, email: data.user.email || '' });
