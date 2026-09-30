@@ -780,7 +780,8 @@ function Trial() {
         <div className="mx-auto max-w-6xl px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
-            <a href="#prezzi" className="ml-auto inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5">{L('Acquista', "Buy")}</a>
+            <a href={APP} className="ml-auto px-3 text-sm font-semibold text-ink">Dashboard</a>
+            <a href="#prezzi" className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5">{L('Acquista', "Buy")}</a>
           </nav>
         </div>
       </header>
