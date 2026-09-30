@@ -170,10 +170,11 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
               <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? 'Copertina' : i + 1}</span>
               <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow" aria-hidden><GripVertical size={16} /></span>
               {onPhoto && (
-                <span className="absolute inset-x-2 bottom-2 flex flex-wrap justify-center gap-1.5 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
-                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-8 items-center gap-1 rounded-full bg-brand px-3 text-xs font-semibold text-white shadow"><Wand2 size={12} /> Migliora con l’AI</button>
-                  {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-8 items-center gap-1 rounded-full bg-white px-3 text-xs font-semibold text-ink shadow"><Star size={12} /> Metti per prima</button>}
-                  <button type="button" onClick={() => remove(src)} aria-label="Togli la foto" className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={13} /></button>
+                // in hover: velo su tutta la foto, azioni al centro una sotto l'altra, togli in alto a destra (sopra la maniglia)
+                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
+                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow"><Wand2 size={13} /> Migliora con l’AI</button>
+                  {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow"><Star size={13} /> Metti per prima</button>}
+                  <button type="button" onClick={() => remove(src)} aria-label="Togli la foto" className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
                 </span>
               )}
             </li>
