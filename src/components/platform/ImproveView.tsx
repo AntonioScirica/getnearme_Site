@@ -66,6 +66,7 @@ export function useImprove() {
     const slim = raw ? { text: raw.text?.slice(0, 20000), json: raw.json?.slice(0, 20000), meta: raw.meta } : undefined;
     const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: { ...l, raw: slim } }) }).catch(() => null);
     if (id !== run.current) return;
+    if (res?.status === 402) { window.dispatchEvent(new Event('agenteimmo:no-credits')); setError('Hai usato le 5 analisi gratuite. Scegli un piano per continuare.'); setStage('error'); return; }
     if (!res?.ok) { setError('Analisi non riuscita, riprova.'); setStage('error'); return; }
     setAnalysis(cap(await res.json()));
     setStage('done');

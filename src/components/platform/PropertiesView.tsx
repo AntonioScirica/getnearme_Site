@@ -111,7 +111,8 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
             <Search size={15} className="text-muted" />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Cerca via, città, rif." className="w-40 bg-transparent text-[13px] outline-none placeholder:text-muted/60" />
           </label>
-          <a href="#/nuovo" className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-black"><Plus size={15} /> Aggiungi immobile</a>
+          {/* in alto solo se c'e' gia' qualche immobile: con la lista vuota c'e' la card sotto */}
+          {!empty && !demo && <a href="#/nuovo" className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-black"><Plus size={15} /> Aggiungi immobile</a>}
         </div>
       </div>
 
