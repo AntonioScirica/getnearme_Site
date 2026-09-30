@@ -216,8 +216,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         </div>,
         document.body,
       )}
-      {/* Testa: copertina + riassunto + progresso (non mentre l'AI scrive l'ultimo passo: li' solo il messaggio al centro) */}
-      {!(done && !ai) && <>
+      {/* Testa: copertina + riassunto + progresso, solo durante le schede: all'ultimo passo (AI che scrive e annuncio pronto)
+          non serve, si torna ai dati dai bottoni di "Mancano ancora" */}
+      {!done && <>
       <div className="flex items-center gap-4">
         {/* freccia = passo precedente (dal primo passo torna alla home) */}
         <button type="button" onClick={() => { if (done && ai) setBack(true); if (step > 0) go(Math.min(step, STEPS.length) - 1); else location.hash = '#/'; }} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? tr('Passo precedente', 'Previous step') : 'Home'}><ArrowLeft size={18} /></button>
