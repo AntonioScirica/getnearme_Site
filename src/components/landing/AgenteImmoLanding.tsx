@@ -663,7 +663,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Stanze che si arredano, cantieri che diventano case', "Rooms that furnish themselves, sites that become homes"), L('Con te in video: parli, esci e la stanza si arreda', "You on camera: talk, walk out, the room gets furnished"), L('Musica inclusa, niente montaggio', "Music included, no editing")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <span className="hidden md:block"><Cta className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
+            <span className="hidden md:block"><Cta href={TRIAL_LOGIN} className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
             {/* i sei modelli della piattaforma, con i loro esempi (si scaricano solo quando la sezione e' in vista) */}
@@ -676,7 +676,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
               ))}
             </div>
           </Reveal>
-          <div className="mt-14 flex justify-center md:hidden"><Cta>{L('Crea video', "Create a video")}</Cta></div>
+          <div className="mt-14 flex justify-center md:hidden"><Cta href={TRIAL_LOGIN}>{L('Crea video', "Create a video")}</Cta></div>
         </div>
       </Band>
 
