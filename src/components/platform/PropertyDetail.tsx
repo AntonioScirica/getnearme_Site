@@ -114,7 +114,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         {/* stato e modello in una riga corta: il nome del modello porta a Il mio sito per cambiarlo */}
         <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
-          ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
+          ? <>
+            <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
+            {/* casa non online (sito spento o casa non pubblica): al cliente la scheda in PDF */}
+            {site && !(site.published && project.is_public) && <button type="button" onClick={() => { setPdfHint(true); void downloadReport(project.id); }} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</button>}
+            {pdfHint && <span className="basis-full text-right text-xs text-muted">{tr('Nella finestra di stampa scegli “Salva come PDF”, poi allega il file su WhatsApp o in una email.', 'In the print window choose “Save as PDF”, then attach the file on WhatsApp or in an email.')}</span>}
+          </>
           : <>
             {/* senza sito: al cliente la scheda in PDF (si salva dalla stampa e si allega su WhatsApp) */}
             <button type="button" onClick={() => { setPdfHint(true); void downloadReport(project.id); }} title={tr('Salva la scheda in PDF e mandala su WhatsApp o per email', 'Save the sheet as PDF and send it on WhatsApp or by email')} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</button>

@@ -208,7 +208,7 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
           {pe && pe.photos.includes(photos[i]) && (
             <span className="absolute bottom-3 left-3 flex gap-2">
               <button type="button" title="Migliora con l’AI" aria-label="Migliora con l’AI" onClick={() => { setI(null); pe.onPhoto(photos[i], 'ai'); }} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#537eec] text-white shadow-lg"><Wand2 size={17} /></button>
-              {photos[i] !== pe.cover && <button type="button" title="Metti come copertina" aria-label="Metti come copertina" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg"><Star size={17} /></button>}
+              {photos[i] !== pe.cover && <button type="button" title="Metti in copertina" aria-label="Metti in copertina" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg"><Star size={17} /></button>}
             </span>
           )}
         </div>}

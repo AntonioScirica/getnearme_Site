@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
   const online = slug && b?.site_published && row.is_public && (await hasSitePlan(u.id)) ? `${siteUrl(slug)}/${row.id}` : ''
   const p = toSiteProperty(row as PublicProperty)
   const pois = await reportPois(p.addr, p.details)
-  const html = buildPropertyReportHtml({ p, name, logo: cfg.logo || b?.logo_colored_h || b?.logo_black_h, cfg, url: slug ? siteUrl(slug) : 'https://agenteimmo.me', pois, origin: req.nextUrl.origin, online })
+  // senza sito online niente indirizzo del sito nel PDF (portava a una pagina spenta)
+  const html = buildPropertyReportHtml({ p, name, logo: cfg.logo || b?.logo_colored_h || b?.logo_black_h, cfg, url: slug && b?.site_published && (await hasSitePlan(u.id)) ? siteUrl(slug) : '', pois, origin: req.nextUrl.origin, online })
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex' } })
 }

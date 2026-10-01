@@ -158,7 +158,7 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
     pe.busy === src ? <span className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 text-sm font-semibold text-neutral-900">Un attimo…</span> : (
       <span className="absolute bottom-3 left-3 z-30 flex gap-2 opacity-0 transition-opacity duration-300 group-hover/ph:opacity-100 [@media(hover:none)]:opacity-100">{/* solo passando sopra la foto (sul telefono sempre) */}
         <span role="button" tabIndex={0} title="Migliora con l’AI" aria-label="Migliora con l’AI" onClick={act('ai')} className="flex h-9 w-9 items-center justify-center rounded-full bg-[#537eec] text-white shadow-lg transition-transform hover:scale-110"><Wand2 size={16} /></span>
-        {src !== pe.cover && <span role="button" tabIndex={0} title="Metti come copertina" aria-label="Metti come copertina" onClick={act('cover')} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg transition-transform hover:scale-110"><Star size={16} /></span>}
+        {src !== pe.cover && <span role="button" tabIndex={0} title="Metti in copertina" aria-label="Metti in copertina" onClick={act('cover')} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg transition-transform hover:scale-110"><Star size={16} /></span>}
       </span>
     )
   ) : null;

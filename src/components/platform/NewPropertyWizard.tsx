@@ -112,26 +112,26 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
   // bozza di un immobile lasciato a meta': non si riprende da sola (sembrava di modificare un immobile esistente),
   // si chiede se continuarla o iniziare da capo. Finche' non si sceglie la bozza resta salvata com'e'.
-  const [pending, setPending] = useState<{ d?: Details; note?: string } | null>(null);
+  const [pending, setPending] = useState<{ d?: Details; note?: string; step?: number } | null>(null);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
-      const x = raw ? JSON.parse(raw) as { d?: Details; note?: string } : null;
+      const x = raw ? JSON.parse(raw) as { d?: Details; note?: string; step?: number } : null;
       if (x && (Object.keys(x.d ?? {}).some(k => k !== 'mostra_indirizzo') || x.note)) { setPending(x); return; } // eslint-disable-line react-hooks/set-state-in-effect
     } catch { /* bozza corrotta */ }
     restored.current = true;
   }, []);
   const resume = (yes: boolean) => {
-    if (yes && pending) { setD(pending.d ?? { mostra_indirizzo: false }); setNote(pending.note ?? ''); }
+    if (yes && pending) { setD(pending.d ?? { mostra_indirizzo: false }); setNote(pending.note ?? ''); if (pending.step) setStep(pending.step); } // si riparte dalla scheda dove si era rimasti
     else localStorage.removeItem(DRAFT_KEY);
     setPending(null); restored.current = true;
   };
   useEffect(() => {
     if (!restored.current) return;
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ d, note })); } catch { /* quota */ }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ d, note, step: Math.min(step, STEPS.length - 1) })); } catch { /* quota */ }
     const t = setTimeout(() => setSavedAt(Date.now()), 0);
     return () => clearTimeout(t);
-  }, [d, note]);
+  }, [d, note, step]);
   const [savedShown, setSavedShown] = useState(false);
   useEffect(() => {
     if (!savedAt) return;

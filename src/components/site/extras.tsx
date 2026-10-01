@@ -98,7 +98,17 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
 const ALL: Field[] = [...ESSENTIALS, ...GROUPS.flatMap(g => g.fields)];
 const SKIP = new Set(['indirizzo', 'mostra_indirizzo', 'trattativa_riservata', 'prezzo', 'contratto', 'tipologia', 'superficie', 'locali', 'camere', 'bagni', 'virtual_tour']);
 // valori importati gia' con l'unita' ("€ 45/mese"): niente unita' ripetuta
-const fmt = (f: Field, v: unknown) => (typeof v === 'boolean' ? (v ? 'Sì' : 'No') : typeof v === 'string' && /^s[iì]$/i.test(v.trim()) ? 'Sì' : typeof v === 'string' && /^no$/i.test(v.trim()) ? 'No' : typeof v === 'string' && /€|\/mese|m²|kWh/i.test(v) ? v : `${v}${f.unit ? ` ${f.unit}` : ''}`);
+const fmt = (f: Field, v: unknown): string => {
+  if (typeof v === 'boolean') return v ? 'Sì' : 'No';
+  if (typeof v === 'number') return `${v.toLocaleString('it-IT')}${f.unit ? ` ${f.unit}` : ''}`; // 2.232 €/mese
+  const t = String(v).trim();
+  if (/^s[iì]$/i.test(t)) return 'Sì';
+  if (/^no$/i.test(t)) return 'No';
+  // importato gia' con l'unita' ("€ 45/mese"): stesso formato dei numeri scritti a mano ("45 €/mese")
+  const n = t.match(/^€?\s*([\d.,]+)\s*(€|\/mese|€\/mese)?/);
+  if (n && f.unit && /€/.test(f.unit) && /€/.test(t)) return `${n[1]} ${f.unit}`;
+  return /€|\/mese|m²|kWh/i.test(t) ? t : `${t}${f.unit ? ` ${f.unit}` : ''}`;
+};
 
 export function DetailsTable({ p }: { p: SiteProperty }) {
   const tx = useT();
