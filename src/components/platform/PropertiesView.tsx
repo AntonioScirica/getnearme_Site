@@ -43,11 +43,12 @@ function useGeo(projects: ProjectData[] | null) {
     (async () => {
       for (const addr of todo) {
         if (stop) return;
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(addr)}`, { headers: { 'Accept-Language': 'it' } })
-          .then(x => x.json()).catch(() => null) as { lat: string; lon: string }[] | null;
+        // dal nostro server (Nominatim dal browser va in errore CORS; il server cerca la via dentro la citta')
+        const res = await fetch(`/api/site/geocode?q=${encodeURIComponent(addr)}`).catch(() => null);
+        const r = res && (res.ok || res.status === 404) ? await res.json().catch(() => null) as { lat?: number; lon?: number } | null : null;
         if (stop) return;
         if (r) setGeo(g => {
-          const next = { ...g!, [addr]: r[0] ? [Number(r[0].lat), Number(r[0].lon)] as LatLon : 0 as const };
+          const next = { ...g!, [addr]: r.lat !== undefined && r.lon !== undefined ? [r.lat, r.lon] as LatLon : 0 as const };
           localStorage.setItem(GEO_KEY, JSON.stringify(next));
           return next;
         });

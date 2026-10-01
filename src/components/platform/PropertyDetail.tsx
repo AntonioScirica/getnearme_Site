@@ -244,7 +244,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const dirty = JSON.stringify(v) !== JSON.stringify(initial()); // Salva e Annulla solo se qualcosa e' cambiato
   const n = (x: string) => Math.max(0, Math.round(Number(x.replace(/[^\d,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0));
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
-  const set = (k: string, x: string) => setV(o => { const nv = { ...o, [k]: x }; onDraft(toUp(nv)); return nv; });
+  // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)
+  const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); onDraft(toUp(nv)); };
   const save = async () => {
     if (busy) return;
     // valori impossibili (prezzo 3 €, 3 m²): si chiede di correggerli prima di salvare
