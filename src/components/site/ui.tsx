@@ -241,6 +241,16 @@ export function contacts(cfg: SiteConfig, subject?: string) {
 
 // Preferiti del visitatore: nel suo browser, uno per sito (niente login)
 const FAV_EVT = 'gnm-fav';
+// pannello a tutto schermo aperto: la pagina sotto non scorre
+export function useLockScroll(on: boolean) {
+  useEffect(() => {
+    if (!on) return;
+    const b = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = b; };
+  }, [on]);
+}
+
 export function useFavs() {
   const { base } = useSite();
   const key = `gnm-fav:${base || 'anteprima'}`;

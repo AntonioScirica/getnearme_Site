@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
+import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -51,6 +51,7 @@ export function Header({ over }: { over?: boolean }) {
   const { cfg, name, logo: profileLogo, t, base, preview, go } = useSite();
   const logo = cfg.logo || profileLogo; // logo scelto nel sito, altrimenti quello del profilo
   const [open, setOpen] = useState(false);
+  useLockScroll(open && t.header === 'drawer'); // pannello laterale del modello drawer
   const links = navLinks(cfg);
   const favs = useFavs();
   const light = over && t.header === 'over';
@@ -75,7 +76,7 @@ export function Header({ over }: { over?: boolean }) {
       <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--c)] px-1 text-[10px] font-bold leading-none text-[var(--on-c,#fff)]">{favs.ids.length}</span>
     </SiteLink>
   );
-  const burger = <button onClick={() => setOpen(v => !v)} className="md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
+  const burger = <button onClick={() => setOpen(v => !v)} className="flex h-10 w-10 shrink-0 items-center justify-center md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
   const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-4 py-4 sm:px-6 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
 
   // drawer: barra scura, menu a sinistra che apre il pannello laterale (con le pagine zona), logo al centro
@@ -84,15 +85,15 @@ export function Header({ over }: { over?: boolean }) {
       <TopBar />
       <div className="bg-[var(--ink)] text-white">
         <Container className="grid min-h-[72px] py-3 grid-cols-[1fr_auto_1fr] items-center">
-          <button onClick={() => setOpen(true)} aria-label="Menu" className="flex w-fit items-center gap-2 text-sm font-medium"><Menu size={20} /> <span className="hidden md:inline">Menu</span></button>
+          <button onClick={() => setOpen(true)} aria-label="Menu" className="flex h-10 w-fit min-w-10 items-center gap-2 text-sm font-medium"><Menu size={20} /> <span className="hidden md:inline">Menu</span></button>
           <SiteLink to={{ page: 'home' }}>{logo ? <img src={logo} alt={name} style={{ height: cfg.logoSize, maxWidth: cfg.logoSize * 6 }} className="object-contain brightness-0 invert" /> : <span className="text-xl font-bold tracking-tight">#{name.replace(/\s+/g, '')}</span>}</SiteLink>
           <div className="flex items-center justify-end gap-2">{fav}{cfg.showContact && <SiteLink to={{ page: 'contatti' }} className="hidden text-sm font-semibold text-[var(--c)] md:block">{cfg.ctaLabel}</SiteLink>}</div>
         </Container>
       </div>
       {open && (
         <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setOpen(false)}>
-          <nav className="h-full w-[85%] max-w-xs overflow-y-auto bg-[var(--ink)] p-7 text-white" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setOpen(false)} aria-label="Chiudi" className="mb-8"><X /></button>
+          <nav className="h-full w-[85%] max-w-xs overflow-y-auto overscroll-contain bg-[var(--ink)] p-7 text-white" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setOpen(false)} aria-label="Chiudi" className="-ml-2 mb-6 flex h-10 w-10 items-center justify-center"><X /></button>
             {links.map(([l, to]) => <SiteLink key={l} to={to} className="block border-b border-white/10 py-3.5 text-[15px] font-medium hover:text-[var(--c)]">{l}</SiteLink>)}
             {cfg.zones.length > 0 && <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Zone</div>}
             {cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block py-2.5 text-sm text-white/80 hover:text-white">Casa a {z.name}</SiteLink>)}
@@ -204,7 +205,7 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
 
       {/* altri filtri, come nelle ricerche avanzate dei siti di agenzia */}
       <div className="mt-3">
-        <button type="button" onClick={() => setMore(v => !v)} className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-80 hover:opacity-100">{tx('search.more')} <ChevronDown size={14} className={`transition-transform ${more ? 'rotate-180' : ''}`} /></button>
+        <button type="button" onClick={() => setMore(v => !v)} className="inline-flex min-h-10 items-center gap-1 text-[13px] font-semibold opacity-80 hover:opacity-100 md:min-h-0">{tx('search.more')} <ChevronDown size={14} className={`transition-transform ${more ? 'rotate-180' : ''}`} /></button>
         {more && (
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <Select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select>
@@ -942,18 +943,18 @@ export function Footer() {
             {(cfg.address || cfg.city) && <div className="flex items-center gap-2"><MapPin size={14} />{cfg.address || cfg.city}</div>}
           </div>
         </div>
-        <div><div className={head}>Pagine</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>{navLinks(cfg).map(([l, to]) => <SiteLink key={l} to={to} className="block hover:underline">{l}</SiteLink>)}</div></div>
-        <div><div className={head}>Link utili</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>
-          {!pageHidden(cfg, 'zona') && cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Zona {z.name}</SiteLink>)}
-          <SiteLink to={{ page: 'immobili', f: { contratto: 'vendita' } }} className="block hover:underline">Immobili in vendita</SiteLink>
-          {properties.some(isRent) && <SiteLink to={{ page: 'immobili', f: { contratto: 'affitto' } }} className="block hover:underline">Immobili in affitto</SiteLink>}
-          {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" className="block hover:underline">Facebook</a>}
-          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noreferrer" className="block hover:underline">Instagram</a>}
+        <div><div className={head}>Pagine</div><div className={`mt-2 text-sm md:mt-4 md:space-y-2.5 ${mut}`}>{navLinks(cfg).map(([l, to]) => <SiteLink key={l} to={to} className="flex min-h-10 items-center hover:underline md:block md:min-h-0">{l}</SiteLink>)}</div></div>
+        <div><div className={head}>Link utili</div><div className={`mt-2 text-sm md:mt-4 md:space-y-2.5 ${mut}`}>
+          {!pageHidden(cfg, 'zona') && cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="flex min-h-10 items-center hover:underline md:block md:min-h-0">Zona {z.name}</SiteLink>)}
+          <SiteLink to={{ page: 'immobili', f: { contratto: 'vendita' } }} className="flex min-h-10 items-center hover:underline md:block md:min-h-0">Immobili in vendita</SiteLink>
+          {properties.some(isRent) && <SiteLink to={{ page: 'immobili', f: { contratto: 'affitto' } }} className="flex min-h-10 items-center hover:underline md:block md:min-h-0">Immobili in affitto</SiteLink>}
+          {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" className="flex min-h-10 items-center hover:underline md:block md:min-h-0">Facebook</a>}
+          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noreferrer" className="flex min-h-10 items-center hover:underline md:block md:min-h-0">Instagram</a>}
         </div></div>
       </Container>
       <Container className={`flex flex-wrap justify-between gap-2 border-t py-6 text-xs ${dark ? 'border-white/10 text-white/45' : 'border-[var(--line)] text-[var(--muted)]'}`}>
         <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span>
-        <span className="flex flex-wrap gap-x-4 gap-y-1"><SiteLink to={{ page: 'legal', doc: 'privacy' }} className="hover:underline">Privacy</SiteLink><SiteLink to={{ page: 'legal', doc: 'cookie' }} className="hover:underline">Cookie</SiteLink><a href="https://agenteimmo.me/it" target="_blank" rel="noopener" className="hover:underline">Sito per agenti immobiliari creato con Agente Immo</a></span>
+        <span className="flex flex-wrap gap-x-4 md:gap-y-1 [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center md:[&>a]:min-h-0"><SiteLink to={{ page: 'legal', doc: 'privacy' }} className="hover:underline">Privacy</SiteLink><SiteLink to={{ page: 'legal', doc: 'cookie' }} className="hover:underline">Cookie</SiteLink><a href="https://agenteimmo.me/it" target="_blank" rel="noopener" className="hover:underline">Sito per agenti immobiliari creato con Agente Immo</a></span>
       </Container>
     </footer>
   );

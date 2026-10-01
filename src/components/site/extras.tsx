@@ -19,12 +19,13 @@ export function TopBar() {
   if (!cfg.topBar || (!cfg.phone && !cfg.email)) return null;
   return (
     <div className="bg-[var(--c)] text-[13px] text-white">
-      <div className="mx-auto flex h-9 max-w-[1240px] items-center gap-5 px-6 md:px-10">
-        {cfg.phone && <a href={`tel:${cfg.phone.replace(/\s/g, '')}`} className="flex items-center gap-1.5 hover:opacity-80"><Phone size={13} />{cfg.phone}</a>}
+      <div className="mx-auto flex h-10 max-w-[1240px] items-center gap-5 px-6 md:h-9 md:px-10">
+        {/* telefono: link alti quanto la barra (40px) */}
+        {cfg.phone && <a href={`tel:${cfg.phone.replace(/\s/g, '')}`} className="flex h-full items-center gap-1.5 hover:opacity-80"><Phone size={13} />{cfg.phone}</a>}
         {cfg.email && <a href={`mailto:${cfg.email}`} className="hidden items-center gap-1.5 hover:opacity-80 sm:flex"><Mail size={13} />{cfg.email}</a>}
         <span className="ml-auto flex items-center gap-3">
-          {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="hover:opacity-80"><Facebook size={14} /></a>}
-          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="hover:opacity-80"><Instagram size={14} /></a>}
+          {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="flex h-10 w-8 items-center justify-center hover:opacity-80 md:h-auto md:w-auto"><Facebook size={14} /></a>}
+          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="flex h-10 w-8 items-center justify-center hover:opacity-80 md:h-auto md:w-auto"><Instagram size={14} /></a>}
         </span>
       </div>
     </div>
@@ -349,7 +350,7 @@ export function AddressLink({ addr, className = '', iconSize = 16 }: { addr: str
       <a href={preview ? undefined : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`} target="_blank" rel="noopener"
         className="inline-flex items-center gap-1.5 underline-offset-4 hover:underline"><MapPin size={iconSize} className="shrink-0" />{addr}</a>
       {dist ? <span className="text-sm opacity-80">{dist}</span>
-        : <button type="button" onClick={measure} disabled={busy} className="inline-flex items-center gap-1 text-sm font-medium text-[var(--c)] hover:underline disabled:opacity-60">{busy && <Loader2 size={13} className="animate-spin" />}Quanto dista da te?</button>}
+        : <button type="button" onClick={measure} disabled={busy} className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-[var(--c)] hover:underline disabled:opacity-60 md:min-h-0">{busy && <Loader2 size={13} className="animate-spin" />}Quanto dista da te?</button>}
     </span>
   );
 }

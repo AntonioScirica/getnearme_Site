@@ -9,7 +9,7 @@ import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteProperty } from '@/lib/si
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
+import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -66,6 +66,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
   const { f, set, setF, list, tipi, favCount } = s;
   const [pageN, setPageN] = useState(0);
   const [open, setOpen] = useState(false);
+  useLockScroll(open);
   useEffect(() => { setPageN(0); }, [f]); // eslint-disable-line react-hooks/set-state-in-effect
   const pages = Math.ceil(list.length / PER_PAGE);
   const shown = list.slice(pageN * PER_PAGE, pageN * PER_PAGE + PER_PAGE);
@@ -161,8 +162,8 @@ function ListingsPage({ initial }: { initial?: Filters }) {
           </Container>
           {open && (
             <div className="fixed inset-0 z-50 flex justify-end bg-black/40 lg:hidden" onClick={() => setOpen(false)}>
-              <div className="h-full w-[88%] max-w-sm overflow-y-auto bg-[var(--bg)] p-6" onClick={e => e.stopPropagation()}>
-                <div className="mb-6 flex items-center justify-between"><span className="text-lg font-semibold">Filtri</span><button onClick={() => setOpen(false)}><X /></button></div>
+              <div className="h-full w-[88%] max-w-sm overflow-y-auto overscroll-contain bg-[var(--bg)] p-6" onClick={e => e.stopPropagation()}>
+                <div className="mb-6 flex items-center justify-between"><span className="text-lg font-semibold">Filtri</span><button onClick={() => setOpen(false)} aria-label="Chiudi" className="-mr-2 flex h-10 w-10 items-center justify-center"><X /></button></div>
                 {sidebar}<Btn onClick={() => setOpen(false)} className="mt-8 w-full">Mostra {list.length} risultati</Btn>
               </div>
             </div>
@@ -303,7 +304,7 @@ function PropertyPage({ id }: { id: string }) {
     <>
       <Sec id="header"><Header /></Sec>
       {t.gallery === 'full' ? (
-        <div className="relative"><Gallery key={p.cover} p={p} /><Container className="absolute inset-x-0 bottom-10 text-white">{heading}</Container></div>
+        <div className="relative"><Gallery key={p.cover} p={p} />{/* telefono: il testo sta sopra il pulsante delle foto, non sotto */}<Container className="absolute inset-x-0 bottom-20 text-white md:bottom-10">{heading}</Container></div>
       ) : (
         <Container className="pt-8">
           <div className="text-[var(--muted)]">{crumbs}</div>
