@@ -31,7 +31,7 @@ export const CHAPTERS: Chapter[] = [
     <tr><th>Voce</th><th>Costo indicativo</th></tr>
   </thead>
   <tbody>
-    <tr><td>Imposte acquisto</td><td>2-10% del prezzo</td></tr>
+    <tr><td>Imposte acquisto</td><td>Da privato: 2% (prima casa) o 9% (seconda casa) del valore catastale, minimo 1.000 €. Dal costruttore: IVA al 4% (prima casa), 10% o 22% (lusso)</td></tr>
     <tr><td>Notaio</td><td>2.000-5.000 euro</td></tr>
     <tr><td>Agenzia</td><td>2-5% + IVA</td></tr>
     <tr><td>Perizia bancaria</td><td>200-400 euro</td></tr>
@@ -207,7 +207,7 @@ export const CHAPTERS: Chapter[] = [
   <li><strong>20 giorni</strong> dalla firma se redatto come scrittura privata</li>
   <li><strong>30 giorni</strong> dalla firma se redatto dal notaio (atto pubblico o scrittura privata autenticata)</li>
 </ul>
-<p>La registrazione è un obbligo fiscale. Se non viene effettuata, si applicano sanzioni dal 120% al 240% dell'imposta dovuta.</p>
+<p>La registrazione è un obbligo fiscale. Se non viene effettuata, si applica una sanzione del 120% dell'imposta dovuta (ridotta se si regolarizza presto con il ravvedimento operoso).</p>
 <h3>Imposte di registrazione</h3>
 <table>
   <thead>
@@ -729,8 +729,8 @@ export const CHAPTERS: Chapter[] = [
 <ul>
   <li><strong>L'immobile non deve essere di lusso:</strong> escluse le categorie catastali A1 (abitazioni signorili), A8 (ville), A9 (castelli e palazzi)</li>
   <li><strong>Residenza:</strong> devi trasferire la residenza nel Comune dell'immobile entro <strong>18 mesi</strong> dal rogito</li>
-  <li><strong>Non possedere altro immobile nello stesso Comune:</strong> non devi essere titolare (neppure in quote) di un altro immobile acquistato con agevolazioni prima casa nello stesso Comune</li>
-  <li><strong>Vendita della precedente prima casa:</strong> se hai già usufruito delle agevolazioni per un altro immobile, devi venderlo entro <strong>2 anni</strong> dal nuovo acquisto</li>
+  <li><strong>Nessuna altra casa nello stesso Comune:</strong> non devi possedere, da solo o in comunione con il coniuge, un'altra abitazione nel Comune dove compri</li>
+  <li><strong>Nessuna casa comprata con le agevolazioni, in tutta Italia:</strong> se ne hai già una (anche in quota), devi venderla entro <strong>2 anni</strong> dal nuovo acquisto</li>
 </ul>
 <p>Se non rispetti questi requisiti (es. non trasferisci la residenza entro 18 mesi), l'Agenzia delle Entrate recupera la differenza d'imposta più una sanzione del 30% e gli interessi.</p>`,
       },

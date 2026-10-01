@@ -586,14 +586,20 @@ function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: Set
 }
 
 function NumberField({ f, v, set, big, suffix, disabled, placeholder, raw }: { f: Field; v: Details[string]; set: SetV; big?: boolean; suffix?: string; disabled?: boolean; placeholder?: string; raw?: boolean }) {
-  const shown = v === undefined ? '' : raw ? String(v) : Number(v).toLocaleString(pageLocale());
+  // IPE e simili hanno i decimali (142,5): prima la virgola spariva e diventava 1425
+  const dec = f.key === 'ipe';
+  const [typed, setTyped] = useState<string | null>(null); // "142," mentre si scrive, prima che diventi numero
+  const shown = typed ?? (v === undefined ? '' : raw ? String(v) : dec ? String(v).replace('.', ',') : Number(v).toLocaleString(pageLocale()));
   return (
     <div>
       <Label f={f} />
       <div className={`flex items-center rounded-2xl bg-white ring-1 ring-line focus-within:ring-2 focus-within:ring-brand ${disabled ? 'opacity-40' : ''}`}>
-        <input inputMode="numeric" disabled={disabled} value={shown} placeholder={placeholder ?? (f.placeholder ? trf(f.placeholder) : '0')}
-          onChange={e => { const n = Number(e.target.value.replace(/\D/g, '')); set(n ? n : undefined); }}
-          className={`min-w-0 flex-1 bg-transparent px-5 outline-none ${big ? 'py-4 font-display text-3xl font-bold' : 'py-3 text-base'}`} />
+        <input disabled={disabled} value={shown} placeholder={placeholder ?? (f.placeholder ? trf(f.placeholder) : '0')}
+          onChange={e => {
+            if (dec) { const t = e.target.value.replace(/[^\d,.]/g, '').replace('.', ','); setTyped(t); const n = Number(t.replace(',', '.')); set(n ? n : undefined); return; }
+            const n = Number(e.target.value.replace(/\D/g, '')); set(n ? n : undefined);
+          }} onBlur={() => setTyped(null)}
+          inputMode={dec ? 'decimal' : 'numeric'} className={`min-w-0 flex-1 bg-transparent px-5 outline-none ${big ? 'py-4 font-display text-3xl font-bold' : 'py-3 text-base'}`} />
         {(suffix ?? f.unit) && <span className={`pr-5 text-muted ${big ? 'text-xl' : 'text-sm'}`}>{suffix ?? trf(f.unit)}</span>}
       </div>
       {f.min && v !== undefined && Number(v) > 0 && Number(v) < f.min && <p className="mt-1.5 text-sm text-rose-600">{tr(`Sembra troppo basso: controlla (almeno ${f.min} ${suffix ?? trf(f.unit)}).`, `Looks too low: please check (at least ${f.min} ${suffix ?? trf(f.unit)}).`)}</p>}
