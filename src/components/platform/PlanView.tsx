@@ -303,7 +303,7 @@ export function WelcomeModal() {
     return () => window.removeEventListener('agenteimmo:welcome', check);
   }, []);
   if (!open) return null;
-  const close = () => { try { sessionStorage.removeItem('agenteimmo:welcome'); } catch { /* niente */ } setOpen(false); };
+  const close = () => { try { sessionStorage.removeItem('agenteimmo:welcome'); } catch { /* niente */ } setOpen(false); window.dispatchEvent(new Event('agenteimmo:welcome-closed')); }; // il tour parte dopo
   return (
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={close}>
       <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-2 shadow-2xl">

@@ -1002,9 +1002,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 {/* il campo file deve stare prima del pulsante vetrina: la label attiva il primo controllo che contiene, e un <button> lo e' */}
                 {picker}
                 <span className="mt-1 flex flex-wrap items-center justify-center gap-2">
-                  <span className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><ImagePlus size={16} /> {tr('Carica foto/video', 'Upload photo/video')}</span>
+                  <span className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><ImagePlus size={16} /> {tr('Carica foto/video', 'Upload photo/video')}</span>{/* principale: caricare (Dalla tua vetrina e' vuota per chi e' nuovo) */}
                   {/* dentro la label: senza preventDefault aprirebbe anche la scelta file */}
-                  <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><LayoutGrid size={16} /> {tr('Dalla tua vetrina', 'From your showcase')}</button>
+                  <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><LayoutGrid size={16} /> {tr('Dalla tua vetrina', 'From your showcase')}</button>
                 </span>
               </label>
             </div>
