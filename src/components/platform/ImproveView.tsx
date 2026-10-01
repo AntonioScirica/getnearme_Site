@@ -492,8 +492,9 @@ export function CopyIcon({ text: t, center }: { text: string; center?: boolean }
   const [copied, setCopied] = useState(false);
   return (
     <button type="button" aria-label={tr('Copia', 'Copy')} title={tr('Copia', 'Copy')} onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      className={`absolute right-2.5 flex h-7 w-7 ${center ? 'top-1/2 -translate-y-1/2' : 'top-2.5'} items-center justify-center rounded-full bg-white text-muted shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:text-ink`}>
-      {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+      // telefono: area di tocco 40x40 attorno al cerchio da 28, che resta nello stesso punto
+      className={`group absolute right-1 flex h-10 w-10 md:right-2.5 md:h-7 md:w-7 ${center ? 'top-1/2 -translate-y-1/2' : 'top-1 md:top-2.5'} items-center justify-center text-muted ease-smooth transition-colors hover:text-ink`}>
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/5">{copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}</span>
     </button>
   );
 }

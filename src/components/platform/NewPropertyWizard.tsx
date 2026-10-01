@@ -463,7 +463,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
 
               <div className="flex flex-wrap items-center justify-between gap-3 pb-6">
-                <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">{tr('Modifica i dati', 'Edit details')}</button>
+                <button onClick={() => go(STEPS.length - 1)} className="min-h-10 text-sm text-muted hover:text-ink md:min-h-0">{tr('Modifica i dati', 'Edit details')}</button>
                 <div className="flex gap-2">
                   <button onClick={save} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Check size={16} strokeWidth={3} /> {tr('Salva immobile', 'Save property')}</button>
                 </div>
@@ -670,7 +670,7 @@ function PortalFields({ d }: { d: Details }) {
     <div className="rise card p-5" style={{ animationDelay: '.18s' }}>
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold">{tr('Campi del portale', 'Portal fields')}</div>
-        <button onClick={() => copy('*', rows.map(r => `${r.label}: ${r.value}`).join('\n'))} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">
+        <button onClick={() => copy('*', rows.map(r => `${r.label}: ${r.value}`).join('\n'))} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink max-md:h-10">
           {copied === '*' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} {tr('Copia tutti', 'Copy all')}</button>
       </div>
       {/* sfumata solo dove la lista continua: in alto se hai scorso, in basso finche' non sei in fondo */}
@@ -681,7 +681,7 @@ function PortalFields({ d }: { d: Details }) {
           <div key={r.key} className="group flex items-center justify-between gap-4 py-2 text-sm">
             <dt className="text-muted">{r.label}</dt>
             <dd className="flex items-center gap-2 text-right font-medium">{r.value}
-              <button onClick={() => copy(r.key, r.value)} aria-label={`${tr('Copia', 'Copy')} ${r.label}`} className="rounded-full p-1 text-muted opacity-0 ease-smooth transition group-hover:opacity-100 hover:bg-canvas hover:text-ink max-md:opacity-100">
+              <button onClick={() => copy(r.key, r.value)} aria-label={`${tr('Copia', 'Copy')} ${r.label}`} className="flex items-center justify-center rounded-full p-1 text-muted opacity-0 max-md:-my-2 max-md:h-10 max-md:w-10 ease-smooth transition group-hover:opacity-100 hover:bg-canvas hover:text-ink max-md:opacity-100">
                 {copied === r.key ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}</button>
             </dd>
           </div>
