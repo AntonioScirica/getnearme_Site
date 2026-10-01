@@ -214,7 +214,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       )}
 
       {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
-        <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={showcase}
+        <Gallery cfg={site.config} draft={dirty ? cfg : null} live={online} name={site.name || 'La tua agenzia'} logo={site.logo} props={showcase}
           onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
       ) : (
         <div className="mt-6">
@@ -512,7 +512,7 @@ function StarterSite() {
   );
 }
 
-function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: string; logo: string | null; props: SiteProperty[]; onPick: (id: TemplateId) => void }) {
+function Gallery({ cfg, draft, live, name, logo, props, onPick }: { cfg: SiteConfig; draft?: SiteConfig | null; live?: boolean; name: string; logo: string | null; props: SiteProperty[]; onPick: (id: TemplateId) => void }) {
   // come in home: al clic le altre card escono (piu' piccole, sfocate), poi la card scelta diventa l'editor
   const [leaving, setLeaving] = useState<TemplateId | null>(null);
   const pick = (id: TemplateId, el: HTMLElement) => {
@@ -530,14 +530,16 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {TEMPLATES.map((t, i) => {
           const used = cfg.template === t.id;
-          const tcfg = used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
+          // bozza non pubblicata: la sua card la mostra con le modifiche e l'etichetta Bozza
+          const isDraft = !!draft && draft.template === t.id;
+          const tcfg = isDraft ? draft : used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
           return (
             // stessa card delle altre pagine (Galleria): bianca 24 con la miniatura 16 dentro e una riga sotto.
             // Passando sopra: velo leggero sulla miniatura e i due pulsanti che salgono (la miniatura resta ferma,
             // cosi' diventa l'editor dalla stessa immagine)
             // tour: la luce va sulla card del modello in uso, da cui poi nasce l'editor
             <div key={t.id}
-              className={`group rise rounded-3xl bg-white p-2 text-left ease-smooth transition-[opacity,transform,filter,box-shadow] ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
+              className={`group rise rounded-3xl bg-white p-2 text-left ease-smooth transition-[opacity,transform,filter,box-shadow] ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : isDraft ? '!ring-2 !ring-amber-300' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
               <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>
                 {/* in hover (sempre su telefono): anteprima in un'altra scheda o scelta del modello, stessa larghezza */}
@@ -552,7 +554,8 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
                   <span className="block text-sm font-semibold">{t.name}</span>
                   <span className="block truncate text-xs text-muted">{tr(t.desc, t.desc_en)}</span>
                 </span>
-                {used && <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">{tr('In uso', 'In use')}</span>}
+                {isDraft && <span className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{tr('Bozza', 'Draft')}</span>}
+                {used && <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">{live ? tr('Online', 'Live') : tr('In uso', 'In use')}</span>}
               </div>
             </div>
           );
