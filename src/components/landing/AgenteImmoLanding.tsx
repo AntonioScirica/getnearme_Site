@@ -234,7 +234,7 @@ const simulate = () => { const q = new URLSearchParams(location.search); return 
 // Barra di avanzamento finta: sale veloce e rallenta, a secs (tempo tipico) e' a ~80%, non arriva mai a 100 da sola
 // (quando il risultato e' pronto la barra sparisce). Tempi veri da ai_usage: foto GPT 14-17 s (+ caricamento),
 // video Prima e dopo ~2 min (come in chat).
-export function FakeBar({ secs, title, sub, more }: { secs: number; title: string; sub: string; more?: ReactNode }) {
+export function FakeBar({ secs, title, sub, more, flat }: { secs: number; title: string; sub: string; more?: ReactNode; flat?: boolean }) {
   const [p, setP] = useState(0);
   // more: cosa fare intanto (il video va avanti da solo), subito nella card
   useEffect(() => {
@@ -243,10 +243,10 @@ export function FakeBar({ secs, title, sub, more }: { secs: number; title: strin
     return () => clearInterval(id);
   }, [secs]);
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-white/30 p-4 backdrop-blur-[3px]">
+    <div className={flat ? 'flex justify-center' : 'absolute inset-0 flex items-center justify-center bg-white/30 p-4 backdrop-blur-[3px]'}>
       <div className="blur-in w-full max-w-[22rem] rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_rgba(0,0,0,.04),0_24px_60px_-20px_rgba(0,0,0,.35)]">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand"><Sparkles size={18} className="animate-pulse" /></span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand max-[400px]:hidden"><Sparkles size={18} className="animate-pulse" /></span>{/* telefoni stretti: via l'icona, il titolo resta intero */}
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-ink">{title}</div>
             <div className="text-xs text-muted">{sub}</div>
@@ -406,19 +406,20 @@ function TryIt({ gate = false }: { gate?: boolean }) {
   };
   return (
     <>
-        <div ref={boxRef} className="rounded-[28px] bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:rounded-[32px] sm:p-2">
-          <div onContextMenu={e => e.preventDefault()} className="relative overflow-hidden rounded-[22px] bg-canvas sm:rounded-[24px]">
+        {/* video in lavorazione: via il contenitore e la foto dietro, resta solo la card con la barra */}
+        <div ref={boxRef} className={`rounded-[28px] sm:rounded-[32px] ${vBusy ? '' : 'bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:p-2'}`}>
+          <div onContextMenu={e => e.preventDefault()} className={`relative rounded-[22px] sm:rounded-[24px] ${vBusy ? '' : 'overflow-hidden bg-canvas'}`}>
             {/* sul risultato della prova niente tasto destro (in pagina c'e' comunque solo la versione con la filigrana) */}
             {video ? (
               <div onContextMenu={e => e.preventDefault()} className={`relative select-none overflow-hidden ${BOX}`}>{after && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />}<video src={video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" /></div>
             ) : after && before ? (
               <div className="relative">
                 {/* telefono: scegliendo il video la foto si toglie e le card stanno nel riquadro che si allunga (dentro la foto 4:3 erano schiacciate e scorrevano) */}
-                <div className={picking && !vBusy ? 'max-sm:hidden' : ''}><BeforeAfter before={before} after={after} auto={false} contain className={BOX} /></div>
+                <div className={vBusy ? 'hidden' : picking ? 'max-sm:hidden' : ''}><BeforeAfter before={before} after={after} auto={false} contain className={BOX} /></div>
                 {/* template del video dentro la foto: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
                 {picking && !vBusy && (
                   <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md max-sm:static max-sm:overflow-visible max-sm:bg-transparent max-sm:px-2 max-sm:backdrop-blur-none sm:justify-center sm:p-6">
-                    <div className="mb-3 flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{anims && <button type="button" onClick={() => setAnims(false)} aria-label={L('Indietro', "Back")} className="-ml-1 text-muted hover:text-ink"><ChevronLeft size={16} /></button>}{anims ? L('Con quale animazione?', "Which animation?") : L('Che video vuoi creare?', "Which video do you want?")}</div>
+                    <div className="mb-3 flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{/* scegliendo il video i pulsanti sotto spariscono: indietro anche dal primo passo (torna alla foto) */}<button type="button" onClick={() => (anims ? setAnims(false) : setPicking(false))} aria-label={L('Indietro', "Back")} className="-ml-1 text-muted hover:text-ink"><ChevronLeft size={16} /></button>{anims ? L('Con quale animazione?', "Which animation?") : L('Che video vuoi creare?', "Which video do you want?")}</div>
                     {/* stesse card della chat della piattaforma: video d'esempio, nome, descrizione */}
                     <div className={`grid w-full gap-3 ${anims ? 'max-w-xl grid-cols-2' : 'max-w-3xl grid-cols-2 sm:grid-cols-3'}`}>{/* due animazioni: griglia stretta e centrata */}
                       {(anims ? PRIMA_DOPO : VIDEO_TEMPLATES).map(([k, it, eng, dIt, dEn, sample], n) => {
@@ -444,7 +445,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                     </div>
                   </div>
                 )}
-                {vBusy && <FakeBar secs={120} title={L('Stiamo facendo il video', "Making your video")} sub={L('Circa 2 minuti', "About 2 minutes")} more={
+                {vBusy && <FakeBar flat secs={120} title={L('Stiamo facendo il video', "Making your video")} sub={L('Circa 2 minuti', "About 2 minutes")} more={
                   <div className="pt-4">
                     <p className="text-xs text-muted">{L('Nel frattempo puoi entrare in piattaforma o vedere i piani: il video lo ritrovi nella tua Galleria.', 'Meanwhile you can enter the platform or see the plans: you will find the video in your Gallery.')}</p>
                     <div className="mt-3 grid grid-cols-2 gap-2">
@@ -479,7 +480,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
             <input ref={input} type="file" accept="image/*" className="hidden" onChange={e => { pick(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
           {/* mentre l'AI arreda o fa il video niente campo, stili e bottoni (inert: non si scrive) */}
-          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${busy || vBusy ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]'}`}><div inert={busy || vBusy} className="min-h-0 overflow-hidden">{/* si chiude (e riapre) con un movimento, il riquadro si stringe piano */}
+          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${busy || vBusy || (picking && after && !video) ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr]'}`}><div inert={busy || vBusy || (picking && !!after && !video)} className="min-h-0 overflow-hidden">{/* si chiude (e riapre) con un movimento, il riquadro si stringe piano */}
           <div className="px-1.5 pb-2 pt-3 sm:p-3">
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 [&:has(input:focus)]:bg-white [&:has(input:focus)]:ring-2 [&:has(input:focus)]:ring-ai sm:flex-nowrap">
               {!after && <>
