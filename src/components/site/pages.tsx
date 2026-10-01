@@ -179,6 +179,8 @@ function ListingsPage({ initial }: { initial?: Filters }) {
 // ---------- Scheda immobile ----------
 // prima/dopo: le foto AI hanno l'originale in p.prima; a tutto schermo si confrontano con il cursore
 function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record<string, string>; i: number | null; setI: (n: number | null) => void }) {
+  useLockScroll(i !== null);
+  const [x0, setX0] = useState<number | null>(null); // inizio del trascinamento col dito
   useEffect(() => {
     if (i === null) return;
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setI(null); if (e.key === 'ArrowRight') setI((i + 1) % photos.length); if (e.key === 'ArrowLeft') setI((i - 1 + photos.length) % photos.length); };
@@ -188,7 +190,10 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
   const before = prima?.[photos[i]];
   // nel body: dentro l'anteprima della piattaforma un antenato trasformato rende "fixed" relativo a lui (foto fuori schermo)
   return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/92" onClick={() => setI(null)}>
+    <div className="fixed inset-0 z-[400] flex items-center justify-center overscroll-contain bg-black/92" onClick={() => setI(null)}
+      // telefono: scorrimento col dito tra le foto (non sul prima/dopo, che ha il suo cursore)
+      onTouchStart={e => setX0(before ? null : e.touches[0].clientX)}
+      onTouchEnd={e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; setX0(null); if (Math.abs(dx) > 50) setI((i + (dx < 0 ? 1 : -1) + photos.length) % photos.length); }}>
       {before ? (
         <div className="relative aspect-[3/2] max-h-[86vh] w-[min(92vw,calc(86vh*1.5))] overflow-hidden rounded-[var(--rc)]" onClick={e => e.stopPropagation()}>
           <InlineSlider before={before} after={photos[i]} isVertical={false} showImages interactive />
@@ -197,9 +202,9 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
         </div>
       ) : /\.mp4$/.test(photos[i]) ? <video key={photos[i]} src={photos[i]} controls autoPlay playsInline className="max-h-[86vh] max-w-[92vw] rounded-[var(--rc)]" onClick={e => e.stopPropagation()} />
         : <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" onClick={e => e.stopPropagation()} />}
-      <button className="absolute right-5 top-5 text-white" onClick={() => setI(null)} aria-label="Chiudi"><X size={28} /></button>
-      <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
-      <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
+      <button className="absolute right-3 top-3 flex h-12 w-12 items-center justify-center text-white md:right-5 md:top-5 md:h-auto md:w-auto" onClick={() => setI(null)} aria-label="Chiudi"><X size={28} /></button>
+      <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto precedente" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
+      <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto successiva" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
       <span className="absolute bottom-5 text-sm text-white/70">{i + 1} / {photos.length}</span>
     </div>,
     document.body,

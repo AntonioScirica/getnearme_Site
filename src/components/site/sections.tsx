@@ -62,9 +62,9 @@ export function Header({ over }: { over?: boolean }) {
         <span className={`truncate font-bold tracking-tight ${t.header === 'centered' ? 'font-[family-name:var(--font-serif-accent)] text-2xl font-normal' : 'text-[17px]'}`}>{name}</span>
       </span>;
   const navCls = light ? 'text-white/85 hover:text-white' : 'text-[var(--muted)] hover:text-[var(--fg)]';
-  const nav = links.map(([l, to]) => <SiteLink key={l} to={to} className={`px-3.5 py-2 text-sm font-medium transition-colors ${navCls}`}>{l}</SiteLink>);
+  const nav = links.map(([l, to]) => <SiteLink key={l} to={to} className={`whitespace-nowrap px-3.5 py-2 text-sm font-medium transition-colors ${navCls}`}>{l}</SiteLink>);
   const cta = cfg.showContact && !pageHidden(cfg, 'contatti') && (
-    <span className="hidden md:block"><Btn href={preview ? undefined : pathOf(base, { page: 'contatti' })} onClick={preview ? () => go?.({ page: 'contatti' }) : undefined} size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`!h-10 ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
+    <span className="hidden lg:block"><Btn href={preview ? undefined : pathOf(base, { page: 'contatti' })} onClick={preview ? () => go?.({ page: 'contatti' }) : undefined} size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`!h-10 ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
       {t.header !== 'minimal' && <Phone size={14} />}{cfg.ctaLabel}{t.header === 'minimal' && <ArrowUpRight size={14} />}
     </Btn></span>
   );
@@ -76,8 +76,8 @@ export function Header({ over }: { over?: boolean }) {
       <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--c)] px-1 text-[10px] font-bold leading-none text-[var(--on-c,#fff)]">{favs.ids.length}</span>
     </SiteLink>
   );
-  const burger = <button onClick={() => setOpen(v => !v)} className="flex h-10 w-10 shrink-0 items-center justify-center md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
-  const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-4 py-4 sm:px-6 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
+  const burger = <button onClick={() => setOpen(v => !v)} className="flex h-10 w-10 shrink-0 items-center justify-center lg:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
+  const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-4 py-4 sm:px-6 text-[var(--fg)] lg:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
 
   // drawer: barra scura, menu a sinistra che apre il pannello laterale (con le pagine zona), logo al centro
   if (t.header === 'drawer') return (
@@ -106,8 +106,8 @@ export function Header({ over }: { over?: boolean }) {
   if (t.header === 'centered') return (
     <header className="relative z-30 bg-[var(--bg)]">
       <TopBar />
-      <Container className="flex min-h-20 items-center justify-between py-3 md:grid md:min-h-24 md:grid-cols-[1fr_auto_1fr]">
-        <nav className="hidden items-center md:flex">{nav}</nav>
+      <Container className="flex min-h-20 items-center justify-between py-3 md:min-h-24 lg:grid lg:grid-cols-[1fr_auto_1fr]">
+        <nav className="hidden items-center lg:flex">{nav}</nav>
         <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
         <div className="flex justify-end gap-3">{fav}{cta}{burger}</div>
       </Container>{mobile}
@@ -120,8 +120,8 @@ export function Header({ over }: { over?: boolean }) {
       <Container>
         <div className="flex min-h-16 items-center gap-6 rounded-full py-2 bg-[var(--surface)]/85 px-3 pl-5 shadow-[0_10px_40px_-15px_rgba(22,22,58,.25)] ring-1 ring-[var(--line)] backdrop-blur-xl">
           <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
-          <nav className="mx-auto hidden items-center md:flex">{nav}</nav>
-          <div className="ml-auto flex items-center gap-3 md:ml-0">{fav}{cta}{burger}</div>
+          <nav className="mx-auto hidden items-center lg:flex">{nav}</nav>
+          <div className="ml-auto flex items-center gap-3 lg:ml-0">{fav}{cta}{burger}</div>
         </div>
       </Container>{mobile}
     </header>
@@ -132,8 +132,8 @@ export function Header({ over }: { over?: boolean }) {
       <TopBar />
       <Container className="flex min-h-20 items-center gap-6 py-3">
         <SiteLink to={{ page: 'home' }} className="min-w-0">{mark}</SiteLink>
-        <nav className={`hidden items-center md:flex ${t.header === 'minimal' ? 'mx-auto' : 'ml-auto'}`}>{nav}</nav>
-        <div className="ml-auto flex items-center gap-3 md:ml-0">{fav}{cta}{burger}</div>
+        <nav className={`hidden items-center lg:flex ${t.header === 'minimal' ? 'mx-auto' : 'ml-auto'}`}>{nav}</nav>
+        <div className="ml-auto flex items-center gap-3 lg:ml-0">{fav}{cta}{burger}</div>
       </Container>{mobile}
     </header>
   );

@@ -36,10 +36,19 @@ export function WhatsAppFloat() {
   const { cfg, preview } = useSite();
   const c = contacts(cfg);
   // nell'anteprima dell'editor lo disegna Preview, fisso nell'angolo della finestra (qui finirebbe in fondo alla pagina)
-  if (!cfg.whatsappButton || !c.wa || preview) return null;
+  // footer in vista: la bolla si toglie di mezzo, cosi' non copre i link in fondo
+  const [atEnd, setAtEnd] = useState(false);
+  const on = cfg.whatsappButton && !!c.wa && !preview;
+  useEffect(() => {
+    const f = on && document.querySelector('footer');
+    if (!f) return;
+    const io = new IntersectionObserver(([e]) => setAtEnd(e.isIntersecting));
+    io.observe(f); return () => io.disconnect();
+  }, [on]);
+  if (!on) return null;
   return (
-    <a href={preview ? undefined : c.wa} target="_blank" rel="noreferrer" aria-label="Scrivimi su WhatsApp"
-      className={`${preview ? 'absolute' : 'fixed'} bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)] transition-transform duration-500 hover:scale-110`}>
+    <a href={preview ? undefined : c.wa} target="_blank" rel="noreferrer" aria-label="Scrivimi su WhatsApp" aria-hidden={atEnd || undefined} tabIndex={atEnd ? -1 : undefined}
+      className={`${preview ? 'absolute' : 'fixed'} bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)] transition-[transform,opacity] duration-500 hover:scale-110 ${atEnd ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
       <MessageCircle size={26} fill="currentColor" className="text-white" />
     </a>
   );
@@ -76,7 +85,7 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
       <textarea name="message" rows={compact ? 3 : 5} maxLength={2000} defaultValue={property ? `Vorrei informazioni su "${property.titolo}"${property.riferimento ? ` (rif. ${property.riferimento})` : ''}.` : ''} placeholder="Il tuo messaggio" className={`${field} h-auto resize-none py-3`} />
       {/* campo trappola per i bot */}
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
-      <label className="flex items-start gap-2 text-xs text-[var(--muted)]"><input type="checkbox" name="privacy" required className="mt-0.5 accent-[var(--c)]" /> <span>Ho letto l’<SiteLink to={{ page: 'legal', doc: 'privacy' }} className="underline underline-offset-2 hover:text-[var(--fg)]">informativa privacy</SiteLink> e acconsento a essere ricontattato.</span></label>
+      <label className="flex min-h-10 cursor-pointer items-start gap-3 py-1 text-[13px] text-[var(--muted)] md:min-h-0 md:gap-2 md:py-0 md:text-xs"><input type="checkbox" name="privacy" required className="h-5 w-5 shrink-0 accent-[var(--c)] md:mt-0.5 md:h-auto md:w-auto" /> <span>Ho letto l’<SiteLink to={{ page: 'legal', doc: 'privacy' }} className="underline underline-offset-2 hover:text-[var(--fg)]">informativa privacy</SiteLink> e acconsento a essere ricontattato.</span></label>
       <button disabled={state === 'sending'} className="flex h-12 w-full items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-semibold text-[var(--on-c,#fff)] transition hover:brightness-110 disabled:opacity-60">
         {state === 'sending' && <Loader2 size={15} className="animate-spin" />} {tx('form.button')}
       </button>
