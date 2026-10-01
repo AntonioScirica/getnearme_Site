@@ -1285,10 +1285,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         {/* telefono: scelte su una riga, sotto Condividi e Scarica meta' e meta' */}
                         <div className="flex items-center gap-2 pt-3 max-sm:flex-wrap">
-                          <div className="flex min-w-0 flex-1 max-sm:basis-full"><Picks picks={m.picks} /></div>
-                          <ShareVideo url={m.url} className="flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 max-sm:flex-1 max-sm:justify-center text-xs font-medium text-white shadow-sm ring-1 ring-black/5" />{/* stessa forma e altezza di Scarica */}
-                          <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
-                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas max-sm:flex-1 max-sm:justify-center ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
+                          {/* una sola scelta: resta sulla riga con Condividi e Scarica (solo icone su telefono); piu' scelte: riga sua */}
+                          <div className={`flex min-w-0 flex-1 ${m.picks.length > 1 ? 'max-sm:basis-full' : ''}`}><Picks picks={m.picks} /></div>
+                          <ShareVideo url={m.url} labelClass={m.picks.length > 1 ? '' : 'max-sm:hidden'} className={`flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 max-sm:justify-center ${m.picks.length > 1 ? 'max-sm:flex-1' : 'max-sm:pr-1.5'} text-xs font-medium text-white shadow-sm ring-1 ring-black/5`} />{/* stessa forma e altezza di Scarica */}
+                          <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url} aria-label={tr('Scarica', 'Download')}
+                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas max-sm:justify-center ${m.picks.length > 1 ? 'max-sm:flex-1' : 'max-sm:pr-1.5'} ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span><span className={m.picks.length > 1 ? '' : 'max-sm:hidden'}>{tr('Scarica', 'Download')}</span></a>
                         </div>
                       </div>
                     )}
