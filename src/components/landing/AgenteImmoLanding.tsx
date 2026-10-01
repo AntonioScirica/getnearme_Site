@@ -244,14 +244,14 @@ export function FakeBar({ secs, title, sub, more }: { secs: number; title: strin
   }, [secs]);
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-white/30 p-4 backdrop-blur-[3px]">
-      <div className="blur-in w-full max-w-[20rem] rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_rgba(0,0,0,.04),0_24px_60px_-20px_rgba(0,0,0,.35)]">
+      <div className="blur-in w-full max-w-[22rem] rounded-[24px] bg-white p-4 shadow-[0_0_0_1px_rgba(0,0,0,.04),0_24px_60px_-20px_rgba(0,0,0,.35)]">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand"><Sparkles size={18} className="animate-pulse" /></span>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-ink">{title}</div>
+            <div className="truncate text-sm font-semibold text-ink">{title}</div>
             <div className="text-xs text-muted">{sub}</div>
           </div>
-          <span className="text-xs font-semibold tabular-nums text-muted">{Math.round(p)}%</span>
+          <span className="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-muted">{Math.round(p)}%</span>{/* larghezza fissa: a 2 cifre il titolo andava a capo */}
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>
         {more}
