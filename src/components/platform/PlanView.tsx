@@ -38,16 +38,17 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   // posto vuoto e invisibile (niente bordo da solo): la pillola arriva intera, bordo e crediti insieme
   if (!c) return <span className="flex h-10 w-[136px]" aria-hidden />;
   const low = isLow(c);
-  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
+  // telefono: area di tocco 40px, il cerchio resta da 32
+  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="group flex h-10 w-10 items-center justify-center md:h-8 md:w-8"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors group-hover:bg-line"><UserRound size={16} /></span></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
   if (c.plan === 'none' && !c.unlimited && c.balance <= 0) return (
     <span className="blur-in flex items-center gap-2">
       <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">{tr('Scegli un piano', 'Choose a plan')}</a>
-      <span className="flex h-10 items-center rounded-full bg-white px-1 ring-1 ring-line">{profile}</span>
+      <span className="flex h-10 items-center rounded-full bg-white ring-1 ring-line md:px-1">{profile}</span>
     </span>
   );
   return (
-    <span className={`blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
+    <span className={`blur-in flex h-10 items-center rounded-full bg-white ring-1 ease-smooth md:pr-1 transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
       <a href="#/piano" title={c.unlimited ? undefined : tr(`${fmt(c.balance)} ${c.balance === 1 ? 'credito' : 'crediti'}`, `${fmt(c.balance)} ${c.balance === 1 ? 'credit' : 'credits'}`)} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
         {/* numero e moneta, senza la parola "crediti" */}
         {c.unlimited ? <><Coins size={15} className="text-ai" /> {tr('Illimitati', 'Unlimited')}</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· {tr('Ricarica', 'Top up')}</span>}

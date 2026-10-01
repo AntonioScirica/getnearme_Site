@@ -76,10 +76,12 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">{tr('Indirizzo del tuo portfolio', 'Your portfolio address')}</label>
+        {/* telefono: il prefisso in piccolo sopra, il campo dello slug a tutta larghezza */}
+        <span className="mb-1.5 block truncate text-xs text-muted sm:hidden">{portfolioPrefix()}</span>
         <div className="flex items-center rounded-full border border-line bg-white pl-1 text-sm focus-within:border-brand">
-          <span className="pl-3 text-muted">{portfolioPrefix()}</span>
+          <span className="hidden whitespace-nowrap pl-3 text-muted sm:inline">{portfolioPrefix()}</span>
           <input value={slug} onChange={e => { setSlugTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40)); }}
-            placeholder={tr('mario-rossi', 'john-smith')} className="min-w-0 flex-1 bg-transparent py-2.5 outline-none" />
+            placeholder={tr('mario-rossi', 'john-smith')} className="min-w-0 flex-1 bg-transparent py-2.5 pl-3 outline-none sm:pl-0" />
           <span className="pr-3">
             {check.state === 'checking' && <Loader2 size={16} className="animate-spin text-muted" />}
             {check.state === 'ok' && <Check size={16} className="text-green-600" />}

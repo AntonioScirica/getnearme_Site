@@ -206,7 +206,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           </>) : <>
           <a href="#/" className="flex items-center gap-2 justify-self-start">
             <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" style={{ viewTransitionName: 'ob-logo' }} />
-            <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
+            <span className="hidden font-display text-lg font-extrabold tracking-tight sm:inline">Agente <span className="text-brand">Immo</span></span>{/* telefono: solo il marchio */}
           </a>
           {/* menu al centro esatto: colonne laterali uguali (1fr), qualunque sia la larghezza di logo e pulsanti */}
           <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
@@ -221,14 +221,15 @@ function PlatformInner({ userData }: { userData: UserData }) {
           <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
             {/* senza piano solo Scegli un piano (in nero): Metti in vetrina appare col piano */}
-            {credits && !noPlan && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">{tr('Metti in vetrina', 'List a property')}</a>}
+            {/* telefono: solo il + (la scritta da sm in su) */}
+            {credits && !noPlan && <a href="#/nuovo" data-tour="nuovo" aria-label={tr('Metti in vetrina', 'List a property')} className="flex h-10 w-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-brand text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98] sm:w-auto sm:px-5"><Plus size={18} className="sm:hidden" /><span className="hidden sm:inline">{tr('Metti in vetrina', 'List a property')}</span></a>}
           </div>
           </>}
         </div>
       </header>
 
       {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto) */}
-      {!chat && route === '/' && <div inert={homeOpen} className={`fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
+      {!chat && route === '/' && <div inert={homeOpen} className={`fixed bottom-[84px] left-1/2 z-30 md:bottom-5 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
         <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <Download size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
         </a>
@@ -278,6 +279,18 @@ function PlatformInner({ userData }: { userData: UserData }) {
           )}
         </div>
       </main>
+      {/* telefono: le voci del menu in una barra in basso (in chat e nel percorso Metti in vetrina no, hanno il loro fondo) */}
+      {!chat && route !== '/nuovo' && (
+        <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+          {NAV.map(({ path, label, icon: Icon }) => {
+            const active = route === path || (path === '/immobili' && !!detailId);
+            return <a key={path} href={`#${path}`} aria-current={active ? 'page' : undefined} className={`relative flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium ease-smooth transition-colors ${active ? 'text-ink' : 'text-muted'}`}>
+              <Icon size={20} className={active ? 'text-brand' : ''} /><span className="max-w-full truncate px-1">{label}</span>
+              {path === '/galleria' && news > 0 && <span className="pop absolute left-1/2 top-2 ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-white ring-2 ring-white">{news > 9 ? '9+' : news}</span>}
+            </a>;
+          })}
+        </nav>
+      )}
     </div>
   );
 }
@@ -614,7 +627,7 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         <h2 className="font-semibold">{tr('Il tuo sito personale', 'Your personal website')}</h2>
         <p className="mt-1 text-sm text-muted">{tr('Il nome che vedono i clienti e l\'indirizzo della pagina con le tue case.', 'The name your clients see and the address of the page with your properties.')}</p>
         <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel={tr('Salva', 'Save')} onSaved={onSaved} /></div>
-        {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
+        {profile?.slug && <a href="#/portfolio" className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-brand hover:underline md:mt-4 md:min-h-0">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
       </div>
       {/* Costi AI: solo per gli amministratori, qui invece che nel menu */}
       {admin && (<>
