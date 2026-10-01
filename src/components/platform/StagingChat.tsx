@@ -159,14 +159,14 @@ function Cr({ n, dark, tight, still }: { n: number; dark?: boolean; tight?: bool
 // scelte fatte (modello, stile...): una sola pillola con un divisore verticale tra una scelta e l'altra
 function Picks({ picks }: { picks: { label: string; icon: keyof typeof PICK_ICON; src?: string }[] }) {
   return (
-    <span className="inline-flex max-w-full flex-wrap items-center rounded-2xl bg-white py-1.5 text-xs font-medium shadow-sm ring-1 ring-black/5">
+    <span className="inline-flex max-w-full flex-wrap items-center rounded-2xl bg-white py-1.5 text-xs font-medium shadow-sm ring-1 ring-black/5 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:[scrollbar-width:none]">{/* telefono: una riga sola, piu' compatta (andando a capo la terza scelta restava storta) */}
       {picks.map((p, i) => {
         const Icon = PICK_ICON[p.icon];
         return (
           <span key={p.label} className="blur-in flex items-center">
             {i > 0 && <span className="h-5 w-px bg-line" aria-hidden />}
-            <span className={`flex items-center gap-2 whitespace-nowrap pr-3 ${i > 0 ? 'pl-3' : 'pl-1.5'}`}>
-              {p.src ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
+            <span className={`flex items-center gap-2 whitespace-nowrap pr-3 max-sm:gap-1.5 max-sm:pr-2 ${i > 0 ? 'pl-3 max-sm:pl-2' : 'pl-1.5'}`}>
+              {p.src ? <img src={p.src} alt="" className="h-7 w-7 shrink-0 rounded-xl object-cover max-sm:h-6 max-sm:w-6 max-sm:rounded-lg" /> : <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand max-sm:h-6 max-sm:w-6 max-sm:rounded-lg"><Icon size={14} /></span>}
               {p.label}
             </span>
           </span>
