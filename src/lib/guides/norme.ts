@@ -10,7 +10,7 @@ const TD = 'style="padding:.6rem .75rem;border-bottom:1px solid #eee;vertical-al
 export const virtualStagingLegale: Guide = {
   slug: 'virtual-staging-legale',
   label: 'Virtual staging legale',
-  title: 'Virtual staging è legale? Regole per le foto arredate con AI',
+  title: 'Virtual staging è legale? Regole per le foto con AI',
   description: 'Il virtual staging è legale negli annunci se non inganna: cosa puoi modificare, cosa mai, come dichiarare l\'arredo virtuale e una checklist per agenti.',
   h1: 'Virtual staging è legale? Come usare le foto arredate con AI negli annunci',
   intro: 'Sì, il virtual staging è legale: arredare in foto una stanza non è vietato. Diventa un problema quando la foto fa credere all\'acquirente qualcosa che non è vero sulla casa. La linea è semplice da ricordare: puoi aggiungere arredi, non puoi cambiare l\'immobile. E devi dirlo.',

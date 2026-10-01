@@ -6,7 +6,7 @@ import type { Guide } from './types';
 export const intelligenzaArtificiale: Guide = {
   slug: 'intelligenza-artificiale-agenti-immobiliari',
   label: 'AI per agenti immobiliari',
-  title: 'Intelligenza artificiale per agenti immobiliari: cosa usare davvero',
+  title: 'Intelligenza artificiale per agenti immobiliari: guida 2026',
   description: 'Come un agente immobiliare può usare l\'intelligenza artificiale ogni giorno: foto arredate, annunci, video e sito. Cosa funziona, cosa evitare e come non perdere tempo.',
   h1: 'Intelligenza artificiale per agenti immobiliari: cosa usare davvero',
   intro: 'Non serve diventare esperti di tecnologia. Serve sapere in quali punti del lavoro l\'AI fa risparmiare ore e fa presentare meglio gli immobili, e in quali invece è solo rumore.',
@@ -60,7 +60,7 @@ export const intelligenzaArtificiale: Guide = {
 export const videoSocial: Guide = {
   slug: 'video-immobiliari-social',
   label: 'Video immobiliari per i social',
-  title: 'Video immobiliari per i social: perché farli e come farli bene',
+  title: 'Video immobiliari per i social: come farli senza videomaker',
   description: 'Perché un agente immobiliare dovrebbe pubblicare video su Instagram e TikTok, che video funzionano, ogni quanto pubblicarli e come farli senza videomaker.',
   h1: 'Video immobiliari per i social: perché farli e come farli bene',
   intro: 'Nella tua zona i clienti chiamano l\'agente che conoscono già. E oggi lo conoscono prima di tutto dai video che vedono scorrendo il telefono.',
@@ -107,8 +107,8 @@ export const videoSocial: Guide = {
 export const acquisireIncarichi: Guide = {
   slug: 'acquisire-incarichi-immobiliari',
   label: 'Come acquisire incarichi',
-  title: 'Come acquisire più incarichi immobiliari: presentarsi meglio',
-  description: 'Come vincere più incarichi di vendita: cosa guarda il proprietario quando sceglie l\'agente e come presentarsi all\'appuntamento con prove concrete, non promesse.',
+  title: 'Come acquisire immobili: trovare più incarichi di vendita',
+  description: 'Come acquisire immobili e trovare più incarichi di vendita: cosa guarda il proprietario quando sceglie l\'agente e come presentarti con prove concrete.',
   h1: 'Come acquisire più incarichi: vince chi si presenta meglio',
   intro: 'Il proprietario ha sentito altre agenzie. Tutte gli hanno promesso di vendere bene e in fretta. Cosa gli fa scegliere te?',
   updated: '2026-09-27',

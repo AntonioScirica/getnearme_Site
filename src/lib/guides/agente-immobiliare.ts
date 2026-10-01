@@ -122,7 +122,7 @@ const FAQ: Guide['faq'] = [
 export const agenteImmobiliare: Guide = {
   slug: 'agente-immobiliare',
   label: 'Agente immobiliare',
-  title: 'Agente immobiliare: cosa fa, come diventarlo, quanto guadagna (guida 2026)',
+  title: 'Agente immobiliare: cosa fa, requisiti e guadagni (2026)',
   description: 'Guida completa all\'agente immobiliare: cosa fa, requisiti, corso ed esame per diventarlo, provvigioni e guadagni, e come trovare più incarichi e vendere prima.',
   h1: 'Agente immobiliare: cosa fa, come diventarlo, quanto guadagna e come trovare incarichi',
   intro: 'Tutto quello che serve sapere sul mestiere di agente immobiliare in Italia: il lavoro di tutti i giorni, requisiti ed esame, provvigioni, e cosa fa davvero la differenza per acquisire più incarichi e vendere prima.',

@@ -6,7 +6,7 @@ import type { Guide } from './types';
 export const scrivereAnnuncio: Guide = {
   slug: 'come-scrivere-annuncio-immobiliare',
   label: 'Come scrivere un annuncio',
-  title: `Come scrivere un annuncio immobiliare efficace: guida pratica`,
+  title: `Come scrivere un annuncio immobiliare: 10 esempi`,
   description: `Come scrivere un annuncio immobiliare che riceve contatti: formula del titolo con 10 esempi, struttura della descrizione, dati essenziali e checklist.`,
   h1: `Come scrivere un annuncio immobiliare efficace: titolo, descrizione, dati e foto`,
   intro: `Un annuncio immobiliare efficace mette subito zona, tipologia e punto di forza nel titolo, apre la galleria con la foto migliore e dà nella descrizione tutti i dati che il compratore usa per decidere se chiamarti. Qui trovi la formula, gli esempi e la checklist da usare prima di pubblicare.`,
@@ -185,7 +185,7 @@ export const scrivereAnnuncio: Guide = {
 export const descrizioneEsempi: Guide = {
   slug: 'descrizione-immobile-esempi',
   label: 'Descrizione immobile: esempi',
-  title: `Descrizione immobile: esempi pronti da copiare per tipologia`,
+  title: `Descrizione immobile: esempi pronti da copiare`,
   description: `Descrizione immobile, esempi pronti da copiare per 7 tipologie: bilocale, trilocale, attico, villetta, da ristrutturare, affitto e casa al mare.`,
   h1: `Descrizione immobile: esempi da copiare per ogni tipologia di casa`,
   intro: `Qui trovi modelli di descrizione immobiliare pronti da copiare per sette tipologie di casa, con i campi da completare tra [parentesi quadre] e i consigli su cosa mettere per primo, che tono usare e quanto scrivere.`,
@@ -533,7 +533,7 @@ export const fotoSmartphone: Guide = {
 export const migliorareFoto: Guide = {
   slug: 'migliorare-foto-annuncio-immobiliare',
   label: 'Migliorare le foto dell\'annuncio',
-  title: `Migliorare le foto di un annuncio immobiliare: guida pratica`,
+  title: `Migliorare le foto di un annuncio immobiliare (anche vuote)`,
   description: `Migliorare le foto di un annuncio immobiliare già scattate: luce, verticali, disordine, cielo, stanze vuote e staging virtuale, con le regole da seguire.`,
   h1: `Come migliorare le foto di un annuncio immobiliare già pubblicato`,
   intro: `Per migliorare le foto di un annuncio immobiliare parti dalle correzioni tecniche (luce, colori, verticali), poi togli il disordine e solo dopo valuta interventi come l'arredo virtuale, sempre dichiarati. Ecco come farlo, in che ordine e cosa è consentito.`,

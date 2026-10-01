@@ -5,7 +5,7 @@ import type { Guide } from './types';
 export const comeDiventare: Guide = {
   slug: 'come-diventare-agente-immobiliare',
   label: 'Come diventare agente immobiliare',
-  title: 'Come diventare agente immobiliare nel 2026: requisiti, corso, esame',
+  title: 'Come diventare agente immobiliare: requisiti e corso 2026',
   description: 'Come diventare agente immobiliare in Italia passo per passo: requisiti, corso regionale, esame alla Camera di Commercio, iscrizione, polizza e primi mesi di lavoro.',
   h1: 'Come diventare agente immobiliare: requisiti, corso, esame e primi passi',
   intro: 'Il percorso per diventare agente immobiliare in Italia, dal diploma al primo incarico: cosa serve, in che ordine, e cosa conviene preparare prima di iniziare.',
@@ -69,7 +69,7 @@ export const comeDiventare: Guide = {
 export const provvigione: Guide = {
   slug: 'provvigione-agente-immobiliare',
   label: 'Provvigione dell\'agente immobiliare',
-  title: 'Provvigione agente immobiliare: quanto è e calcolo (con IVA)',
+  title: 'Provvigione agente immobiliare: quanto è e calcolo IVA',
   description: 'Provvigione dell\'agente immobiliare: quanto vale di solito, quando matura, chi la paga e un calcolatore gratuito con IVA per venditore e acquirente.',
   h1: 'Provvigione dell\'agente immobiliare: quanto è, quando matura e chi la paga',
   intro: 'Come funziona il compenso dell\'agente immobiliare: percentuali più comuni, il momento in cui la provvigione è dovuta, cosa succede se l\'affare salta e come si calcola.',
@@ -122,8 +122,8 @@ export const provvigione: Guide = {
 export const software: Guide = {
   slug: 'software-agenti-immobiliari',
   label: 'Software per agenti immobiliari',
-  title: 'Software per agenti immobiliari: quali servono davvero nel 2026',
-  description: 'I software per agenti immobiliari che servono davvero: gestionale, portali, sito personale, foto e home staging virtuale, video e social. Cosa scegliere e perché.',
+  title: 'Software e gestionale per agenti immobiliari: i migliori 2026',
+  description: 'Il miglior gestionale immobiliare e i software che servono davvero all\'agente nel 2026: gestionale, portali, sito, home staging virtuale, video e social.',
   h1: 'Software per agenti immobiliari: quali servono davvero',
   intro: 'Gestionale, portali, sito, foto, video, social: gli strumenti digitali che un agente immobiliare usa ogni giorno, a cosa servono e come sceglierli senza pagare doppio.',
   updated: '2026-09-27',
@@ -175,7 +175,7 @@ export const software: Guide = {
 export const homeStaging: Guide = {
   slug: 'home-staging-virtuale',
   label: 'Home staging virtuale',
-  title: 'Home staging virtuale: cos\'è, quando usarlo e come farlo bene',
+  title: 'Home staging virtuale: cos\'è e come farlo (guida 2026)',
   description: 'Home staging virtuale per agenti immobiliari: cos\'è, differenze con quello fisico, quando conviene, regole di correttezza negli annunci ed errori da evitare.',
   h1: 'Home staging virtuale: cos\'è e come usarlo per vendere prima',
   intro: 'Arredare le stanze in foto invece che dal vivo: quando ha senso, cosa cambia rispetto all\'home staging tradizionale e come usarlo negli annunci senza ingannare nessuno.',
