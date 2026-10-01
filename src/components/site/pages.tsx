@@ -207,12 +207,11 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
       <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto precedente" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
       <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto successiva" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
       <span className="absolute bottom-5 text-sm text-white/70">{i + 1} / {photos.length}</span>
+      {/* in basso a sinistra, solo icone come sulle foto della scheda */}
       {pe && pe.photos.includes(photos[i]) && (
-        <div className="absolute bottom-14 left-1/2 flex -translate-x-1/2 gap-2" onClick={e => e.stopPropagation()}>
-          <button type="button" onClick={() => { setI(null); pe.onPhoto(photos[i], 'ai'); }} className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg"><Wand2 size={15} /> Migliora con l’AI</button>
-          {photos[i] !== pe.cover
-            ? <button type="button" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-white px-4 text-sm font-semibold text-neutral-900 shadow-lg"><Star size={15} /> Metti in copertina</button>
-            : <span className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-white/90 px-4 text-sm font-semibold text-neutral-900"><Star size={15} className="fill-current" /> Copertina</span>}
+        <div className="absolute bottom-6 left-6 flex gap-2" onClick={e => e.stopPropagation()}>
+          <button type="button" title="Migliora con l’AI" aria-label="Migliora con l’AI" onClick={() => { setI(null); pe.onPhoto(photos[i], 'ai'); }} className="flex h-11 w-11 items-center justify-center rounded-full bg-[#537eec] text-white shadow-lg"><Wand2 size={18} /></button>
+          {photos[i] !== pe.cover && <button type="button" title="Metti come copertina" aria-label="Metti come copertina" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg"><Star size={18} /></button>}
         </div>
       )}
     </div>,

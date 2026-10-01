@@ -3,7 +3,7 @@
 import { deleteProject } from '@/lib/projects';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker } from 'leaflet';
-import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
@@ -72,6 +72,15 @@ function ensureLeafletCss() {
 }
 
 export default function PropertiesView({ projects: real, onChange }: { projects: ProjectData[] | null; onChange?: () => void }) {
+  // video per immobile (dalla Galleria): nel carosello della card dopo le foto
+  const [vids, setVids] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    authFetch('/api/platform/media').then(r => r.json()).then((d: { items?: { video?: string; casa?: string | null }[] }) => {
+      const m: Record<string, string[]> = {};
+      for (const x of d.items ?? []) if (x.video && x.casa) (m[x.casa] ??= []).push(x.video);
+      setVids(m);
+    }).catch(() => {});
+  }, []);
   // "In vetrina" sulle card solo se il sito c'e' davvero (Plus, Pro): con Starter la casa non e' online
   const cr = useCredits();
   const siteOk = !!cr && (!!cr.unlimited || cr.plan === 'plus' || cr.plan === 'pro');
@@ -140,7 +149,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
         </div>
       ) : shown.length ? (
         <div className="stagger mt-10 grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map(p => <PropertyCard siteOk={siteOk} key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
+          {shown.map(p => <PropertyCard siteOk={siteOk} videos={vids[p.id]} key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
       ) : !empty && ( // lista vuota: c'e' gia' la card "Non hai ancora immobili", niente secondo messaggio
         <p className="mt-12 text-center text-sm text-muted">{tr('Nessun immobile con questi filtri.', 'No properties match these filters.')}</p>
@@ -164,7 +173,13 @@ function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
   );
 }
 
-function PropertyCard({ p, demo, onHover, onChange, siteOk }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void; siteOk?: boolean }) {
+function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void; siteOk?: boolean; videos?: string[] }) {
+  // carosello: tutte le foto e poi i video dell'immobile, con le frecce (sul telefono sempre visibili)
+  const photos = (p.import_data as { photos?: unknown } | undefined)?.photos;
+  const media = [...(Array.isArray(photos) && photos.length ? photos.filter((x): x is string => typeof x === 'string') : p.cover ? [p.cover] : []), ...videos];
+  const [idx, setIdx] = useState(0);
+  const step = (d: number) => (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setIdx(i => (i + d + media.length) % media.length); };
+  const cur = media[idx] ?? p.cover;
   const score = (p.import_data as { score?: number } | undefined)?.score;
   const [menu, setMenu] = useState(false);
   const [up, setUp] = useState(false); // menu verso l'alto se sotto non c'e' posto (fondo della pagina o barra in basso)
@@ -201,9 +216,16 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk }: { p: ProjectData; 
     )}
     <a href={demo ? '#/nuovo' : `#/immobile/${p.id}`} onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)} className="group block">
       <div className={`relative aspect-[4/3] overflow-hidden rounded-[24px] bg-canvas ${CARD_SHADOW} ease-smooth transition-transform group-hover/card:-translate-y-1`}>
-        {p.cover
-          ? <img src={p.cover} alt="" className="h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
+        {cur
+          ? /\.mp4($|#)/.test(cur)
+            ? <video key={cur} src={cur} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+            : <img key={cur} src={cur} alt="" className="blur-in h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
           : <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={36} /></div>}
+        {media.length > 1 && <>
+          <button type="button" onClick={step(-1)} aria-label={tr('Foto precedente', 'Previous photo')} className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 shadow ease-smooth transition-opacity group-hover/card:opacity-100 [@media(hover:none)]:opacity-100"><ChevronLeft size={18} /></button>
+          <button type="button" onClick={step(1)} aria-label={tr('Foto successiva', 'Next photo')} className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 shadow ease-smooth transition-opacity group-hover/card:opacity-100 [@media(hover:none)]:opacity-100"><ChevronRight size={18} /></button>
+          <span className="pointer-events-none absolute bottom-14 left-1/2 -translate-x-1/2 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-semibold text-white opacity-0 ease-smooth transition-opacity group-hover/card:opacity-100 [@media(hover:none)]:opacity-100">{idx + 1} / {media.length}</span>
+        </>}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
         <div className="absolute left-3 right-16 top-3 flex min-w-0 gap-1.5">
           {demo && <span className="shrink-0 whitespace-nowrap rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md">{tr('Esempio', 'Sample')}</span>}
