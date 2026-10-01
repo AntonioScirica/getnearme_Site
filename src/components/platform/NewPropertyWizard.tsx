@@ -109,10 +109,22 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     return () => clearTimeout(t);
   }, [addr]);
 
+  // bozza di un immobile lasciato a meta': non si riprende da sola (sembrava di modificare un immobile esistente),
+  // si chiede se continuarla o iniziare da capo. Finche' non si sceglie la bozza resta salvata com'e'.
+  const [pending, setPending] = useState<{ d?: Details; note?: string } | null>(null);
   useEffect(() => {
-    try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const x = JSON.parse(raw); setD(x.d ?? { mostra_indirizzo: false }); setNote(x.note ?? ''); } } catch { /* bozza corrotta */ }
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      const x = raw ? JSON.parse(raw) as { d?: Details; note?: string } : null;
+      if (x && (Object.keys(x.d ?? {}).some(k => k !== 'mostra_indirizzo') || x.note)) { setPending(x); return; } // eslint-disable-line react-hooks/set-state-in-effect
+    } catch { /* bozza corrotta */ }
     restored.current = true;
   }, []);
+  const resume = (yes: boolean) => {
+    if (yes && pending) { setD(pending.d ?? { mostra_indirizzo: false }); setNote(pending.note ?? ''); }
+    else localStorage.removeItem(DRAFT_KEY);
+    setPending(null); restored.current = true;
+  };
   useEffect(() => {
     if (!restored.current) return;
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ d, note })); } catch { /* quota */ }
@@ -216,6 +228,17 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
   // Riassunto vivo in testa: la scheda che prende forma.
   const summary = [d.tipologia, d.locali ? `${d.locali} ${tr('locali', 'rooms')}` : null, d.superficie ? `${d.superficie} m²` : null, d.indirizzo ? String(d.indirizzo).split(',').slice(-1)[0].trim() : null, d.trattativa_riservata ? tr('Trattativa riservata', 'Price on request') : d.prezzo ? euro(Number(d.prezzo)) + (d.contratto === 'Affitto' ? tr('/mese', '/month') : '') : null].filter(Boolean).join(' · ');
+
+  if (pending) return (
+    <div className="mx-auto mt-10 max-w-md rounded-[28px] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+      <h2 className="font-display text-xl font-bold">{tr('Hai un immobile lasciato a metà', 'You have an unfinished property')}</h2>
+      <p className="mt-2 text-sm text-muted">{[pending.d?.tipologia, pending.d?.indirizzo].filter(Boolean).map(String).join(', ') || tr('Bozza senza indirizzo', 'Draft without address')}</p>
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <button type="button" onClick={() => resume(true)} className="h-11 rounded-full bg-ink px-5 text-sm font-semibold text-white">{tr('Continua la bozza', 'Continue the draft')}</button>
+        <button type="button" onClick={() => resume(false)} className="h-11 rounded-full px-5 text-sm font-semibold text-brand ring-1 ring-black/10 hover:bg-canvas">{tr('Inizia un immobile nuovo', 'Start a new property')}</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-3xl">
