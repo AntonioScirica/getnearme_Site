@@ -404,10 +404,11 @@ function TryIt({ gate = false }: { gate?: boolean }) {
               <div onContextMenu={e => e.preventDefault()} className={`relative select-none overflow-hidden ${BOX}`}>{after && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />}<video src={video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" /></div>
             ) : after && before ? (
               <div className="relative">
-                <BeforeAfter before={before} after={after} auto={false} contain className={BOX} />
+                {/* telefono: scegliendo il video la foto si toglie e le card stanno nel riquadro che si allunga (dentro la foto 4:3 erano schiacciate e scorrevano) */}
+                <div className={picking && !vBusy ? 'max-sm:hidden' : ''}><BeforeAfter before={before} after={after} auto={false} contain className={BOX} /></div>
                 {/* template del video dentro la foto: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
                 {picking && !vBusy && (
-                  <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md sm:justify-center sm:p-6">
+                  <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md max-sm:static max-sm:overflow-visible max-sm:bg-transparent max-sm:px-2 max-sm:backdrop-blur-none sm:justify-center sm:p-6">
                     <div className="mb-3 flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{anims && <button type="button" onClick={() => setAnims(false)} aria-label={L('Indietro', "Back")} className="-ml-1 text-muted hover:text-ink"><ChevronLeft size={16} /></button>}{anims ? L('Con quale animazione?', "Which animation?") : L('Che video vuoi creare?', "Which video do you want?")}</div>
                     {/* stesse card della chat della piattaforma: video d'esempio, nome, descrizione */}
                     <div className={`grid w-full gap-3 ${anims ? 'max-w-xl grid-cols-2' : 'max-w-3xl grid-cols-2 sm:grid-cols-3'}`}>{/* due animazioni: griglia stretta e centrata */}
