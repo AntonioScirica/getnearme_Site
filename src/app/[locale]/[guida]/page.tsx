@@ -80,7 +80,7 @@ export default async function Page({ params }: Props) {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
         <Link href="/it" className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/immo/logo-mark.png" alt="Agente Immo" className="h-8 w-8" /> Agente <span className="text-brand">Immo</span>
+          <img src="/immo/logo-mark.png" alt="Agente Immo" className="h-8 w-8" /><span className="whitespace-nowrap">Agente <span className="text-brand">Immo</span></span>
         </Link>
         <Link href={TRY} className="inline-flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black">Prova gratis <ArrowRight size={15} /></Link>
       </header>

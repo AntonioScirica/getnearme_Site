@@ -188,17 +188,17 @@ function Compare() {
         <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L(`Con Agente Immo è tutto incluso, per ogni casa che prendi, da ${PRICING.starter} € al mese.`, `With Agente Immo it's all included, for every home you list, from €${PRICING.starter} a month.`)}</p>
       </Reveal>
       <Reveal delay={120} className="mt-10 overflow-hidden rounded-[28px] bg-white ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)]">
-        <div className="hidden grid-cols-[1.4fr_1fr_auto] gap-4 bg-canvas px-6 py-3 text-xs font-semibold uppercase tracking-wide text-muted md:grid">
+        <div className="hidden grid-cols-[1.4fr_1fr_11rem] gap-4 bg-canvas px-6 py-3 text-xs font-semibold uppercase tracking-wide text-muted md:grid">
           <span>{L('Cosa ti serve', "What you need")}</span><span>{L('Senza Agente Immo', "Without Agente Immo")}</span><span className="text-right">{L('Con Agente Immo', "With Agente Immo")}</span>
         </div>
         {WITHOUT.map(([Icon, ...t]) => { const [what, cost, who] = en ? t.slice(3) : t; return (
-          <div key={what} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-t border-line px-5 py-4 first-of-type:border-t-0 md:grid-cols-[1.4fr_1fr_auto] md:px-6 md:first-of-type:border-t">
+          <div key={what} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-t border-line px-5 py-4 first-of-type:border-t-0 md:grid-cols-[1.4fr_1fr_11rem] md:px-6 md:first-of-type:border-t">
             <span className="col-span-2 flex items-center gap-3 font-semibold md:col-span-1"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-canvas text-ink"><Icon size={16} /></span>{what}</span>
             <span><span className="block font-bold text-rose-600">{cost}</span><span className="block text-xs text-muted">{who}</span></span>
             <span className="flex items-center justify-end gap-1.5 text-sm font-semibold text-emerald-600"><Check size={15} /> {L('Incluso', "Included")}</span>
           </div>
         ); })}
-        <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 border-t border-line bg-canvas px-5 py-5 md:grid-cols-[1.4fr_1fr_auto] md:px-6">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 border-t border-line bg-canvas px-5 py-5 md:grid-cols-[1.4fr_1fr_11rem] md:px-6">
           <span className="col-span-2 font-display text-lg font-extrabold md:col-span-1">{L('Totale', "Total")}</span>
           <span className="font-display text-xl font-extrabold text-rose-600 line-through decoration-rose-300">{L('~3.400 €', "~€3,400")}</span>
           <span className="text-right font-display text-xl font-extrabold text-emerald-600">{L(`da ${PRICING.starter} €/mese`, `from €${PRICING.starter}/mo`)}</span>
