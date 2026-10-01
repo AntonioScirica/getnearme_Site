@@ -29,7 +29,8 @@ const MARKDOWN_COMPONENTS: Components = {
   ),
   th: (props) => <th style={{ textAlign: "left", padding: "9px 13px", fontWeight: 700, background: "#f4f4f5", borderBottom: "2px solid #e4e4e7" }} {...props} />,
   td: (props) => <td style={{ padding: "9px 13px", borderBottom: "1px solid #f4f4f5" }} {...props} />,
-  ul: (props) => <ul style={{ margin: "7px 0 14px", paddingLeft: 22 }} {...props} />,
+  ul: (props) => <ul style={{ margin: "7px 0 14px", paddingLeft: 22, listStyle: "disc" }} {...props} />,
+  ol: (props) => <ol style={{ margin: "7px 0 14px", paddingLeft: 22, listStyle: "decimal" }} {...props} />,
   li: (props) => <li style={{ marginBottom: 5, lineHeight: 1.6 }} {...props} />,
 };
 
@@ -191,7 +192,7 @@ export default async function BlogPostPage({ params }: Props) {
         </section>
       )}
 
-      <EndCta locale={locale} title="Provalo sulla tua prossima casa" />
+      <EndCta locale={locale} title="Il prossimo incarico, vincilo così." />
 
       <SiteFooter lang="it" />
     </div>
