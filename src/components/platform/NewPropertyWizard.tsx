@@ -41,7 +41,7 @@ const euro = (n: number) => `€ ${n.toLocaleString(pageLocale())}`;
 // Icone per le opzioni che meritano una card (le altre restano chip).
 const ICONS: Record<string, Record<string, Icon>> = {
   contratto: { Vendita: Tag, Affitto: KeyRound },
-  tipologia: { Appartamento: Building2, Attico: Crown, Mansarda: Tent, Loft: Warehouse, Villa: Home, 'Villetta a schiera': Fence, 'Casa indipendente': Home, Terratetto: Building, 'Rustico / Casale': TreePine },
+  tipologia: { Monolocale: Building2, Bilocale: Building2, Trilocale: Building2, Quadrilocale: Building2, Villetta: Home, Appartamento: Building2, Attico: Crown, Mansarda: Tent, Loft: Warehouse, Villa: Home, 'Villetta a schiera': Fence, 'Casa indipendente': Home, Terratetto: Building, 'Rustico / Casale': TreePine },
   stato: { 'Nuovo / In costruzione': Sparkles, 'Ottimo / Ristrutturato': ThumbsUp, 'Buono / Abitabile': CircleCheck, 'Da ristrutturare': Hammer },
   riscaldamento: { Autonomo: Flame, Centralizzato: Building2, Assente: Ban },
   climatizzazione: { Autonoma: Snowflake, Centralizzata: Building2, Predisposizione: CircleCheck, Assente: Ban },
@@ -139,7 +139,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     return () => { clearTimeout(a); clearTimeout(b); };
   }, [savedAt]);
 
-  const set = (k: string, v: Details[string]) => setD(prev => ({ ...prev, [k]: v }));
+  // Bilocale, Trilocale...: i locali si compilano da soli (se non li ha gia' scritti)
+  const ROOMS_OF: Record<string, number> = { Monolocale: 1, Bilocale: 2, Trilocale: 3, Quadrilocale: 4 };
+  const set = (k: string, v: Details[string]) => setD(prev => ({ ...prev, [k]: v, ...(k === 'tipologia' && ROOMS_OF[String(v)] && !prev.locali ? { locali: ROOMS_OF[String(v)] } : {}) }));
   const comp = useMemo(() => completeness(d, photos.length), [d, photos.length]);
   const cur = STEPS[step];
   // valori impossibili (prezzo 3 €, 3 m²): non si va avanti finche' non si correggono

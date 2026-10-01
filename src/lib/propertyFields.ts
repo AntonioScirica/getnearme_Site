@@ -26,7 +26,7 @@ const isRent = (d: Details) => d.contratto === 'Affitto';
 // --- Essenziali (step 1): pochi, obbligatori o quasi -------------------------------------
 export const ESSENTIALS: Field[] = [
   { key: 'contratto', label: 'Contratto', type: 'chips', options: ['Vendita', 'Affitto'], weight: 5 },
-  { key: 'tipologia', label: 'Tipologia', type: 'chips', weight: 5, options: ['Appartamento', 'Attico', 'Mansarda', 'Loft', 'Villa', 'Villetta a schiera', 'Casa indipendente', 'Terratetto', 'Rustico / Casale'] },
+  { key: 'tipologia', label: 'Tipologia', type: 'chips', weight: 5, options: ['Monolocale', 'Bilocale', 'Trilocale', 'Quadrilocale', 'Appartamento', 'Attico', 'Mansarda', 'Loft', 'Villa', 'Villetta', 'Villetta a schiera', 'Casa indipendente', 'Terratetto', 'Rustico / Casale'] },
   { key: 'indirizzo', label: 'Indirizzo', type: 'text', placeholder: 'Via Roma 12, Milano', weight: 5 },
   { key: 'mostra_indirizzo', label: 'Mostra l\'indirizzo esatto nell\'annuncio', type: 'toggle', hint: 'Se spento mostriamo solo zona e città.' },
   { key: 'prezzo', label: 'Prezzo', type: 'number', unit: '€', weight: 5, min: 50 },
