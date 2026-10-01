@@ -457,9 +457,9 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   if (k === 'services') return <ListEditor items={cfg.services} max={8} addLabel={tr('Aggiungi servizio', 'Add service')} onChange={x => set({ services: x })} fields={[['title', tr('Nome del servizio', 'Service name'), 70, false], ['text', tr('Descrizione', 'Description'), 600, true]]} empty={{ title: '', text: '' }} />;
   if (k === 'zones') return <><p className="text-xs text-muted">{tr('Una pagina per località (es. “Casa a Sirolo”). Scrivi “## Titolo” per un sottotitolo.', 'One page per area (e.g. “Homes in Sirolo”). Write “## Title” for a subheading.')}</p><ListEditor items={cfg.zones} max={8} addLabel={tr('Aggiungi zona', 'Add area')} onChange={x => set({ zones: x })} fields={[['name', tr('Località', 'Area'), 40, false], ['text', tr('Testo sulla zona', 'Text about the area'), 4000, true]]} empty={{ name: '', text: '' }} /></>;
   if (k === 'reviews') return <ListEditor items={cfg.reviews} max={3} addLabel={tr('Aggiungi recensione', 'Add review')} onChange={x => set({ reviews: x })} fields={[['text', tr('Cosa ha detto il cliente', 'What the client said'), 300, true], ['name', tr('Nome', 'Name'), 60, false]]} empty={{ text: '', name: '', zone: '' }} />;
-  if (k === 'years' || k === 'sold' || k === 'clients') return <Field label={label} value={String(v)} placeholder={PLACEHOLDERS[k]} onChange={x => set({ [k]: x.replace(/\D/g, '') })} max={6} />;
+  if (k === 'years' || k === 'sold' || k === 'clients') return <Field label={label} value={String(v)} placeholder={eg(PLACEHOLDERS[k])} onChange={x => set({ [k]: x.replace(/\D/g, '') })} max={6} />;
   const long = k === 'aboutText' || k === 'method' || k === 'heroSubtitle';
-  return <Field label={label} value={String(v ?? '')} placeholder={PLACEHOLDERS[k]} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
+  return <Field label={label} value={String(v ?? '')} placeholder={eg(PLACEHOLDERS[k])} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
 }
 
 // Riporta in cima la pagina (ease-in-out, 600 ms), poi `done`: scegliendo un modello in basso l'editor si apre in alto.
@@ -695,6 +695,8 @@ const Group = ({ title, children }: { title: string; children: ReactNode }) => (
   <div><div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">{title}</div><div className="space-y-2.5">{children}</div></div>
 );
 
+// esempio nel campo vuoto con "es." davanti: senza sembrava gia' compilato con i dati di qualcun altro
+const eg = (x?: string) => (x ? `${tr('es.', 'e.g.')} ${x}` : undefined);
 function Field({ label, value, onChange, max, area, placeholder }: { label: string; value: string; onChange: (v: string) => void; max: number; area?: boolean; placeholder?: string }) {
   const cls = 'w-full rounded-2xl bg-canvas px-3.5 py-2.5 text-sm outline-none ease-smooth transition-shadow placeholder:text-ink/35 focus:bg-white focus:ring-1 focus:ring-ink/15';
   return (
