@@ -859,7 +859,7 @@ export function Zones() {
             <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="group relative block aspect-[4/5] overflow-hidden rounded-[var(--r)] text-white">
               <Photo src={cover(z.name)} zoom className="absolute inset-0 h-full" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5"><div className="text-xs uppercase tracking-[0.2em] text-white/70">Casa a</div><div className="text-2xl font-semibold">{z.name}</div><div className="mt-1 text-sm text-white/80">{count(z.name) ? `${count(z.name)} immobili` : 'Scopri la zona'}</div></div>
+              <div className="absolute bottom-5 left-5 right-5"><div className="text-xs uppercase tracking-[0.2em] text-white/70">Zona</div><div className="text-2xl font-semibold">{z.name}</div><div className="mt-1 text-sm text-white/80">{count(z.name) ? `${count(z.name)} immobili` : 'Scopri la zona'}</div></div>
             </SiteLink>
           ))}
         </div>
