@@ -650,7 +650,7 @@ export function SectionHead({ eyebrow, title, sub, link, center }: { eyebrow?: s
   return (
     <div className={center ? 'flex flex-col items-center gap-5 text-center' : 'flex flex-wrap items-end justify-between gap-4'}>
       <div>{eyebrow && <Eyebrow className="mb-3">{eyebrow}</Eyebrow>}<H className="text-3xl md:text-[2.7rem]">{title}</H>{sub && <p className={`mt-3 max-w-lg text-[var(--muted)] ${center ? 'mx-auto' : ''}`}>{sub}</p>}</div>
-      {link && <SiteLink to={link.to} className={center ? 'inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[var(--line)] hover:ring-[var(--fg)]' : 'inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--c)] hover:underline'}>{link.label} <ArrowRight size={15} /></SiteLink>}
+      {link && <SiteLink to={link.to} className={center ? 'inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold ring-1 ring-[var(--line)] hover:ring-[var(--fg)]' : 'inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-[var(--c)] hover:underline md:min-h-0'}>{link.label} <ArrowRight size={15} /></SiteLink>}
     </div>
   );
 }
@@ -822,7 +822,7 @@ export function Reviews() {
         <H className="mx-auto mt-8 max-w-4xl text-3xl md:text-5xl">“{r.text}”</H>
         <div className="mt-8 flex justify-center gap-0.5 text-[var(--c)]">{[0, 1, 2, 3, 4].map(s => <Star key={s} size={15} fill="currentColor" />)}</div>
         <div className="mt-3 font-semibold">{r.name}</div>
-        {cfg.reviews.length > 1 && <div className="mt-8 flex justify-center gap-2">{cfg.reviews.map((_, k) => <button key={k} onClick={() => setI(k)} aria-label={`Recensione ${k + 1}`} className={`h-2 rounded-full transition-all duration-500 ${k === i % cfg.reviews.length ? 'w-8 bg-[var(--fg)]' : 'w-2 bg-[var(--line)]'}`} />)}</div>}
+        {cfg.reviews.length > 1 && <div className="mt-6 flex justify-center md:mt-8">{cfg.reviews.map((_, k) => <button key={k} onClick={() => setI(k)} aria-label={`Recensione ${k + 1}`} className="flex h-10 min-w-10 items-center justify-center md:h-2 md:min-w-0 md:px-1">{/* telefono: area di tocco 40px attorno al pallino */}<span className={`block h-2 rounded-full transition-all duration-500 ${k === i % cfg.reviews.length ? 'w-8 bg-[var(--fg)]' : 'w-2 bg-[var(--line)]'}`} /></button>)}</div>}
       </Container>
     );
   }

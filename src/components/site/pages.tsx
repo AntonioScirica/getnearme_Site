@@ -302,7 +302,7 @@ function PropertyPage({ id }: { id: string }) {
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
       </div>
       <H as="h1" className="mt-4 text-4xl md:text-5xl"><Editable k="titolo" value={p.titolo}>{p.titolo || 'Titolo dell’immobile'}</Editable></H>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><Editable k="addr" value={p.addr}><AddressLink addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr) || p.addr} /></Editable>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><Editable k="addr" value={p.addr}><AddressLink light={t.gallery === 'full'} addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr) || p.addr} /></Editable>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
     </>
   );
   return (
@@ -543,11 +543,11 @@ function ContactPage() {
   const tx = useT();
   const c = contacts(cfg);
   const info = (
-    <div className="space-y-4">
+    <div className="space-y-1 md:space-y-4">{/* telefono: righe da 40px, piu' strette tra loro */}
       <div className="text-lg font-semibold">{name}</div>
       {cfg.address && <div className="opacity-80"><AddressLink addr={cfg.address} iconSize={17} /></div>}
-      {c.tel && <a href={c.tel} className="flex items-center gap-3"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
-      {c.mail && <a href={c.mail} className="flex items-center gap-3"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
+      {c.tel && <a href={c.tel} className="flex min-h-10 items-center gap-3 md:min-h-0"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
+      {c.mail && <a href={c.mail} className="flex min-h-10 items-center gap-3 break-all md:min-h-0"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
       {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
       {!cfg.address && !c.tel && !c.mail && !c.wa && <p className="text-[var(--muted)]">Scrivimi dal modulo: ti rispondo al più presto.</p>}
     </div>

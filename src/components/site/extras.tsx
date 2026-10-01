@@ -337,7 +337,8 @@ export function NearbyList({ p }: { p: SiteProperty }) {
 
 // Indirizzo cliccabile: apre Google Maps. "Quanto dista da te?" chiede la posizione (solo al clic) e mostra la
 // distanza in linea d'aria. Se l'agente non mostra l'indirizzo esatto qui arriva gia' solo zona e citta'.
-export function AddressLink({ addr, className = '', iconSize = 16 }: { addr: string; className?: string; iconSize?: number }) {
+// light: sopra una foto scura, il link prende il colore del testo intorno (bianco) invece del colore del sito
+export function AddressLink({ addr, className = '', iconSize = 16, light = false }: { addr: string; className?: string; iconSize?: number; light?: boolean }) {
   const { preview } = useSite();
   const [dist, setDist] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -357,9 +358,9 @@ export function AddressLink({ addr, className = '', iconSize = 16 }: { addr: str
   return (
     <span className={`inline-flex flex-wrap items-center gap-x-3 gap-y-1 ${className}`}>
       <a href={preview ? undefined : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`} target="_blank" rel="noopener"
-        className="inline-flex items-center gap-1.5 underline-offset-4 hover:underline"><MapPin size={iconSize} className="shrink-0" />{addr}</a>
+        className="inline-flex min-h-10 items-center gap-1.5 underline-offset-4 hover:underline md:min-h-0"><MapPin size={iconSize} className="shrink-0" />{addr}</a>
       {dist ? <span className="text-sm opacity-80">{dist}</span>
-        : <button type="button" onClick={measure} disabled={busy} className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-[var(--c)] hover:underline disabled:opacity-60 md:min-h-0">{busy && <Loader2 size={13} className="animate-spin" />}Quanto dista da te?</button>}
+        : <button type="button" onClick={measure} disabled={busy} className={`inline-flex min-h-10 items-center gap-1 text-sm font-medium ${light ? 'underline underline-offset-4' : 'text-[var(--c)] hover:underline'} disabled:opacity-60 md:min-h-0`}>{busy && <Loader2 size={13} className="animate-spin" />}Quanto dista da te?</button>}
     </span>
   );
 }
