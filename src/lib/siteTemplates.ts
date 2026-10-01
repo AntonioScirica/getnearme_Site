@@ -124,6 +124,16 @@ const SAMPLE_REVIEWS = [
   { text: 'Professionale e onesto: ci ha sconsigliato una casa che non faceva per noi. Raro.', name: 'Elena', zone: '' },
 ]
 const isSampleReview = (t: string) => SAMPLE_REVIEWS.some(x => x.text === t)
+// servizi e punti in evidenza d'esempio: fino al 02/10/2026 erano nella configurazione iniziale e uscivano online
+// (in prima persona: geometri, notai, clienti dall'estero). Ora solo anteprima; cleanSite li toglie dai siti salvati.
+const SAMPLE_SERVICES = [
+  { title: 'Valutazione gratuita', text: 'Mandami foto e documenti anche su WhatsApp: sopralluogo, valutazione onesta e, se decidi di vendere, penso io a tutte le pratiche.' },
+  { title: 'Consulenza tecnica, legale e finanziaria', text: 'Lavoro con geometri, architetti, notai e consulenti del credito: ogni aspetto della compravendita è seguito da chi lo conosce.' },
+  { title: 'Foto, video e home staging', text: 'Servizio fotografico, video e home staging per presentare la casa al meglio e ridurre i tempi di vendita.' },
+  { title: 'Ricerca su misura', text: 'Cerchi casa da fuori zona o dall’estero? Seleziono per te solo gli immobili giusti e ti mando tutto prima della visita.' },
+]
+const SAMPLE_HIGHLIGHTS = ['Esperienza sul territorio', 'Clienti italiani e stranieri', 'Dalla prima visita al rogito']
+const sameList = (a: unknown[], b: unknown[]) => JSON.stringify(a) === JSON.stringify(b)
 const SAMPLE_ZONES = [
   { name: 'Centro', text: 'Case in centro storico, a due passi da negozi, servizi e mezzi.' },
   { name: 'Semicentro', text: 'Quartieri tranquilli e ben serviti, a pochi minuti dal centro.' },
@@ -145,6 +155,8 @@ export function withPlaceholders(c: SiteConfig, props: { addr?: string }[] = [])
   for (const [k, v] of Object.entries(PLACEHOLDERS)) if (!out[k]) out[k] = v
   if (!c.zones.length) out.zones = SAMPLE_ZONES
   if (!c.reviews.length) out.reviews = SAMPLE_REVIEWS
+  if (!c.services.length) out.services = SAMPLE_SERVICES
+  if (!c.highlights.length) out.highlights = SAMPLE_HIGHLIGHTS
   return out as SiteConfig
 }
 
@@ -157,15 +169,10 @@ export function defaultSite(name: string, email = ''): SiteConfig {
     aboutText: '', // vuoto: nell'editor l'esempio e' in grigio, sul sito esce ABOUT_DEFAULT
     aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '',
     showPrices: true, showStats: true, showAbout: true, showContact: true,
-    services: [
-      { title: 'Valutazione gratuita', text: 'Mandami foto e documenti anche su WhatsApp: sopralluogo, valutazione onesta e, se decidi di vendere, penso io a tutte le pratiche.' },
-      { title: 'Consulenza tecnica, legale e finanziaria', text: 'Lavoro con geometri, architetti, notai e consulenti del credito: ogni aspetto della compravendita è seguito da chi lo conosce.' },
-      { title: 'Foto, video e home staging', text: 'Servizio fotografico, video e home staging per presentare la casa al meglio e ridurre i tempi di vendita.' },
-      { title: 'Ricerca su misura', text: 'Cerchi casa da fuori zona o dall’estero? Seleziono per te solo gli immobili giusti e ti mando tutto prima della visita.' },
-    ],
+    services: [], // gli esempi (SAMPLE_SERVICES) solo nell'anteprima: online solo i servizi scritti dall'agente
     zones: [],
     method: 'La trattativa non si improvvisa alla fine: si costruisce all’inizio. Studio l’immobile con il proprietario, definisco il prezzo corretto e preparo tutti i documenti prima di metterlo sul mercato. Pubblico solo quando è davvero pronto: meno trattativa, nessuna sorpresa.',
-    highlights: ['Esperienza sul territorio', 'Clienti italiani e stranieri', 'Dalla prima visita al rogito'],
+    highlights: [], // esempi (SAMPLE_HIGHLIGHTS) solo nell'anteprima
     address: '', legal: '', instagram: '', facebook: '', topBar: true, whatsappButton: true, texts: {}, hidden: [],
     reviews: [], // le recensioni d'esempio sono solo segnaposto dell'anteprima (SAMPLE_REVIEWS): online solo quelle vere
   }
@@ -201,14 +208,14 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     years: (x => (x === '10' && !str(r.sold, 6, '') && !str(r.clients, 6, '') ? '' : x))(str(r.years, 4, '').replace(/\D/g, '')),
     sold: str(r.sold, 6, '').replace(/\D/g, ''),
     clients: str(r.clients, 6, '').replace(/\D/g, ''),
-    services: Array.isArray(r.services)
+    services: (x => (sameList(x, SAMPLE_SERVICES) ? [] : x))(Array.isArray(r.services)
       ? r.services.slice(0, 8).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { title: str(o.title, 70, ''), text: str(o.text, 600, '') } }).filter(x => x.title)
-      : d.services,
+      : d.services),
     zones: Array.isArray(r.zones)
       ? r.zones.slice(0, 8).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { name: str(o.name, 40, '').trim(), text: str(o.text, 4000, '') } }).filter(x => x.name)
       : d.zones,
     method: str(r.method, 1500, d.method),
-    highlights: Array.isArray(r.highlights) ? r.highlights.slice(0, 6).map(x => str(x, 50, '')).filter(Boolean) : d.highlights,
+    highlights: (x => (sameList(x, SAMPLE_HIGHLIGHTS) ? [] : x))(Array.isArray(r.highlights) ? r.highlights.slice(0, 6).map(x => str(x, 50, '')).filter(Boolean) : d.highlights),
     address: str(r.address, 120, ''),
     legal: str(r.legal, 160, ''),
     instagram: url(r.instagram),
@@ -245,7 +252,7 @@ export const TEXTS: Record<string, string> = {
   'intro.title': 'Case scelte una per una, come le vorresti tu', 'intro.button': 'Esplora',
   'feature.1.title': 'Affidabilità', 'feature.1.text': 'Ogni immobile verificato, documenti in ordine prima della visita.',
   'feature.2.title': 'Consulenza vera', 'feature.2.text': 'Un agente che ti segue di persona, non un call center.',
-  'feature.3.title': 'Scelta selezionata', 'feature.3.text': 'Poche case, quelle giuste: niente annunci fantasma.',
+  'feature.3.title': 'Scelta selezionata', 'feature.3.text': 'Poche case, quelle giuste, con foto e dati veri.',
   'feature.4.title': 'Fino al rogito', 'feature.4.text': 'Trattativa, mutuo e notaio: ti accompagno in ogni passo.',
   'featured.eyebrow': 'I nostri immobili', 'featured.title': 'In evidenza', 'featured.sub': 'Le case disponibili adesso.', 'featured.link': 'Vedi tutti',
   'about.check.1': 'Valutazione gratuita del tuo immobile', 'about.check.2': 'Foto e annunci curati', 'about.check.3': 'Assistenza fino al rogito', 'about.cta': 'Conoscimi meglio',

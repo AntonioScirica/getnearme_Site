@@ -235,7 +235,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
         {/* barra e sito entrano con la stessa dissolvenza della pagina (prima comparivano di scatto dopo lo scheletro) */}
         {/* i dati d'esempio dell'anteprima (lib/siteTemplates PLACEHOLDERS, SAMPLE_REVIEWS) non vanno mai online: si dice chiaro */}
-        <p className="blur-in mb-4 flex items-start gap-2 rounded-2xl bg-brand/5 px-4 py-3 text-sm text-ink/80 ring-1 ring-brand/15"><Info size={16} className="mt-0.5 shrink-0 text-brand" />{tr('Telefono, email, P.IVA, numeri, zone e recensioni che vedi qui sono esempi finché non metti i tuoi. Sul sito pubblicato compaiono solo i tuoi dati: le parti senza dati non si vedono.', 'Phone, email, VAT, numbers, areas and reviews shown here are examples until you add yours. Your published site only shows your own data: sections without data are hidden.')}</p>
+        <p className="blur-in mb-4 flex items-start gap-2 rounded-2xl bg-brand/5 px-4 py-3 text-sm text-ink/80 ring-1 ring-brand/15"><Info size={16} className="mt-0.5 shrink-0 text-brand" />{tr('Telefono, email, P.IVA, numeri, zone, servizi e recensioni che vedi qui sono esempi finché non metti i tuoi. Sul sito pubblicato compaiono solo i tuoi dati: le parti senza dati non si vedono.', 'Phone, email, VAT, numbers, areas and reviews shown here are examples until you add yours. Your published site only shows your own data: sections without data are hidden.')}</p>
         {/* telefono: con modifiche da pubblicare (o appena pubblicate) la barra resta in basso, sopra il menu.
             Nel body: dentro la pagina un antenato con transform (fade-up) rende fixed relativo a lui */}
         {(dirty || saved !== 'idle') && createPortal(
