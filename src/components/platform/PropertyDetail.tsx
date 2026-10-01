@@ -52,7 +52,18 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const sitePlan = !!credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'); // come in Il mio sito
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
-  const [pdfHint, setPdfHint] = useState(false);
+  // Manda al cliente senza sito: link pubblico della scheda su WhatsApp (prima: stampa, salva PDF e allega)
+  const [sending, setSending] = useState(false);
+  const sendSheet = async () => {
+    setSending(true);
+    const w = window.open('', '_blank'); // aperta subito (dopo l'attesa il browser la bloccherebbe come popup)
+    const d = await authFetch(`/api/platform/report?id=${encodeURIComponent(project!.id)}&link=1`).then(r => r.json()).catch(() => null) as { url?: string } | null;
+    setSending(false);
+    if (!d?.url) { w?.close(); alert(tr('Non sono riuscito a preparare la scheda, riprova.', 'Could not prepare the sheet, please try again.')); return; }
+    const text = `${tr('Buongiorno, ecco la scheda della casa di cui parlavamo', 'Hello, here is the sheet of the home we talked about')}: ${(project!.titolo || project!.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}\n${d.url}`;
+    const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    if (w) w.location.href = wa; else window.location.href = wa;
+  };
   const downloadReport = async (id: string) => {
     setReport('busy');
     const html = await authFetch(`/api/platform/report?id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
@@ -117,14 +128,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
           ? <>
             <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
             {/* casa non online (sito spento o casa non pubblica): al cliente la scheda in PDF */}
-            {site && !(site.published && project.is_public) && <button type="button" onClick={() => { setPdfHint(true); void downloadReport(project.id); }} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</button>}
-            {pdfHint && <span className="basis-full text-right text-xs text-muted">{tr('Nella finestra di stampa scegli “Salva come PDF”, poi allega il file su WhatsApp o in una email.', 'In the print window choose “Save as PDF”, then attach the file on WhatsApp or in an email.')}</span>}
+            {site && !(site.published && project.is_public) && <button type="button" onClick={() => void sendSheet()} disabled={sending} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>}
           </>
           : <>
             {/* senza sito: al cliente la scheda in PDF (si salva dalla stampa e si allega su WhatsApp) */}
-            <button type="button" onClick={() => { setPdfHint(true); void downloadReport(project.id); }} title={tr('Salva la scheda in PDF e mandala su WhatsApp o per email', 'Save the sheet as PDF and send it on WhatsApp or by email')} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</button>
+            <button type="button" onClick={() => void sendSheet()} disabled={sending} title={tr('Manda al cliente la scheda della casa su WhatsApp', 'Send the client the property sheet on WhatsApp')} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>
             <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>
-            {pdfHint && <span className="basis-full text-right text-xs text-muted">{tr('Nella finestra di stampa scegli “Salva come PDF”, poi allega il file su WhatsApp o in una email.', 'In the print window choose “Save as PDF”, then attach the file on WhatsApp or in an email.')}</span>}
           </>}
         {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
         {/* sito spento: niente link (il cliente vedrebbe "sito non disponibile") */}
