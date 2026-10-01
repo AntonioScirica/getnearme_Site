@@ -10,7 +10,7 @@
 //   5. zona e costi, chiusura con l'agente
 import { calculateDetailedCosts } from './reportHtml'
 import { ALL_FIELDS, ENERGY_COLORS, GROUPS, formatValue, visible, type Details } from './propertyFields'
-import { FONTS, type SiteConfig, type SiteProperty } from './siteTemplates'
+import { FONTS, zoneOnly, type SiteConfig, type SiteProperty } from './siteTemplates'
 import type { Poi } from './zone'
 
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
@@ -42,7 +42,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   const d = (p.details ?? {}) as Details
   const rent = /affitt/i.test(p.contratto ?? '')
   const showPrice = cfg.showPrices && !d.trattativa_riservata && p.prezzo > 0
-  const address = d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ')
+  const address = d.mostra_indirizzo ? p.addr : zoneOnly(p.addr)
   const city = (p.addr ?? '').split(',').map(x => x.trim()).filter(Boolean).pop()?.replace(/^\d{5}\s*/, '') ?? ''
   const photos = (p.photos?.length ? p.photos : p.cover ? [p.cover] : []).slice(0, 40)
   const tipo = p.tipologia?.split('|')[0]?.trim() || 'Immobile'

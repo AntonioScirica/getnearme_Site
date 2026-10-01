@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
-import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { ABOUT_DEFAULT, pageHidden, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
@@ -180,6 +180,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
 // prima/dopo: le foto AI hanno l'originale in p.prima; a tutto schermo si confrontano con il cursore
 function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record<string, string>; i: number | null; setI: (n: number | null) => void }) {
   useLockScroll(i !== null);
+  const pe = useSite().propEdit; // scheda in piattaforma: anche a schermo intero Migliora con l'AI e Copertina
   const [x0, setX0] = useState<number | null>(null); // inizio del trascinamento col dito
   useEffect(() => {
     if (i === null) return;
@@ -206,6 +207,14 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
       <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto precedente" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
       <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto successiva" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
       <span className="absolute bottom-5 text-sm text-white/70">{i + 1} / {photos.length}</span>
+      {pe && pe.photos.includes(photos[i]) && (
+        <div className="absolute bottom-14 left-1/2 flex -translate-x-1/2 gap-2" onClick={e => e.stopPropagation()}>
+          <button type="button" onClick={() => { setI(null); pe.onPhoto(photos[i], 'ai'); }} className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg"><Wand2 size={15} /> Migliora con l’AI</button>
+          {photos[i] !== pe.cover
+            ? <button type="button" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-white px-4 text-sm font-semibold text-neutral-900 shadow-lg"><Star size={15} /> Metti in copertina</button>
+            : <span className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-white/90 px-4 text-sm font-semibold text-neutral-900"><Star size={15} className="fill-current" /> Copertina</span>}
+        </div>
+      )}
     </div>,
     document.body,
   );
@@ -302,7 +311,7 @@ function PropertyPage({ id }: { id: string }) {
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
       </div>
       <H as="h1" className="mt-4 text-4xl md:text-5xl"><Editable k="titolo" value={p.titolo}>{p.titolo || 'Titolo dell’immobile'}</Editable></H>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><Editable k="addr" value={p.addr}><AddressLink light={t.gallery === 'full'} addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr) || p.addr} /></Editable>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><Editable k="addr" value={p.addr}><AddressLink light={t.gallery === 'full'} addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr)} /></Editable>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
     </>
   );
   return (
@@ -344,7 +353,7 @@ function PropertyPage({ id }: { id: string }) {
               {p.addr && (p.details as { distanze_auto?: boolean } | undefined)?.distanze_auto !== false && <NearbyList p={p} />}
             </div></Sec>
           )}
-          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : p.addr.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ')} /></div></Sec>}
+          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOnly(p.addr)} /></div></Sec>}
         </div>
         <aside><div className="sticky top-24"><Sec id="property.agent"><AgentCard subject={p.titolo} property={p} /></Sec></div></aside>
       </Container>

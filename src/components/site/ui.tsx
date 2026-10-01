@@ -4,7 +4,7 @@ import { Children, createContext, isValidElement, useContext, useEffect, useLayo
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
 import { Bath, BedDouble, Check, Star, Wand2, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
-import { FONTS, fontCss, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FONTS, fontCss, zoneOnly, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
@@ -194,7 +194,7 @@ export function NoListings({ className = '' }: { className?: string }) {
 }
 
 export const price = (n: number) => (n ? `€ ${Number(n).toLocaleString('it-IT')}` : 'Trattativa riservata');
-export const zoneOf = (addr: string) => addr?.split(',').map(s => s.trim()).filter(Boolean).slice(-2).join(', ') || '';
+export const zoneOf = (addr: string) => zoneOnly(addr);
 export const typeOf = (p: SiteProperty) => p.tipologia?.split('|')[0].trim() || 'Immobile';
 
 export function Facts({ p, className = '', full }: { p: SiteProperty; className?: string; full?: boolean }) {

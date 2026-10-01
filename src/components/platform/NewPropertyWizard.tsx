@@ -13,6 +13,7 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
 import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
+import { zoneOnly } from '@/lib/siteTemplates';
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { CopyIcon } from './ImproveView';
 import CountUp from './CountUp';
@@ -181,9 +182,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       }
       // tutti i dati compilati, con etichetta e valore leggibili (es. "Classe energetica: G", "Spese condominiali: 120 €/mese")
       // indirizzo nascosto: all'AI (e nella bozza) solo zona e citta', mai il civico
-      const hide = (f: Field, v: string) => (f.key === 'indirizzo' && !d.mostra_indirizzo ? v.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') : v);
+      const hide = (f: Field, v: string) => (f.key === 'indirizzo' && !d.mostra_indirizzo ? zoneOnly(v) : v);
       const dati = ALL_FIELDS.filter(f => visible(f, d)).map(f => { const v = formatValue(f, d[f.key]); return v ? `${f.label}: ${hide(f, v)}` : null; }).filter(Boolean);
-      const res = await authFetch('/api/platform/describe', { method: 'POST', headers: { 'x-no-modal': '1' }, body: JSON.stringify({ property: { dati, ...d, ...(d.indirizzo && !d.mostra_indirizzo ? { indirizzo: String(d.indirizzo).split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') } : {}), zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      const res = await authFetch('/api/platform/describe', { method: 'POST', headers: { 'x-no-modal': '1' }, body: JSON.stringify({ property: { dati, ...d, ...(d.indirizzo && !d.mostra_indirizzo ? { indirizzo: zoneOnly(String(d.indirizzo)) } : {}), zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
       if (res.status === 402) {
         // niente crediti per l'AI: bozza di titolo e descrizione dai dati, l'agente la rifinisce e salva
         const city = d.indirizzo ? String(d.indirizzo).split(',').slice(-1)[0].trim() : '';

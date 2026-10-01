@@ -7,7 +7,7 @@ import { Check, Compass, FileDown, Play, ExternalLink, Facebook, Fence, Flame, L
 import { authFetch } from '@/components/platform/api';
 import { printHtml } from '@/lib/printHtml';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
-import type { SiteProperty } from '@/lib/siteTemplates';
+import { zoneOnly, type SiteProperty } from '@/lib/siteTemplates';
 import type { Poi } from '@/lib/zone';
 import { contacts, H, SiteLink, useSite, useT } from './ui';
 
@@ -109,7 +109,7 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
     ['tipologia', 'Tipologia', p.tipologia?.split('|')[0] || '—'],
     ['contratto', 'Contratto', /affitt/i.test(p.contratto ?? '') ? 'Affitto' : 'Vendita'],
     // indirizzo esatto solo se l'agente ha scelto di mostrarlo, altrimenti zona e citta'
-    ['indirizzo', 'Indirizzo', d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') || '—'],
+    ['indirizzo', 'Indirizzo', d.mostra_indirizzo ? p.addr : zoneOnly(p.addr) || '—'],
     ...(p.mq ? [['superficie', 'Superficie', `${p.mq} m²`] as Row] : []),
     ...(p.locali ? [['locali', 'Locali', String(p.locali)] as Row] : []),
     ...(p.camere ? [['camere', 'Camere', String(p.camere)] as Row] : []),

@@ -140,6 +140,13 @@ const SAMPLE_ZONES = [
 ]
 // citta' dell'agente dai suoi immobili (la piu' frequente in fondo agli indirizzi): niente "Immobili a Roma" a chi
 // lavora a Bari. '' se non si capisce.
+// Indirizzo senza via e civico ("Via Tagliamento 40, Avellino" -> "Avellino"; "Via X 3, Prati, Roma" -> "Prati, Roma"):
+// per gli immobili con l'indirizzo esatto nascosto. Prima si prendevano le ultime due parti e con due sole usciva tutto.
+export function zoneOnly(addr = ''): string {
+  const p = addr.split(',').map(x => x.trim()).filter(Boolean)
+  return p.length > 1 ? p.slice(1).slice(-2).join(', ') : (p[0] ?? '').replace(/\s*\d+\w*$/, '')
+}
+
 export function cityOf(props: { addr?: string }[]): string {
   const n = new Map<string, number>()
   for (const p of props) {

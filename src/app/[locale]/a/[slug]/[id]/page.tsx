@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { zoneOnly } from '@/lib/siteTemplates';
 import { notFound } from 'next/navigation';
 import { loadSite, siteUrl } from '@/lib/portfolio';
 import { SitePage } from '@/components/site/pages';
@@ -22,7 +23,7 @@ export default async function PublicPropertyPage({ params }: Props) {
   if (!s || s.cfg.hidden.includes('page:immobile') || !s.properties.some(x => x.id === id)) notFound(); // anche se l'agente ha nascosto le schede
   const p = s.properties.find(x => x.id === id)!;
   // annuncio per Google: prezzo, foto, indirizzo (solo zona se l'agente non mostra l'indirizzo esatto)
-  const addr = (p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ');
+  const addr = (p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOnly(p.addr);
   const ld = {
     '@context': 'https://schema.org', '@type': 'RealEstateListing', name: p.titolo, url: siteUrl(slug, `/${id}`),
     description: p.descrizione?.slice(0, 500), image: p.photos?.slice(0, 10), datePosted: p.createdAt,
