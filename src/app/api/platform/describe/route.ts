@@ -9,6 +9,8 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
+// il portale taglia il titolo a 60 caratteri: se l'AI sfora si taglia all'ultima parola intera
+const fit60 = (t: string) => (t.length <= 60 ? t : t.slice(0, 61).replace(/[\s,;:.-]+\S*$/, '').trim())
 // Genera titolo, descrizione e score di un annuncio a partire dai dati inseriti
 // dall'agente (flow "Crea da zero"). Stesso output servira' al flow "Migliora annuncio".
 // ponytail: niente addebito crediti per ora, da agganciare prima dello switch.
@@ -64,5 +66,7 @@ export async function POST(req: NextRequest) {
     console.error('describe error:', r.error, r.detail)
     return NextResponse.json({ error: r.error === 'refused' ? 'refused' : 'ai_failed' }, { status: r.error === 'refused' ? 422 : 502 })
   }
-  return NextResponse.json(r.data)
+  const out = r.data as { titolo?: unknown }
+  if (typeof out.titolo === 'string') out.titolo = fit60(out.titolo)
+  return NextResponse.json(out)
 }

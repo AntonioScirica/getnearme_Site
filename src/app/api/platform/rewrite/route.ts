@@ -9,6 +9,8 @@ import { deepProfanity } from '@/lib/profanity'
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export const maxDuration = 300
 
+// il portale taglia il titolo a 60 caratteri: se l'AI sfora si taglia all'ultima parola intera
+const fit60 = (t: string) => (t.length <= 60 ? t : t.slice(0, 61).replace(/[\s,;:.-]+\S*$/, '').trim())
 // "Riscrivi l'annuncio" (Miglioralo): nuovo titolo e descrizione dai campi letti. Solo testo, niente foto.
 // Prima Gemini a quota gratuita (costo 0, gratis anche per l'agente); se manca la chiave o la quota e' finita,
 // Sonnet 5 (~0,01 $ a riscrittura, scelto il 28/09: scrive meglio di Haiku e costa meno del credito) e si scala 1 credito.
@@ -41,12 +43,12 @@ export async function POST(req: NextRequest) {
 
   if (await overDailyCap(data.user.id, ['rewrite'], Number(process.env.REWRITE_DAILY_LIMIT) || 50)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
   const free = await geminiFreeJson<Out>({ system: SYSTEM, text: input, userId: data.user.id, kind: 'rewrite', maxTokens: 6000 })
-  if (ok(free) && !deepProfanity(free)) return NextResponse.json({ titolo: free.titolo, descrizione: free.descrizione, gratis: true })
+  if (ok(free) && !deepProfanity(free)) return NextResponse.json({ titolo: fit60(free.titolo), descrizione: free.descrizione, gratis: true })
 
   // ripiego a pagamento: Sonnet 5, 1 credito
   if (!(await canAfford(data.user.id, 'riscrivi'))) return NextResponse.json({ error: 'no_credits' }, { status: 402 })
   const r = await generateJson<Out>({ system: SYSTEM, text: input, schema: SCHEMA, usage: { userId: data.user.id, kind: 'rewrite' }, model: 'claude-sonnet-5' })
   if (!r.ok || !ok(r.data)) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   await spend(data.user.id, 'riscrivi', { url: b.url })
-  return NextResponse.json({ titolo: r.data.titolo, descrizione: r.data.descrizione, gratis: false })
+  return NextResponse.json({ titolo: fit60(r.data.titolo), descrizione: r.data.descrizione, gratis: false })
 }

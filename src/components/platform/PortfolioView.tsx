@@ -35,7 +35,9 @@ const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b'
 export const toSite = (p: ProjectData): SiteProperty => {
       const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
       return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
-        descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
+        descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : p.cover ? [p.cover] : [], zona: Array.isArray(d.zona) ? d.zona : [],
+        // come sul sito pubblicato (toSiteProperty): il contratto puo' stare anche nei dettagli (affitti fatti a mano)
+        contratto: d.contratto ?? String((d as { details?: { contratto?: unknown } }).details?.contratto ?? '') };
 };
 
 export default function PortfolioView({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {

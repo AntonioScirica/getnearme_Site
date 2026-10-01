@@ -48,7 +48,7 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   );
   return (
     <span className={`blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
-      <a href="#/piano" title={c.unlimited ? undefined : tr(`${fmt(c.balance)} crediti`, `${fmt(c.balance)} credits`)} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
+      <a href="#/piano" title={c.unlimited ? undefined : tr(`${fmt(c.balance)} ${c.balance === 1 ? 'credito' : 'crediti'}`, `${fmt(c.balance)} ${c.balance === 1 ? 'credit' : 'credits'}`)} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
         {/* numero e moneta, senza la parola "crediti" */}
         {c.unlimited ? <><Coins size={15} className="text-ai" /> {tr('Illimitati', 'Unlimited')}</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· {tr('Ricarica', 'Top up')}</span>}
       </a>
@@ -136,7 +136,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
             {/* con un piano attivo non si rivedono le card: cambio piano, disdetta, pagamento e fatture nel portale Stripe */}
             <div className="text-sm text-muted">{tr('Piano', 'Plan')} {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
             {portalError && <p className="text-sm text-rose-600">{portalError}</p>}
-            <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} {tr('crediti', 'credits')}</div>
+            <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} {c.balance === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</div>
             <div className="text-sm text-muted">{tr(`circa ${photosFor(c.balance)} foto o ${videosFor(c.balance)} video · si ricaricano a ${fmt(c.monthly)} il ${date(c.renews)}`, `about ${photosFor(c.balance)} photos or ${videosFor(c.balance)} videos · back to ${fmt(c.monthly)} on ${date(c.renews)}`)}</div>
           </div>
           <div className="flex flex-wrap items-center gap-2">

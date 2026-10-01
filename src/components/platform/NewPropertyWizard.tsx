@@ -195,7 +195,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       setSaving({ n: photos.length + 1, total, label: publish ? tr('Salvo e pubblico sul tuo sito', 'Saving and publishing to your site') : tr('Salvo l’immobile', 'Saving the property') });
       const project = await createProject({
         nome: ai.titolo, titolo: ai.titolo, descrizione: ai.descrizione, addr: String(d.indirizzo ?? ''), tipologia: String(d.tipologia ?? ''),
-        prezzo: Number(d.prezzo) || 0, mq: Number(d.superficie) || 0, locali: Number(d.locali) || undefined, camere: Number(d.camere) || 0, bagni: Number(d.bagni) || 0,
+        prezzo: Number(d.prezzo) || 0, mq: Number(d.superficie) || 0, locali: Number(d.locali) || undefined, camere: Number(d.camere) || 0, bagni: Number(d.bagni) || 0, riferimento: d.riferimento ? String(d.riferimento) : undefined,
         cover: urls[0] ?? '', thumb,
         import_data: { source: 'platform', details: { ...d, planimetria: planUrl || undefined }, note, photos: urls, score: ai.score, suggerimenti: ai.suggerimenti },
       });
