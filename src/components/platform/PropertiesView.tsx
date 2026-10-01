@@ -46,7 +46,7 @@ function useGeo(projects: ProjectData[] | null) {
         if (stop) return;
         // dal nostro server (Nominatim dal browser va in errore CORS; il server cerca la via dentro la citta')
         const res = await fetch(`/api/site/geocode?q=${encodeURIComponent(addr)}`).catch(() => null);
-        const r = res && (res.ok || res.status === 404) ? await res.json().catch(() => null) as { lat?: number; lon?: number } | null : null;
+        const r = res && (res.ok || res.status === 404 || res.status === 400) ? await res.json().catch(() => null) as { lat?: number; lon?: number } | null : null; // 400 = indirizzo troppo corto: si ricorda come non trovato, niente richiesta a ogni visita
         if (stop) return;
         if (r) setGeo(g => {
           const next = { ...g!, [addr]: r.lat !== undefined && r.lon !== undefined ? [r.lat, r.lon] as LatLon : 0 as const };
