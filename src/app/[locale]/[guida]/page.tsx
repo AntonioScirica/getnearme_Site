@@ -6,6 +6,7 @@ import { locales } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
 import { GUIDES, guideBySlug } from '@/lib/guides';
 import ProvvigioneCalc from '@/components/ProvvigioneCalc';
+import { PRICING, photosFor } from '@/lib/pricing';
 
 // Guide SEO su /it/<slug> (pilastro "agente immobiliare" + satelliti), solo in italiano.
 // Le rotte statiche sotto [locale] hanno la precedenza: qui arrivano solo gli slug delle guide.
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Chi arriva da Google sulle guide: inviti a provare sparsi nella pagina, tutti verso la prova sulla home
-const TRY = '/it#prova';
+const TRY = '/it/accedi?next=/it/prova'; // Prova gratis porta sempre al login, poi alla prova
 function TryCard({ compact = false }: { compact?: boolean }) {
   return (
     <Link href={TRY} className={`not-prose group my-10 flex items-center gap-5 rounded-[28px] bg-canvas p-3 pr-6 no-underline ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-md ${compact ? '' : 'mt-8'}`}>
@@ -40,7 +41,7 @@ function TryCard({ compact = false }: { compact?: boolean }) {
       <img src="/immo/home/staging-after.webp" alt="Stanza arredata con l'AI da Agente Immo" className={`${compact ? 'h-20 w-28' : 'h-24 w-36'} shrink-0 rounded-[20px] object-cover`} />
       <span className="min-w-0 flex-1">
         <span className="block font-display text-lg font-bold leading-tight text-ink">{compact ? 'Vuoi vedere la tua stanza arredata?' : 'Provalo sulla tua foto, gratis'}</span>
-        <span className="mt-1 block text-sm text-muted">{compact ? 'Carica una foto e l\'AI la arreda in pochi secondi. Gratis.' : '1 foto arredata e 1 video per i social, in un minuto. Senza carta di credito.'}</span>
+        <span className="mt-1 block text-sm text-muted">{compact ? 'Carica una foto e l\'AI la arreda in pochi secondi. Gratis.' : `1 foto arredata e 1 video per i social, gratis e senza carta di credito. Poi da ${PRICING.starter} € al mese.`}</span>
       </span>
       <span className="hidden shrink-0 items-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-white sm:inline-flex">Prova gratis <ArrowRight size={14} className="ease-smooth transition-transform group-hover:translate-x-0.5" /></span>
     </Link>
@@ -132,6 +133,8 @@ export default async function Page({ params }: Props) {
         <aside className="mt-16 rounded-[32px] bg-ink px-6 py-12 text-center text-white">
           <h2 className="mx-auto max-w-xl font-display text-3xl font-extrabold tracking-tight">Più incarichi, case vendute prima.</h2>
           <p className="mx-auto mt-3 max-w-lg text-white/70">Foto arredate con l&apos;AI, video per i social e il tuo sito, per ogni immobile. Senza fotografo né web agency.</p>
+          {/* chi arriva da Google cerca "quanto costa": il prezzo detto subito */}
+          <p className="mx-auto mt-4 max-w-lg text-sm font-semibold text-white">Da {PRICING.starter} € al mese con {PRICING.starterCredits} crediti: {photosFor(PRICING.starterCredits)} foto arredate. Disdici quando vuoi.</p>
           <Link href={TRY} className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink">Provalo gratis sulla tua foto <ArrowRight size={16} /></Link>
         </aside>
       </main>

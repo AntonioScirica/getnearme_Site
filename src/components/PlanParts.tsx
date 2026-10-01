@@ -10,7 +10,7 @@ export function Credits({ n, en }: { n: number; en?: boolean }) {
       <div className="font-display text-xl font-extrabold tracking-tight">{thousands(n, en)} {en ? 'credits a month' : 'crediti al mese'}</div>
       <div className="mt-2 space-y-1 text-[15px] text-muted">
         <div>= {photosFor(n)} {en ? 'staged photos' : 'foto arredate'}</div>
-        <div>~ {videosFor(n)} {en ? 'videos' : 'video'}</div>
+        <div>{en ? 'or' : 'oppure'} {videosFor(n)} {en ? 'Before and after videos' : 'video Prima e dopo'}</div>
       </div>
     </div>
   );

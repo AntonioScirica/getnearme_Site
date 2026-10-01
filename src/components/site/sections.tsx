@@ -525,10 +525,10 @@ export function Intro() {
     <Container className="grid gap-10 pt-20 md:grid-cols-2 md:items-end">
       <div>
         <H className="text-5xl md:text-6xl">{stats[0] ? `${stats[0].v} ${stats[0].l.toLowerCase()}.` : 'Case scelte con cura.'}</H>
-        <div className="mt-6 flex items-center gap-3">
+        {cfg.reviews.length > 0 && <div className="mt-6 flex items-center gap-3">
           <span className="flex -space-x-2">{cfg.reviews.slice(0, 3).map((r, i) => <span key={i} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--soft)] text-xs font-bold ring-2 ring-white">{initial(r.name)}</span>)}<span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--c)] text-white ring-2 ring-white"><Star size={14} fill="currentColor" /></span></span>
           <span className="text-sm text-[var(--muted)]">Clienti che ci hanno scelto</span>
-        </div>
+        </div>}
       </div>
       <div>
         <p className="text-lg leading-relaxed">{introOf(cfg)}</p>
@@ -944,7 +944,7 @@ export function Footer() {
         </div>
         <div><div className={head}>Pagine</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>{navLinks(cfg).map(([l, to]) => <SiteLink key={l} to={to} className="block hover:underline">{l}</SiteLink>)}</div></div>
         <div><div className={head}>Link utili</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>
-          {!pageHidden(cfg, 'zona') && cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Casa a {z.name}</SiteLink>)}
+          {!pageHidden(cfg, 'zona') && cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Zona {z.name}</SiteLink>)}
           <SiteLink to={{ page: 'immobili', f: { contratto: 'vendita' } }} className="block hover:underline">Immobili in vendita</SiteLink>
           {properties.some(isRent) && <SiteLink to={{ page: 'immobili', f: { contratto: 'affitto' } }} className="block hover:underline">Immobili in affitto</SiteLink>}
           {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" className="block hover:underline">Facebook</a>}

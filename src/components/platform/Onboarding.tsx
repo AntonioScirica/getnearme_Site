@@ -176,7 +176,8 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
               {shown === 4 ? (
             <div className="grid gap-2 sm:grid-cols-3">
               {TOOLS.map(({ kicker, title, img, badge: Badge }, i) => (
-                <div key={title} className={`flex flex-col rounded-[20px] bg-canvas p-5 ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
+                // un clic su una card fa come Inizia (sembravano cliccabili e non lo erano)
+                <div key={title} role="button" tabIndex={0} onClick={() => void save()} onKeyDown={e => { if (e.key === 'Enter') void save(); }} className={`flex cursor-pointer flex-col rounded-[20px] bg-canvas p-5 ease-smooth transition-shadow hover:shadow-md ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
                   <span className="text-xs text-muted">{title}</span>
                   <span className="mt-1 text-lg font-bold leading-tight tracking-tight">{kicker}</span>
                   <div className="relative mt-4">

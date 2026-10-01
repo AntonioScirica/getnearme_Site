@@ -29,7 +29,7 @@ const privacyIt: LegalPage = {
   blocks: [
     { type: "h2", text: "1. Titolare del trattamento" },
     { type: "p", text: "Questa informativa spiega come vengono trattati i dati personali di chi visita il sito agenteimmo.me e di chi usa la piattaforma Agente Immo (il \"Servizio\"), ai sensi del Regolamento (UE) 2016/679 (GDPR), del D.Lgs. 196/2003 (Codice Privacy) come modificato dal D.Lgs. 101/2018 e della Direttiva 2002/58/CE (ePrivacy)." },
-    { type: "p", text: "Titolare del trattamento: Antonio Scirica, operante commercialmente con il nome \"Agente Immo\"\nSede: Viale Pretoriano 3, Roma (RM), Italia\nPartita IVA: 16096461005\nEmail: as.scirica@gmail.com" },
+    { type: "p", text: "Titolare del trattamento: Antonio Scirica, operante commercialmente con il nome \"Agente Immo\"\nSede: Viale Pretoriano 3, Roma (RM), Italia\nPartita IVA: 16096461005\nEmail: info@agenteimmo.me" },
     { type: "h2", text: "2. A chi si applica" },
     { type: "ul", items: [
       "Agli utenti registrati della piattaforma (agenti e agenzie immobiliari) e a chi prova il Servizio dalla pagina iniziale.",
@@ -119,14 +119,14 @@ const privacyIt: LegalPage = {
       "di opporti ai trattamenti basati sul legittimo interesse (art. 21);",
       "di revocare il consenso in ogni momento, senza pregiudicare i trattamenti già effettuati."
     ]},
-    { type: "p", text: "Per esercitare i tuoi diritti scrivi a as.scirica@gmail.com. Rispondiamo entro un mese." },
+    { type: "p", text: "Per esercitare i tuoi diritti scrivi a info@agenteimmo.me. Rispondiamo entro un mese." },
     { type: "p", text: "Hai anche il diritto di proporre reclamo all'autorità di controllo:\nGarante per la protezione dei dati personali\nPiazza Venezia 11, 00187 Roma\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
     { type: "h2", text: "11. Minori" },
     { type: "p", text: "Il Servizio è destinato a professionisti del settore immobiliare maggiorenni. Non raccogliamo consapevolmente dati di persone con meno di 18 anni; se ci accorgiamo di averli ricevuti, li cancelliamo." },
     { type: "h2", text: "12. Modifiche a questa informativa" },
     { type: "p", text: "Possiamo aggiornare questa informativa quando cambiano il Servizio, i fornitori o la normativa. La data in alto indica l'ultima versione; in caso di modifiche importanti ti avviseremo via email o nella piattaforma." },
     { type: "h2", text: "13. Contatti" },
-    { type: "p", text: "Per qualsiasi domanda su questa informativa o sul trattamento dei tuoi dati: as.scirica@gmail.com." },
+    { type: "p", text: "Per qualsiasi domanda su questa informativa o sul trattamento dei tuoi dati: info@agenteimmo.me." },
   ],
 };
 
@@ -137,7 +137,7 @@ const privacyEn: LegalPage = {
   blocks: [
     { type: "h2", text: "1. Data Controller" },
     { type: "p", text: "This policy explains how personal data is processed for people who visit agenteimmo.me and use the Agente Immo platform (the \"Service\"), in accordance with Regulation (EU) 2016/679 (GDPR), Italian Legislative Decree 196/2003 (Italian Privacy Code) as amended by Legislative Decree 101/2018, and Directive 2002/58/EC (ePrivacy)." },
-    { type: "p", text: "Data Controller: Antonio Scirica, acting commercially under the trade name \"Agente Immo\"\nRegistered address: Viale Pretoriano 3, Rome (RM), Italy\nVAT number: IT16096461005\nEmail: as.scirica@gmail.com" },
+    { type: "p", text: "Data Controller: Antonio Scirica, acting commercially under the trade name \"Agente Immo\"\nRegistered address: Viale Pretoriano 3, Rome (RM), Italy\nVAT number: IT16096461005\nEmail: info@agenteimmo.me" },
     { type: "h2", text: "2. Scope" },
     { type: "ul", items: [
       "Registered users of the platform (real estate agents and agencies) and people who try the Service from the home page.",
@@ -227,14 +227,14 @@ const privacyEn: LegalPage = {
       "to object to processing based on legitimate interest (Art. 21);",
       "to withdraw your consent at any time, without affecting processing carried out before the withdrawal."
     ]},
-    { type: "p", text: "To exercise your rights, write to as.scirica@gmail.com. We reply within one month." },
+    { type: "p", text: "To exercise your rights, write to info@agenteimmo.me. We reply within one month." },
     { type: "p", text: "You also have the right to lodge a complaint with the supervisory authority:\nGarante per la protezione dei dati personali\nPiazza Venezia 11, 00187 Rome, Italy\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
     { type: "h2", text: "11. Children" },
     { type: "p", text: "The Service is intended for adult real estate professionals. We do not knowingly collect data from people under 18; if we become aware that we have received such data, we delete it." },
     { type: "h2", text: "12. Changes to This Policy" },
     { type: "p", text: "We may update this policy when the Service, our providers or the law change. The date at the top shows the latest version; we will notify you of significant changes by email or in the platform." },
     { type: "h2", text: "13. Contact" },
-    { type: "p", text: "For any question about this policy or the processing of your data: as.scirica@gmail.com." },
+    { type: "p", text: "For any question about this policy or the processing of your data: info@agenteimmo.me." },
   ],
 };
 
@@ -257,7 +257,7 @@ const termsIt: LegalPage = {
   description: "Termini di Servizio della piattaforma Agente Immo per agenti immobiliari.",
   blocks: [
     { type: "h2", text: "1. Chi siamo e accettazione dei Termini" },
-    { type: "p", text: "Agente Immo è un servizio di Antonio Scirica, operante commercialmente con il nome \"Agente Immo\" (sede: Viale Pretoriano 3, Roma (RM); partita IVA: 16096461005; email: as.scirica@gmail.com), disponibile su agenteimmo.me (il \"Servizio\")." },
+    { type: "p", text: "Agente Immo è un servizio di Antonio Scirica, operante commercialmente con il nome \"Agente Immo\" (sede: Viale Pretoriano 3, Roma (RM); partita IVA: 16096461005; email: info@agenteimmo.me), disponibile su agenteimmo.me (il \"Servizio\")." },
     { type: "p", text: "Creando un account o usando il Servizio accetti questi Termini di Servizio (\"Termini\") e dichiari di avere almeno 18 anni. Se usi il Servizio per conto di un'agenzia o di un'impresa, dichiari di avere il potere di vincolarla. Se non accetti i Termini, non usare il Servizio." },
     { type: "h2", text: "2. Il Servizio" },
     { type: "p", text: "Agente Immo è una piattaforma web per agenti immobiliari che permette di:" },
@@ -298,7 +298,7 @@ const termsIt: LegalPage = {
     { type: "h3", text: "4.4. Disdetta" },
     { type: "p", text: "Puoi disdire l'abbonamento in ogni momento dalla sezione del piano nella piattaforma (portale di Stripe). La disdetta ha effetto alla fine del periodo già pagato: fino ad allora puoi continuare a usare il Servizio. Se elimini l'account, l'abbonamento viene annullato subito." },
     { type: "h3", text: "4.5. Recesso e rimborsi" },
-    { type: "p", text: "Se sei un consumatore, acquistando un abbonamento o un pacchetto di crediti chiedi espressamente che il Servizio inizi subito e prendi atto che, una volta resi disponibili i crediti o iniziato il Servizio, perdi il diritto di recesso (art. 59, comma 1, lett. a) e o) del Codice del Consumo, D.Lgs. 206/2005). Salvo quanto previsto dalla legge, i pagamenti non sono rimborsabili, neppure per periodi non usati o crediti residui. In caso di errore tecnico a noi imputabile (per esempio crediti pagati ma non accreditati) scrivici a as.scirica@gmail.com e sistemeremo il problema." },
+    { type: "p", text: "Se sei un consumatore, acquistando un abbonamento o un pacchetto di crediti chiedi espressamente che il Servizio inizi subito e prendi atto che, una volta resi disponibili i crediti o iniziato il Servizio, perdi il diritto di recesso (art. 59, comma 1, lett. a) e o) del Codice del Consumo, D.Lgs. 206/2005). Salvo quanto previsto dalla legge, i pagamenti non sono rimborsabili, neppure per periodi non usati o crediti residui. In caso di errore tecnico a noi imputabile (per esempio crediti pagati ma non accreditati) scrivici a info@agenteimmo.me e sistemeremo il problema." },
     { type: "h2", text: "5. Prova gratuita" },
     { type: "ul", items: [
       "Dalla pagina iniziale puoi provare il Servizio gratuitamente con 1 foto e 1 video.",
@@ -357,7 +357,7 @@ const termsIt: LegalPage = {
     { type: "p", text: "Questi Termini sono regolati dalla legge italiana. Per le controversie con utenti professionisti è competente in via esclusiva il Foro di Roma. Se sei un consumatore è competente il foro del tuo luogo di residenza o domicilio in Italia, e restano salvi i diritti inderogabili previsti dalla legge del tuo paese." },
     { type: "p", text: "Se una clausola risulta invalida, le altre restano valide." },
     { type: "h2", text: "16. Contatti" },
-    { type: "p", text: "Per domande su questi Termini: as.scirica@gmail.com." },
+    { type: "p", text: "Per domande su questi Termini: info@agenteimmo.me." },
   ],
 };
 
@@ -367,7 +367,7 @@ const termsEn: LegalPage = {
   description: "Terms of Service of the Agente Immo platform for real estate agents.",
   blocks: [
     { type: "h2", text: "1. About Us and Acceptance of the Terms" },
-    { type: "p", text: "Agente Immo is a service provided by Antonio Scirica, acting commercially under the trade name \"Agente Immo\" (registered address: Viale Pretoriano 3, Rome (RM), Italy; VAT number: IT16096461005; email: as.scirica@gmail.com), available at agenteimmo.me (the \"Service\")." },
+    { type: "p", text: "Agente Immo is a service provided by Antonio Scirica, acting commercially under the trade name \"Agente Immo\" (registered address: Viale Pretoriano 3, Rome (RM), Italy; VAT number: IT16096461005; email: info@agenteimmo.me), available at agenteimmo.me (the \"Service\")." },
     { type: "p", text: "By creating an account or using the Service you accept these Terms of Service (\"Terms\") and confirm that you are at least 18 years old. If you use the Service on behalf of an agency or business, you confirm that you are authorized to bind it. If you do not accept the Terms, do not use the Service." },
     { type: "h2", text: "2. The Service" },
     { type: "p", text: "Agente Immo is a web platform for real estate agents that lets you:" },
@@ -408,7 +408,7 @@ const termsEn: LegalPage = {
     { type: "h3", text: "4.4. Cancellation" },
     { type: "p", text: "You can cancel your subscription at any time from the plan section of the platform (Stripe portal). Cancellation takes effect at the end of the period already paid, and until then you can keep using the Service. If you delete your account, the subscription is cancelled immediately." },
     { type: "h3", text: "4.5. Withdrawal and Refunds" },
-    { type: "p", text: "If you are a consumer, when you buy a subscription or a credit pack you expressly request that the Service start immediately and acknowledge that, once the credits are made available or the Service has started, you lose your right of withdrawal (Article 16(m) of Directive 2011/83/EU and Article 59 of the Italian Consumer Code). Except where the law provides otherwise, payments are non-refundable, including for unused periods or remaining credits. In the event of a technical error attributable to us (for example credits paid for but not credited), write to as.scirica@gmail.com and we will fix it." },
+    { type: "p", text: "If you are a consumer, when you buy a subscription or a credit pack you expressly request that the Service start immediately and acknowledge that, once the credits are made available or the Service has started, you lose your right of withdrawal (Article 16(m) of Directive 2011/83/EU and Article 59 of the Italian Consumer Code). Except where the law provides otherwise, payments are non-refundable, including for unused periods or remaining credits. In the event of a technical error attributable to us (for example credits paid for but not credited), write to info@agenteimmo.me and we will fix it." },
     { type: "h2", text: "5. Free Trial" },
     { type: "ul", items: [
       "From the home page you can try the Service for free with 1 photo and 1 video.",
@@ -467,7 +467,7 @@ const termsEn: LegalPage = {
     { type: "p", text: "These Terms are governed by Italian law. Disputes with professional users are subject to the exclusive jurisdiction of the courts of Rome, Italy. If you are a consumer, the courts of your place of residence or domicile have jurisdiction, and the mandatory rights granted by the law of your country remain unaffected." },
     { type: "p", text: "If any provision is found invalid, the remaining provisions remain in effect." },
     { type: "h2", text: "16. Contact" },
-    { type: "p", text: "For questions about these Terms: as.scirica@gmail.com." },
+    { type: "p", text: "For questions about these Terms: info@agenteimmo.me." },
   ],
 };
 
@@ -515,11 +515,11 @@ const dataDeletionIt: LegalPage = {
       "Conversazioni della chat: vengono cancellate automaticamente dopo 30 giorni."
     ]},
     { type: "h2", text: "5. Richiesta via email" },
-    { type: "p", text: "Se non riesci ad accedere o vuoi esercitare un altro diritto previsto dal GDPR, scrivi a as.scirica@gmail.com dall'indirizzo email del tuo account, con oggetto \"Richiesta di cancellazione\". Rispondiamo entro 30 giorni e ti confermiamo la cancellazione via email (art. 17 GDPR)." },
+    { type: "p", text: "Se non riesci ad accedere o vuoi esercitare un altro diritto previsto dal GDPR, scrivi a info@agenteimmo.me dall'indirizzo email del tuo account, con oggetto \"Richiesta di cancellazione\". Rispondiamo entro 30 giorni e ti confermiamo la cancellazione via email (art. 17 GDPR)." },
     { type: "h2", text: "6. Account Instagram o Facebook collegati in passato" },
     { type: "p", text: "Se in passato hai collegato un account Instagram o una Pagina Facebook ad Agente Immo, puoi revocare l'accesso dalle impostazioni di Facebook (Impostazioni, Integrazioni aziendali) o di Instagram (Impostazioni, App e siti web), cercando \"Agente Immo\" e premendo \"Rimuovi\". Eliminando l'account cancelliamo anche i relativi codici di accesso." },
     { type: "h2", text: "7. Domande" },
-    { type: "p", text: "Per qualsiasi domanda sulla cancellazione dei dati o sui tuoi diritti scrivi a as.scirica@gmail.com. Puoi anche rivolgerti al Garante per la protezione dei dati personali: www.garanteprivacy.it." },
+    { type: "p", text: "Per qualsiasi domanda sulla cancellazione dei dati o sui tuoi diritti scrivi a info@agenteimmo.me. Puoi anche rivolgerti al Garante per la protezione dei dati personali: www.garanteprivacy.it." },
   ],
 };
 
@@ -554,11 +554,11 @@ const dataDeletionEn: LegalPage = {
       "Chat conversations: they are deleted automatically after 30 days."
     ]},
     { type: "h2", text: "5. Request by email" },
-    { type: "p", text: "If you cannot sign in or want to exercise another GDPR right, write to as.scirica@gmail.com from your account's email address, with the subject \"Deletion Request\". We reply within 30 days and confirm the deletion by email (Art. 17 GDPR)." },
+    { type: "p", text: "If you cannot sign in or want to exercise another GDPR right, write to info@agenteimmo.me from your account's email address, with the subject \"Deletion Request\". We reply within 30 days and confirm the deletion by email (Art. 17 GDPR)." },
     { type: "h2", text: "6. Instagram or Facebook accounts connected in the past" },
     { type: "p", text: "If you connected an Instagram account or a Facebook Page to Agente Immo in the past, you can revoke access from your Facebook settings (Settings, Business Integrations) or Instagram settings (Settings, Apps and Websites) by finding \"Agente Immo\" and pressing \"Remove\". Deleting your account also deletes the related access tokens." },
     { type: "h2", text: "7. Questions" },
-    { type: "p", text: "For any question about data deletion or your rights, write to as.scirica@gmail.com. You can also contact the Italian Data Protection Authority: www.garanteprivacy.it." },
+    { type: "p", text: "For any question about data deletion or your rights, write to info@agenteimmo.me. You can also contact the Italian Data Protection Authority: www.garanteprivacy.it." },
   ],
 };
 

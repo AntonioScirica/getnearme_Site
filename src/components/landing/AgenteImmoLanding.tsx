@@ -70,7 +70,8 @@ function Reveal({ children, className = '', delay = 0, as: Tag = 'div', anim = '
 // Numero che sale da 0 quando entra in vista (e riparte se si torna su)
 function CountUp({ to, prefix = '', suffix = '' }: { to: number; prefix?: string; suffix?: string }) {
   const [ref, on] = useInView('-10%');
-  const [v, setV] = useState(0);
+  // fuori vista il numero vero (lo leggono Google e chi non scorre: prima restava "~0 €"), entrando riparte da 0
+  const [v, setV] = useState(to);
   useEffect(() => {
     if (!on) return;
     const t0 = performance.now();
@@ -615,7 +616,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">{L('L\'incarico va a chi arriva con la casa già arredata, un video pronto e il suo sito. Con Agente Immo ce l\'hai in un minuto, senza fotografo né web agency.', "The listing goes to the agent who shows up with the home staged, a video ready and their own website. With Agente Immo you get it in a minute, no photographer or web agency.")}</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Cta>{L('Prova gratis sulla tua foto', "Try it free on your photo")}</Cta>
+            <Cta href={TRIAL_LOGIN}>{L('Prova gratis sulla tua foto', "Try it free on your photo")}</Cta>{/* Prova gratis porta sempre al login, poi alla prova */}
             <span className="hidden sm:block"><Cta ghost href="#prezzi">{L('Vedi i prezzi', "See pricing")}</Cta></span>
           </Reveal>
         </div>
@@ -689,7 +690,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <Reveal anim="in-left">
             <Eyebrow n="03">{L('Il sito te lo facciamo noi', "We build your website")}</Eyebrow>
             <h2 className={H2}>{L('Il tuo sito lo facciamo noi, tu scegli lo stile.', "We build your website, you just pick the style.")}</h2>
-            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Appena ti iscrivi hai il tuo sito, con il tuo nome. Scegli il modello, metti logo e colori: gli immobili ci finiscono da soli.', "Sign up and your website is ready, with your name. Pick a template, add your logo and colors: your listings land there on their own.")}</p>
+            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Con Plus e Pro hai il tuo sito, con il tuo nome. Scegli il modello, metti logo e colori: gli immobili ci finiscono da soli.', "With Plus and Pro you get your own website, with your name. Pick a template, add your logo and colors: your listings land there on their own.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>

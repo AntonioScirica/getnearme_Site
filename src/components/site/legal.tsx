@@ -5,7 +5,7 @@ import { RichText } from './extras';
 
 // Informativa privacy e cookie del sito di un agente, generate dai dati del sito: titolare e' l'agente,
 // Agente Immo e' responsabile del trattamento (art. 28 GDPR). Base di partenza da far rivedere a un legale.
-const PLATFORM = 'Antonio Scirica, che opera con il marchio Agente Immo (as.scirica@gmail.com)';
+const PLATFORM = 'Antonio Scirica, che opera con il marchio Agente Immo (info@agenteimmo.me)';
 
 export function LegalPage({ doc }: { doc: 'privacy' | 'cookie' }) {
   const { cfg, name } = useSite();

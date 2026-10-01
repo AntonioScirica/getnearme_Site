@@ -112,6 +112,14 @@ export const PLACEHOLDERS: Partial<Record<keyof SiteConfig, string>> = {
   instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA RM-123456',
   areas: 'Centro, Trastevere, Prati', years: '10', sold: '120', clients: '300',
 }
+// recensioni d'esempio: solo nell'anteprima dell'editor. Fino al 01/10/2026 erano nella configurazione iniziale e
+// finivano online: cleanSite le toglie anche dai siti gia' salvati.
+const SAMPLE_REVIEWS = [
+  { text: 'Ci ha seguiti in tutto, dalla prima visita al notaio. Sempre disponibile e chiaro su ogni passaggio.', name: 'Giulia e Marco', zone: '' },
+  { text: 'Venduto in poche settimane al prezzo giusto. Foto e annuncio fatti benissimo.', name: 'Roberto', zone: '' },
+  { text: 'Professionale e onesto: ci ha sconsigliato una casa che non faceva per noi. Raro.', name: 'Elena', zone: '' },
+]
+const isSampleReview = (t: string) => SAMPLE_REVIEWS.some(x => x.text === t)
 const SAMPLE_ZONES = [
   { name: 'Centro', text: 'Case in centro storico, a due passi da negozi, servizi e mezzi.' },
   { name: 'Trastevere', text: 'Vicoli, piazze e trattorie: appartamenti con carattere a due passi dal centro.' },
@@ -120,6 +128,7 @@ export function withPlaceholders(c: SiteConfig): SiteConfig {
   const out = { ...c } as Record<string, unknown>
   for (const [k, v] of Object.entries(PLACEHOLDERS)) if (!out[k]) out[k] = v
   if (!c.zones.length) out.zones = SAMPLE_ZONES
+  if (!c.reviews.length) out.reviews = SAMPLE_REVIEWS
   return out as SiteConfig
 }
 
@@ -142,11 +151,7 @@ export function defaultSite(name: string, email = ''): SiteConfig {
     method: 'La trattativa non si improvvisa alla fine: si costruisce all’inizio. Studio l’immobile con il proprietario, definisco il prezzo corretto e preparo tutti i documenti prima di metterlo sul mercato. Pubblico solo quando è davvero pronto: meno trattativa, nessuna sorpresa.',
     highlights: ['Esperienza sul territorio', 'Clienti italiani e stranieri', 'Dalla prima visita al rogito'],
     address: '', legal: '', instagram: '', facebook: '', topBar: true, whatsappButton: true, texts: {}, hidden: [],
-    reviews: [
-      { text: 'Ci ha seguiti in tutto, dalla prima visita al notaio. Sempre disponibile e chiaro su ogni passaggio.', name: 'Giulia e Marco', zone: '' },
-      { text: 'Venduto in poche settimane al prezzo giusto. Foto e annuncio fatti benissimo.', name: 'Roberto', zone: '' },
-      { text: 'Professionale e onesto: ci ha sconsigliato una casa che non faceva per noi. Raro.', name: 'Elena', zone: '' },
-    ],
+    reviews: [], // le recensioni d'esempio sono solo segnaposto dell'anteprima (SAMPLE_REVIEWS): online solo quelle vere
   }
 }
 
@@ -197,7 +202,7 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     hidden: Array.isArray(r.hidden) ? r.hidden.filter((x): x is string => typeof x === 'string' && (HIDEABLE.has(x) || HIDEABLE_PAGES.some(p => x === `page:${p}`))) : [],
     whatsappButton: bool(r.whatsappButton, d.whatsappButton),
     reviews: Array.isArray(r.reviews)
-      ? r.reviews.slice(0, 3).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { text: str(o.text, 300, ''), name: str(o.name, 60, ''), zone: str(o.zone, 60, '') } }).filter(x => x.text)
+      ? r.reviews.slice(0, 3).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { text: str(o.text, 300, ''), name: str(o.name, 60, ''), zone: str(o.zone, 60, '') } }).filter(x => x.text && !isSampleReview(x.text))
       : d.reviews,
     ctaLabel: str(r.ctaLabel, 30, d.ctaLabel) || d.ctaLabel,
     phone: phone(r.phone),

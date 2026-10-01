@@ -72,7 +72,9 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
-  const [changing, setChanging] = useState(!!change);
+  const [changingRaw, setChanging] = useState(!!change);
+  // "cambia piano" ha senso solo con un piano: chi non ce l'ha (anche arrivando da ?cambia=1) vede i tre piani normali
+  const changing = changingRaw && !!c && c.plan !== 'none' && !c.unlimited;
   // Pro: fatturazione in corso (annuale o trimestrale) letta da Stripe, cosi' la card mostra quella che si ha
   const [proLookup, setProLookup] = useState<string | null>(null);
   useEffect(() => {
