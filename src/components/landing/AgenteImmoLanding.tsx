@@ -690,7 +690,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <Reveal anim="in-left">
             <Eyebrow n="03">{L('Il sito te lo facciamo noi', "We build your website")}</Eyebrow>
             <h2 className={H2}>{L('Il tuo sito lo facciamo noi, tu scegli lo stile.', "We build your website, you just pick the style.")}</h2>
-            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Con Plus e Pro hai il tuo sito, con il tuo nome. Scegli il modello, metti logo e colori: gli immobili ci finiscono da soli.', "With Plus and Pro you get your own website, with your name. Pick a template, add your logo and colors: your listings land there on their own.")}</p>
+            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Appena ti iscrivi hai il tuo sito, con il tuo nome. Scegli il modello, metti logo e colori: gli immobili ci finiscono da soli.', "Sign up and your website is ready, with your name. Pick a template, add your logo and colors: your listings land there on their own.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
