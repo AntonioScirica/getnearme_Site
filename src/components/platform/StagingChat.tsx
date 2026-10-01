@@ -10,6 +10,7 @@ import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
 import { authFetch, CARD_SHADOW, portfolioUrl } from './api';
 import { useCredits } from './PlanView';
+import ShareVideo from './ShareVideo';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
@@ -217,7 +218,10 @@ const CHAT_WORDS = /^(ciao|salve|buongiorno|buonasera|hey|ehi|hello|hi|grazie|ok
 // 1-2 parole senza parole da modifica ("cicaooo", tasti a caso) = non e' una richiesta; da 3 parole in su nel dubbio parte
 // le stesse parole in inglese (piattaforma in inglese): "white walls", "brighter" sono richieste, non chiacchiere
 const EDIT_WORDS_EN = /\b(remov|delet|take (out|away)|add|put|furnish|empty|clear|chang|replac|move|paint|colou?r|make|turn|style|modern|nordic|scandi|luxury|boho|industrial|classic|minimal|wall|floor|parquet|ceiling|light|bright|sofa|couch|bed|table|chair|kitchen|bath|curtain|picture|painting|plant|rug|carpet|lamp|window|door|wardrobe|cabinet|tv|shelf|shelves|green|white|black|grey|gray|beige|blue|red|wood|oak|marble|tile|cushion|pillow|declutter|tidy|clean|stag)/i;
-const isChatter = (t: string) => !EDIT_WORDS.test(t) && !EDIT_WORDS_EN.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.split(/\s+/).length <= 2);
+// domanda su come usare la foto (Facebook, scaricare, crediti...): vince anche su "metto", "cambio" ecc.
+const HOWTO = /\b(facebook|instagram|whatsapp|tiktok|social|pubblic|condivid|scaric|idealista|immobiliare\.it|casa\.it|portal|link|credit|abbonament|fattur)/i;
+const QUESTION = /^(come|dove|quando|perch[eé]|quanto|quanti|quale|cos['a ]|che cos|posso|si pu[oò]|how|where|when|why|can i)\b/i;
+const isChatter = (t: string) => HOWTO.test(t) || (QUESTION.test(t) && /\b(su|sul|sulla|nel|nella|in)\s+(facebook|instagram|sito|portale|annuncio)\b|\b(funziona|serve|costa|faccio|si fa)\b/i.test(t)) || !EDIT_WORDS.test(t) && !EDIT_WORDS_EN.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.split(/\s+/).length <= 2);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 // esempi del campo: il primo per tipo di stanza, poi ritocchi sul risultato (a rotazione)
@@ -624,7 +628,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const note = (n: string) => { setText(''); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t }, { id: uid(), role: 'note', text: n }]); toBottom(); };
     const lastPhoto = [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image);
     if (lastPhoto?.seen === 'unknown') { note(tr('Prima dimmi che stanza è dal menu qui sopra, così la arredo giusta.', 'First tell me which room this is from the menu above, so I furnish it right.')); return; }
-    if (!region && !styleRef && !pk && isChatter(t)) { note(tr('Scrivimi cosa cambiare nella foto, per esempio: togli il divano, pareti bianche, arredala in stile nordico.', 'Tell me what to change in the photo, for example: remove the sofa, white walls, furnish it in Nordic style.')); return; }
+    if (!region && !styleRef && !pk && isChatter(t)) { note(HOWTO.test(t) ? tr('Qui modifico solo la foto. Per metterla su Facebook, Instagram o sul portale: Scarica e caricala, oppure da telefono Condividi.', 'Here I only edit the photo. To post it on Facebook, Instagram or a portal: Download and upload it, or Share from your phone.') : tr('Scrivimi cosa cambiare nella foto, per esempio: togli il divano, pareti bianche, arredala in stile nordico.', 'Tell me what to change in the photo, for example: remove the sofa, white walls, furnish it in Nordic style.')); return; }
     // stile da una foto: sempre Normale; scritta: quella delle pill sopra il campo; stili: l'ultima scelta nel popup
     const dens = styleRef ? 'normale' : given === undefined ? typedDensity : densityRef.current;
     setTextDensity(null);
@@ -1001,7 +1005,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
                 <span className="text-lg font-semibold">{tr('Carica la foto della stanza', 'Upload a photo of the room')}</span>
-                <span className="text-sm text-muted">{tr('Carica una foto o trascinala qui. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.', 'Upload a photo or drag it here. A facade, a garden or a floor plan work too: I recognize it on my own. Or a video of you: you talk, step out and the room gets furnished.')}</span>
+                <span className="text-sm text-muted"><span className="sm:hidden">{tr('Foto di stanza, facciata o planimetria, oppure un tuo video.', 'A room, facade or floor plan photo, or a video of you.')}</span><span className="max-sm:hidden">{tr('Carica una foto o trascinala qui. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.', 'Upload a photo or drag it here. A facade, a garden or a floor plan work too: I recognize it on my own. Or a video of you: you talk, step out and the room gets furnished.')}</span></span>
                 {/* il campo file deve stare prima del pulsante vetrina: la label attiva il primo controllo che contiene, e un <button> lo e' */}
                 {picker}
                 <span className="mt-1 flex flex-wrap items-center justify-center gap-2 max-sm:w-full max-sm:flex-col max-sm:[&>*]:w-full max-sm:[&>*]:justify-center">{/* telefono: due pulsanti uguali a tutta larghezza */}
@@ -1266,6 +1270,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         <div className="flex items-center gap-2 pt-3">
                           <div className="flex min-w-0 flex-1"><Picks picks={m.picks} /></div>
+                          <ShareVideo url={m.url} className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-brand py-2 pl-3 pr-3.5 text-xs font-semibold text-white shadow-sm" />
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
                             className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
                         </div>

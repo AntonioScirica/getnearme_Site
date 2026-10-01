@@ -234,8 +234,11 @@ const simulate = () => { const q = new URLSearchParams(location.search); return 
 // Barra di avanzamento finta: sale veloce e rallenta, a secs (tempo tipico) e' a ~80%, non arriva mai a 100 da sola
 // (quando il risultato e' pronto la barra sparisce). Tempi veri da ai_usage: foto GPT 14-17 s (+ caricamento),
 // video Prima e dopo ~2 min (come in chat).
-export function FakeBar({ secs, title, sub }: { secs: number; title: string; sub: string }) {
+export function FakeBar({ secs, title, sub, more }: { secs: number; title: string; sub: string; more?: ReactNode }) {
   const [p, setP] = useState(0);
+  // dopo qualche secondo la card si allunga verso il basso e mostra cosa fare intanto (il video va avanti da solo)
+  const [open, setOpen] = useState(false);
+  useEffect(() => { if (!more) return; const t = setTimeout(() => setOpen(true), 4000); return () => clearTimeout(t); }, [more]);
   useEffect(() => {
     const t0 = Date.now();
     const id = setInterval(() => setP(95 * (1 - Math.exp(-((Date.now() - t0) / 1000) / (secs * 0.6)))), 250);
@@ -253,6 +256,7 @@ export function FakeBar({ secs, title, sub }: { secs: number; title: string; sub
           <span className="text-xs font-semibold tabular-nums text-muted">{Math.round(p)}%</span>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>
+        {more && <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}><div className="min-h-0 overflow-hidden">{more}</div></div>}
       </div>
     </div>
   );
@@ -429,7 +433,14 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                     </div>
                   </div>
                 )}
-                {vBusy && <FakeBar secs={120} title={L('Stiamo facendo il video', "Making your video")} sub={L('Circa 2 minuti, puoi restare qui', "About 2 minutes, stay on this page")} />}
+                {vBusy && <FakeBar secs={120} title={L('Stiamo facendo il video', "Making your video")} sub={L('Circa 2 minuti', "About 2 minutes")} more={
+                  <div className="pt-4">
+                    <p className="text-xs text-muted">{L('Nel frattempo puoi entrare in piattaforma o vedere i piani: il video lo ritrovi nella tua Galleria.', 'Meanwhile you can enter the platform or see the plans: you will find the video in your Gallery.')}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <a href={APP} className="flex h-10 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">{L('Entra', 'Enter')}</a>
+                      <a href={`${APP}#/piano?cambia=1`} className="flex h-10 items-center justify-center rounded-full bg-canvas text-sm font-semibold text-ink">{L('Vedi i piani', 'See plans')}</a>
+                    </div>
+                  </div>} />}
               </div>
             ) : before ? (
               <div className={`relative overflow-hidden ${BOX}`}>

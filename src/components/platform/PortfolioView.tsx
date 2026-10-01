@@ -171,7 +171,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const covers = [...new Set(pub.map(toSite).map(p => p.cover).filter(Boolean))].slice(0, 12);
 
   // Starter non ha il sito: niente link ne' editor, solo cosa avrebbe passando a Plus (anteprima vera col suo nome)
-  if (credits?.plan === 'starter') return <StarterSite />;
+  if (credits && !sitePlan) return <StarterSite />; // anche senza piano: prima vedeva i modelli con un avviso, non i motivi per averlo
 
   return (
     <>
