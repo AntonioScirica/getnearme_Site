@@ -40,7 +40,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const [gridH, setGridH] = useState<number>();
   useEffect(() => {
     if (!editing) return;
-    const fit = () => { const el = grid.current; if (el) setGridH(Math.max(420, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
+    // sotto lg pannello e sito sono uno sopra l'altro: niente altezza fissa (il pannello restava una fessura), scorre la pagina
+    const fit = () => { const el = grid.current; if (el) setGridH(window.innerWidth < 1024 ? undefined : Math.max(420, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
     fit();
     const t = setTimeout(fit, 700); // dopo lo scorrimento
     window.addEventListener('resize', fit);
@@ -109,9 +110,9 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <Info size={16} className="shrink-0 text-brand" />
         {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
-        <span className="min-w-0 flex-1 truncate text-muted">{!planKnown ? '' : !sitePlan ? tr('Non è online.', 'Not online yet.') : project.is_public ? tr('Sul tuo sito si vede', 'Live on your website') : tr('Non è sul tuo sito. Online si vedrà', 'Not on your website yet. It will show')}{sitePlan && <> {tr('con lo stile del modello', 'with the template')} {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : tr('scelto', 'you picked')}.</>}</span>
+        <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online.', 'Not online yet.') : project.is_public ? tr('Sul tuo sito si vede', 'Live on your website') : tr('Non è sul tuo sito. Online si vedrà', 'Not on your website yet. It will show')}{sitePlan && <> {tr('con lo stile del modello', 'with the template')} {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : tr('scelto', 'you picked')}.</>}</span>
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-brand/10 text-brand">{tr('Cambia modello', 'Change template')}</a>
-        <span className="h-5 w-px bg-line" aria-hidden />
+        <span className="hidden h-5 w-px bg-line sm:block" aria-hidden />
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
           : <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>}
@@ -128,7 +129,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
         {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onAdded={onChange} onSaved={() => { setDraft(null); onChange(); }}
-          report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
+          report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [{ ...toSite({ ...project, ...draft }), videos }], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
     </>
@@ -144,21 +145,26 @@ const FIELDS: { k: keyof ProjectData; label: string; num?: boolean; wide?: boole
   { k: 'bagni', label: tr('Bagni', 'Bathrooms'), num: true }, { k: 'tipologia', label: tr('Tipologia', 'Property type'), ph: tr('Appartamento', 'Apartment') },
   { k: 'riferimento', label: tr('Riferimento', 'Reference'), ph: tr('Codice interno', 'Internal code') },
 ]
-// Pagina del sito in scala, larga 1280 px come su un computer; non cliccabile (si guarda e si scorre con la pagina)
+// Pagina del sito in scala, larga 1280 px come su un computer; non cliccabile (si guarda e si scorre con la pagina).
+// Su telefono invece a grandezza vera, larga quanto il riquadro: si vede la versione mobile del sito, leggibile
 function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id: string }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
+  const [w, setW] = useState(1280);
   const [h, setH] = useState(0);
   useEffect(() => {
-    const ro = new ResizeObserver(() => { if (box.current) setK(box.current.clientWidth / 1280); if (inner.current) setH(inner.current.offsetHeight); });
+    const ro = new ResizeObserver(() => {
+      if (box.current) { const cw = box.current.clientWidth, W = window.innerWidth < 768 ? cw : 1280; setW(W); setK(cw / W); }
+      if (inner.current) setH(inner.current.offsetHeight);
+    });
     if (box.current) ro.observe(box.current);
     if (inner.current) ro.observe(inner.current);
     return () => ro.disconnect();
   }, []);
   return (
     <div ref={box} className="relative min-w-0 overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/10" style={{ height: h ? h * k : undefined }}>
-      <div ref={inner} className={ctx.propEdit ? '' : 'pointer-events-none select-none'} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }} aria-hidden={!ctx.propEdit}>
+      <div ref={inner} className={ctx.propEdit ? '' : 'pointer-events-none select-none'} style={{ width: w, transform: `scale(${k})`, transformOrigin: 'top left' }} aria-hidden={!ctx.propEdit}>
         <SitePage ctx={ctx} page={{ page: 'immobile', id }} />
       </div>
     </div>
@@ -274,12 +280,12 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     );
   };
   return (
-    <div ref={panel} className="blur-in flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-black/5">
+    <div ref={panel} className="blur-in flex min-h-0 flex-col rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:h-full lg:overflow-hidden">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-bold">{tr('Modifica immobile', 'Edit listing')}</h2>
         {err && <span className="ml-auto mr-2 text-sm text-rose-600">{err}</span>}
       </div>
-      <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+      <div className="flex-1 space-y-6 px-5 py-5 lg:overflow-y-auto">
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
         {!photos.length && (
           <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl bg-canvas p-5 text-center border border-dashed border-black/15 ${adding ? 'pointer-events-none opacity-60' : 'hover:border-black/30'}`}>
@@ -320,7 +326,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
         ))}
       </div>
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
-      <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
+      {/* sotto lg il pannello scorre con la pagina: Annulla e Salva restano attaccati in fondo */}
+      <div className="sticky bottom-0 z-10 flex items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
         {report}
         <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 disabled:opacity-40 disabled:hover:bg-transparent text-brand">{tr('Annulla', 'Cancel')}</button>
         <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Salva', 'Save')}</button>
