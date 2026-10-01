@@ -12,7 +12,9 @@ import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './
 import { PublicSwitch, toSite } from './PortfolioView';
 import { useCredits } from './PlanView';
 import { printHtml } from '@/lib/printHtml';
-import { tr } from './i18n';
+import { tr, trf } from './i18n';
+import { Chips, Counter, EnergyScale, NumberField, TextField, Toggle } from './NewPropertyWizard';
+import { ESSENTIALS, GROUPS as DETAIL_GROUPS, visible, type Details, type Field } from '@/lib/propertyFields';
 
 // Dettaglio in piattaforma: stessa pagina della casa del portfolio pubblico + barra agente
 // (torna agli immobili, pubblico/privato) e suggerimenti dell'AI in fondo.
@@ -37,17 +39,13 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       setVideos((d.items ?? []).filter(x => x.video && x.casa === pid).map(x => x.video!))).catch(() => {});
   }, [pid]);
   const grid = useRef<HTMLDivElement>(null);
-  const [gridH, setGridH] = useState<number>();
+  // in modifica (da lg): barra e sito alti quanto lo schermo e fermi, si scorre solo dentro ciascuno.
+  // Si porta la griglia in cima (prima l'altezza inseguiva lo scorrimento della pagina e tutto si spostava)
   useEffect(() => {
-    if (!editing) return;
-    // sotto lg pannello e sito sono uno sopra l'altro: niente altezza fissa (il pannello restava una fessura), scorre la pagina
-    const fit = () => { const el = grid.current; if (el) setGridH(window.innerWidth < 1024 ? undefined : Math.max(420, window.innerHeight - Math.max(0, el.getBoundingClientRect().top) - 24)); };
-    fit();
-    const t = setTimeout(fit, 700); // dopo lo scorrimento
-    window.addEventListener('resize', fit);
-    window.addEventListener('scroll', fit, true);
-    return () => { clearTimeout(t); window.removeEventListener('resize', fit); window.removeEventListener('scroll', fit, true); };
-  }, [editing]);
+    if (!editing || window.innerWidth < 1024) return;
+    const t = setTimeout(() => grid.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50);
+    return () => clearTimeout(t);
+  }, [editing, project?.id]); // anche quando l'immobile arriva (prima la griglia non c'era ancora)
   const planKnown = !!credits; // finche' non si sa il piano, niente interruttore ne' invito (niente salto)
   const sitePlan = !!credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'); // come in Il mio sito
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
@@ -118,7 +116,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Immobili', 'Listings')}</a>
       </div>
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
-      <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
+      <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm max-sm:p-3 max-sm:pl-4 ${CARD_SHADOW}`}>
         <Info size={16} className="shrink-0 text-brand" />
         {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
@@ -128,23 +126,24 @@ export default function PropertyDetail({ project, loading, onChange }: { project
           ? <>
             <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
             {/* casa non online (sito spento o casa non pubblica): al cliente la scheda in PDF */}
-            {site && !(site.published && project.is_public) && <button type="button" onClick={() => void sendSheet()} disabled={sending} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>}
+            {site && !(site.published && project.is_public) && <button type="button" onClick={() => void sendSheet()} disabled={sending} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>}
           </>
           : <>
             {/* senza sito: al cliente la scheda in PDF (si salva dalla stampa e si allega su WhatsApp) */}
-            <button type="button" onClick={() => void sendSheet()} disabled={sending} title={tr('Manda al cliente la scheda della casa su WhatsApp', 'Send the client the property sheet on WhatsApp')} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>
+            <button type="button" onClick={() => void sendSheet()} disabled={sending} title={tr('Manda al cliente la scheda della casa su WhatsApp', 'Send the client the property sheet on WhatsApp')} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>
             <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>
           </>}
         {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
         {/* sito spento: niente link (il cliente vedrebbe "sito non disponibile") */}
         {sitePlan && site?.slug && site.published && (
-          <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
+          <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] max-sm:basis-full ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
             <span className="min-w-0 overflow-hidden">
-              <span className="flex items-center gap-2">
+              {/* telefono: Manda al cliente e Vedi sul sito su una riga, meta' e meta' */}
+              <span className="flex items-center gap-2 max-sm:grid max-sm:grid-cols-2">
                 <span className="mr-1 hidden h-5 w-px bg-line sm:block" aria-hidden />{/* divisore dopo Pubblico, entra con i pulsanti */}
                 {/* al cliente il link pubblico della casa, su WhatsApp (non quello della piattaforma, che chiede l'accesso) */}
-                <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${(project.titolo || project.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
-                <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
+                <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${(project.titolo || project.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 max-sm:h-11 max-sm:px-2"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
+                <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60 max-sm:h-11 max-sm:px-2">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
               </span>
             </span>
           </span>
@@ -152,7 +151,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       </div>
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
-      <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
+      <div ref={grid} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-6 lg:sticky lg:top-6 lg:h-[calc(100svh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
         {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onAdded={onChange} onSaved={() => { setDraft(null); onChange(); }}
           report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [{ ...toSite({ ...project, ...draft }), videos }], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
@@ -313,6 +312,21 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 // [nome italiano (fa anche da chiave), nome inglese, campi]
 const GROUPS: [string, string, (keyof ProjectData)[]][] = [['Annuncio', 'Listing', ['titolo', 'addr']], ['Prezzo e spazi', 'Price and size', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', 'Other', ['tipologia', 'riferimento']]];
+// Tutti gli altri dati del form di creazione (import_data.details): prima in Modifica non c'erano (classe energetica,
+// spese, piano, stato...). Quelli gia' sopra (prezzo, superficie, locali...) restano nei campi base e si copiano qui al salvataggio.
+const BASE_KEYS = new Set(['tipologia', 'indirizzo', 'prezzo', 'superficie', 'locali', 'camere', 'bagni', 'riferimento']);
+const DETAIL_SECTIONS: { title: string; fields: Field[] }[] = [
+  { title: 'Contratto e piano', fields: ESSENTIALS.filter(f => !BASE_KEYS.has(f.key)) },
+  ...DETAIL_GROUPS.map(g => ({ title: g.title, fields: g.fields.filter(f => !BASE_KEYS.has(f.key)) })),
+];
+function DetailField({ f, v, set }: { f: Field; v: Details[string]; set: (x: Details[string]) => void }) {
+  if (f.key === 'classe_energetica') return <EnergyScale v={v} set={set} />;
+  if (f.type === 'toggle') return <Toggle f={f} v={v} set={set} />;
+  if (f.type === 'stepper') return <Counter f={f} v={v} set={set} inline />;
+  if (f.type === 'number') return <NumberField f={f} v={v} set={set} raw={f.key === 'anno'} />;
+  if (f.type === 'text') return <TextField f={f} v={v} set={set} />;
+  return <Chips f={f} v={v} set={set} multi={f.type === 'multi'} />;
+}
 function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, onAdded, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onPhoto: PropEdit['onPhoto']; onClose: () => void; onSaved: () => void; onAdded: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
   // aggiungere foto dopo la creazione (anche a un immobile salvato senza foto): su R2, poi in coda all'immobile
@@ -343,23 +357,36 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   };
   const panel = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
+  // dettagli del form di creazione: bozza a parte (chiave :det), salvati in import_data.details
+  const savedDet = () => ({ ...(((project.import_data ?? {}) as { details?: Details }).details ?? {}) });
+  const [det, setDetState] = useState<Details>(savedDet);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const initial = () => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]);
   // Bozza: le modifiche non salvate restano sul dispositivo (uscendo e tornando si ritrovano), finche' Salva o Scarta
   const dKey = `agenteimmo:prop-draft:${project.id}`;
-  const reset = () => { localStorage.removeItem(dKey); setV(initial()); setErr(''); onClose(); }; // Scarta: si torna ai dati salvati
-  const dirty = JSON.stringify(v) !== JSON.stringify(initial()); // Salva e Annulla solo se qualcosa e' cambiato
+  const reset = () => { localStorage.removeItem(dKey); localStorage.removeItem(`${dKey}:det`); setV(initial()); setDetState(savedDet()); setErr(''); onClose(); }; // Scarta: si torna ai dati salvati
+  const dirty = JSON.stringify(v) !== JSON.stringify(initial()) || JSON.stringify(det) !== JSON.stringify(savedDet()); // Salva e Annulla solo se qualcosa e' cambiato
   const n = (x: string) => Math.max(0, Math.round(Number(x.replace(/[^\d,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0));
-  const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
+  const toUp = (o: Record<string, string>, dd: Details = det) => {
+    const up = Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]) as Record<string, string | number>;
+    // i campi base copiati anche nei dettagli (report, portali e sito leggono anche da li')
+    const details: Details = { ...dd, prezzo: up.prezzo || undefined, superficie: up.mq || undefined, locali: up.locali || undefined, camere: up.camere || undefined, bagni: up.bagni || undefined, indirizzo: String(up.addr) || undefined, tipologia: String(up.tipologia) || undefined, riferimento: String(up.riferimento) || undefined };
+    return { ...up, import_data: { ...(project.import_data ?? {}), details } };
+  };
   // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)
   const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); setErr(''); onDraft(toUp(nv)); try { localStorage.setItem(dKey, JSON.stringify(nv)); } catch { /* niente storage */ } };
+  const setDet = (k: string, x: Details[string]) => { const nd = { ...det, [k]: x }; if (x === undefined) delete nd[k]; setDetState(nd); setErr(''); onDraft(toUp(v, nd)); try { localStorage.setItem(`${dKey}:det`, JSON.stringify(nd)); localStorage.setItem(dKey, JSON.stringify(v)); } catch { /* niente storage */ } };
   // all'apertura: c'era una bozza di questo immobile? si riprende (anche nell'anteprima a destra)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(dKey);
       const d = raw ? JSON.parse(raw) as Record<string, string> : null;
-      if (d && JSON.stringify(d) !== JSON.stringify(initial())) { setV(d); onDraft(toUp(d)); } else if (raw) localStorage.removeItem(dKey); // eslint-disable-line react-hooks/set-state-in-effect
+      const rawDet = localStorage.getItem(`${dKey}:det`);
+      const dd = rawDet ? JSON.parse(rawDet) as Details : null;
+      if (dd && JSON.stringify(dd) !== JSON.stringify(savedDet())) setDetState(dd); // eslint-disable-line react-hooks/set-state-in-effect
+      else if (rawDet) localStorage.removeItem(`${dKey}:det`);
+      if (d && (JSON.stringify(d) !== JSON.stringify(initial()) || dd)) { setV(d); onDraft(toUp(d, dd ?? savedDet())); } else if (raw) localStorage.removeItem(dKey);
     } catch { /* bozza rovinata */ }
   }, [dKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // valori impossibili (prezzo 3 €, 3 m²): il campo diventa rosso e si chiede di correggerlo prima di salvare
@@ -370,7 +397,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     setBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
     setBusy(false);
-    if (r) { localStorage.removeItem(dKey); onSaved(); } else setErr(tr('Salvataggio non riuscito, riprova.', 'Save failed, please try again.'));
+    if (r) { localStorage.removeItem(dKey); localStorage.removeItem(`${dKey}:det`); onSaved(); } else setErr(tr('Salvataggio non riuscito, riprova.', 'Save failed, please try again.'));
   };
   const input = 'mt-1 h-10 w-full rounded-xl bg-canvas px-3 text-sm outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand';
   const field = (k: keyof ProjectData) => {
@@ -387,7 +414,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-bold">{tr('Modifica immobile', 'Edit listing')}</h2>
       </div>
-      <div className="flex-1 space-y-6 px-5 py-5 lg:overflow-y-auto">
+      <div className="flex-1 space-y-6 px-5 py-5 lg:overflow-y-auto lg:overscroll-contain">
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
         {!photos.length && (
           <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl bg-canvas p-5 text-center border border-dashed border-black/15 ${adding ? 'pointer-events-none opacity-60' : 'hover:border-black/30'}`}>
@@ -437,6 +464,13 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
             )}
           </section>
         ))}
+        {/* come nel form: alimentazione e terminali solo dopo aver scelto il riscaldamento */}
+        {DETAIL_SECTIONS.map(sec => { const fs = sec.fields.filter(f => visible(f, det) && ((f.key !== 'alimentazione' && f.key !== 'emissione') || !!det.riscaldamento)); return fs.length ? (
+          <section key={sec.title} className="space-y-5">
+            <h3 className="text-sm font-semibold">{trf(sec.title)}</h3>
+            {fs.map(f => <DetailField key={f.key} f={f} v={det[f.key]} set={x => setDet(f.key, x)} />)}
+          </section>
+        ) : null; })}
       </div>
       {picking && <GalleryPick onClose={() => setPicking(false)} onPick={addUrls} />}
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={async o => {

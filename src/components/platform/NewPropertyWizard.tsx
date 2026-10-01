@@ -547,7 +547,7 @@ function Cards({ f, v, set, big, multi }: { f: Field; v: Details[string]; set: S
   );
 }
 
-function Chips({ f, v, set, multi }: { f: Field; v: Details[string]; set: SetV; multi?: boolean }) {
+export function Chips({ f, v, set, multi }: { f: Field; v: Details[string]; set: SetV; multi?: boolean }) {
   const arr = Array.isArray(v) ? v : [];
   const on = (o: string) => multi ? arr.includes(o) : v === o;
   return (
@@ -561,7 +561,7 @@ function Chips({ f, v, set, multi }: { f: Field; v: Details[string]; set: SetV; 
   );
 }
 
-function Toggle({ f, v, set }: { f: Field; v: Details[string]; set: SetV }) {
+export function Toggle({ f, v, set }: { f: Field; v: Details[string]; set: SetV }) {
   return (
     <button type="button" role="switch" aria-checked={!!v} onClick={() => set(!v || undefined)} className="flex w-full items-center justify-between gap-4 text-left">
       <span><span className="text-sm font-medium">{trf(f.label)}</span>{f.hint && <span className="block text-xs text-muted">{trf(f.hint)}</span>}</span>
@@ -570,7 +570,7 @@ function Toggle({ f, v, set }: { f: Field; v: Details[string]; set: SetV }) {
   );
 }
 
-function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: SetV; inline?: boolean }) {
+export function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: SetV; inline?: boolean }) {
   const n = Number(v) || 0;
   return (
     // telefono: etichetta a sinistra e - valore + a destra; da sm la card centrata come prima
@@ -585,7 +585,7 @@ function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: Set
   );
 }
 
-function NumberField({ f, v, set, big, suffix, disabled, placeholder, raw }: { f: Field; v: Details[string]; set: SetV; big?: boolean; suffix?: string; disabled?: boolean; placeholder?: string; raw?: boolean }) {
+export function NumberField({ f, v, set, big, suffix, disabled, placeholder, raw }: { f: Field; v: Details[string]; set: SetV; big?: boolean; suffix?: string; disabled?: boolean; placeholder?: string; raw?: boolean }) {
   // IPE e simili hanno i decimali (142,5): prima la virgola spariva e diventava 1425
   const dec = f.key === 'ipe';
   const [typed, setTyped] = useState<string | null>(null); // "142," mentre si scrive, prima che diventi numero
@@ -607,7 +607,7 @@ function NumberField({ f, v, set, big, suffix, disabled, placeholder, raw }: { f
   );
 }
 
-function TextField({ f, v, set, autoFocus, big }: { f: Field; v: Details[string]; set: SetV; autoFocus?: boolean; big?: boolean }) {
+export function TextField({ f, v, set, autoFocus, big }: { f: Field; v: Details[string]; set: SetV; autoFocus?: boolean; big?: boolean }) {
   return (
     <div>
       <Label f={f} />
@@ -618,7 +618,7 @@ function TextField({ f, v, set, autoFocus, big }: { f: Field; v: Details[string]
 }
 
 // Classe energetica: la scala colorata dell'APE, si tocca la lettera.
-function EnergyScale({ v, set }: { v: Details[string]; set: SetV }) {
+export function EnergyScale({ v, set }: { v: Details[string]; set: SetV }) {
   const colors = ENERGY_COLORS;
   return (
     <div>
