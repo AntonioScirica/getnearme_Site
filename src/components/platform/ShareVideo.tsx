@@ -21,7 +21,7 @@ export default function ShareVideo({ url, className = '' }: { url?: string | nul
   if (!file) return null;
   return (
     <button type="button" onClick={() => { void navigator.share({ files: [file] }).catch(() => {}); }} className={className}>
-      <Share2 size={15} /> {tr('Condividi', 'Share')}
+      <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/20"><Share2 size={15} /></span> {tr('Condividi', 'Share')}
     </button>
   );
 }

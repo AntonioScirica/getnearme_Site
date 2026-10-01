@@ -1285,7 +1285,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         <div className="flex items-center gap-2 pt-3">
                           <div className="flex min-w-0 flex-1"><Picks picks={m.picks} /></div>
-                          <ShareVideo url={m.url} className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-brand py-2 pl-3 pr-3.5 text-xs font-semibold text-white shadow-sm" />
+                          <ShareVideo url={m.url} className="flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 text-xs font-medium text-white shadow-sm ring-1 ring-black/5" />{/* stessa forma e altezza di Scarica */}
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
                             className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
                         </div>
