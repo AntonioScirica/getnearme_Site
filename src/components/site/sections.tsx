@@ -164,18 +164,20 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
     </>
   );
   if (layout === 'advanced') {
+    // tablet: colonne che si stringono e pulsante piu' stretto (a 768 la riga usciva di 6px).
+    // Tendine della seconda riga md:flex, non md:block: col block la freccia andava a capo sotto il testo.
     const box = 'h-12 w-full rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3.5 text-sm text-[var(--fg)] outline-none focus:border-[var(--c)]';
     const cities = [...new Set(properties.map(p => p.addr?.split(',').slice(-1)[0]?.trim()).filter(Boolean))] as string[];
     return (
-      <form action={preview ? undefined : pathOf(base, { page: 'immobili' })} method="get" onSubmit={submit} className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_160px]">
+      <form action={preview ? undefined : pathOf(base, { page: 'immobili' })} method="get" onSubmit={submit} className="grid gap-3 md:grid-cols-[repeat(4,minmax(0,1fr))_120px] lg:grid-cols-[1fr_1fr_1fr_1fr_160px]">
         <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className={`${box} hidden md:block`} />
         <Select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={box}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</Select>
         <Select name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} className={box}><option value="">Tutte le città</option>{cities.map(x => <option key={x}>{x}</option>)}</Select>
         <Select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={box}><option value="">Prezzo massimo</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</Select>
         <button type="submit" className="row-span-2 flex h-12 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-bold uppercase tracking-wider text-[var(--on-c,#fff)] transition hover:brightness-105 md:h-full"><Search size={16} /> {tx('search.button')}</button>
-        <Select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select>
-        <Select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</Select>
-        <Select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={`${box} hidden md:block`}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></Select>
+        <Select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={`${box} hidden md:flex`}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select>
+        <Select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={`${box} hidden md:flex`}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</Select>
+        <Select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={`${box} hidden md:flex`}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></Select>
         <span />
       </form>
     );
@@ -904,8 +906,9 @@ export function CtaBand() {
   const tx = useT();
   const c = contacts(cfg);
   if (!cfg.showContact) return null;
+  // telefono: un pulsante sotto l'altro a tutta larghezza (affiancati andavano a capo storti)
   const buttons = (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid w-full gap-3 sm:flex sm:w-auto sm:flex-wrap">
       {c.tel && <Btn href={c.tel} variant="light"><Phone size={15} /> {cfg.phone}</Btn>}
       {c.wa && <Btn href={c.wa} external variant="light">WhatsApp</Btn>}
       {c.mail && <Btn href={c.mail} variant="light"><Mail size={15} /> Email</Btn>}
