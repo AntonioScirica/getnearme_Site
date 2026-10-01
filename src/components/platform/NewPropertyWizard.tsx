@@ -71,7 +71,7 @@ const filled = (v: Details[string]) => v !== undefined && v !== '' && v !== fals
 export default function NewPropertyWizard({ onCreated }: { onCreated: (p: ProjectData) => void }) {
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState<1 | -1>(1);
-  const [d, setD] = useState<Details>({ mostra_indirizzo: true });
+  const [d, setD] = useState<Details>({ mostra_indirizzo: false });
   const [note, setNote] = useState('');
   const [zoneOpen, setZoneOpen] = useState(false); // servizi della zona: compatti finche' non si apre
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -110,7 +110,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   }, [addr]);
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const x = JSON.parse(raw); setD(x.d ?? { mostra_indirizzo: true }); setNote(x.note ?? ''); } } catch { /* bozza corrotta */ }
+    try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const x = JSON.parse(raw); setD(x.d ?? { mostra_indirizzo: false }); setNote(x.note ?? ''); } } catch { /* bozza corrotta */ }
     restored.current = true;
   }, []);
   useEffect(() => {
@@ -168,8 +168,10 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         setBusy(tr('Scrivo titolo e descrizione...', 'Writing title and description...'));
       }
       // tutti i dati compilati, con etichetta e valore leggibili (es. "Classe energetica: G", "Spese condominiali: 120 €/mese")
-      const dati = ALL_FIELDS.filter(f => visible(f, d)).map(f => { const v = formatValue(f, d[f.key]); return v ? `${f.label}: ${v}` : null; }).filter(Boolean);
-      const res = await authFetch('/api/platform/describe', { method: 'POST', headers: { 'x-no-modal': '1' }, body: JSON.stringify({ property: { dati, ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      // indirizzo nascosto: all'AI (e nella bozza) solo zona e citta', mai il civico
+      const hide = (f: Field, v: string) => (f.key === 'indirizzo' && !d.mostra_indirizzo ? v.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') : v);
+      const dati = ALL_FIELDS.filter(f => visible(f, d)).map(f => { const v = formatValue(f, d[f.key]); return v ? `${f.label}: ${hide(f, v)}` : null; }).filter(Boolean);
+      const res = await authFetch('/api/platform/describe', { method: 'POST', headers: { 'x-no-modal': '1' }, body: JSON.stringify({ property: { dati, ...d, ...(d.indirizzo && !d.mostra_indirizzo ? { indirizzo: String(d.indirizzo).split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') } : {}), zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
       if (res.status === 402) {
         // niente crediti per l'AI: bozza di titolo e descrizione dai dati, l'agente la rifinisce e salva
         const city = d.indirizzo ? String(d.indirizzo).split(',').slice(-1)[0].trim() : '';

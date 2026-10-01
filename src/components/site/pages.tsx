@@ -344,7 +344,7 @@ function PropertyPage({ id }: { id: string }) {
               {p.addr && (p.details as { distanze_auto?: boolean } | undefined)?.distanze_auto !== false && <NearbyList p={p} />}
             </div></Sec>
           )}
-          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={p.addr} /></div></Sec>}
+          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : p.addr.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ')} /></div></Sec>}
         </div>
         <aside><div className="sticky top-24"><Sec id="property.agent"><AgentCard subject={p.titolo} property={p} /></Sec></div></aside>
       </Container>
