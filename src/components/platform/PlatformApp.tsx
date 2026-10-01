@@ -27,7 +27,7 @@ import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
 import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal, useCredits } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
-import { tr, lp } from './i18n';
+import { tr, lp, pageLocale } from './i18n';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -236,6 +236,15 @@ function PlatformInner({ userData }: { userData: UserData }) {
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
+        {/* piano scaduto: si dice in home, con la data e come riattivarlo */}
+        {route === '/' && credits?.lapsed && !credits.unlimited && (
+          <div className="mx-auto mt-4 max-w-6xl px-6">
+            <p className="blur-in flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-900 ring-1 ring-amber-200">
+              {tr(`Il tuo piano è scaduto il ${new Date(credits.until!).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long' })}. Immobili, Galleria e sito sono in pausa: non abbiamo cancellato niente.`, `Your plan ended on ${new Date(credits.until!).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long' })}. Properties, Gallery and website are paused: nothing was deleted.`)}
+              <a href="#/piano?cambia=1" className="font-semibold text-brand">{tr('Riattiva il piano', 'Reactivate your plan')}</a>
+            </p>
+          </div>
+        )}
         <div key={route} className={`${morph ? '' : 'fade-up'} ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
@@ -246,7 +255,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           ) : route === '/affiliati' && isPlatformAdmin(userData.email) ? (
             <AffiliatesView />
           ) : route === '/migliora' ? (
-            <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
+            <HomeView key={query} name={profile?.name ?? undefined} slug={profile?.slug ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
             // senza piano: qualsiasi clic, tasto o foto trascinata nella chat apre il popup che porta ai piani
             <div className="h-full" onClickCapture={noPlan ? blockNoPlan : undefined} onKeyDownCapture={noPlan ? blockNoPlan : undefined} onDropCapture={noPlan ? blockNoPlan : undefined} onDragOverCapture={noPlan ? e => e.preventDefault() : undefined}>
@@ -265,7 +274,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           ) : route === '/portfolio' ? (
             <Locked on={lapsed} what="site"><PortfolioView projects={projects} onChange={reload} /></Locked>
           ) : (
-            <HomeView name={profile?.name ?? undefined} onSaved={reload} morph={morph} />
+            <HomeView name={profile?.name ?? undefined} slug={profile?.slug ?? undefined} onSaved={reload} morph={morph} />
           )}
         </div>
       </main>
@@ -479,7 +488,7 @@ const TITLES: Record<string, [string, string]> = {
   manual: [tr('Incolla il testo dell\'annuncio', 'Paste the listing text'), tr('Titolo, prezzo, caratteristiche e descrizione.', 'Title, price, features and description.')],
 };
 
-export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: string; initialUrl?: string; onSaved?: () => void; morph?: boolean }) {
+export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name?: string; slug?: string; initialUrl?: string; onSaved?: () => void; morph?: boolean }) {
   const noSite = useCredits()?.plan === 'starter'; // Starter non ha il sito: niente indirizzo sulla card Mettilo in vetrina
   const imp = useImprove();
   const [open, setOpen] = useState(false);
@@ -516,7 +525,8 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
 
   // Apre Migliora = intenzione di analizzare: si accende la GPU dell'analisi (avvio a freddo ~3,5 min).
   const openLink = () => { setIntro(false); setOpen(true); };
-  const vetrina = (name ?? tr('tuonome', 'yourname')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  // l'indirizzo vero del sito (lo slug scelto), non uno ricavato dal nome
+  const vetrina = slug || (name ?? tr('tuonome', 'yourname')).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
@@ -578,12 +588,29 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
 }
 
 // Profilo: nome e indirizzo della vetrina (stesso modulo dell'onboarding), link alla vetrina, uscita.
+// Profilo: il piano in una riga (nome, crediti, rinnovo o scadenza) e il link alla pagina del piano e alle fatture
+function PlanCard() {
+  const c = useCredits();
+  if (!c || c.unlimited) return <div className="mt-8" />;
+  const d = (x: string | null) => (x ? new Date(x).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '');
+  const name = { none: '', starter: 'Starter', plus: 'Plus', pro: 'Pro' }[c.plan];
+  const line = c.plan !== 'none' ? tr(`${c.balance} crediti · si ricaricano il ${d(c.renews)}`, `${c.balance} credits · top up on ${d(c.renews)}`)
+    : c.lapsed ? tr(`Scaduto il ${d(c.until)}`, `Ended on ${d(c.until)}`) : c.balance > 0 ? tr(`${c.balance} crediti dei pacchetti`, `${c.balance} pack credits`) : tr('Nessun piano attivo', 'No active plan');
+  return (
+    <a href={c.plan === 'none' ? '#/piano?cambia=1' : '#/piano'} className={`mt-8 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
+      <span className="flex-1"><span className="block font-semibold">{name ? tr(`Piano ${name}`, `${name} plan`) : tr('Il tuo piano', 'Your plan')}</span><span className="block text-sm text-muted">{line}</span></span>
+      <span className="text-sm font-medium text-brand">{c.plan === 'none' ? (c.lapsed ? tr('Riattiva', 'Reactivate') : tr('Scegli un piano', 'Choose a plan')) : tr('Piano e fatture', 'Plan and invoices')}</span>
+    </a>
+  );
+}
+
 function ProfileView({ email, profile, onSaved, admin }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void; admin: boolean }) {
   return (
     <div className="mx-auto max-w-xl">
       <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio profilo', 'My profile')}</h1>
       <p className="mt-1 text-muted">{email}</p>
-      <div className={`mt-8 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
+      <PlanCard />
+      <div className={`mt-4 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
         <h2 className="font-semibold">{tr('Il tuo sito personale', 'Your personal website')}</h2>
         <p className="mt-1 text-sm text-muted">{tr('Il nome che vedono i clienti e l\'indirizzo della pagina con le tue case.', 'The name your clients see and the address of the page with your properties.')}</p>
         <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel={tr('Salva', 'Save')} onSaved={onSaved} /></div>

@@ -301,8 +301,8 @@ export function NoCreditsModal() {
           <button type="button" onClick={() => setOpen(false)} aria-label={tr('Chiudi', 'Close')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur hover:bg-white"><X size={16} /></button>
         </div>
         <div className="px-5 pb-5 pt-5">
-          <h2 className="font-display text-2xl font-extrabold tracking-tight">{tr('Scegli un piano per iniziare', 'Choose a plan to get started')}</h2>
-          <p className="mt-1.5 text-sm text-muted">{tr(`Da ${PRICING.starter} € al mese, disdici quando vuoi.`, `From €${PRICING.starter} a month, cancel anytime.`)}</p>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">{c?.lapsed ? tr('Riattiva il tuo piano', 'Reactivate your plan') : tr('Scegli un piano per iniziare', 'Choose a plan to get started')}</h2>
+          <p className="mt-1.5 text-sm text-muted">{c?.lapsed ? tr('Il tuo piano è scaduto. Immobili, foto e sito ti aspettano: riattivi e ritrovi tutto.', 'Your plan has ended. Properties, photos and website are waiting: reactivate and everything is back.') : tr(`Da ${PRICING.starter} € al mese, disdici quando vuoi.`, `From €${PRICING.starter} a month, cancel anytime.`)}</p>
           <ul className="mt-5 space-y-2.5 text-[15px]">
             {[tr('Foto arredate e svuotate in pochi secondi', 'Photos furnished or emptied in seconds'), tr('Video per i social dalle tue foto', 'Social videos from your photos'), tr('Il tuo sito con i tuoi immobili (Plus e Pro)', 'Your website with your properties (Plus and Pro)')].map(t => (
               <li key={t} className="flex items-center gap-3"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} strokeWidth={3} /></span>{t}</li>

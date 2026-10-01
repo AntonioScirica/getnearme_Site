@@ -42,6 +42,12 @@ export type PublicProperty = {
 
 const PROPERTY_COLS = 'id, titolo, nome, descrizione, addr, prezzo, mq, locali, camere, bagni, tipologia, cover, import_data, riferimento, created_at'
 
+// Sito spento o piano scaduto: nome e email dell'agente per una pagina "non disponibile" invece del 404 nudo
+export async function getOfflineBrand(slug: string): Promise<{ name: string; email: string } | null> {
+  const { data } = await admin.from('user_brand').select('company_name, display_name, company_email').eq('portfolio_slug', slug).maybeSingle()
+  return data ? { name: (data.company_name || data.display_name || '') as string, email: (data.company_email || '') as string } : null
+}
+
 export async function getBrand(slug: string): Promise<PortfolioBrand | null> {
   const { data } = await admin
     .from('user_brand')
