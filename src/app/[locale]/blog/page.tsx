@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import AuthCta from "@/components/AuthCta";
+import { SiteFooter } from "@/components/landing/AgenteImmoLanding";
 import { type Locale } from "@/lib/i18n";
 import { getPublishedPosts } from "@/lib/blog";
+import EndCta from "./components/EndCta";
 import BlogPostCard from "./components/BlogPostCard";
 
 // Content is published daily by cron, not fixed at deploy time — ISR instead
@@ -22,16 +22,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (locale !== "it") return {};
 
   return {
-    title: "Blog Agente Immo — risorse per agenti immobiliari",
+    title: "Blog Agente Immo, risorse per agenti immobiliari",
     description:
-      "Guide pratiche su home staging AI, video per annunci, social media e produttività per agenzie immobiliari.",
+      "Guide pratiche su home staging virtuale, video per i social, sito personale e lavoro in agenzia per agenti immobiliari.",
     alternates: {
       canonical: `${BASE_URL}/${locale}/blog`,
     },
     openGraph: {
-      title: "Blog Agente Immo — risorse per agenti immobiliari",
+      title: "Blog Agente Immo, risorse per agenti immobiliari",
       description:
-        "Guide pratiche su home staging AI, video per annunci, social media e produttività per agenzie immobiliari.",
+        "Guide pratiche su home staging virtuale, video per i social, sito personale e lavoro in agenzia per agenti immobiliari.",
       type: "website",
     },
   };
@@ -66,7 +66,7 @@ export default async function BlogHubPage({ params }: Props) {
           Risorse per agenti immobiliari
         </h1>
         <p style={{ fontSize: 15, color: "#6b7280", maxWidth: 486, margin: "0 auto", lineHeight: 1.6 }}>
-          Home staging AI, video, social media e produttività: guide pratiche per far crescere la tua agenzia.
+          Home staging virtuale, video per i social e il tuo sito: guide pratiche per vincere più incarichi.
         </p>
       </section>
 
@@ -88,63 +88,9 @@ export default async function BlogHubPage({ params }: Props) {
         `}</style>
       </section>
 
-      <section style={{ maxWidth: 702, margin: "0 auto", padding: "0 22px 72px", textAlign: "center" }}>
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 18,
-            boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-            padding: "36px 29px",
-          }}
-        >
-          <h2 style={{ fontSize: 23, fontWeight: 800, margin: "0 0 7px", color: "#1a1a2e" }}>Prova Agente Immo gratis</h2>
-          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 22px", lineHeight: 1.6 }}>
-            Staging AI, video, template social e report brandizzati per la tua agenzia.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 13 }}>
-            <a
-              data-cal-link="getnearme/30min"
-              data-cal-config='{"layout":"month_view"}'
-              className="neo-shadow neo-cta-blue"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                fontSize: 14,
-                fontWeight: 700,
-                padding: "13px 25px",
-                borderRadius: 11,
-                textDecoration: "none",
-                cursor: "pointer",
-              }}
-            >
-              Prenota una demo <ArrowRight size={18} strokeWidth={2.5} />
-            </a>
-            <AuthCta
-              locale={locale}
-              href={`/${locale}#pricing`}
-              className="neo-border neo-shadow neo-cta-outline"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 7,
-                background: "#fff",
-                color: "#1a1a2e",
-                fontSize: 14,
-                fontWeight: 700,
-                padding: "13px 25px",
-                borderRadius: 11,
-                textDecoration: "none",
-              }}
-              dashLabel="Vai alla dashboard"
-            >
-              Vedi piani e prezzi
-            </AuthCta>
-          </div>
-        </div>
-      </section>
+      <EndCta locale={locale} title="Prova Agente Immo gratis" />
+
+      <SiteFooter lang="it" />
     </div>
   );
 }

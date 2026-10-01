@@ -785,38 +785,52 @@ function Landing({ faq }: { faq: [string, string][] }) {
         })}
       </nav>
 
-      {/* footer: marchio a sinistra, tre colonne di link (prodotto, guide SEO, legale), riga finale */}
-      <footer className="border-t border-line bg-canvas">
-        <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 text-center md:text-left ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-[1.4fr_1fr_1.2fr_1fr]'}`}>
-          <div>
-            <a href="#top" className="flex items-center justify-center gap-2 md:justify-start"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
-            <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0 leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
-            <Cta href={TRIAL_LOGIN} className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
-          </div>
-          {([
-            [L('Prodotto', "Product"), [['#staging', 'Home staging'], ['#video', L('Video per i social', "Social videos")], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")], ['#domande', L('Domande frequenti', "FAQ")]]],
-            // le guide sono articoli in italiano: nella versione inglese la colonna non c'e'
-            ...(en ? [] : [['Guide', GUIDE_LINKS]]),
-            ['Agente Immo', [[`/${l}/privacy`, 'Privacy'], [`/${l}/cookie`, 'Cookie'], [`/${l}/termini`, L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
-          ] as [string, string[][]][]).map(([h, links]) => (
-            <nav key={h} aria-label={h}>
-              <div className="text-sm font-semibold">{h}</div>
-              <ul className="mt-2 text-sm text-muted md:mt-4 md:space-y-2.5">
-                {/* telefono: ogni link alto 40px per il tocco */}
-                {links.map(([href, l]) => <li key={href}>{href === '#cookie' ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:cookie-prefs'))} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</button> : href.startsWith('/') ? <Link href={href} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</Link> : <a href={href} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</a>}</li>)}
-              </ul>
-            </nav>
-          ))}
-        </div>
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-line px-4 py-6 text-xs text-muted md:flex-row">
-          <span>© {new Date().getFullYear()} Agente Immo</span>
-          <span className="flex items-center gap-4">
-            <span className="flex gap-2">{(['it', 'en'] as const).map(l => <a key={l} href={`/${l}`} hrefLang={l} className={`inline-flex min-h-10 items-center md:min-h-0 ${(en ? 'en' : 'it') === l ? 'font-semibold text-ink' : 'hover:text-ink'}`}>{l === 'it' ? 'Italiano' : 'English'}</a>)}</span>
-            <a href="mailto:info@agenteimmo.me" className="inline-flex min-h-10 items-center hover:text-ink md:min-h-0">info@agenteimmo.me</a>
-          </span>
-        </div>
-      </footer>
+      <Footer home />
     </div>
+  );
+}
+
+// footer del sito: marchio a sinistra, tre colonne di link (prodotto, guide SEO e blog, legale), riga finale.
+// Lo usano la landing e le pagine fuori dalla home (blog): li' i link alle sezioni portano alla home.
+export function SiteFooter({ lang = 'it' }: { lang?: LandingLang }) {
+  return <Lang.Provider value={lang}><Footer /></Lang.Provider>;
+}
+
+function Footer({ home = false }: { home?: boolean }) {
+  const L = useL(), en = useEn();
+  const { l, TRIAL_LOGIN } = useLinks();
+  const base = home ? '' : `/${l}`; // sulla home le sezioni sono nella stessa pagina
+  return (
+    <footer className="border-t border-line bg-canvas">
+      <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 text-center md:text-left ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-[1.4fr_1fr_1.2fr_1fr]'}`}>
+        <div>
+          <a href={home ? '#top' : `/${l}`} className="flex items-center justify-center gap-2 md:justify-start"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
+          <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0 leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
+          <Cta href={TRIAL_LOGIN} className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
+        </div>
+        {([
+          [L('Prodotto', "Product"), [[`${base}#staging`, 'Home staging'], [`${base}#video`, L('Video per i social', "Social videos")], [`${base}#sito`, L('Il tuo sito', "Your website")], [`${base}#prezzi`, L('Prezzi', "Pricing")], [`${base}#domande`, L('Domande frequenti', "FAQ")]]],
+          // le guide sono articoli in italiano: nella versione inglese la colonna non c'e'
+          ...(en ? [] : [['Guide', [['/it/blog', 'Blog'], ...GUIDE_LINKS]]]),
+          ['Agente Immo', [[`/${l}/privacy`, 'Privacy'], [`/${l}/cookie`, 'Cookie'], [`/${l}/termini`, L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
+        ] as [string, string[][]][]).map(([h, links]) => (
+          <nav key={h} aria-label={h}>
+            <div className="text-sm font-semibold">{h}</div>
+            <ul className="mt-2 text-sm text-muted md:mt-4 md:space-y-2.5">
+              {/* telefono: ogni link alto 40px per il tocco */}
+              {links.map(([href, l]) => <li key={href}>{href === '#cookie' ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:cookie-prefs'))} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</button> : href.startsWith('/') ? <Link href={href} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</Link> : <a href={href} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</a>}</li>)}
+            </ul>
+          </nav>
+        ))}
+      </div>
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-line px-4 py-6 text-xs text-muted md:flex-row">
+        <span>© {new Date().getFullYear()} Agente Immo</span>
+        <span className="flex items-center gap-4">
+          <span className="flex gap-2">{(['it', 'en'] as const).map(l => <a key={l} href={`/${l}`} hrefLang={l} className={`inline-flex min-h-10 items-center md:min-h-0 ${(en ? 'en' : 'it') === l ? 'font-semibold text-ink' : 'hover:text-ink'}`}>{l === 'it' ? 'Italiano' : 'English'}</a>)}</span>
+          <a href="mailto:info@agenteimmo.me" className="inline-flex min-h-10 items-center hover:text-ink md:min-h-0">info@agenteimmo.me</a>
+        </span>
+      </div>
+    </footer>
   );
 }
 

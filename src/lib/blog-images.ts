@@ -1,42 +1,33 @@
-// Cover images for blog posts, reusing existing marketing assets in public/ —
-// the AI pipeline never generates or links images, only markdown text, so
-// there's no risk of invented/broken image URLs. One curated pool per
-// pillar; ai-staging additionally gets the real BeforeAfterSlider component
-// (see blog [slug] page) instead of a flat cover.
+// Copertine del blog: immagini col marchio Agente Immo su R2 (blog/covers/), composte con sharp dalle foto
+// della landing (prima e dopo, reel dei modelli video) con un titolo breve. Una per articolo; gli articoli
+// nuovi del cron senza copertina propria prendono quella del loro tema (pillar-<tema>.jpg).
+const R2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/blog/covers';
 
-// No people/faces in any pool — property/interior shots only (verified by
-// visual audit; sottotitoli-poster, split-poster and primo-piano-poster are
-// talking-head avatar frames and are deliberately excluded).
-const COVERS_BY_PILLAR: Record<string, string[]> = {
-  'ai-staging': ['/staging/1.jpg', '/staging/2.jpg'],
-  'ai-video': [
-    '/reference/immagini-a-video-poster.jpg',
-    '/reference/social-reel-poster.jpg',
-    '/reference/montaggio-poster.jpg',
-  ],
-  'social-media': [
-    '/reference/social-post-feed.png',
-    '/reference/social-reel-feed-poster.jpg',
-    '/reference/social-post-square.png',
-  ],
-  'reports-analytics': ['/report/appartamento.png'],
-  'ai-avatar': ['/reference/giorno-notte-poster.jpg'],
-  'agency-productivity': ['/demo/foto_demo.jpg', '/demo/dopo_demo.jpg'],
-  'comparison-geo': ['/reference/construction-poster.jpg', '/reference/giorno-notte-poster.jpg'],
-};
+const COVER_SLUGS = new Set([
+  'home-staging-virtuale-prezzi-confronto-staging-fisico',
+  'video-annunci-immobiliari-ai-creare-senza-videomaker',
+  'costo-video-immobiliare-ai',
+  'calendario-editoriale-social-agenti-immobiliari',
+  'template-post-immobiliari-instagram',
+  'lead-generation-agenzia-immobiliare-social',
+  'report-analisi-zona-immobiliare-automatici',
+  'analisi-mercato-immobiliare-2026-dati-zona',
+  'strumenti-ai-agenzia-immobiliare-team-collaborazione',
+  'tempo-perde-agenzia-senza-ai-produttivita',
+  'onboarding-agenti-immobiliari-standardizzare-contenuti-report',
+  'migliori-strumenti-ai-agenzie-immobiliari-2026',
+  'agente-immo-vs-canva-strumenti-agenti-immobiliari',
+  'ai-immobiliare-italia-strumenti-agenzie-2026',
+  'avatar-ai-agente-immobiliare-presentare-immobile',
+  'report-valutazione-immobiliare-pdf-cosa-deve-contenere',
+  'home-staging-virtuale-agenzie-immobiliari-2026',
+  '5-errori-video-presentazione-immobili',
+]);
 
-const FALLBACK_COVER = '/reference/social-post-feed.png';
+const PILLARS = new Set(['ai-staging', 'ai-video', 'social-media', 'reports-analytics', 'ai-avatar', 'agency-productivity', 'comparison-geo']);
 
-function hashSlug(slug: string): number {
-  let h = 0;
-  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
-  return h;
-}
-
-/** Deterministic pick so the same post always renders the same cover, but
- * different posts in the same pillar don't all show an identical image. */
+/** URL assoluto della copertina (va bene anche per og:image e JSON-LD). */
 export function getCoverImage(pillar: string, slug: string): string {
-  const pool = COVERS_BY_PILLAR[pillar];
-  if (!pool || pool.length === 0) return FALLBACK_COVER;
-  return pool[hashSlug(slug) % pool.length];
+  if (COVER_SLUGS.has(slug)) return `${R2}/${slug}.jpg`;
+  return `${R2}/pillar-${PILLARS.has(pillar) ? pillar : 'ai-staging'}.jpg`;
 }

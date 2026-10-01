@@ -4,13 +4,13 @@ import { getCoverImage } from "@/lib/blog-images";
 import type { BlogPost } from "@/lib/blog";
 
 const PILLAR_LABELS: Record<string, string> = {
-  "ai-staging": "Home Staging AI",
-  "ai-video": "Video AI",
-  "social-media": "Social Media",
-  "reports-analytics": "Report & Analisi",
-  "ai-avatar": "Avatar AI",
-  "agency-productivity": "Produttività Agenzia",
-  "comparison-geo": "Confronti",
+  "ai-staging": "Home staging virtuale",
+  "ai-video": "Video per i social",
+  "social-media": "Social",
+  "reports-analytics": "Report per i clienti",
+  "ai-avatar": "Tu in video",
+  "agency-productivity": "Lavoro in agenzia",
+  "comparison-geo": "Strumenti",
 };
 
 export default function BlogPostCard({ post, locale }: { post: BlogPost; locale: string }) {
@@ -47,7 +47,7 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
             style={{
               fontSize: 10,
               fontWeight: 700,
-              color: "#3B83F6",
+              color: "#537eec",
               textTransform: "uppercase",
               letterSpacing: 0.5,
               marginBottom: 7,
@@ -61,7 +61,7 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
           <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 13px", lineHeight: 1.5, flex: 1 }}>
             {post.seo_description}
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#3B83F6" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#537eec" }}>
             Leggi l&apos;articolo
             <ChevronRight size={14} />
           </div>

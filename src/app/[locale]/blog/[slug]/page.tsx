@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Navbar from "@/components/Navbar";
-import AuthCta from "@/components/AuthCta";
-import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import { SiteFooter } from "@/components/landing/AgenteImmoLanding";
 import { type Locale } from "@/lib/i18n";
 import { getPostBySlug, getRelatedPosts } from "@/lib/blog";
 import { getCoverImage } from "@/lib/blog-images";
 import FaqAccordion from "../components/FaqAccordion";
+import EndCta from "../components/EndCta";
 import BlogPostCard from "../components/BlogPostCard";
 import InlineCta from "../components/InlineCta";
 import { GUIDES } from "@/lib/guides";
@@ -21,7 +21,7 @@ const MARKDOWN_COMPONENTS: Components = {
   h2: (props) => <h2 style={{ fontSize: 22, fontWeight: 800, margin: "29px 0 11px", color: "#1a1a2e" }} {...props} />,
   h3: (props) => <h3 style={{ fontSize: 17, fontWeight: 700, margin: "22px 0 7px", color: "#1a1a2e" }} {...props} />,
   p: (props) => <p style={{ margin: "0 0 14px" }} {...props} />,
-  a: (props) => <a style={{ color: "#3B83F6", fontWeight: 700, textDecoration: "underline" }} {...props} />,
+  a: (props) => <a style={{ color: "#537eec", fontWeight: 700, textDecoration: "underline" }} {...props} />,
   table: (props) => (
     <div style={{ overflowX: "auto", margin: "14px 0" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, border: "2px solid #e4e4e7", borderRadius: 11 }} {...props} />
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "article",
       publishedTime: post.published_at,
       modifiedTime: post.updated_at,
-      images: [{ url: `${BASE_URL}${getCoverImage(post.pillar, post.slug)}` }],
+      images: [{ url: getCoverImage(post.pillar, post.slug), width: 1200, height: 675 }],
     },
   };
 }
@@ -91,7 +91,7 @@ export default async function BlogPostPage({ params }: Props) {
     "@type": "Article",
     headline: post.title,
     description: post.seo_description,
-    image: `${BASE_URL}${cover}`,
+    image: cover,
     author: { "@type": "Organization", name: "Agente Immo", url: BASE_URL },
     publisher: { "@type": "Organization", name: "Agente Immo", url: BASE_URL },
     mainEntityOfPage: { "@type": "WebPage", "@id": `${BASE_URL}/${locale}/blog/${slug}` },
@@ -138,16 +138,10 @@ export default async function BlogPostPage({ params }: Props) {
           {post.title}
         </h1>
 
-        {post.pillar === "ai-staging" ? (
-          <div style={{ marginBottom: 7 }}>
-            <BeforeAfterSlider />
-          </div>
-        ) : (
-          <div style={{ borderRadius: 14, overflow: "hidden", aspectRatio: "16 / 9", marginBottom: 7 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cover} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }} />
-          </div>
-        )}
+        <div style={{ borderRadius: 16, overflow: "hidden", aspectRatio: "16 / 9", marginBottom: 7 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={cover} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        </div>
       </section>
 
       <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 22px 14px" }}>
@@ -161,7 +155,7 @@ export default async function BlogPostPage({ params }: Props) {
                   {section}
                 </ReactMarkdown>
                 {i < sections.length - 1 && (i === 1 || (i === midIndex && midIndex !== 1)) && (
-                  <InlineCta />
+                  <InlineCta locale={locale} />
                 )}
               </div>
             ));
@@ -197,65 +191,9 @@ export default async function BlogPostPage({ params }: Props) {
         </section>
       )}
 
-      <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 22px 72px", textAlign: "center" }}>
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 18,
-            boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-            padding: "36px 29px",
-          }}
-        >
-          <h2 style={{ fontSize: 23, fontWeight: 800, margin: "0 0 7px", color: "#1a1a2e" }}>
-            Provalo sulla tua prossima proprietà
-          </h2>
-          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 22px", lineHeight: 1.6 }}>
-            Staging AI, video, template social e report brandizzati per la tua agenzia.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 13 }}>
-            <a
-              data-cal-link="getnearme/30min"
-              data-cal-config='{"layout":"month_view"}'
-              className="neo-shadow neo-cta-blue"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                fontSize: 14,
-                fontWeight: 700,
-                padding: "13px 25px",
-                borderRadius: 11,
-                textDecoration: "none",
-                cursor: "pointer",
-              }}
-            >
-              Prenota una demo <ArrowRight size={18} strokeWidth={2.5} />
-            </a>
-            <AuthCta
-              locale={locale}
-              href={`/${locale}#pricing`}
-              className="neo-border neo-shadow neo-cta-outline"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 7,
-                background: "#fff",
-                color: "#1a1a2e",
-                fontSize: 14,
-                fontWeight: 700,
-                padding: "13px 25px",
-                borderRadius: 11,
-                textDecoration: "none",
-              }}
-              dashLabel="Vai alla dashboard"
-            >
-              Vedi piani e prezzi
-            </AuthCta>
-          </div>
-        </div>
-      </section>
+      <EndCta locale={locale} title="Provalo sulla tua prossima casa" />
+
+      <SiteFooter lang="it" />
     </div>
   );
 }

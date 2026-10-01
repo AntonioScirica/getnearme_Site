@@ -1,16 +1,14 @@
 import { ArrowRight } from "lucide-react";
+import AuthCta from "@/components/AuthCta";
 
-// Compact mid-article CTA — light card, real site button classes
-// (neo-cta-blue / neo-cta-outline), same ones used on the homepage.
-// "Prenota una demo" opens the real Cal.com booking widget (data-cal-link),
-// same pattern as the homepage — not an internal /demo page.
-export default function InlineCta() {
+// Invito a meta' articolo: carta chiara, Prova gratis come nella home (login, poi la prova).
+export default function InlineCta({ locale }: { locale: string }) {
   return (
     <div
       style={{
         background: "#fff",
         border: "1px solid rgba(26,26,46,0.10)",
-        borderRadius: 14,
+        borderRadius: 16,
         boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
         padding: "22px 25px",
         margin: "29px 0",
@@ -22,32 +20,21 @@ export default function InlineCta() {
       }}
     >
       <div>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1a1a2e" }}>
-          Provalo sulla tua prossima proprietà
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1d1d1f" }}>
+          Provalo sulla tua prossima casa
         </p>
         <p style={{ margin: "4px 0 0", fontSize: 13, color: "#71717a" }}>
-          Staging AI, video e report in pochi minuti.
+          Carica una foto e la vedi arredata. Gratis.
         </p>
       </div>
-      <a
-        data-cal-link="getnearme/30min"
-        data-cal-config='{"layout":"month_view"}'
-        className="neo-shadow neo-cta-blue"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 7,
-          fontSize: 14,
-          fontWeight: 700,
-          padding: "11px 22px",
-          borderRadius: 9,
-          textDecoration: "none",
-          whiteSpace: "nowrap",
-          cursor: "pointer",
-        }}
+      <AuthCta
+        locale={locale}
+        href={`/${locale}/accedi?next=/${locale}/prova`}
+        dashLabel="Vai alla dashboard"
+        className="inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-full bg-ink px-5 text-sm font-semibold text-white"
       >
-        Prenota una demo <ArrowRight size={16} strokeWidth={2.5} />
-      </a>
+        Prova gratis <ArrowRight size={16} />
+      </AuthCta>
     </div>
   );
 }
