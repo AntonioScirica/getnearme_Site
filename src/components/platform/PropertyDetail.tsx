@@ -28,6 +28,14 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const [seenPhotos, setSeenPhotos] = useState(photoKey);
   if (photoKey !== seenPhotos) { setSeenPhotos(photoKey); dropPhotoDraft(); }
   const credits = useCredits();
+  // video fatti da questo immobile (dalla Galleria): nell'anteprima della pagina come sul sito pubblicato
+  const [videos, setVideos] = useState<string[]>([]);
+  const pid = project?.id;
+  useEffect(() => {
+    if (!pid) return;
+    authFetch('/api/platform/media').then(r => r.json()).then((d: { items?: { video?: string; casa?: string | null }[] }) =>
+      setVideos((d.items ?? []).filter(x => x.video && x.casa === pid).map(x => x.video!))).catch(() => {});
+  }, [pid]);
   const grid = useRef<HTMLDivElement>(null);
   const [gridH, setGridH] = useState<number>();
   useEffect(() => {
@@ -121,7 +129,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
         {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onAdded={onChange} onSaved={() => { setDraft(null); onChange(); }}
           report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
-        {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
+        {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [{ ...toSite({ ...project, ...draft }), videos }], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
     </>
   );
@@ -292,10 +300,10 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
                 <span className="block text-xs text-muted">{photos.length} {tr('foto · ordine, copertina e AI', 'photos · order, cover and AI')}</span>
               </span>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> {tr('Riordina', 'Reorder')}</button>
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
-              <label className={`flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white ${adding ? 'pointer-events-none opacity-60' : ''}`}><input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</label>
+              <label className={`col-span-2 flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white ${adding ? 'pointer-events-none opacity-60' : ''}`}><input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</label>
             </div>
           </section>
         )}

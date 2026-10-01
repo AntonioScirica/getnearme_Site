@@ -3,6 +3,7 @@ import { cache } from 'react'
 import { headers } from 'next/headers'
 import { cityOf, cleanSite, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
 import { hasSitePlan, sitePlanHolders } from './sitePlan'
+import { listKeys, publicUrl } from './r2'
 
 // Lettura pubblica del portfolio: service role lato server, SOLO immobili is_public.
 const admin = createClient(
@@ -99,7 +100,13 @@ export const loadSite = cache(async (locale: string, slug: string) => {
   const brand = await getBrand(slug)
   if (!brand) return null
   const [props, cfg, base] = await Promise.all([getPublicProperties(brand.user_id), getSite(brand), portfolioBase(locale, slug)])
-  const properties = props.map(toSiteProperty)
+  // video dell'agente per immobile: un solo elenco su R2 (videos/<agente>/casa-<id>/<nome>.mp4), raggruppato per casa
+  const vids = new Map<string, string[]>()
+  for (const { key } of await listKeys(`videos/${brand.user_id}/`).catch(() => [])) {
+    const id = key.match(/\/casa-([\w-]+)\/[^/]+\.mp4$/)?.[1]
+    if (id) vids.set(id, [...(vids.get(id) ?? []), publicUrl(key)])
+  }
+  const properties = props.map(toSiteProperty).map(p => (vids.has(p.id) ? { ...p, videos: vids.get(p.id) } : p))
   // citta' non scritta dall'agente: quella dei suoi immobili
   return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: brand.company_name || brand.display_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
 })

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
 import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
@@ -184,20 +185,23 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
   }, [i, photos.length, setI]);
   if (i === null) return null;
   const before = prima?.[photos[i]];
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/92" onClick={() => setI(null)}>
+  // nel body: dentro l'anteprima della piattaforma un antenato trasformato rende "fixed" relativo a lui (foto fuori schermo)
+  return createPortal(
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/92" onClick={() => setI(null)}>
       {before ? (
         <div className="relative aspect-[3/2] max-h-[86vh] w-[min(92vw,calc(86vh*1.5))] overflow-hidden rounded-[var(--rc)]" onClick={e => e.stopPropagation()}>
           <InlineSlider before={before} after={photos[i]} isVertical={false} showImages interactive />
           <span className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Prima</span>
           <span className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Dopo</span>
         </div>
-      ) : <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" onClick={e => e.stopPropagation()} />}
+      ) : /\.mp4$/.test(photos[i]) ? <video key={photos[i]} src={photos[i]} controls autoPlay playsInline className="max-h-[86vh] max-w-[92vw] rounded-[var(--rc)]" onClick={e => e.stopPropagation()} />
+        : <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" onClick={e => e.stopPropagation()} />}
       <button className="absolute right-5 top-5 text-white" onClick={() => setI(null)} aria-label="Chiudi"><X size={28} /></button>
       <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
       <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
       <span className="absolute bottom-5 text-sm text-white/70">{i + 1} / {photos.length}</span>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -209,7 +213,9 @@ function Gallery({ p }: { p: SiteProperty }) {
   const [i, setI] = useState<number | null>(null);
   const [cur, setCur] = useState(0);
   const alt = (k: number) => `${p.titolo}, foto ${k + 1}`; // testo alternativo per Google Immagini e lettori di schermo
-  const all = photos.length > 1 && <button onClick={() => setI(0)} className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-lg"><Expand size={14} /> {photos.length} foto</button>;
+  // foto e video insieme nella vista a schermo intero; l'etichetta dice quanti sono gli uni e gli altri
+  const vids = p.videos ?? [];
+  const all = (photos.length > 1 || vids.length > 0) && <button onClick={() => setI(0)} className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-lg"><Expand size={14} /> {photos.length} foto{vids.length ? ` · ${vids.length} video` : ''}</button>;
   let body: ReactNode;
   if (t.gallery === 'slider') body = (
     <div>
@@ -242,7 +248,7 @@ function Gallery({ p }: { p: SiteProperty }) {
       {all}
     </div>
   );
-  return <>{body}<Lightbox photos={photos} prima={p.prima} i={i} setI={setI} /></>;
+  return <>{body}<Lightbox photos={[...photos, ...vids]} prima={p.prima} i={i} setI={setI} /></>;
 }
 
 function AgentCard({ subject, property }: { subject?: string; property?: SiteProperty }) {
@@ -317,6 +323,7 @@ function PropertyPage({ id }: { id: string }) {
               {desc.length > 400 && <button onClick={() => setMore(v => !v)} className="mt-2 text-sm font-semibold text-[var(--c)]">{more ? 'Mostra meno' : 'Leggi tutto'}</button>}
             </div></Sec>
           )}
+          {t.video !== 'cinema' && <PropertyVideos p={p} />}
           <Sec id="property.details"><div className="mt-12"><DetailsTable p={p} /></div></Sec>
           <Sec id="property.features"><div className="mt-12 empty:hidden"><FeatureList p={p} /></div></Sec>
           <div className="mt-12 empty:hidden"><TourBlock p={p} /></div>
@@ -334,6 +341,7 @@ function PropertyPage({ id }: { id: string }) {
         </div>
         <aside><div className="sticky top-24"><Sec id="property.agent"><AgentCard subject={p.titolo} property={p} /></Sec></div></aside>
       </Container>
+      {t.video === 'cinema' && <PropertyVideos p={p} />}
       {similar.length > 0 && (
         <Sec id="property.similar"><section className="bg-[var(--soft)] py-20">
           <Container>
@@ -344,6 +352,43 @@ function PropertyPage({ id }: { id: string }) {
       )}
       <Sec id="footer"><Footer /></Sec>
     </>
+  );
+}
+
+// Video dell'immobile (fatti in piattaforma dalle sue foto), nello stile del modello:
+// cards = griglia nella colonna, reel = verticali affiancati che partono da soli come sui social,
+// cinema = fascia scura a tutta larghezza con il primo video grande. Ogni video tiene il suo formato (16:9 o 9:16).
+function PropertyVideos({ p }: { p: SiteProperty }) {
+  const { t, propEdit } = useSite();
+  const v = (p.videos ?? []).map(u => `${u}#t=0.1`); // #t: primo fotogramma come copertina (anche Safari)
+  if (!v.length) return propEdit ? (
+    <div className="mt-12 rounded-[var(--r)] border border-dashed border-[var(--line)] px-6 py-8 text-center text-sm text-[var(--muted)]">I video che crei dalle foto di questo immobile compaiono qui, sul tuo sito.</div>
+  ) : null;
+  if (t.video === 'reel') return (
+    <Sec id="property.video"><div className="mt-12">
+      <H className="text-3xl">Guarda la casa in video</H>
+      <div className="-mx-2 mt-5 flex snap-x gap-4 overflow-x-auto px-2 pb-2">
+        {v.map(u => <video key={u} src={u} autoPlay muted loop playsInline preload="metadata" className="h-[440px] w-auto max-w-none shrink-0 snap-start rounded-[calc(var(--r)*1.4)] bg-black shadow-lg" />)}
+      </div>
+    </div></Sec>
+  );
+  if (t.video === 'cinema') return (
+    <Sec id="property.video"><section className="bg-[var(--ink)] py-20 text-white">
+      <Container>
+        <Eyebrow className="!text-white/60">Video</Eyebrow>
+        <H className="mt-3 text-4xl !text-white md:text-5xl">La casa, in movimento</H>
+        <video src={v[0]} controls playsInline preload="metadata" className="mx-auto mt-10 max-h-[78vh] w-auto max-w-full rounded-[var(--r)] bg-black" />
+        {v.length > 1 && <div className="mt-6 grid gap-4 sm:grid-cols-3">{v.slice(1).map(u => <video key={u} src={u} controls playsInline preload="metadata" className="max-h-80 w-full rounded-[var(--r)] bg-black object-contain" />)}</div>}
+      </Container>
+    </section></Sec>
+  );
+  return (
+    <Sec id="property.video"><div className="mt-12">
+      <H className="text-3xl">Video</H>
+      <div className="mt-5 grid items-start gap-4 sm:grid-cols-2">
+        {v.map(u => <video key={u} src={u} controls playsInline preload="metadata" className="mx-auto max-h-[560px] w-auto max-w-full rounded-[var(--r)] bg-black" />)}
+      </div>
+    </div></Sec>
   );
 }
 

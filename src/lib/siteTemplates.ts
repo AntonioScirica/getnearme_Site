@@ -60,6 +60,7 @@ export type SiteProperty = {
   tipologia?: string | null
   cover: string
   photos?: string[]
+  videos?: string[] // video fatti in piattaforma da questo immobile (videos/<agente>/casa-<id>/)
   descrizione?: string
   locali?: number | null
   contratto?: string

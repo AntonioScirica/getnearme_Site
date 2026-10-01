@@ -83,6 +83,15 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     return () => clearInterval(t);
   }, [demo]);
   const credits = useCredits();
+  // video per immobile (dalla Galleria): le schede dell'anteprima li mostrano come il sito pubblicato
+  const [vids, setVids] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    authFetch('/api/platform/media').then(r => r.json()).then((d: { items?: { video?: string; casa?: string | null }[] }) => {
+      const m: Record<string, string[]> = {};
+      for (const x of d.items ?? []) if (x.video && x.casa) (m[x.casa] ??= []).push(x.video);
+      setVids(m);
+    }).catch(() => {});
+  }, []);
   useEffect(() => {
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); setEditing(d.config.template); }); // si entra dritti nell'editor del modello in uso (scelto nell'onboarding); Tutti i modelli per cambiarlo
   }, []);
@@ -135,7 +144,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const pub = (projects ?? []).filter(p => p.is_public);
   // anteprima: senza case in vetrina (o durante il tour) il sito si vede con le case d'esempio a Roma. Solo anteprima:
   // online vanno le case vere, e le foto proponibili come copertina restano solo quelle dell'agente
-  const props: SiteProperty[] = (pub.length && !demo ? pub : FAKE_PROPERTIES).map(toSite);
+  const props: SiteProperty[] = (pub.length && !demo ? pub : FAKE_PROPERTIES).map(toSite).map(p => (vids[p.id] ? { ...p, videos: vids[p.id] } : p));
   // miniature dei modelli: sempre piene di case, le tue piu' quelle di esempio fino a 9 (solo anteprima, non va online)
   const showcase = [...props, ...FAKE_PROPERTIES.filter(f => !props.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, props.length));
   const covers = [...new Set(pub.map(toSite).map(p => p.cover).filter(Boolean))].slice(0, 12);

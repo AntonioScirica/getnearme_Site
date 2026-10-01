@@ -31,35 +31,37 @@ export type Theme = {
   services: 'cards' | 'list' | 'steps';
   contact: 'split' | 'card' | 'band';
   zone: 'sidebar' | 'wide';
+  // video dell'immobile: cards = griglia di card, reel = verticali affiancati come sui social, cinema = fascia scura a tutta larghezza
+  video: 'cards' | 'reel' | 'cinema';
 };
 
 export const THEMES: Record<TemplateId, Theme> = {
   prato: { bg: '#ffffff', fg: '#10231a', muted: '#62706a', line: '#e6ece8', surface: '#ffffff', soft: '#f1f6f3', ink: '#0f2a1d', radius: 14,
-    header: 'plain', hero: 'split', intro: 'features', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split', services: 'cards', contact: 'split', zone: 'sidebar' },
+    header: 'plain', hero: 'split', intro: 'features', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split', services: 'cards', contact: 'split', zone: 'sidebar', video: 'cards' },
   bosco: { bg: '#f6f4ee', fg: '#1d2417', muted: '#6a705f', line: '#e3e0d4', surface: '#ffffff', soft: '#eceade', ink: '#23301b', radius: 26,
-    header: 'centered', hero: 'full', intro: 'welcome', card: 'button', about: 'card', reviews: 'quote', cta: 'photo', footer: 'soft', listings: 'sidebar', results: 'grid', gallery: 'slider', agent: 'cover', services: 'steps', contact: 'card', zone: 'wide' },
+    header: 'centered', hero: 'full', intro: 'welcome', card: 'button', about: 'card', reviews: 'quote', cta: 'photo', footer: 'soft', listings: 'sidebar', results: 'grid', gallery: 'slider', agent: 'cover', services: 'steps', contact: 'card', zone: 'wide', video: 'reel' },
   cielo: { bg: '#fbfaff', fg: '#16163a', muted: '#6b6d8c', line: '#ebeaf5', surface: '#ffffff', soft: '#f3f2fc', ink: '#16163a', radius: 20,
-    header: 'pill', hero: 'card', intro: 'pastel', card: 'badge', about: 'checklist', reviews: 'cards', cta: 'gradient', footer: 'ink', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover', services: 'cards', contact: 'card', zone: 'sidebar' },
+    header: 'pill', hero: 'card', intro: 'pastel', card: 'badge', about: 'checklist', reviews: 'cards', cta: 'gradient', footer: 'ink', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover', services: 'cards', contact: 'card', zone: 'sidebar', video: 'reel' },
   citta: { bg: '#f5f5f2', fg: '#111111', muted: '#6b6b6b', line: '#e2e2de', surface: '#ffffff', soft: '#ebebe7', ink: '#111111', radius: 10,
-    header: 'over', hero: 'center', intro: 'none', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'topbar', results: 'rows', gallery: 'full', agent: 'split', services: 'list', contact: 'band', zone: 'wide' },
+    header: 'over', hero: 'center', intro: 'none', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'topbar', results: 'rows', gallery: 'full', agent: 'split', services: 'list', contact: 'band', zone: 'wide', video: 'cinema' },
   nord: { bg: '#ffffff', fg: '#111111', muted: '#6b6b6b', line: '#ececec', surface: '#ffffff', soft: '#f6f6f3', ink: '#111111', radius: 18,
-    header: 'minimal', hero: 'form', intro: 'trust', card: 'price', about: 'numbers', reviews: 'cards', cta: 'band', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered', services: 'steps', contact: 'split', zone: 'wide' },
+    header: 'minimal', hero: 'form', intro: 'trust', card: 'price', about: 'numbers', reviews: 'cards', cta: 'band', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered', services: 'steps', contact: 'split', zone: 'wide', video: 'cards' },
   // Riviera: agenzia di zona (sul modello di casalconero.com): barra contatti, logo al centro con menu,
   // foto con titolo e ricerca avanzata sotto, testo di presentazione, card con stato e agente.
   riviera: { bg: '#ffffff', fg: '#222831', muted: '#6b7280', line: '#e8ebee', surface: '#ffffff', soft: '#f4f6f7', ink: '#2b3036', radius: 6,
-    header: 'drawer', hero: 'banner', intro: 'text', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'split', services: 'list', contact: 'split', zone: 'sidebar' },
+    header: 'drawer', hero: 'banner', intro: 'text', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'split', services: 'list', contact: 'split', zone: 'sidebar', video: 'cards' },
   // Atelier (rif. Ambiente): editoriale, verde scuro, serif con corsivo, servizi con foto su fondo scuro
   atelier: { bg: '#f7f6f2', fg: '#1b221e', muted: '#6c726d', line: '#e3e2dc', surface: '#ffffff', soft: '#eeede7', ink: '#1d2b24', radius: 4,
-    header: 'minimal', hero: 'editorial', intro: 'services', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'sidebar', results: 'grid', gallery: 'full', agent: 'split', services: 'list', contact: 'band', zone: 'wide' },
+    header: 'minimal', hero: 'editorial', intro: 'services', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'sidebar', results: 'grid', gallery: 'full', agent: 'split', services: 'list', contact: 'band', zone: 'wide', video: 'cinema' },
   // Oro (rif. Nexora): oro e crema, ricerca a schede sulla foto, categorie con icone, perche' sceglierci
   oro: { bg: '#ffffff', fg: '#1c1a17', muted: '#77716a', line: '#ece6dc', surface: '#ffffff', soft: '#f8f4ec', ink: '#1c1a17', radius: 10,
-    header: 'over', hero: 'tabs', intro: 'categories', card: 'price', about: 'why', reviews: 'cards', cta: 'photo', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover', services: 'cards', contact: 'split', zone: 'sidebar' },
+    header: 'over', hero: 'tabs', intro: 'categories', card: 'price', about: 'why', reviews: 'cards', cta: 'photo', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover', services: 'cards', contact: 'split', zone: 'sidebar', video: 'cinema' },
   // Orizzonte (rif. Skyline / EstateHorizon): cielo, corsivo nel titolo, ricerca a pillola, filtro a chip, card con etichette
   orizzonte: { bg: '#ffffff', fg: '#111827', muted: '#6b7280', line: '#eceef3', surface: '#ffffff', soft: '#f4f7fb', ink: '#0f172a', radius: 16,
-    header: 'over', hero: 'sky', intro: 'none', card: 'label', featured: 'chips', about: 'numbered', reviews: 'cards', cta: 'gradient', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered', services: 'steps', contact: 'card', zone: 'wide' },
+    header: 'over', hero: 'sky', intro: 'none', card: 'label', featured: 'chips', about: 'numbered', reviews: 'cards', cta: 'gradient', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered', services: 'steps', contact: 'card', zone: 'wide', video: 'reel' },
   // Vista (rif. Propvista): titolo a sinistra e testo a destra, modulo sulla foto, riquadri con numeri e mappa
   vista: { bg: '#f9f9f8', fg: '#111111', muted: '#6b6b6b', line: '#e6e6e3', surface: '#ffffff', soft: '#f1f1ee', ink: '#111111', radius: 14,
-    header: 'plain', hero: 'bento', intro: 'bento', card: 'clean', about: 'checklist', reviews: 'quote', cta: 'band', footer: 'light', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split', services: 'cards', contact: 'split', zone: 'sidebar' },
+    header: 'plain', hero: 'bento', intro: 'bento', card: 'clean', about: 'checklist', reviews: 'quote', cta: 'band', footer: 'light', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split', services: 'cards', contact: 'split', zone: 'sidebar', video: 'cards' },
 };
 
 export type SiteCtx = {
@@ -202,11 +204,12 @@ export function Facts({ p, className = '', full }: { p: SiteProperty; className?
     p.camere ? { i: BedDouble, v: String(p.camere), l: p.camere === 1 ? 'Camera' : 'Camere' } : null,
     p.bagni ? { i: Bath, v: String(p.bagni), l: p.bagni === 1 ? 'Bagno' : 'Bagni' } : null,
   ].filter(Boolean) as { i: typeof Bath; v: string; l: string }[];
+  if (full && !items.length) return null; // nessun dato: niente riquadro
   if (full) return (
-    // su telefono tante colonne quanti i dati (max 3 per riga): niente caselle vuote
-    <div className={`grid gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] ${items.length === 4 ? 'grid-cols-2' : items.length === 2 ? 'grid-cols-2' : items.length === 1 ? 'grid-cols-1' : 'grid-cols-3'} sm:grid-cols-4 ${className}`}>
+    // sempre le stesse colonne (i dati restano vicini): le caselle che mancano non si vedono, niente fondo grigio
+    <div className={`grid grid-cols-2 sm:grid-cols-4 ${className}`}>
       {items.map(x => (
-        <div key={x.l} className="min-w-0 bg-[var(--surface)] p-4 sm:p-5">
+        <div key={x.l} className="min-w-0 border-[var(--line)] p-4 not-last:border-r sm:p-5">
           <x.i size={18} className="text-[var(--c)]" />
           <div className="mt-3 text-xl font-semibold">{x.v}</div>
           <div className="text-xs text-[var(--muted)]">{x.l}</div>
