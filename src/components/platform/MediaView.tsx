@@ -227,7 +227,15 @@ export default function MediaView() {
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
       {items === null ? (
-        <div className="flex h-64 items-center justify-center"><ImmoLoader size="block" /></div>
+        // scheletro con la forma delle card (foto 4:3 + riga data e Scarica), non la rotellina
+        <div aria-busy className="mt-8 grid animate-pulse grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2, 3, 4, 5].map(i => (
+            <div key={i} className={`rounded-3xl bg-white p-2 ${CARD_SHADOW}`}>
+              <div className="aspect-[4/3] rounded-2xl bg-line/60" />
+              <div className="flex h-12 items-center justify-between px-2 pt-2"><div className="h-3 w-24 rounded-full bg-line/60" /><div className="h-6 w-20 rounded-full bg-line/50" /></div>
+            </div>
+          ))}
+        </div>
       ) : !items.length ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Qui finiranno le foto che crei nella chat di home staging.', 'Photos you create in the home staging chat will show up here.')}</p>
       ) : !filtered.length ? (
