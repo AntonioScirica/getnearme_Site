@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
-import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
+import { ABOUT_DEFAULT, isSampleReview, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
 import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
@@ -543,7 +543,15 @@ export function Intro() {
 }
 
 // ---------- Card immobile: 5 varianti ----------
+// Case d'esempio dell'anteprima (fake-*): bollino ESEMPIO sopra la card, cosi' non si scambiano per case vere
+// (nel sito pubblicato non ci sono mai)
 export function PropertyCard({ p }: { p: SiteProperty }) {
+  if (!p.id.startsWith('fake-')) return <PropertyCardBody p={p} />;
+  return <div className="relative"><SampleTag className="left-3 top-12" /><PropertyCardBody p={p} /></div>;
+}
+export const SampleTag = ({ className = '' }: { className?: string }) => <span className={`pointer-events-none absolute z-20 rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-900 shadow ${className}`}>Esempio</span>;
+
+function PropertyCardBody({ p }: { p: SiteProperty }) {
   const { cfg, t, name } = useSite();
   const riv = cfg.template === 'riviera';
   const badge = <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
@@ -814,10 +822,11 @@ export function Reviews() {
   const tx = useT();
   const [i, setI] = useState(0);
   if (!cfg.reviews.length) return null;
+  const sample = cfg.reviews.every(r => isSampleReview(r.text)); // recensioni d'esempio dell'anteprima: bollino
   if (t.reviews === 'quote') {
     const r = cfg.reviews[i % cfg.reviews.length];
     return (
-      <Container className="py-24 text-center">
+      <Container className="relative py-24 text-center">{sample && <SampleTag className="left-1/2 top-12 -translate-x-1/2" />}
         <Quote size={34} className="mx-auto text-[var(--c)]" />
         <H className="mx-auto mt-8 max-w-4xl text-3xl md:text-5xl">“{r.text}”</H>
         <div className="mt-8 flex justify-center gap-0.5 text-[var(--c)]">{[0, 1, 2, 3, 4].map(s => <Star key={s} size={15} fill="currentColor" />)}</div>
@@ -827,7 +836,7 @@ export function Reviews() {
     );
   }
   return (
-    <Container className="py-24">
+    <Container className="relative py-24">{sample && <SampleTag className="right-4 top-12" />}
       <SectionHead eyebrow={tx('reviews.eyebrow')} title={tx('reviews.title')} />
       <div className="mt-10 grid gap-5 md:grid-cols-3">
         {cfg.reviews.map((r, k) => (

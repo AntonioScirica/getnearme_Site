@@ -112,8 +112,8 @@ export const fontCss = (ids: string[]) => {
 export const ABOUT_DEFAULT = 'Seguo ogni immobile come se fosse mio: valutazione, foto, visite e trattativa. Ti accompagno fino al rogito, senza sorprese.'
 export const PLACEHOLDERS: Partial<Record<keyof SiteConfig, string>> = {
   aboutText: ABOUT_DEFAULT,
-  phone: '+39 333 123 4567', whatsapp: '+39 333 123 4567', email: 'nome@agenzia.it', address: 'Via del Corso 12, Roma', city: 'Roma',
-  instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA RM-123456',
+  phone: '+39 000 000 0000', whatsapp: '+39 000 000 0000', email: 'nome@agenzia.it', address: 'Via del Corso 12, Roma', city: 'Roma',
+  instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA della tua agenzia',
   areas: 'Centro, Semicentro, Periferia', years: '10', sold: '120', clients: '300',
 }
 // recensioni d'esempio: solo nell'anteprima dell'editor. Fino al 01/10/2026 erano nella configurazione iniziale e
@@ -123,7 +123,7 @@ const SAMPLE_REVIEWS = [
   { text: 'Venduto in poche settimane al prezzo giusto. Foto e annuncio fatti benissimo.', name: 'Roberto', zone: '' },
   { text: 'Professionale e onesto: ci ha sconsigliato una casa che non faceva per noi. Raro.', name: 'Elena', zone: '' },
 ]
-const isSampleReview = (t: string) => SAMPLE_REVIEWS.some(x => x.text === t)
+export const isSampleReview = (t: string) => SAMPLE_REVIEWS.some(x => x.text === t)
 // servizi e punti in evidenza d'esempio: fino al 02/10/2026 erano nella configurazione iniziale e uscivano online
 // (in prima persona: geometri, notai, clienti dall'estero). Ora solo anteprima; cleanSite li toglie dai siti salvati.
 const SAMPLE_SERVICES = [
@@ -159,7 +159,8 @@ export function withPlaceholders(c: SiteConfig, props: { addr?: string }[] = [])
   const out = { ...c } as Record<string, unknown>
   const city = cityOf(props)
   if (city) { out.city ||= city; out.address ||= `Via Garibaldi 12, ${city}` }
-  for (const [k, v] of Object.entries(PLACEHOLDERS)) if (!out[k]) out[k] = v
+  // numeri (anni, venduti, clienti) mai inventati nell'anteprima: "300+ clienti" spaventava chi non li ha scritti
+  for (const [k, v] of Object.entries(PLACEHOLDERS)) if (!out[k] && !['years', 'sold', 'clients'].includes(k)) out[k] = v
   if (!c.zones.length) out.zones = SAMPLE_ZONES
   if (!c.reviews.length) out.reviews = SAMPLE_REVIEWS
   if (!c.services.length) out.services = SAMPLE_SERVICES
