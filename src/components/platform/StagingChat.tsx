@@ -858,6 +858,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // telefono: suggerimento corto nel campo (quello lungo finiva tagliato)
   const [narrow, setNarrow] = useState(false);
   useEffect(() => { const m = matchMedia('(max-width: 639px)'); const f = () => setNarrow(m.matches); f(); m.addEventListener('change', f); return () => m.removeEventListener('change', f); }, []);
+  // telefono: il campo cresce con il testo fino a 5 righe (poi scorre); da sm resta alto 40 come prima
+  const field = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = field.current; if (!el) return;
+    el.style.height = '';
+    if (narrow && text) el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
+  }, [text, narrow]);
   // Suggerimento nel campo: segue quello che sta succedendo (foto, stanza riconosciuta, lavoro in corso, esito)
   const lastAi = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai');
   const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
@@ -1373,11 +1380,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             </div>
           )}
           {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image)?.seen !== null && (
-            <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
+            <div className="blur-in -mx-1 mb-4 flex gap-1.5 overflow-x-auto sm:mb-2 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(STYLE_FROM_PHOTO, null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
           {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send(STYLE_FROM_PHOTO, null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}
-          <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
+          <div className={`relative flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* foto e zona vicine, come un gruppo di strumenti */}
             <div className="flex shrink-0 items-center">
               <button type="button" onClick={() => setLibrary(true)} title={base ? tr('Carica un\'altra foto', 'Upload another photo') : tr('Carica una foto', 'Upload a photo')} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
@@ -1389,14 +1396,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 </button>
               </Tooltip>
             </div>
-            <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
+            <textarea ref={field} rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!narrow ? hint : !base ? tr('Carica una foto per iniziare', 'Upload a photo to start') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Scrivi cosa cambiare', 'Write what to change') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-[52px] min-w-0 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-5 outline-none sm:h-10 sm:py-2 sm:leading-6 placeholder:text-muted/60 disabled:cursor-not-allowed" />
             {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}
             {text.trim() && base && !busy && (() => {
               const n = creditsOf({ prompt: text.trim(), scene }, editsDone);
-              return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-muted">{n ? `${n} ${n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}` : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
+              // telefono: sul bordo del campo, in alto a destra, cosi' il testo ha tutta la riga
+              return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-muted max-sm:absolute max-sm:-top-3 max-sm:right-4 max-sm:py-0.5 max-sm:ring-1 max-sm:ring-line">{n ? `${n} ${n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}` : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
             })()}
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label={tr('Invia', 'Send')}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
@@ -1599,7 +1607,7 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
   return createPortal(
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => state !== 'busy' && onClose()}>
       <style>{SAVE_ANIM}</style>
-      <div onClick={e => e.stopPropagation()} className="w-full max-w-xl rounded-[32px] bg-white p-6 shadow-2xl">
+      <div onClick={e => e.stopPropagation()} className="max-h-full w-full max-w-xl overflow-y-auto overscroll-contain rounded-[32px] bg-white p-6 shadow-2xl">
         {state === 'ok' ? (
           <div className="blur-in flex flex-col items-center gap-3 py-6 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check size={26} /></span>

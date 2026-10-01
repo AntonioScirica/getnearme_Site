@@ -19,7 +19,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
   const btn = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number; up: boolean; max: number } | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; up: boolean; max: number; w: number } | null>(null);
   const [active, setActive] = useState(0);
   const current = options.find(o => o.value === value);
 
@@ -31,7 +31,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
       const h = Math.min(360, options.length * 40 + 40);
       const below = window.innerHeight - r.bottom - 24, above = r.top - 24;
       const up = below < h && above > below;
-      setPos({ left: align === 'end' ? r.right : r.left, top: up ? r.top - 8 : r.bottom + 8, up, max: Math.max(120, Math.min(360, up ? above : below)) });
+      setPos({ left: align === 'end' ? r.right : r.left, top: up ? r.top - 8 : r.bottom + 8, up, max: Math.max(120, Math.min(360, up ? above : below)), w: r.width });
     };
     place();
     window.addEventListener('scroll', place, true); window.addEventListener('resize', place);
@@ -61,9 +61,10 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
         {children ?? <span className="max-w-[16rem] truncate" style={current?.style}>{current?.label}</span>}
         <ChevronDown size={14} strokeWidth={2.5} className={`shrink-0 translate-y-px ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
+      {/* sopra tutto, anche alle finestre (z 260-400) da cui si apre; largo almeno quanto il pulsante */}
       {open && pos && createPortal(
-        <div ref={menu} role="listbox" className="blur-in fixed z-[200] max-h-[360px] w-60 overflow-y-auto rounded-2xl bg-white p-2 text-sm text-ink shadow-[0_18px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5 [scrollbar-width:none]"
-          style={{ left: pos.left, top: pos.top, maxHeight: pos.max, transform: `translate(${align === 'end' ? '-100%' : '0'}, ${pos.up ? '-100%' : '0'})` }}>
+        <div ref={menu} role="listbox" className="blur-in fixed z-[600] max-h-[360px] w-60 overflow-y-auto rounded-2xl bg-white p-2 text-sm text-ink shadow-[0_18px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5 [scrollbar-width:none]"
+          style={{ left: pos.left, top: pos.top, maxHeight: pos.max, minWidth: Math.min(pos.w, window.innerWidth - 32), transform: `translate(${align === 'end' ? '-100%' : '0'}, ${pos.up ? '-100%' : '0'})` }}>
           {options.map((o, i) => {
             const head = o.group && o.group !== options[i - 1]?.group ? o.group : null;
             return (
@@ -71,7 +72,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
                 {head && <div className={`px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted ${i ? 'pt-3' : 'pt-1'}`}>{head}</div>}
                 <button type="button" role="option" aria-selected={o.value === value} onMouseEnter={() => setActive(i)}
                   onClick={() => { onChange(o.value); setOpen(false); btn.current?.focus(); }}
-                  className={`flex h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left ease-smooth transition-colors ${i === active ? 'bg-canvas' : ''} ${o.value === value ? 'font-semibold' : ''}`}>
+                  className={`flex h-11 w-full items-center justify-between gap-3 rounded-lg px-3 sm:h-10 text-left ease-smooth transition-colors ${i === active ? 'bg-canvas' : ''} ${o.value === value ? 'font-semibold' : ''}`}>
                   <span className="min-w-0 truncate" title={o.label} style={o.style}>{o.label}</span>{o.value === value && <Check size={15} className="shrink-0 text-brand" />}
                 </button>
               </div>
