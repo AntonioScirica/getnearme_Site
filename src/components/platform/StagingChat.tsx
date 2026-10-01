@@ -1675,7 +1675,7 @@ export function SaveToProperty({ before, after, projectId, origin, onClose, done
   const option = (id: 'add' | 'plain' | 'replace', title: string, text: string, visual: React.ReactNode, off?: boolean) => (
     <button type="button" onClick={() => setMode(id)} aria-pressed={chosen === id} disabled={off}
       className={`flex min-w-0 flex-1 flex-col rounded-3xl bg-white p-2 text-left ring-1 ease-smooth transition-shadow max-sm:flex-row max-sm:items-center max-sm:gap-1 disabled:cursor-not-allowed disabled:opacity-45 ${chosen === id ? 'ring-2 ring-brand' : 'ring-line enabled:hover:ring-ink/20'}`}>
-      <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas max-sm:w-28 max-sm:shrink-0 max-sm:[&_span.absolute.bottom-2]:hidden">{visual}</span>{/* telefono: card in riga, foto piccola a sinistra (impilate grandi spingevano Salva fuori schermo) */}
+      <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas max-sm:w-36 max-sm:shrink-0 max-sm:[&_span.absolute.bottom-2]:hidden">{visual}</span>{/* telefono: card in riga, foto piccola a sinistra (impilate grandi spingevano Salva fuori schermo) */}
       <span className="block px-1.5 pb-1 pt-2.5"><span className="block text-sm font-semibold">{title}</span><span className="block text-xs leading-snug text-muted">{text}</span></span>
     </button>
   );
