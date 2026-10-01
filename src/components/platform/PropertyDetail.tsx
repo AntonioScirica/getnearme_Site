@@ -185,7 +185,7 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
           <h2 className="font-display text-2xl font-bold tracking-tight">{tr('Le foto', 'Photos')}</h2>
           <p className="mt-1 text-sm text-muted">{tr('Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.', 'Drag them to change the order clients will see them in: the first one is the cover. Hover over a photo to improve it with AI or remove it.')}</p>
         </div>
-        <ul className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-7 sm:grid-cols-3">
+        <ul className="grid min-h-0 flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
             <li key={src} ref={el => { if (el) tiles.current.set(src, el); else tiles.current.delete(src); }} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
               className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-2xl bg-canvas ease-smooth transition-[opacity,transform,box-shadow] active:cursor-grabbing ${drag === src ? 'scale-95 opacity-40' : 'hover:shadow-lg'} ${i === 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
