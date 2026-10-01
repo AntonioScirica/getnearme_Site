@@ -1440,14 +1440,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(STYLE_FROM_PHOTO, null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
           {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send(STYLE_FROM_PHOTO, null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}
-          <div className={`relative flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
-            {/* foto e zona vicine, come un gruppo di strumenti */}
+          <div className={`relative flex items-end gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
+            {/* foto e zona vicine, come un gruppo di strumenti. Telefono, scrivendo: come Telegram restano solo foto e invio (stile e microfono via), il testo ha piu' spazio */}
             <div className="flex shrink-0 items-center">
               <button type="button" onClick={() => setLibrary(true)} title={base ? tr('Carica un\'altra foto', 'Upload another photo') : tr('Carica una foto', 'Upload a photo')} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
                 <ImagePlus size={20} />
               </button>
               <Tooltip label={tr('Stile da una foto: cerca o carica dal computer', 'Style from a photo: search or upload from your computer')}>
-                <button type="button" onClick={() => setInspo(true)} disabled={!base || busy} aria-label={tr('Stile da una foto', 'Style from a photo')} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors enabled:hover:bg-canvas enabled:hover:text-ink disabled:opacity-40">
+                <button type="button" onClick={() => setInspo(true)} disabled={!base || busy} aria-label={tr('Stile da una foto', 'Style from a photo')} className={`${text ? 'max-sm:hidden' : ''} flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors enabled:hover:bg-canvas enabled:hover:text-ink disabled:opacity-40`}>
                   <Palette size={19} />
                 </button>
               </Tooltip>
@@ -1460,10 +1460,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             {text.trim() && base && !busy && credits && (credits.unlimited || credits.plan !== 'none' || credits.balance > 0) && (() => {
               const n = creditsOf({ prompt: text.trim(), scene }, editsDone);
               // telefono: sul bordo del campo, in alto a destra, cosi' il testo ha tutta la riga
+              if (!n) return null; // gratis: niente pill (prima "Gratis, ancora N")
               return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-muted max-sm:absolute max-sm:-top-3 max-sm:right-4 max-sm:py-0.5 max-sm:ring-1 max-sm:ring-line">{n ? <span className="inline-flex items-center gap-1"><Coins size={12} />{n} {n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</span> : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
             })()}
             {canDictate && <button type="button" onClick={dictate} disabled={!base || busy} aria-label={listening ? tr('Ferma la dettatura', 'Stop dictation') : tr('Detta a voce', 'Dictate')} title={listening ? tr('Ferma la dettatura', 'Stop dictation') : tr('Detta a voce', 'Dictate')}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors disabled:opacity-40 ${listening ? 'animate-pulse bg-rose-500 text-white' : 'text-muted enabled:hover:bg-canvas enabled:hover:text-ink'}`}><Mic size={19} /></button>}
+              className={`${text && !listening ? 'max-sm:hidden' : ''} flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors disabled:opacity-40 ${listening ? 'animate-pulse bg-rose-500 text-white' : 'text-muted enabled:hover:bg-canvas enabled:hover:text-ink'}`}><Mic size={19} /></button>}
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label={tr('Invia', 'Send')}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
