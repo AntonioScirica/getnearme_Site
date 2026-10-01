@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
+import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Menu, Sparkles, Upload, Users, Wand2, X } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -576,6 +576,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
   const L = useL(), en = useEn();
   const { l, APP, TRIAL_LOGIN, SIGNUP } = useLinks();
   const scrolled = useScrolled();
+  const [menu, setMenu] = useState(false); // tendina dei link su telefono
   const [logged, setLogged] = useState(false);
   useEffect(() => {
     // gia' dentro: il sito porta dritto alla home della piattaforma
@@ -596,17 +597,26 @@ function Landing({ faq }: { faq: [string, string][] }) {
       <header className="sticky top-0 z-40 pt-4">
         {/* scorrendo: sfocatura progressiva sotto la barra */}
         <ProgressiveBlur show={scrolled} fade={40} />
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4">
-          <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
-            <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
-            <div className="mx-auto hidden items-center gap-1 md:flex">
+        <div className="relative mx-auto flex max-w-6xl items-center gap-4 px-4">
+          <nav className="glass flex h-14 w-full items-center gap-1 rounded-full border px-2 pl-3 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)] sm:gap-2 sm:pl-4">
+            {/* telefono: solo il marchio, la scritta da sm in su */}
+            <a href="#top" aria-label="Agente Immo" className="flex shrink-0 items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="hidden whitespace-nowrap font-display text-lg font-extrabold tracking-tight sm:inline">Agente <span className="text-brand">Immo</span></span></a>
+            <div className="mx-auto hidden items-center gap-1 lg:flex">
               {[['#staging', L('Annunci', "Listings")], ['#video', 'Social'], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")]].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
             {/* dentro: solo Dashboard; fuori: solo Prova gratis */}
             {logged
-              ? <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">Dashboard</Cta>
-              : <><a href={`/${l}/accedi`} className="ml-auto shrink-0 rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink md:ml-0">{L('Accedi', 'Sign in')}</a><Cta href={TRIAL_LOGIN} className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">{L('Prova gratis', "Try it free")}</Cta></>}
+              ? <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 lg:ml-0">Dashboard</Cta>
+              : <><a href={`/${l}/accedi`} className="ml-auto flex h-10 shrink-0 items-center rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink sm:px-3.5 lg:ml-0">{L('Accedi', 'Sign in')}</a><Cta href={TRIAL_LOGIN} className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 lg:ml-0">{L('Prova gratis', "Try it free")}</Cta></>}
+            <button type="button" onClick={() => setMenu(m => !m)} aria-expanded={menu} aria-label={L('Menu', 'Menu')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink ease-smooth transition-colors hover:bg-canvas lg:hidden">{menu ? <X size={18} /> : <Menu size={18} />}</button>
           </nav>
+          {/* tendina dei link su telefono, sotto la pillola */}
+          {menu && <div className="glass blur-in absolute inset-x-4 top-full mt-2 flex flex-col rounded-[24px] border p-2 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)] lg:hidden">
+            {[['#staging', L('Annunci', "Listings")], ['#video', 'Social'], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")]].map(([h, t]) => <a key={h} href={h} onClick={() => setMenu(false)} className="flex h-12 items-center rounded-[16px] px-4 text-[15px] font-medium text-ink ease-smooth transition-colors hover:bg-canvas">{t}</a>)}
+            <div className="mt-1 flex gap-1 border-t border-line px-2 pt-2">
+              {(['it', 'en'] as const).map(x => <a key={x} href={`/${x}`} hrefLang={x} aria-current={(en ? 'en' : 'it') === x ? 'true' : undefined} className={`flex h-10 flex-1 items-center justify-center rounded-full text-sm font-semibold ease-smooth transition-colors ${(en ? 'en' : 'it') === x ? 'bg-canvas text-ink' : 'text-muted hover:text-ink'}`}>{x === 'it' ? 'Italiano' : 'English'}</a>)}
+            </div>
+          </div>}
         </div>
       </header>
 
@@ -767,8 +777,8 @@ function Landing({ faq }: { faq: [string, string][] }) {
         </Reveal>
       </section>
 
-      {/* lingua: pillola fissa in basso a destra, la lingua attiva nel cerchio bianco */}
-      <nav aria-label="Lingua" className="fixed bottom-4 right-4 z-40 flex h-11 items-center rounded-full bg-canvas/90 p-1 text-sm font-semibold shadow-[0_10px_30px_-10px_rgba(0,0,0,.25)] ring-1 ring-black/5 backdrop-blur">
+      {/* lingua: pillola fissa in basso a destra, la lingua attiva nel cerchio bianco; su telefono sta nel menu e nel footer */}
+      <nav aria-label="Lingua" className="fixed bottom-4 right-4 z-40 hidden h-11 md:flex items-center rounded-full bg-canvas/90 p-1 text-sm font-semibold shadow-[0_10px_30px_-10px_rgba(0,0,0,.25)] ring-1 ring-black/5 backdrop-blur">
         {(['it', 'en'] as const).map(l => {
           const on = (en ? 'en' : 'it') === l;
           return <a key={l} href={`/${l}`} hrefLang={l} aria-current={on ? 'true' : undefined} className={`flex h-9 w-9 items-center justify-center rounded-full uppercase ease-smooth transition-colors ${on ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</a>;
@@ -791,8 +801,9 @@ function Landing({ faq }: { faq: [string, string][] }) {
           ] as [string, string[][]][]).map(([h, links]) => (
             <nav key={h} aria-label={h}>
               <div className="text-sm font-semibold">{h}</div>
-              <ul className="mt-4 space-y-2.5 text-sm text-muted">
-                {links.map(([href, l]) => <li key={href}>{href === '#cookie' ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:cookie-prefs'))} className="ease-smooth transition-colors hover:text-ink">{l}</button> : href.startsWith('/') ? <Link href={href} className="ease-smooth transition-colors hover:text-ink">{l}</Link> : <a href={href} className="ease-smooth transition-colors hover:text-ink">{l}</a>}</li>)}
+              <ul className="mt-2 text-sm text-muted md:mt-4 md:space-y-2.5">
+                {/* telefono: ogni link alto 40px per il tocco */}
+                {links.map(([href, l]) => <li key={href}>{href === '#cookie' ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:cookie-prefs'))} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</button> : href.startsWith('/') ? <Link href={href} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</Link> : <a href={href} className="inline-flex min-h-10 items-center ease-smooth transition-colors hover:text-ink md:min-h-0">{l}</a>}</li>)}
               </ul>
             </nav>
           ))}
@@ -800,8 +811,8 @@ function Landing({ faq }: { faq: [string, string][] }) {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-line px-4 py-6 text-xs text-muted md:flex-row">
           <span>© {new Date().getFullYear()} Agente Immo</span>
           <span className="flex items-center gap-4">
-            <span className="flex gap-2">{(['it', 'en'] as const).map(l => <a key={l} href={`/${l}`} hrefLang={l} className={`${(en ? 'en' : 'it') === l ? 'font-semibold text-ink' : 'hover:text-ink'}`}>{l === 'it' ? 'Italiano' : 'English'}</a>)}</span>
-            <a href="mailto:info@agenteimmo.me" className="hover:text-ink">info@agenteimmo.me</a>
+            <span className="flex gap-2">{(['it', 'en'] as const).map(l => <a key={l} href={`/${l}`} hrefLang={l} className={`inline-flex min-h-10 items-center md:min-h-0 ${(en ? 'en' : 'it') === l ? 'font-semibold text-ink' : 'hover:text-ink'}`}>{l === 'it' ? 'Italiano' : 'English'}</a>)}</span>
+            <a href="mailto:info@agenteimmo.me" className="inline-flex min-h-10 items-center hover:text-ink md:min-h-0">info@agenteimmo.me</a>
           </span>
         </div>
       </footer>
