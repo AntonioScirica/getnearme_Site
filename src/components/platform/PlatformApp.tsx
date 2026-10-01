@@ -188,7 +188,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro e i crediti (la chat ha tutto lo spazio) */}
           {chat ? (<>
             {/* Indietro dalla chat: all'immobile se la chat e' partita da li' (?project=), altrimenti alla home */}
-            <button type="button" onClick={() => { const pid = new URLSearchParams(query).get('project'); location.hash = pid ? `#/immobile/${pid}` : '#/'; }}
+            <button type="button" onClick={() => { const pid = new URLSearchParams(query).get('project'); go(pid ? `/immobile/${pid}` : '/'); }}
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-brand ease-smooth transition-colors hover:bg-brand/10"><ArrowLeft size={18} /> {tr('Indietro', 'Back')}</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
