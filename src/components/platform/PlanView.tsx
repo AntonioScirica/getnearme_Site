@@ -39,17 +39,17 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   // posto vuoto e invisibile (niente bordo da solo): la pillola arriva intera, bordo e crediti insieme
   if (!c) return <span className="flex h-10 w-[136px]" aria-hidden />;
   const low = isLow(c);
-  // telefono: area di tocco 40px, il cerchio resta da 32
-  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="group flex h-10 w-10 items-center justify-center md:h-8 md:w-8"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors group-hover:bg-line"><UserRound size={16} /></span></a>;
+  // telefono e tablet (sotto lg): area di tocco 40px, il cerchio resta da 32
+  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="group flex h-10 w-10 items-center justify-center lg:h-8 lg:w-8"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors group-hover:bg-line"><UserRound size={16} /></span></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
   if (c.plan === 'none' && !c.unlimited && c.balance <= 0) return (
     <span className="blur-in flex items-center gap-2">
       <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">{tr('Scegli un piano', 'Choose a plan')}</a>
-      <span className="flex h-10 items-center rounded-full bg-white ring-1 ring-line md:px-1">{profile}</span>
+      <span className="flex h-10 items-center rounded-full bg-white ring-1 ring-line lg:px-1">{profile}</span>
     </span>
   );
   return (
-    <span className={`blur-in flex h-10 items-center rounded-full bg-white ring-1 ease-smooth md:pr-1 transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
+    <span className={`blur-in flex h-10 items-center rounded-full bg-white ring-1 ease-smooth lg:pr-1 transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
       <a href="#/piano" title={c.unlimited ? undefined : tr(`${fmt(c.balance)} ${c.balance === 1 ? 'credito' : 'crediti'}`, `${fmt(c.balance)} ${c.balance === 1 ? 'credit' : 'credits'}`)} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
         {/* numero e moneta, senza la parola "crediti" */}
         {c.unlimited ? <><Coins size={15} className="text-ai" /> {tr('Illimitati', 'Unlimited')}</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· {tr('Ricarica', 'Top up')}</span>}
@@ -172,7 +172,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
       )}
       {/* pagamento non partito (pacchetto o piano): avviso in basso, sempre in vista anche su telefono, si chiude da solo */}
       {/* nel body: un antenato con transform (fade-up) renderebbe fixed relativo a lui */}
-      {buyError && createPortal(<p role="alert" className="blur-in fixed bottom-[84px] left-1/2 z-40 w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-center text-sm font-medium text-white shadow-lg md:bottom-6">{buyError}</p>, document.body)}
+      {buyError && createPortal(<p role="alert" className="blur-in fixed bottom-[84px] left-1/2 z-40 w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-center text-sm font-medium text-white shadow-lg lg:bottom-6">{buyError}</p>, document.body)}
       {/* codice: chi ha un piano ne inserisce uno; l'affiliato (anche senza piano) al posto del campo vede il suo */}
       {c && <CodeBox canRedeem={c.plan !== 'none' || !!c.unlimited} onReady={() => setCodeReady(true)} />}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}

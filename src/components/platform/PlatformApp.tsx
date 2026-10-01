@@ -82,7 +82,7 @@ function ChatHistory() {
   const when = (d: number) => (d === 0 ? tr('Oggi', 'Today') : d === 1 ? tr('Ieri', 'Yesterday') : tr(`${d} giorni fa`, `${d} days ago`));
   return (
     <div ref={box} className="relative">
-      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label={tr('Storico delle chat', 'Chat history')} title={tr('Storico delle chat', 'Chat history')} className="group flex h-10 w-10 items-center justify-center md:h-8 md:w-8"><span className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink group-hover:bg-line'}`}><History size={16} /></span></button>
+      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label={tr('Storico delle chat', 'Chat history')} title={tr('Storico delle chat', 'Chat history')} className="group flex h-10 w-10 items-center justify-center lg:h-8 lg:w-8"><span className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink group-hover:bg-line'}`}><History size={16} /></span></button>
       {open && (
         <div className="blur-in absolute -right-1 top-11 z-50 w-80 rounded-[24px] bg-white p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
           <div className="px-3 pb-2 pt-1.5 text-xs text-muted">{tr('Le chat restano 30 giorni. Foto e video li trovi sempre in Galleria.', 'Chats are kept for 30 days. Your photos and videos are always in the Gallery.')}</div>
@@ -184,7 +184,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
       {tour && !chat && credits && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
-        <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-md:flex'}`}>
+        <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-lg:flex'}`}>
           {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro e i crediti (la chat ha tutto lo spazio) */}
           {chat ? (<>
             {/* Indietro dalla chat: all'immobile se la chat e' partita da li' (?project=), altrimenti alla home */}
@@ -195,7 +195,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
             {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
             <div className="ml-auto flex items-center gap-2">
               {credits && !noPlan && (
-                <span className="blur-in flex h-10 items-center rounded-full bg-white ring-1 ring-line md:pr-1" style={{ animationDelay: '.15s' }}>
+                <span className="blur-in flex h-10 items-center rounded-full bg-white ring-1 ring-line lg:pr-1" style={{ animationDelay: '.15s' }}>
                   {/* telefono: solo la matita, la scritta da sm in su */}
                   <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} aria-label={tr('Nuova chat', 'New chat')} className="flex h-full min-w-10 items-center justify-center whitespace-nowrap text-sm font-semibold sm:pl-4 sm:pr-3"><SquarePen size={16} className="sm:hidden" /><span className="hidden sm:inline">{tr('Nuova chat', 'New chat')}</span></button>
                   <span className="mr-1 h-5 w-px bg-line" aria-hidden />
@@ -210,7 +210,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
             <span className="hidden font-display text-lg font-extrabold tracking-tight sm:inline">Agente <span className="text-brand">Immo</span></span>{/* telefono: solo il marchio */}
           </a>
           {/* menu al centro esatto: colonne laterali uguali (1fr), qualunque sia la larghezza di logo e pulsanti */}
-          <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
+          <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 lg:flex">{/* sotto lg le voci stanno nella barra in basso */}
             {NAV.map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
               return <a key={path} href={`#${path}`} data-tour={path} className={`relative rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}
@@ -219,7 +219,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
               </a>;
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
+          <div className="ml-auto flex items-center gap-2.5 justify-self-end lg:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
             {/* senza piano solo Scegli un piano (in nero): Metti in vetrina appare col piano */}
             {/* telefono: solo il + (la scritta da sm in su) */}
@@ -230,7 +230,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
       </header>
 
       {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto) */}
-      {!chat && route === '/' && <div inert={homeOpen} className={`fixed bottom-[84px] left-1/2 z-30 md:bottom-5 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
+      {!chat && route === '/' && <div inert={homeOpen} className={`fixed bottom-[84px] left-1/2 z-30 lg:bottom-5 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
         <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <Download size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
         </a>
@@ -280,9 +280,9 @@ function PlatformInner({ userData }: { userData: UserData }) {
           )}
         </div>
       </main>
-      {/* telefono: le voci del menu in una barra in basso (in chat e nel percorso Metti in vetrina no, hanno il loro fondo) */}
+      {/* telefono e tablet (sotto lg): le voci del menu in una barra in basso (in chat e nel percorso Metti in vetrina no, hanno il loro fondo) */}
       {!chat && route !== '/nuovo' && (
-        <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+        <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
           {NAV.map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
             return <a key={path} href={`#${path}`} aria-current={active ? 'page' : undefined} className={`relative flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium ease-smooth transition-colors ${active ? 'text-ink' : 'text-muted'}`}>
@@ -548,7 +548,7 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
   const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
-  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none -my-2.5 max-h-0 overflow-hidden sm:mx-0! sm:my-0 sm:w-0! scale-75 opacity-0 blur-[8px]' : `max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
+  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none -my-2.5 max-h-0 overflow-hidden lg:mx-0! lg:my-0 lg:w-0! scale-75 opacity-0 blur-[8px]' : `max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
 
   return (
     // pb-24: lo spazio delle pill fisse in basso (Profilo, Importa), cosi' titolo e box stanno al centro della parte libera
@@ -558,7 +558,8 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
         <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
       </h1>
 
-      <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-0">
+      {/* tessere in fila solo da lg (a 768 tre da 320 uscivano dai lati), sotto in colonna */}
+      <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-0">
         <ImproveTile phase={phase} stage={imp.stage} onOpen={openLink} onClose={close} onSubmit={() => imp.start(url)} onNew={restart}
           hover={hover} setHover={setHover} intro={intro} url={url} setUrl={setUrl}>
           {/* Il contenuto segue il titolo: sfuma, cambia a meta' tempo, rientra (niente salti tra scansione e verdetto) */}
