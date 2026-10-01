@@ -26,7 +26,7 @@ const place = (p: ProjectData) => p.addr?.split(',').map(s => s.trim()).filter(B
 const title = (p: ProjectData) => p.titolo || p.nome || tr('Immobile', 'Property');
 
 // ponytail: geocoding dal browser, uno al secondo (limite Nominatim); salvare lat/lon sul progetto se gli immobili diventano centinaia
-const GEO_KEY = 'gnm-geo';
+const GEO_KEY = 'gnm-geo-2'; // -2: posizioni rifatte con la ricerca dentro la citta' (01/10/2026)
 function useGeo(projects: ProjectData[] | null) {
   // null finche' non leggo la cache: localStorage solo dopo il montaggio (altrimenti errore di idratazione)
   const [geo, setGeo] = useState<Record<string, LatLon | 0> | null>(null);
