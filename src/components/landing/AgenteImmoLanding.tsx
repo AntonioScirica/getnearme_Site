@@ -236,9 +236,7 @@ const simulate = () => { const q = new URLSearchParams(location.search); return 
 // video Prima e dopo ~2 min (come in chat).
 export function FakeBar({ secs, title, sub, more }: { secs: number; title: string; sub: string; more?: ReactNode }) {
   const [p, setP] = useState(0);
-  // dopo qualche secondo la card si allunga verso il basso e mostra cosa fare intanto (il video va avanti da solo)
-  const [open, setOpen] = useState(false);
-  useEffect(() => { if (!more) return; const t = setTimeout(() => setOpen(true), 4000); return () => clearTimeout(t); }, [more]);
+  // more: cosa fare intanto (il video va avanti da solo), subito nella card
   useEffect(() => {
     const t0 = Date.now();
     const id = setInterval(() => setP(95 * (1 - Math.exp(-((Date.now() - t0) / 1000) / (secs * 0.6)))), 250);
@@ -256,7 +254,7 @@ export function FakeBar({ secs, title, sub, more }: { secs: number; title: strin
           <span className="text-xs font-semibold tabular-nums text-muted">{Math.round(p)}%</span>
         </div>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-brand transition-[width] duration-300 ease-linear" style={{ width: `${p}%` }} /></div>
-        {more && <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}><div className="min-h-0 overflow-hidden">{more}</div></div>}
+        {more}
       </div>
     </div>
   );
@@ -269,6 +267,9 @@ const BOX = 'aspect-[4/3] md:aspect-video'; // 16:9 come le foto d'esempio: il r
 function TryIt({ gate = false }: { gate?: boolean }) {
   const L = useL();
   const { APP, TRIAL, TRIAL_LOGIN } = useLinks();
+  // telefono: suggerimento corto nel campo (quello lungo finiva tagliato a "soggiorn")
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => { const m = matchMedia('(max-width: 639px)'); const f = () => setNarrow(m.matches); f(); m.addEventListener('change', f); return () => m.removeEventListener('change', f); }, []);
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
   const [style, setStyle] = useState<(typeof DEMO_STYLES)[number][0]>('modern');
@@ -473,7 +474,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 [&:has(input:focus)]:bg-white [&:has(input:focus)]:ring-2 [&:has(input:focus)]:ring-ai sm:flex-nowrap">
               {!after && <>
               <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
-              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && void run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
+              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && void run()} placeholder={narrow ? L('Scrivi come la vuoi', 'Describe it') : L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
               </>}
               {after
@@ -492,10 +493,10 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before || gate ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before || gate ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
             {/* stili solo prima dell'arredo: nel passo del video non servono */}
-            {!after && <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
+            {!after && <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:mt-3 sm:justify-start sm:gap-2">
               <span className="hidden text-sm text-muted sm:inline">{L('Oppure scegli uno stile:', "Or pick a style:")}</span>
               {DEMO_STYLES.map(([k, l, e]) => (
-                <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
+                <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-3 text-sm font-semibold ease-smooth transition-colors sm:px-4 ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
               ))}
               {/* ci sono altri stili (nella piattaforma): la pillola non fa nulla */}
               <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
@@ -868,12 +869,12 @@ function Trial() {
         <div className="mx-auto max-w-6xl px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <Link href={`/${l}`} className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
-            <a href={APP} className="ml-auto inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5">{L('Entra in piattaforma', "Go to the platform")}</a>
+            <a href={APP} className="ml-auto inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5"><span className="sm:hidden">{L('Entra', 'Enter')}</span><span className="max-sm:hidden">{L('Entra in piattaforma', "Go to the platform")}</span></a>
           </nav>
         </div>
       </header>
       {/* la prova sta tutta nel primo schermo, centrata: la foto si stringe in base all'altezza della finestra */}
-      <section id="prova" className="mx-auto flex min-h-[calc(100svh-4.5rem)] max-w-4xl flex-col justify-center px-4 py-6">
+      <section id="prova" className="mx-auto flex max-w-4xl flex-col justify-center px-4 pb-6 pt-10 sm:min-h-[calc(100svh-4.5rem)] sm:py-6">{/* telefono: niente centratura in altezza, lasciava mezzo schermo vuoto sopra */}
         <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
         <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.78))' }}><TryIt /></div>
