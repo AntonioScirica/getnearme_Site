@@ -40,9 +40,16 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
   };
   const list = projects?.filter(p => photosOf(p).length) ?? [];
 
+  // Carica foto/video: in alto accanto al titolo; su telefono in fondo a tutta larghezza (in alto schiacciava il titolo)
+  const upload = (cls: string) => (
+    <label className={`${cls} flex cursor-pointer items-center justify-center gap-2 rounded-full bg-canvas px-4 text-sm font-medium ease-smooth transition-colors hover:bg-line`}>
+      <Monitor size={15} /> {tr('Carica foto/video', 'Upload photo/video')}
+      <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { const f = Array.from(e.target.files ?? []); if (f.length) { onFiles(f); onClose(); } }} />
+    </label>
+  );
   return createPortal(
-    <div className="blur-in fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} className="flex h-[min(640px,85vh)] w-full max-w-3xl flex-col rounded-[32px] bg-white p-6 shadow-2xl">
+    <div className="blur-in fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-6" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="flex h-[min(640px,85vh)] w-full max-w-3xl flex-col rounded-[32px] bg-white p-5 shadow-2xl sm:p-6">
         <div className="flex items-center gap-2 pb-4">
           {open && <button onClick={() => setOpen(null)} aria-label={tr('Indietro', 'Back')} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-canvas"><ArrowLeft size={18} /></button>}
           {/* titolo e descrizione in un blocco: la descrizione sta subito sotto il titolo */}
@@ -50,10 +57,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
             <h2 className="truncate text-lg font-semibold leading-tight">{open ? open.titolo || open.nome : tr('Scegli una foto', 'Choose a photo')}</h2>
             {!open && <p className="pt-0.5 text-sm text-muted">{tr('Dalla tua vetrina: scegli l’immobile e poi la foto.', 'From your showcase: pick the property, then the photo.')}</p>}
           </div>
-          <label className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-canvas px-4 text-sm font-medium ease-smooth transition-colors hover:bg-line">
-            <Monitor size={15} /> {tr('Carica foto/video', 'Upload photo/video')}
-            <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { const f = Array.from(e.target.files ?? []); if (f.length) { onFiles(f); onClose(); } }} />
-          </label>
+          {upload('max-sm:hidden h-9')}
           <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-canvas"><X size={18} /></button>
         </div>
         {err && <p className="pb-3 text-sm text-rose-600">{tr('Non riesco a scaricare questa foto, provane un\'altra.', 'I can\'t download this photo, try another one.')}</p>}
@@ -71,7 +75,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
                   </button>
                 ))}
               </div>
-            ) : <p className="flex h-full items-center justify-center text-sm text-muted">{tr('Nella vetrina non ci sono ancora immobili con foto.', 'Your showcase has no properties with photos yet.')}</p>
+            ) : <p className="flex h-full items-center justify-center text-balance text-center text-sm text-muted">{tr('Nella vetrina non ci sono ancora immobili con foto.', 'Your showcase has no properties with photos yet.')}</p>
           ) : (
             <div key={open.id} className="blur-in grid grid-cols-2 gap-3 sm:grid-cols-3">
               {photosOf(open).map(u => (
@@ -83,6 +87,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
             </div>
           )}
         </div>
+        {upload('sm:hidden mt-4 h-12 shrink-0')}
       </div>
     </div>,
     document.body,
