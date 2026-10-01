@@ -1693,7 +1693,7 @@ export function SaveToProperty({ before, after, projectId, origin, onClose, done
             </span>
             <div className="mt-5 text-lg font-semibold">{tr('Foto salvata nell’immobile', 'Photo saved to the property')}</div>
             <div className="mt-0.5 text-sm font-medium text-ink/80">{(p?.titolo || p?.nome || tr('Immobile', 'Property')).replace(/[\s.]+$/, '')}</div>
-            <p className="mt-2 text-sm text-muted">{chosen === 'add' ? tr('Sul sito il cliente la confronta con l’originale.', 'On the website the client compares it with the original.') : chosen === 'plain' ? tr('È in fondo alle foto dell’immobile, l’originale resta.', 'It\'s at the end of the property photos, the original stays.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
+            <p className="mt-2 text-sm text-muted">{chosen === 'add' ? tr('Sul tuo sito il cliente la confronta con l’originale, che resta salvata.', 'On your website the client compares it with the original, which stays saved.') : chosen === 'plain' ? tr('È in fondo alle foto dell’immobile, l’originale resta.', 'It\'s at the end of the property photos, the original stays.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
             <div className="mt-6 flex w-full gap-2">
               <button onClick={onClose} className="h-11 flex-1 rounded-full bg-canvas px-5 text-sm font-semibold text-ink hover:bg-line/60">{tr('Chiudi', 'Close')}</button>
               {p?.is_public && slug
@@ -1749,7 +1749,7 @@ export function SaveToProperty({ before, after, projectId, origin, onClose, done
             </>, !canReplace)}
           </div>
           {/* dubbi rimasti ai test: la copertina cambia? lo slider va anche su Facebook? */}
-          <p className="pt-3 text-xs text-muted">{chosen === 'replace' ? tr('Se l’originale era la copertina, la copertina diventa la nuova.', 'If the original was the cover, the new one becomes the cover.') : tr('La copertina resta la stessa. Il confronto si vede solo sul tuo sito.', 'The cover stays the same. The comparison only shows on your website.')}</p>
+          <p className="pt-3 text-xs text-muted">{chosen === 'replace' ? tr('Se l’originale era la copertina, la copertina diventa la nuova.', 'If the original was the cover, the new one becomes the cover.') : tr('La copertina resta la stessa. Il confronto si vede sul tuo sito, non sui portali.', 'The cover stays the same. The comparison shows on your website, not on portals.')}</p>
           <div className="flex flex-wrap items-center justify-end gap-2 pt-4 max-sm:[&>button]:flex-1">
             {state === 'err' && <span className="mr-auto text-xs text-rose-600">{tr('Non sono riuscito a salvarla, riprova.', 'I couldn\'t save it, please try again.')}</span>}
             <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
