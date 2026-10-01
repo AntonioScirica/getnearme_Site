@@ -288,6 +288,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
   // aggiungere foto dopo la creazione (anche a un immobile salvato senza foto): su R2, poi in coda all'immobile
   const [adding, setAdding] = useState(false);
+  const [addMenu, setAddMenu] = useState(false);
   const [picking, setPicking] = useState(false); // scelta di foto gia' fatte (Galleria) da aggiungere all'immobile
   const addUrls = async (urls: string[]) => {
     setPicking(false); setAdding(true);
@@ -362,6 +363,9 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
             <span className="text-xs text-muted">{tr('La prima diventa la copertina', 'The first one becomes the cover')}</span>
           </label>
         )}
+        {!photos.length && (
+          <button type="button" onClick={() => setPicking(true)} className="-mt-3 flex w-full items-center justify-center gap-1.5 text-sm font-medium text-brand"><Images size={14} /> {tr('Oppure prendile dalla Galleria', 'Or pick them from the Gallery')}</button>
+        )}
         {photos.length > 0 && (
           <section className="rounded-2xl bg-canvas p-3">
             <div className="flex items-center gap-3">
@@ -374,10 +378,17 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
               </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> {tr('Riordina', 'Reorder')}</button>
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
-              <label className={`flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white ${adding ? 'pointer-events-none opacity-60' : ''}`}><input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</label>
-              <button type="button" onClick={() => setPicking(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Images size={14} /> {tr('Dalla Galleria', 'From Gallery')}</button>
+              {/* Aggiungi: dal computer o dalla Galleria, in un solo pulsante */}
+              <span className="relative">
+                <button type="button" onClick={() => setAddMenu(o => !o)} disabled={adding} className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</button>
+                {addMenu && (
+                  <span className="blur-in absolute right-0 top-12 z-30 flex w-52 flex-col rounded-2xl bg-white p-1.5 text-sm shadow-lg ring-1 ring-black/5">
+                    <label className="flex h-10 cursor-pointer items-center gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><input type="file" accept="image/*" multiple className="hidden" onChange={e => { setAddMenu(false); void addPhotos(e.target.files); e.target.value = ''; }} /><ImagePlus size={15} /> {tr('Dal computer o telefono', 'From your device')}</label>
+                    <button type="button" onClick={() => { setAddMenu(false); setPicking(true); }} className="flex h-10 items-center gap-2 rounded-xl px-3 text-left font-medium hover:bg-canvas"><Images size={15} /> {tr('Dalla Galleria', 'From Gallery')}</button>
+                  </span>
+                )}
+              </span>
             </div>
           </section>
         )}

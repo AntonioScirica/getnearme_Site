@@ -148,6 +148,9 @@ function PlatformInner({ userData }: { userData: UserData }) {
   }, [wantedId, projects, checkedId]);
   // cambio pagina: si riparte dall'alto (restava lo scorrimento della pagina prima, es. dopo aver creato un immobile)
   useEffect(() => { document.querySelector('main')?.scrollTo(0, 0); window.scrollTo(0, 0); }, [route]);
+  // tornando agli immobili (es. dalla chat dopo Salva nell'immobile) si rileggono: con l'elenco vecchio la scheda
+  // mostrava la foto sostituita e il nuovo ordine delle foto veniva rifiutato dal server
+  useEffect(() => { if (route.startsWith('/immobile')) reload(); }, [route]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     reload();
     try { localStorage.setItem('agenteimmo:has-account', '1'); } catch { /* niente storage */ } // /accedi poi si apre sull'accesso
