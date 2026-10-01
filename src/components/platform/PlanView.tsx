@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Coins, Copy, Gift, Loader2, Sparkles, UserRound, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
@@ -170,7 +171,8 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
         </>
       )}
       {/* pagamento non partito (pacchetto o piano): avviso in basso, sempre in vista anche su telefono, si chiude da solo */}
-      {buyError && <p role="alert" className="blur-in fixed bottom-[84px] left-1/2 z-40 w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-center text-sm font-medium text-white shadow-lg md:bottom-6">{buyError}</p>}
+      {/* nel body: un antenato con transform (fade-up) renderebbe fixed relativo a lui */}
+      {buyError && createPortal(<p role="alert" className="blur-in fixed bottom-[84px] left-1/2 z-40 w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-center text-sm font-medium text-white shadow-lg md:bottom-6">{buyError}</p>, document.body)}
       {/* codice: chi ha un piano ne inserisce uno; l'affiliato (anche senza piano) al posto del campo vede il suo */}
       {c && <CodeBox canRedeem={c.plan !== 'none' || !!c.unlimited} onReady={() => setCodeReady(true)} />}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}

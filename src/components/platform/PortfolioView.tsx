@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, MessageCircle, ChevronDown, Copy, Eye, EyeOff, ExternalLink, Globe, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2, Info } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
@@ -207,9 +208,9 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
           {/* Pubblica a destra, sulla stessa riga */}
           <div className="flex items-center gap-3 text-sm">
-            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? tr('Modifiche non pubblicate', 'Unpublished changes') : ''}</span>
+            <span className={`max-md:hidden ${dirty ? 'font-medium' : 'text-muted'}`}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? tr('Modifiche non pubblicate', 'Unpublished changes') : ''}</span>
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'}
-              className="flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
+              className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
               {saved === 'ok' ? tr('Online', 'Live') : tr('Salva e pubblica', 'Save and publish')}
             </button>
@@ -218,15 +219,17 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         {/* barra e sito entrano con la stessa dissolvenza della pagina (prima comparivano di scatto dopo lo scheletro) */}
         {/* i dati d'esempio dell'anteprima (lib/siteTemplates PLACEHOLDERS, SAMPLE_REVIEWS) non vanno mai online: si dice chiaro */}
         <p className="blur-in mb-4 flex items-start gap-2 rounded-2xl bg-brand/5 px-4 py-3 text-sm text-ink/80 ring-1 ring-brand/15"><Info size={16} className="mt-0.5 shrink-0 text-brand" />{tr('Telefono, email, P.IVA, numeri, zone e recensioni che vedi qui sono esempi finché non metti i tuoi. Sul sito pubblicato compaiono solo i tuoi dati: le parti senza dati non si vedono.', 'Phone, email, VAT, numbers, areas and reviews shown here are examples until you add yours. Your published site only shows your own data: sections without data are hidden.')}</p>
-        {/* telefono: con modifiche da pubblicare (o appena pubblicate) la barra resta in basso, sopra il menu */}
-        {(dirty || saved !== 'idle') && (
+        {/* telefono: con modifiche da pubblicare (o appena pubblicate) la barra resta in basso, sopra il menu.
+            Nel body: dentro la pagina un antenato con transform (fade-up) rende fixed relativo a lui */}
+        {(dirty || saved !== 'idle') && createPortal(
           <div className="blur-in fixed inset-x-4 bottom-[84px] z-30 flex items-center justify-between gap-3 rounded-full bg-white p-1.5 pl-5 text-sm shadow-[0_10px_40px_-15px_rgba(0,0,0,.35)] ring-1 ring-line md:hidden">
             <span className="min-w-0 truncate font-medium">{saved === 'ok' ? tr('Il tuo sito è online', 'Your website is live') : tr('Modifiche non pubblicate', 'Unpublished changes')}</span>
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-4 font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
               {saved === 'ok' ? tr('Online', 'Live') : tr('Salva e pubblica', 'Save and publish')}
             </button>
-          </div>
+          </div>,
+          document.body,
         )}
         <div data-tour="site-editor" className={`blur-in grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)] ${dirty || saved !== 'idle' ? 'max-md:pb-16' : ''}`} style={{ animationDelay: '.1s' }}>
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
