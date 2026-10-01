@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import PhotoViewer from '@/components/ui/PhotoViewer';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown from '@/components/ui/Dropdown';
-import { downloadImage } from '@/lib/staging';
+import { downloadImage, STAGING_ANGLES, STAGING_STYLES } from '@/lib/staging';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW } from './api';
 import { FAKE_MEDIA, FAKE_PROPERTIES } from '@/lib/fakeProperties';
@@ -57,7 +57,9 @@ const PERIODS = [
 type Period = (typeof PERIODS)[number]['value'];
 const PAGE = 24;
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: tr('Prima', 'Before') }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text || tr('Modifica', 'Edit') }))];
+// richiesta salvata come id dello stile ("modern", "empty day"...): si mostra il nome in italiano
+const nice = (t: string) => t.split(' ').map(w => STAGING_STYLES.find(x => x.id === w)?.label ?? STAGING_ANGLES.find(x => x.id === w)?.label ?? (w === 'planimetria' ? tr('Planimetria', 'Floor plan') : w)).join(', ')
+const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: tr('Prima', 'Before') }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text ? nice(s.text) : tr('Modifica', 'Edit') }))];
 
 // Galleria: divisa per immobile, con ricerca (stanza, casa, richiesta), filtri e caricamento a scorrimento
 // (24 alla volta). Passando sopra una foto si vede com'era all'inizio.
@@ -73,6 +75,19 @@ export default function MediaView() {
   // selezione multipla per cancellare
   const [selecting, setSelecting] = useState(false);
   const [sel, setSel] = useState<Set<string>>(new Set());
+  // scarico con conferma: "Scaricata" sul pulsante per un attimo (prima non diceva niente)
+  const [got, setGot] = useState<string | null>(null);
+  const dl = async (m: { id: string; video?: string; dopo: string }, n = 0) => {
+    await downloadImage(m.video ?? m.dopo, m.video ? `agenteimmo-video${n ? `-${n}` : ''}.mp4` : `agenteimmo${n ? `-${n}` : ''}.jpg`);
+    setGot(m.id); setTimeout(() => setGot(g => (g === m.id ? null : g)), 2000);
+  };
+  const [dlAll, setDlAll] = useState(false);
+  const downloadSel = async () => {
+    setDlAll(true);
+    let n = 0;
+    for (const m of (items ?? []).filter(x => sel.has(x.id))) await dl(m, ++n).catch(() => {});
+    setDlAll(false);
+  };
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [note, setNote] = useState('');
@@ -253,7 +268,7 @@ export default function MediaView() {
                     </button>
                     <div className="flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted">
                       <span className="min-w-0 flex-1 truncate">{DAY.format(m.at)}</span>
-                      <button type="button" onClick={() => downloadImage(m.video ?? m.dopo, m.video ? 'agenteimmo-video.mp4' : 'agenteimmo.jpg')} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><Download size={14} className="translate-y-px" /> {tr('Scarica', 'Download')}</button>
+                      <button type="button" onClick={() => void dl(m)} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas">{got === m.id ? <><Check size={14} className="text-emerald-600" /> {tr('Scaricata', 'Downloaded')}</> : <><Download size={14} className="translate-y-px" /> {tr('Scarica', 'Download')}</>}</button>
                     </div>
                   </div>
                 ))}
@@ -272,6 +287,7 @@ export default function MediaView() {
           <div className={`pointer-events-auto relative flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
             <span className="font-medium">{sel.size} {tr('selezionate', 'selected')}</span>
             <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Seleziona tutte', 'Select all')}</button>
+            <button type="button" disabled={!sel.size || dlAll} onClick={() => void downloadSel()} className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-black disabled:opacity-40">{dlAll ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} {tr('Scarica', 'Download')}</button>
             <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>
         </div>,
