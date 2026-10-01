@@ -135,6 +135,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const publish = async () => {
     if (!sitePlan) { go('/piano?cambia=1'); return; }
     const next = !site.published;
+    // spegnere: si chiede (i link gia' mandati ai clienti smettono di funzionare)
+    if (!next && !confirm(tr('Togliere il sito da internet? I link già mandati ai clienti mostreranno "sito non disponibile".', 'Take the website offline? Links already sent to clients will show "website not available".'))) return;
     setSite(s => ({ ...s!, published: next }));
     const d = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: next }) }).then(r => r.json()).catch(() => ({}));
     if (d.published !== next) setSite(s => ({ ...s!, published: !next }));
@@ -147,6 +149,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   // Senza piano col sito si va ai piani (prima sembrava riuscito e la pagina pubblica dava 404).
   const save = async () => {
     if (!sitePlan) { go('/piano?cambia=1'); return; }
+    if (!confirm(site.published ? tr('Mettere online le modifiche? I clienti le vedranno subito.', 'Put the changes live? Clients will see them right away.') : tr('Mettere online il tuo sito? I clienti lo vedranno subito.', 'Put your website live? Clients will see it right away.'))) return;
     setSaved('saving');
     const d = await authFetch('/api/platform/site', { method: 'PUT', body: JSON.stringify(cfg) }).then(r => r.json()).catch(() => ({}));
     if (!d.config) { setSaved('idle'); return; }
