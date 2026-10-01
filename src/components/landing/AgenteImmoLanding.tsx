@@ -377,6 +377,15 @@ function TryIt({ gate = false }: { gate?: boolean }) {
   };
   const [picking, setPicking] = useState(false); // scelta del template del video
   const [anims, setAnims] = useState(false); // secondo passo di Prima e dopo: Popup o Dall'alto (come in chat)
+  // telefono: a ogni passo (foto pronta, scelta video, animazione, video in corso o finito) il riquadro torna al centro dello schermo
+  const boxRef = useRef<HTMLDivElement>(null);
+  const firstStep = useRef(true);
+  useEffect(() => {
+    if (firstStep.current) { firstStep.current = false; return; }
+    if (!matchMedia('(max-width: 639px)').matches) return;
+    const t = setTimeout(() => boxRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80); // dopo il cambio di altezza
+    return () => clearTimeout(t);
+  }, [picking, anims, vBusy, busy, !!after, !!video]); // eslint-disable-line react-hooks/exhaustive-deps
   const [emptied, setEmptied] = useState(false); // stanza svuotata: il video va dalla foto originale alla vuota (i mobili spariscono)
   const toVideo = async (anim: 'popup' | 'gravity', vanish = false) => {
     if (!after || vBusy) return;
@@ -397,7 +406,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
   };
   return (
     <>
-        <div className="rounded-[28px] bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:rounded-[32px] sm:p-2">
+        <div ref={boxRef} className="rounded-[28px] bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:rounded-[32px] sm:p-2">
           <div onContextMenu={e => e.preventDefault()} className="relative overflow-hidden rounded-[22px] bg-canvas sm:rounded-[24px]">
             {/* sul risultato della prova niente tasto destro (in pagina c'e' comunque solo la versione con la filigrana) */}
             {video ? (
