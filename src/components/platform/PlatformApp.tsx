@@ -4,7 +4,7 @@ import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown, Gift, Lock } from 'lucide-react';
+import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Download, BookOpen, ChevronDown, Gift, Lock } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -193,20 +193,16 @@ function PlatformInner({ userData }: { userData: UserData }) {
       {tour && !chat && credits && <Tour noPlan={noPlan} noSite={!(credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro')} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
-        <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-lg:flex'}`}>
-          {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro e i crediti (la chat ha tutto lo spazio) */}
+        <div className="mx-auto grid h-20 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6 max-lg:flex">
+          {/* in chat: crediti e profilo a sinistra, menu al centro come nelle altre pagine (non si sposta), Nuova chat a destra */}
           {chat ? (<>
-            {/* Indietro dalla chat: all'immobile se la chat e' partita da li' (?project=), altrimenti alla home */}
-            <button type="button" onClick={() => { const pid = new URLSearchParams(query).get('project'); go(pid ? `/immobile/${pid}` : '/'); }}
-              aria-label={tr('Indietro', 'Back')} className="-ml-2 flex h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-sm font-medium text-brand ease-smooth transition-colors hover:bg-brand/10 sm:ml-0 sm:px-3"><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
+            <div className="flex items-center justify-self-start">{credits && <CreditsPill c={credits} />}</div>
             {/* menu anche in chat (da lg; sotto c'e' la barra in basso): si va ovunque senza tornare indietro */}
-            <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 lg:flex">
+            <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 lg:flex">
               {NAV.map(({ path, label }) => <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${path === '/staging' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>)}
             </nav>
-            {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
-            {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
-            {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+            {/* entrando in chat Nuova chat (con lo storico dentro) arriva in dissolvenza, solo quando si sa il piano */}
+            <div className="ml-auto flex items-center justify-self-end lg:ml-0">
               {credits && !noPlan && (
                 <span className="blur-in flex h-10 items-center rounded-full bg-white ring-1 ring-line lg:pr-1" style={{ animationDelay: '.15s' }}>
                   {/* telefono: solo la matita, la scritta da sm in su */}
@@ -215,7 +211,6 @@ function PlatformInner({ userData }: { userData: UserData }) {
                   <ChatHistory />
                 </span>
               )}
-              {credits && <CreditsPill c={credits} />}
             </div>
           </>) : <>
           <a href="#/" className="flex items-center gap-2 justify-self-start">
