@@ -12,6 +12,8 @@ import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView, { TemplatePreview } from './PortfolioView';
 import Tour, { TOUR_KEY } from './Tour';
+// tour ancora da fare (segnato a fine onboarding, tolto quando finisce o si salta)
+const tourPending = () => { try { return localStorage.getItem(TOUR_KEY) === '1'; } catch { return false; } };
 import type { TemplateId } from '@/lib/siteTemplates';
 import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
@@ -133,14 +135,6 @@ function PlatformInner({ userData }: { userData: UserData }) {
   const [demoGate, setDemoGate] = useState(hasDemo);
   // tour guidato: dopo l'onboarding (flag in localStorage) o da #/tour
   const [tour, setTour] = useState(() => { try { return localStorage.getItem(TOUR_KEY) === '1'; } catch { return false; } });
-  // popup dei crediti di benvenuto aperto: il tour aspetta che si chiuda (prima gli finiva sopra e lo copriva)
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
-  useEffect(() => {
-    const on = () => setWelcomeOpen(true), off = () => setWelcomeOpen(false);
-    try { if (sessionStorage.getItem('agenteimmo:welcome')) on(); } catch { /* niente */ } // eslint-disable-line react-hooks/set-state-in-effect
-    window.addEventListener('agenteimmo:welcome', on); window.addEventListener('agenteimmo:welcome-closed', off);
-    return () => { window.removeEventListener('agenteimmo:welcome', on); window.removeEventListener('agenteimmo:welcome-closed', off); };
-  }, []);
   const morph = morphAt === route;
 
   const reload = () => fetchProjects().then(setProjects);
@@ -193,10 +187,10 @@ function PlatformInner({ userData }: { userData: UserData }) {
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
-      {/* appena finito l'onboarding: il regalo solo a transizione finita (tour attivato), prima compariva sopra i passi che sfumavano */}
-      {(!morph || tour) && <WelcomeModal />}
+      {/* il regalo dei crediti dopo il tour (finito o saltato): mai sopra l'onboarding o il tour */}
+      {!tour && !tourPending() && <WelcomeModal />}
       <DemoDownload />
-      {tour && !chat && credits && !welcomeOpen && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
+      {tour && !chat && credits && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-lg:flex'}`}>
