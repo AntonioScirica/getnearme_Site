@@ -1647,7 +1647,7 @@ const SAVE_ANIM = `
 function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
   const [pid, setPid] = useState<string>(projectId ?? '');
-  const [mode, setMode] = useState<'add' | 'replace'>('add');
+  const [mode, setMode] = useState<'add' | 'plain' | 'replace'>('add');
   const [state, setState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle');
   // un solo immobile: scelto da solo, senza menu
   // indirizzo del sito: "Vedi l'immobile" apre la casa online se e' pubblica
@@ -1662,16 +1662,17 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
   const p = projects?.find(x => x.id === pid);
   const photosOf = (x?: ProjectData) => { const d = (x?.import_data ?? {}) as { photos?: unknown }; return Array.isArray(d.photos) ? d.photos as string[] : x?.cover ? [x.cover] : []; };
   const canReplace = !!origin && photosOf(p).includes(origin);
-  const chosen = canReplace ? mode : 'add';
+  const chosen = mode === 'replace' && !canReplace ? 'add' : mode;
   const save = async () => {
     if (!pid) return;
     setState('busy');
-    const beforeUrl = canReplace ? origin! : before.startsWith('data:') ? await uploadDataUrl(before, 'properties') : before;
-    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: pid, mode: chosen, before: beforeUrl || undefined, after }) }).catch(() => null);
+    // Aggiungi: solo la foto nuova in coda, l'originale resta e non c'e' il confronto Prima / Dopo
+    const beforeUrl = chosen === 'plain' ? '' : canReplace ? origin! : before.startsWith('data:') ? await uploadDataUrl(before, 'properties') : before;
+    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: pid, mode: chosen === 'plain' ? 'add' : chosen, before: beforeUrl || undefined, after }) }).catch(() => null);
     setState(r?.ok ? 'ok' : 'err');
   };
   const tag = 'absolute bottom-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white';
-  const option = (id: 'add' | 'replace', title: string, text: string, visual: React.ReactNode, off?: boolean) => (
+  const option = (id: 'add' | 'plain' | 'replace', title: string, text: string, visual: React.ReactNode, off?: boolean) => (
     <button type="button" onClick={() => setMode(id)} aria-pressed={chosen === id} disabled={off}
       className={`flex min-w-0 flex-1 flex-col rounded-3xl bg-white p-2 text-left ring-1 ease-smooth transition-shadow disabled:cursor-not-allowed disabled:opacity-45 ${chosen === id ? 'ring-2 ring-brand' : 'ring-line enabled:hover:ring-ink/20'}`}>
       <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas">{visual}</span>
@@ -1681,12 +1682,12 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
   return createPortal(
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => state !== 'busy' && onClose()}>
       <style>{SAVE_ANIM}</style>
-      <div onClick={e => e.stopPropagation()} className="max-h-full w-full max-w-xl overflow-y-auto overscroll-contain rounded-[32px] bg-white p-6 shadow-2xl">
+      <div onClick={e => e.stopPropagation()} className="max-h-full w-full max-w-3xl overflow-y-auto overscroll-contain rounded-[32px] bg-white p-6 shadow-2xl">
         {state === 'ok' ? (
           <div className="blur-in flex flex-col items-center gap-3 py-6 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check size={26} /></span>
             <div className="text-lg font-semibold">{tr('Salvata in', 'Saved to')} {p?.titolo || p?.nome || tr('immobile', 'property')}</div>
-            <p className="text-sm text-muted">{chosen === 'add' ? tr('Sul sito la trovi con l’etichetta Prima / Dopo.', 'On the website you\'ll find it with the Before / After label.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
+            <p className="text-sm text-muted">{chosen === 'add' ? tr('Sul sito la trovi con l’etichetta Prima / Dopo.', 'On the website you\'ll find it with the Before / After label.') : chosen === 'plain' ? tr('L’abbiamo aggiunta alle foto dell’immobile.', 'We added it to the property photos.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
             <div className="flex gap-2 pt-2">
               <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Chiudi', 'Close')}</button>
               {p?.is_public && slug
@@ -1719,6 +1720,14 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
                 <span className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-md" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={14} /></span>
               </span>
               <span className={`${tag} left-2`}>{tr('Prima', 'Before')}</span><span className={`${tag} right-2`}>{tr('Dopo', 'After')}</span>
+            </>)}
+            {option('plain', tr('Aggiungi', 'Add'), tr('Aggiunge la foto nuova e tiene anche l’altra, senza confronto.', 'Adds the new photo and keeps the other one too, no comparison.'), <>
+              {/* le due foto affiancate: l'originale resta, la nuova si aggiunge */}
+              <span className="absolute inset-0 grid grid-cols-2 gap-1">
+                <img src={before} alt="" className="h-full w-full object-cover" />
+                <img src={after} alt="" className="h-full w-full object-cover" />
+              </span>
+              <span className={`${tag} left-2`}>{tr('Resta', 'Kept')}</span><span className={`${tag} right-2`}>{tr('Nuova', 'New')}</span>
             </>)}
             {/* sempre visibile, spenta quando la foto di partenza non e' di quell'immobile: si capisce che esiste */}
             {option('replace', tr('Sostituisci', 'Replace'), canReplace ? tr('La foto nuova prende il posto dell’originale.', 'The new photo replaces the original.') : tr('Solo se parti da una foto di questo immobile.', 'Only if you start from a photo of this property.'), <>
