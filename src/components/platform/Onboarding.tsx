@@ -11,6 +11,8 @@ import { PLACEHOLDER_PHOTOS } from '@/components/site/ui';
 import { cleanSite, TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
 import { tr } from './i18n';
 import { useCredits } from './PlanView';
+import { SITE_PERKS } from '@/components/PlanParts';
+import InlineSlider from '@/components/InlineSlider';
 
 // Onboarding: l'AI "costruisce" il sito dell'agente davanti ai suoi occhi.
 // 0 logo al centro, poi sale e saluta > 1 solo il campo nome > 2 compare il finto sito col nome, lo slug si scrive da solo
@@ -55,6 +57,9 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     return () => clearTimeout(t);
   }, [bar, typed, slug.length]);
   const [check, setResult] = useSlugCheck(slug, null);
+  // la riga del link segue la fine mentre si scrive (anche durante la scrittura automatica)
+  const linkRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => { const el = linkRef.current; if (el) el.scrollLeft = el.scrollWidth; }, [slug, typed]);
   // Sequenza del cambio passo: 1) testo e contenuto vecchi sfumano (450 ms) 2) il box si adatta a larghezza e altezza
   // del contenuto nuovo, invisibile (700 ms) 3) il contenuto nuovo entra, card una alla volta, poi la CTA.
   const [shown, setShown] = useState<Step>(0);
@@ -139,14 +144,14 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   };
 
   const [head, sub] = shown === 4 && noSite ? [tr('Tutto pronto, iniziamo.', 'All set, let’s start.'), tr('Ecco cosa puoi fare con Agente Immo.', 'Here’s what you can do with Agente Immo.')]
-    : shown === 2 && noSite ? [tr('Puoi avere anche un tuo sito.', 'You can have your own website too.'), tr('Con i tuoi immobili, quando passi a Plus o Pro.', 'With your properties, when you move to Plus or Pro.')]
+    : shown === 2 && noSite ? [tr('Puoi avere anche un tuo sito.', 'You can have your own website too.'), tr('È incluso nei piani Plus e Pro.', 'It’s included in the Plus and Pro plans.')]
     : TITLES[shown];
   const words = head.split(' ');
   const ctaOff = step === 2 && !noSite && (!done || check.state !== 'ok');
   const base = cleanSite(null, name.trim(), ''); // configurazione di partenza per le anteprime dei modelli
 
   return (
-    <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-10 font-body text-ink" style={DOTS_BG}>
+    <div className="flex h-full flex-col items-center justify-center-safe overflow-y-auto px-4 py-10 font-body text-ink sm:px-6" style={DOTS_BG}>{/* center-safe: piu alto dello schermo (telefono, ultimo passo) parte dall alto, prima il titolo restava tagliato sopra */}
       {/* l'AI che parla: icona + titolo che si riscrive a ogni passo */}
       <img src="/immo/logo-mark.png" alt="" className="fade h-14 w-14" style={{ viewTransitionName: 'ob-logo' }} />
       {/* il titolo apre spazio sotto il logo: il logo sale mentre compaiono le parole */}
@@ -163,7 +168,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
 
       {/* passo 1: solo il nome, niente altro intorno */}
       <div inert={step !== 1} className={`grid w-full max-w-md transition-[grid-template-rows,opacity] duration-[900ms] ease-smooth ${step === 1 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-        <div className={`-mx-8 min-h-0 overflow-hidden px-8 transition-[padding] duration-[900ms] ease-smooth ${step === 1 ? 'pb-8' : 'pb-0'}`}>
+        <div className={`-mx-4 min-h-0 overflow-hidden px-4 sm:-mx-8 sm:px-8 transition-[padding] duration-[900ms] ease-smooth ${step === 1 ? 'pb-8' : 'pb-0'}`}>
           <div className={`mt-8 flex items-center rounded-full bg-white p-1.5 pl-6 ${CARD_SHADOW}`}>
             <input ref={nameRef} value={name} onChange={e => onName(e.target.value)} onKeyDown={e => e.key === 'Enter' && next()} maxLength={80} placeholder={tr('Mario Rossi', 'John Smith')}
               className="min-w-0 flex-1 bg-transparent font-display text-xl font-bold tracking-tight outline-none placeholder:text-muted/40" />
@@ -174,21 +179,26 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
 
       {/* passi 2 e 3: UN solo contenitore. Il contenuto vecchio sfuma, il box si adatta (altezza e larghezza), entra il nuovo */}
       <div inert={step < 2} className={`grid w-full transition-[grid-template-rows,opacity,max-width] duration-[900ms] ease-smooth ${shown === 4 ? 'max-w-3xl' : shown === 3 ? 'max-w-4xl' : 'max-w-2xl'} ${step >= 2 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-        <div className={`-mx-8 min-h-0 overflow-hidden px-8 transition-[padding] duration-[900ms] ease-smooth ${step >= 2 ? 'pb-8' : 'pb-0'}`}>
+        <div className={`-mx-4 min-h-0 overflow-hidden px-4 sm:-mx-8 sm:px-8 transition-[padding] duration-[900ms] ease-smooth ${step >= 2 ? 'pb-8' : 'pb-0'}`}>
           <div className={`mt-8 overflow-hidden rounded-[28px] bg-white transition-[height] duration-[900ms] ease-smooth ${CARD_SHADOW}`} style={{ height: boxH }}>
             <div ref={boxRef} className={`p-2 transition-[opacity,filter] duration-[450ms] ease-smooth ${shown !== step || !settled ? 'opacity-0 blur-[6px]' : ''}`}>
               {shown === 4 ? (
             <div className="grid gap-2 sm:grid-cols-3">
               {TOOLS.map(({ kicker, title, img }, i) => (
                 // un clic su una card fa come Inizia (sembravano cliccabili e non lo erano)
-                <div key={title} role="button" tabIndex={0} onClick={() => void save()} onKeyDown={e => { if (e.key === 'Enter') void save(); }} className={`flex cursor-pointer flex-col rounded-[20px] bg-canvas p-5 ease-smooth transition-shadow hover:shadow-md ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
-                  <span className="text-xs text-muted">{title}</span>
-                  <span className="mt-1 text-lg font-bold leading-tight tracking-tight">{kicker}</span>
-                  <div className="relative mt-4">
-                    <img src={img} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
+                <div key={title} role="button" tabIndex={0} onClick={() => void save()} onKeyDown={e => { if (e.key === 'Enter') void save(); }} className={`flex cursor-pointer flex-col rounded-[20px] bg-canvas p-4 ease-smooth max-sm:flex-row max-sm:items-center max-sm:gap-4 sm:p-5 transition-shadow hover:shadow-md ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
+                  {/* telefono: riga compatta come le card della home (foto piccola e domanda) */}
+                  <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />
+                  <span className="flex min-w-0 flex-col max-sm:flex-1">
+                    <span className="text-xs text-muted max-sm:text-sm">{title}</span>
+                    <span className="mt-1 text-lg font-bold leading-tight tracking-tight">{kicker}</span>
+                  </span>
+                  {/* Home staging: prima e dopo col cursore da trascinare (il trascinamento non apre la piattaforma) */}
+                  <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-xl max-sm:hidden" onClick={i === 2 ? e => e.stopPropagation() : undefined}>
+                    {i === 2 ? <InlineSlider before="/immo/home/staging-before.webp" after={img} isVertical={false} showImages interactive /> : <img src={img} alt="" className="h-full w-full object-cover" />}
                   </div>
-                  <span className="mt-4 block h-2 w-4/5 rounded-full bg-white" />
-                  <span className="mt-1.5 block h-2 w-3/5 rounded-full bg-white" />
+                  <span className="mt-4 block h-2 w-4/5 rounded-full bg-white max-sm:hidden" />
+                  <span className="mt-1.5 block h-2 w-3/5 rounded-full bg-white max-sm:hidden" />
                 </div>
               ))}
             </div>
@@ -204,26 +214,39 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
                 </div>
               ))}
             </div>
-            <div className="flex min-h-12 items-center justify-end gap-2 px-4 pb-2 pt-3">
+            <div className="flex min-h-12 items-center justify-end gap-2 px-4 pb-2 pt-3 max-sm:px-2 max-sm:[&>button]:flex-1 max-sm:[&>button]:justify-center">
               <button type="button" onClick={() => setStep(2)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>
               <button type="button" onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
             </div>
             </>
               ) : (
                 <>
+            {noSite ? (
+              // senza sito nel piano: una card che spiega cosa avrebbe (niente link da scegliere)
+              <div className="rounded-[20px] bg-canvas p-5 sm:p-6">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand"><Globe size={20} /></span>
+                <div className="mt-4 font-display text-xl font-bold tracking-tight">{tr('Il tuo sito da agente', 'Your agent website')}</div>
+                <ul className="mt-4 space-y-3">
+                  {SITE_PERKS.map(([Icon, it, en]) => <li key={it} className="flex items-center gap-3 text-[15px]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-brand"><Icon size={15} /></span>{tr(it, en)}</li>)}
+                </ul>
+              </div>
+            ) : (
             <div className="overflow-hidden rounded-[20px] ring-1 ring-black/5">
               {/* barra indirizzi: lo slug si scrive da solo, poi e' un campo */}
               <div>
                 <div>
-                  <div className="flex h-12 items-center gap-3 bg-canvas px-4">
+                  <div className="flex h-12 items-center gap-3 bg-canvas px-4 max-sm:h-auto max-sm:flex-wrap max-sm:py-3">{/* telefono: il link sotto i pallini, a tutta larghezza */}
                     <span className="flex gap-1.5">{['#ff5f57', '#febc2e', '#28c840'].map(c => <i key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />)}</span>
-                    <div className={`flex h-8 flex-1 items-center rounded-full bg-white px-3 text-[13px] ring-1 transition-[box-shadow] ease-smooth ${bar ? 'ring-brand' : 'ring-black/5'}`}>
+                    <div className={`flex h-8 min-w-0 flex-1 items-center rounded-full bg-white px-3 text-[13px] ring-1 max-sm:h-10 max-sm:basis-full transition-[box-shadow] ease-smooth ${bar ? 'ring-brand' : 'ring-black/5'}`}>
                       <Globe size={13} className="mr-2 shrink-0 text-brand" />
+                      {/* indirizzo intero in una riga che scorre: scrivendo va indietro tutto il link (prima scorreva solo la parte scritta) */}
+                      <span ref={linkRef} className="flex min-w-0 flex-1 items-center overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <span className="shrink-0 text-muted">{portfolioPrefix()}</span>
-                                            {bar && !done && <span className="min-w-0 truncate font-medium">{slug.slice(0, typed)}<span className="animate-pulse">|</span></span>}
-                      {done && noSite && <span className="min-w-0 truncate font-medium">{slug}</span>}
-                      {done && !noSite && <input autoFocus value={slug} onChange={e => { setSlugTouched(true); const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40); setSlug(v); setTyped(v.length); }}
-                        onKeyDown={e => e.key === 'Enter' && next()} placeholder={tr('mario-rossi', 'john-smith')} className="min-w-0 flex-1 bg-transparent font-medium outline-none" />}
+                      {bar && !done && <span className="shrink-0 font-medium">{slug.slice(0, typed)}<span className="animate-pulse">|</span></span>}
+                      {done && noSite && <span className="shrink-0 font-medium">{slug}</span>}
+                      {done && !noSite && <span className="inline-grid shrink-0">{/* larghezza = testo vero (in ch restava spazio vuoto e il link scorreva troppo) */}<span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre pr-px font-medium">{slug || tr('mario-rossi', 'john-smith')}</span><input autoFocus value={slug} onChange={e => { setSlugTouched(true); const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40); setSlug(v); setTyped(v.length); }}
+                        onKeyDown={e => e.key === 'Enter' && next()} placeholder={tr('mario-rossi', 'john-smith')} className="col-start-1 row-start-1 w-full min-w-0 bg-transparent font-medium outline-none" /></span>}
+                      </span>
                       {done && !noSite && <span className="ml-2 shrink-0">
                         {check.state === 'checking' && <Loader2 size={14} className="animate-spin text-muted" />}
                         {check.state === 'ok' && <Check size={14} className="text-green-600" />}
@@ -234,14 +257,14 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
                 </div>
               </div>
               {/* pagina: intestazione col nome + card immobili (scheletro, non bottoni) */}
-              <div className="bg-white p-6">
+              <div className="bg-white p-4 sm:p-6">
                 <div className="flex items-center justify-between gap-4">
                   <span className="truncate font-display text-2xl font-bold tracking-tight">{name.trim()}</span>
                   <nav className="hidden shrink-0 gap-4 text-sm text-muted sm:flex">{[tr('Immobili', 'Properties'), tr('Servizi', 'Services'), tr('Contatti', 'Contact')].map(l => <span key={l}>{l}</span>)}</nav>
                 </div>
-                <div className="mt-5 grid grid-cols-3 gap-3">
-                  {LISTINGS.map(([src, price]) => (
-                    <div key={src} className="overflow-hidden rounded-xl ring-1 ring-black/5">
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{/* telefono: due case, tre erano strette */}
+                  {LISTINGS.map(([src, price], k) => (
+                    <div key={src} className={`overflow-hidden rounded-xl ring-1 ring-black/5 ${k === 2 ? 'max-sm:hidden' : ''}`}>
                       <img src={src} alt="" className="aspect-[4/3] w-full object-cover" />
                       <div className="p-3">
                         <span className="block text-sm font-bold">€ {price}</span>
@@ -253,18 +276,19 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
                 </div>
               </div>
             </div>
+            )}
 
             {/* piede: aiuto + avanti */}
-            <div className="flex min-h-12 items-center justify-between gap-3 px-4 pb-2 pt-3">
-              <span className="text-sm text-red-600">
-                {noSite && <span className="whitespace-nowrap text-muted">{tr('Con Plus e Pro', 'With Plus and Pro')}</span>}
+            {/* telefono: nota sopra, Indietro e Continua sotto a tutta larghezza */}
+            <div className="flex min-h-12 items-center justify-between gap-3 px-4 pb-2 pt-3 max-sm:flex-wrap max-sm:px-2">
+              <span className="text-sm text-red-600 max-sm:w-full max-sm:empty:hidden">
                 {error}
                 {done && !noSite && check.state === 'taken' && <>{tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline text-brand" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
                 {done && !noSite && check.state === 'invalid' && tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}
                 {done && !noSite && check.state === 'bad' && tr('Questo indirizzo contiene una parola che non possiamo usare.', 'This address contains a word we can’t use.')}
               </span>
-              <span className="flex items-center gap-2">
-                {step === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>}
+              <span className="flex items-center gap-2 max-sm:w-full max-sm:[&>button]:flex-1 max-sm:[&>button]:justify-center">
+                {shown === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>}
                 <button type="button" disabled={ctaOff} onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
               </span>
             </div>
@@ -276,10 +300,12 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
       </div>
 
       {/* CTA finale: lo spazio si apre col box, il bottone entra a scatto elastico (pop) dopo le card */}
-      <div inert={step !== 4} className={`grid transition-[grid-template-rows] duration-[900ms] ease-smooth ${step === 4 ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-        <div className="-mx-8 min-h-0 overflow-hidden px-8 pb-8">
-          <div className="mt-6 flex flex-col items-center gap-2">
-            <button type="button" disabled={saving} onClick={save} className={`btn-ink flex h-11 items-center gap-2 rounded-full px-6 text-sm font-semibold ${shown === 4 && settled ? 'pop' : 'scale-0 opacity-0'}`} style={{ animationDelay: '.45s' }}>
+      {/* telefono: Inizia sempre in vista, attaccato in fondo */}
+      <div inert={step !== 4} className={`grid transition-[grid-template-rows] duration-[900ms] ease-smooth max-sm:w-full ${step === 4 ? 'max-sm:sticky max-sm:bottom-0 max-sm:z-10 grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+        {/* sfumatura e spazio solo all'ultimo passo: prima, chiuso, lasciava una riga bianca sopra Continua */}
+        <div className={`-mx-4 min-h-0 overflow-hidden px-4 sm:-mx-8 sm:px-8 ${step === 4 ? 'pb-8 max-sm:bg-gradient-to-t max-sm:from-white max-sm:from-70% max-sm:to-transparent max-sm:pb-2' : ''}`}>
+          <div className="mt-6 flex flex-col items-center gap-2 max-sm:items-stretch">
+            <button type="button" disabled={saving} onClick={save} className={`btn-ink flex h-11 items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold max-sm:h-12 ${shown === 4 && settled ? 'pop' : 'scale-0 opacity-0'}`} style={{ animationDelay: '.45s' }}>
               {saving ? <Loader2 size={15} className="animate-spin" /> : null} {tr('Inizia', 'Start')} <ArrowRight size={15} />
             </button>
             {error && <span className="text-sm text-red-600">{error}</span>}
