@@ -465,6 +465,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const lastActive = useRef(0);
   const touch = useCallback(() => { lastActive.current = Date.now(); }, []);
 
+  // foto o video appena finiti: si scorre su di loro (al centro se ci stanno, altrimenti dall'inizio), non in fondo alla chat
+  const toMsg = useCallback((id: string) => {
+    requestAnimationFrame(() => {
+      const el = scroller.current?.querySelector<HTMLElement>(`[data-mid="${id}"]`), box = scroller.current;
+      if (!el || !box) return toBottom();
+      el.scrollIntoView({ block: el.offsetHeight < box.clientHeight - 240 ? 'center' : 'start', behavior: 'smooth' });
+    });
+  }, [toBottom]);
   // Modifica su una foto piu' in alto: si resta su quella foto (prima scendeva in fondo e ci si perdeva)
   const toZone = useCallback(() => {
     requestAnimationFrame(() => {
@@ -858,7 +866,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const v = r ? await r.json().catch(() => ({})) : {};
       if (v.url) {
         patchV(id, { url: v.url });
-        toBottom(); return;
+        toMsg(id); return;
       }
       if (v.error) { patchV(id, { err: fail }); return; }
     }
@@ -890,8 +898,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       .then(r => (r.ok ? r.json() : null)).then(c => { if (c?.state) setRoomState(c.state); }).catch(() => {});
     setTimeout(() => patch(id, { reveal: 'line' }), 600);
     setTimeout(() => patch(id, { reveal: 'slider' }), 1450);
-    // foto pronta: si scorre in fondo per vederla tutta, compresa la riga sotto (arriva con lo slider)
-    toBottom(); setTimeout(toBottom, 1500);
+    // foto pronta: si scorre sulla foto (anche dopo lo slider, che allunga la riga sotto)
+    toMsg(id); setTimeout(() => toMsg(id), 1500);
   };
 
   // Ricomincia da qui: i messaggi successivi restano (si puo' ripartire anche da li') ma sbiaditi,
@@ -1338,7 +1346,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               )}
             </div>
           ) : (
-            <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
+            <div key={m.id} data-mid={m.id} className={`blur-in flex scroll-mt-24 justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
               <div className={`w-full rounded-3xl bg-white p-2 ${CARD_SHADOW}`} style={{ maxWidth: `min(560px, calc(60vh * ${ratios[m.before] ?? 1.5} + 16px))` }}><AutoSize>
                 {/* Modifica: la foto resta dov'e' e diventa selezionabile, sotto cambiano solo i pulsanti */}
                 {/* card con foto: angoli tutti uguali (24), foto 16 = 24 - padding 8; la coda resta solo sui fumetti di testo */}
