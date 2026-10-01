@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Check, Globe, Loader2, X, Plus, Wand2 } from 'lucide-react';
+import { ArrowRight, Check, Globe, Loader2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { authFetch, portfolioPrefix, CARD_SHADOW } from './api';
 import { slugify, useSlugCheck, type Profile } from './ProfileForm';
@@ -30,9 +30,9 @@ const TITLES: Record<Step, [string, string]> = {
 const DOTS_BG = { background: 'radial-gradient(rgba(0,0,0,0.09) 1.2px, transparent 1.2px) 0 0 / 18px 18px, #fff', '--gnm-ease': 'cubic-bezier(.65, 0, .35, 1)' } as React.CSSProperties;
 // ultimo passo: le tre card della home, ferme (scheletro + testo, non sembrano bottoni)
 const TOOLS = [
-  { kicker: tr('Annuncio già online?', 'Listing already online?'), title: tr('Miglioralo', 'Improve it'), img: '/immo/home/demo-1.webp', badge: null },
-  { kicker: tr('Hai un nuovo immobile?', 'Got a new property?'), title: tr('Mettilo in vetrina', 'Put it on show'), img: '/immo/home/fan-2.webp', badge: Plus },
-  { kicker: 'Home staging', title: tr('Hai una stanza vuota?', 'Got an empty room?'), img: '/immo/home/staging-after.webp', badge: Wand2 },
+  { kicker: tr('Annuncio già online?', 'Listing already online?'), title: tr('Miglioralo', 'Improve it'), img: '/immo/home/demo-1.webp' },
+  { kicker: tr('Hai un nuovo immobile?', 'Got a new property?'), title: tr('Mettilo in vetrina', 'Put it on show'), img: '/immo/home/fan-2.webp' },
+  { kicker: 'Home staging', title: tr('Hai una stanza vuota?', 'Got an empty room?'), img: '/immo/home/staging-after.webp' },
 ];
 const LISTINGS = [['/immo/home/demo-1.webp', tr('245.000', '245,000')], ['/immo/home/demo-2.webp', tr('189.000', '189,000')], ['/immo/home/demo-3.webp', tr('320.000', '320,000')]];
 
@@ -101,13 +101,15 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
   }, []);
 
   // Link e modello solo con un piano che ha il sito (Plus, Pro, admin). Starter, senza piano o piano non ancora arrivato da
-  // Stripe: dal nome si va dritti alla fine; il link resta scelto in automatico e serve se poi passa a Plus o Pro.
+  // Stripe: dopo il nome vedono il sito col loro nome (si attiva con Plus o Pro), senza scegliere link e modello; il link resta
+  // scelto in automatico e serve se poi passano a Plus o Pro.
   const credits = useCredits();
   const noSite = !(credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'));
   const onName = (v: string) => { setName(v); if (!slugTouched) setSlug(slugify(v)); };
   const nameOk = name.trim().length >= 2;
   const next = () => {
-    if (step === 1 && nameOk && noSite) { if (!slug) setSlug(slugify(name)); setStep(4); }
+    // senza sito nel piano: si mostra lo stesso il sito col suo nome (si puo' avere con Plus o Pro), poi dritti alla fine
+    if (step === 2 && noSite) setStep(4);
     else if (step === 1 && nameOk) { if (!slug) setSlug(slugify(name)); setTyped(0); setBar(false); setStep(2); setTimeout(() => setBar(true), 900); }
     else if (step === 2 && done && check.state === 'ok') setStep(3);
     else if (step === 3) setStep(4);
@@ -136,9 +138,11 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     else setError(tr('Salvataggio non riuscito, riprova.', 'Saving failed, try again.'));
   };
 
-  const [head, sub] = shown === 4 && noSite ? [tr('Tutto pronto, iniziamo.', 'All set, let’s start.'), tr('Ecco cosa puoi fare con Agente Immo.', 'Here’s what you can do with Agente Immo.')] : TITLES[shown];
+  const [head, sub] = shown === 4 && noSite ? [tr('Tutto pronto, iniziamo.', 'All set, let’s start.'), tr('Ecco cosa puoi fare con Agente Immo.', 'Here’s what you can do with Agente Immo.')]
+    : shown === 2 && noSite ? [tr('Puoi avere anche un tuo sito.', 'You can have your own website too.'), tr('Con i tuoi immobili, quando passi a Plus o Pro.', 'With your properties, when you move to Plus or Pro.')]
+    : TITLES[shown];
   const words = head.split(' ');
-  const ctaOff = step === 2 && (!done || check.state !== 'ok');
+  const ctaOff = step === 2 && !noSite && (!done || check.state !== 'ok');
   const base = cleanSite(null, name.trim(), ''); // configurazione di partenza per le anteprime dei modelli
 
   return (
@@ -175,14 +179,13 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             <div ref={boxRef} className={`p-2 transition-[opacity,filter] duration-[450ms] ease-smooth ${shown !== step || !settled ? 'opacity-0 blur-[6px]' : ''}`}>
               {shown === 4 ? (
             <div className="grid gap-2 sm:grid-cols-3">
-              {TOOLS.map(({ kicker, title, img, badge: Badge }, i) => (
+              {TOOLS.map(({ kicker, title, img }, i) => (
                 // un clic su una card fa come Inizia (sembravano cliccabili e non lo erano)
                 <div key={title} role="button" tabIndex={0} onClick={() => void save()} onKeyDown={e => { if (e.key === 'Enter') void save(); }} className={`flex cursor-pointer flex-col rounded-[20px] bg-canvas p-5 ease-smooth transition-shadow hover:shadow-md ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
                   <span className="text-xs text-muted">{title}</span>
                   <span className="mt-1 text-lg font-bold leading-tight tracking-tight">{kicker}</span>
                   <div className="relative mt-4">
                     <img src={img} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" />
-                    {Badge && <span className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-ink text-white shadow-md"><Badge size={14} /></span>}
                   </div>
                   <span className="mt-4 block h-2 w-4/5 rounded-full bg-white" />
                   <span className="mt-1.5 block h-2 w-3/5 rounded-full bg-white" />
@@ -218,9 +221,10 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
                       <Globe size={13} className="mr-2 shrink-0 text-brand" />
                       <span className="shrink-0 text-muted">{portfolioPrefix()}</span>
                                             {bar && !done && <span className="min-w-0 truncate font-medium">{slug.slice(0, typed)}<span className="animate-pulse">|</span></span>}
-                      {done && <input autoFocus value={slug} onChange={e => { setSlugTouched(true); const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40); setSlug(v); setTyped(v.length); }}
+                      {done && noSite && <span className="min-w-0 truncate font-medium">{slug}</span>}
+                      {done && !noSite && <input autoFocus value={slug} onChange={e => { setSlugTouched(true); const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40); setSlug(v); setTyped(v.length); }}
                         onKeyDown={e => e.key === 'Enter' && next()} placeholder={tr('mario-rossi', 'john-smith')} className="min-w-0 flex-1 bg-transparent font-medium outline-none" />}
-                      {done && <span className="ml-2 shrink-0">
+                      {done && !noSite && <span className="ml-2 shrink-0">
                         {check.state === 'checking' && <Loader2 size={14} className="animate-spin text-muted" />}
                         {check.state === 'ok' && <Check size={14} className="text-green-600" />}
                         {(check.state === 'taken' || check.state === 'invalid' || check.state === 'bad') && <X size={14} className="text-red-600" />}
@@ -253,10 +257,11 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             {/* piede: aiuto + avanti */}
             <div className="flex min-h-12 items-center justify-between gap-3 px-4 pb-2 pt-3">
               <span className="text-sm text-red-600">
+                {noSite && <span className="whitespace-nowrap text-muted">{tr('Con Plus e Pro', 'With Plus and Pro')}</span>}
                 {error}
-                {done && check.state === 'taken' && <>{tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline text-brand" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
-                {done && check.state === 'invalid' && tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}
-                {done && check.state === 'bad' && tr('Questo indirizzo contiene una parola che non possiamo usare.', 'This address contains a word we can’t use.')}
+                {done && !noSite && check.state === 'taken' && <>{tr('Già in uso.', 'Already taken.')}{check.suggestion && <> {tr('Prova', 'Try')} <button type="button" className="font-medium underline text-brand" onClick={() => { setSlugTouched(true); setSlug(check.suggestion!); }}>{check.suggestion}</button></>}</>}
+                {done && !noSite && check.state === 'invalid' && tr('Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.', '3 to 40 characters: lowercase letters, numbers and hyphens.')}
+                {done && !noSite && check.state === 'bad' && tr('Questo indirizzo contiene una parola che non possiamo usare.', 'This address contains a word we can’t use.')}
               </span>
               <span className="flex items-center gap-2">
                 {step === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>}
