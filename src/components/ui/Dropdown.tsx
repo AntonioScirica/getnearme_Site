@@ -31,7 +31,10 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
       const h = Math.min(360, options.length * 40 + 40);
       const below = window.innerHeight - r.bottom - 24, above = r.top - 24;
       const up = below < h && above > below;
-      setPos({ left: align === 'end' ? r.right : r.left, top: up ? r.top - 8 : r.bottom + 8, up, max: Math.max(120, Math.min(360, up ? above : below)), w: r.width });
+      // larghezza del menu (w-60 o quanto il pulsante): non esce mai dallo schermo a destra o a sinistra
+      const vw = window.innerWidth, mw = Math.min(Math.max(240, r.width), vw - 32);
+      const left = align === 'end' ? Math.max(r.right, 16 + mw) : Math.min(r.left, vw - 16 - mw);
+      setPos({ left, top: up ? r.top - 8 : r.bottom + 8, up, max: Math.max(120, Math.min(360, up ? above : below)), w: r.width });
     };
     place();
     window.addEventListener('scroll', place, true); window.addEventListener('resize', place);
@@ -51,7 +54,18 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
     return () => { document.removeEventListener('pointerdown', out); document.removeEventListener('keydown', key); };
   }, [open, active, options, onChange]);
 
-  const toggle = () => { setActive(Math.max(0, options.findIndex(o => o.value === value))); setOpen(v => !v); };
+  // una sola tendina aperta: aprendone una, le altre si chiudono (anche senza pointerdown, es. tastiera)
+  useEffect(() => {
+    if (!open) return;
+    const other = (e: Event) => { if ((e as CustomEvent).detail !== btn.current) setOpen(false); };
+    window.addEventListener('agenteimmo:dropdown', other);
+    return () => window.removeEventListener('agenteimmo:dropdown', other);
+  }, [open]);
+  const toggle = () => {
+    setActive(Math.max(0, options.findIndex(o => o.value === value)));
+    if (!open) window.dispatchEvent(new CustomEvent('agenteimmo:dropdown', { detail: btn.current }));
+    setOpen(v => !v);
+  };
 
   return (
     <>
@@ -64,7 +78,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
       {/* sopra tutto, anche alle finestre (z 260-400) da cui si apre; largo almeno quanto il pulsante */}
       {open && pos && createPortal(
         <div ref={menu} role="listbox" className="blur-in fixed z-[600] max-h-[360px] w-60 overflow-y-auto rounded-2xl bg-white p-2 text-sm text-ink shadow-[0_18px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5 [scrollbar-width:none]"
-          style={{ left: pos.left, top: pos.top, maxHeight: pos.max, minWidth: Math.min(pos.w, window.innerWidth - 32), transform: `translate(${align === 'end' ? '-100%' : '0'}, ${pos.up ? '-100%' : '0'})` }}>
+          style={{ left: pos.left, top: pos.top, maxHeight: pos.max, minWidth: Math.min(pos.w, window.innerWidth - 32), maxWidth: window.innerWidth - 32, transform: `translate(${align === 'end' ? '-100%' : '0'}, ${pos.up ? '-100%' : '0'})` }}>
           {options.map((o, i) => {
             const head = o.group && o.group !== options[i - 1]?.group ? o.group : null;
             return (

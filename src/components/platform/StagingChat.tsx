@@ -1517,22 +1517,25 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
       </div>
   );
   // Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica
+  // strumenti di selezione (solo icone, nome nel tooltip): nel campo da sm, su telefono in una riga sotto, 40x40
+  const tools = (big: boolean) => ([['rect', tr('Rettangolo: trascina per disegnare la zona', 'Rectangle: drag to draw the area'), SquareDashed], ['lasso', tr('Forma: disegna il contorno o clicca i punti', 'Shape: draw the outline or click the points'), Lasso]] as const).map(([id, l, I]) => (
+    <Tooltip key={id} label={l}>
+      <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
+        className={`flex ${big ? 'h-10 w-10' : 'h-8 w-8'} items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><I size={15} /></button>
+    </Tooltip>
+  ));
   const form = (
-      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex w-0 min-w-full items-center gap-2 pt-2">
-        {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
-        <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
+      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex w-0 min-w-full flex-wrap items-center gap-2 pt-2 sm:flex-nowrap">
+        {/* campo con dentro, a destra, gli strumenti di selezione; su telefono il campo prende tutta la riga */}
+        <div className="flex h-10 min-w-0 flex-1 basis-full items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white sm:basis-auto">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
             placeholder={ready ? `${tr('Cosa cambio qui? Es.', 'What should I change here? E.g.')} ${example}` : tool === 'rect' ? tr('Disegna sulla foto', 'Draw on the photo') : clicks.length ? tr('Doppio clic per chiudere', 'Double-click to close') : tr('Disegna il contorno', 'Draw the outline')}
             className="mr-2 h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />{/* spazio tra testo e strumenti */}
-          {([['rect', tr('Rettangolo: trascina per disegnare la zona', 'Rectangle: drag to draw the area'), SquareDashed], ['lasso', tr('Forma: disegna il contorno o clicca i punti', 'Shape: draw the outline or click the points'), Lasso]] as const).map(([id, l, I]) => (
-            <Tooltip key={id} label={l}>
-              <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
-                className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><I size={15} /></button>
-            </Tooltip>
-          ))}
+          <span className="hidden sm:contents">{tools(false)}</span>
         </div>
+        <span className="flex items-center gap-1 sm:hidden">{tools(true)}</span>
         <button type="submit" disabled={!ready || !text.trim() || busy}
-          className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">{tr('Modifica', 'Edit')}</button>
+          className="ml-auto h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40 sm:ml-0">{tr('Modifica', 'Edit')}</button>
       </form>
   );
   // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
