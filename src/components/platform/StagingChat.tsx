@@ -1453,9 +1453,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               </Tooltip>
             </div>
             <textarea ref={field} rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
-              placeholder={!narrow ? hint : !base ? tr('Carica una foto', 'Upload a photo') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Scrivi cosa cambiare', 'Write what to change') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
+              placeholder={!narrow ? hint : !base ? tr('Carica una foto', 'Upload a photo') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Cosa cambio?', 'What to change?') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />{/* una riga centrata come Telegram, cresce scrivendo */}
+              className={`block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed ${text ? '' : 'overflow-hidden text-ellipsis whitespace-nowrap'}`} />{/* una riga centrata come Telegram, cresce scrivendo; vuoto: il suggerimento resta su una riga (andava a capo e il campo scorreva) */}
             {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}
             {text.trim() && base && !busy && credits && (credits.unlimited || credits.plan !== 'none' || credits.balance > 0) && (() => {
               const n = creditsOf({ prompt: text.trim(), scene }, editsDone);
