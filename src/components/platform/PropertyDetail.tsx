@@ -266,11 +266,11 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
   // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)
   const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); onDraft(toUp(nv)); };
+  // valori impossibili (prezzo 3 €, 3 m²): il campo diventa rosso e si chiede di correggerlo prima di salvare
+  const bad = (k: string) => { const m = k === 'prezzo' ? 50 : k === 'mq' ? 10 : 0; const n = Number(String(v[k] ?? '').replace(/\D/g, '')); return n > 0 && n < m; };
   const save = async () => {
     if (busy) return;
-    // valori impossibili (prezzo 3 €, 3 m²): si chiede di correggerli prima di salvare
-    const low = (k: string, m: number) => { const n = Number(String(v[k] ?? '').replace(/\D/g, '')); return n > 0 && n < m; };
-    if (low('prezzo', 50) || low('mq', 10)) { setErr(tr('Prezzo o superficie sembrano troppo bassi: controllali.', 'Price or floor area look too low: please check them.')); return; }
+    if (bad('prezzo') || bad('mq')) { setErr(tr('Prezzo o superficie sembrano troppo bassi: controllali.', 'Price or floor area look too low: please check them.')); return; }
     setBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
     setBusy(false);
@@ -281,7 +281,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     const f = FIELDS.find(x => x.k === k)!;
     return (
       <label key={k} className={`block text-xs font-medium text-muted ${f.wide ? 'col-span-2' : ''}`}>{f.label}
-        <input value={v[k]} onChange={e => set(k, e.target.value)} inputMode={f.num ? 'numeric' : undefined} placeholder={f.ph} maxLength={k === 'titolo' ? 120 : 200} className={input} />
+        <input value={v[k]} onChange={e => set(k, e.target.value)} inputMode={f.num ? 'numeric' : undefined} placeholder={f.ph} maxLength={k === 'titolo' ? 120 : 200} className={`${input} ${bad(k) ? '!ring-2 !ring-rose-400' : ''}`} />
+        {bad(k) && <span className="mt-1 block text-rose-600">{tr('Sembra troppo basso', 'Looks too low')}</span>}
       </label>
     );
   };
@@ -289,7 +290,6 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     <div ref={panel} className="blur-in flex min-h-0 flex-col rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:h-full lg:overflow-hidden">
       <div className="flex items-center justify-between border-b border-line px-5 py-4">
         <h2 className="font-display text-lg font-bold">{tr('Modifica immobile', 'Edit listing')}</h2>
-        {err && <span className="ml-auto mr-2 text-sm text-rose-600">{err}</span>}
       </div>
       <div className="flex-1 space-y-6 px-5 py-5 lg:overflow-y-auto">
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
@@ -333,7 +333,9 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       </div>
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       {/* sotto lg il pannello scorre con la pagina: Annulla e Salva restano attaccati in fondo */}
-      <div className="sticky bottom-0 z-10 flex items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
+        {/* errore accanto a Salva, dove si guarda (in alto finiva fuori schermo) */}
+        {err && <span className="basis-full pb-1 text-right text-sm text-rose-600">{err}</span>}
         {report}
         <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 disabled:opacity-40 disabled:hover:bg-transparent text-brand">{tr('Annulla', 'Cancel')}</button>
         <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Salva', 'Save')}</button>
