@@ -198,7 +198,9 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
       <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-4xl flex-col rounded-[32px] bg-white shadow-2xl">
         <div className="px-7 pt-7">
           <h2 className="font-display text-2xl font-bold tracking-tight">{tr('Le foto', 'Photos')}</h2>
-          <p className="mt-1 text-sm text-muted">{tr('Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.', 'Drag them to change the order clients will see them in: the first one is the cover. Hover over a photo to improve it with AI or remove it.')}</p>
+          {/* touch (niente hover, niente trascinamento): le azioni stanno sempre sulle foto, il testo lo dice */}
+          <p className="mt-1 text-sm text-muted [@media(hover:none)]:hidden">{tr('Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.', 'Drag them to change the order clients will see them in: the first one is the cover. Hover over a photo to improve it with AI or remove it.')}</p>
+          <p className="mt-1 hidden text-sm text-muted [@media(hover:none)]:block">{tr('La prima è la copertina. Su ogni foto: la bacchetta la migliora con l’AI, la stella la mette per prima, la X la toglie.', 'The first one is the cover. On each photo: the wand improves it with AI, the star moves it first, the X removes it.')}</p>
         </div>
         <ul className="grid min-h-0 flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
@@ -207,13 +209,13 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
               <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
               <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? tr('Copertina', 'Cover') : i + 1}</span>
               {/* maniglia: in hover si sposta accanto alla X (sopra il velo) */}
-              <span className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow ease-smooth transition-[right] ${onPhoto ? 'group-hover:right-12' : ''}`} aria-hidden><GripVertical size={16} /></span>
+              <span className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow ease-smooth transition-[right] [@media(hover:none)]:hidden ${onPhoto ? 'group-hover:right-12' : ''}`} aria-hidden><GripVertical size={16} /></span>
               {onPhoto && (
                 // in hover: velo su tutta la foto, azioni al centro una sotto l'altra, togli in alto a destra (sopra la maniglia)
-                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
-                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow"><Wand2 size={13} /> {tr('Migliora con l’AI', 'Improve with AI')}</button>
-                  {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow"><Star size={13} /> {tr('Metti per prima', 'Move to first')}</button>}
-                  <button type="button" onClick={() => remove(src)} aria-label={tr('Togli la foto', 'Remove photo')} className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
+                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 ease-smooth transition-opacity group-hover:opacity-100 [@media(hover:none)]:flex-row [@media(hover:none)]:items-end [@media(hover:none)]:justify-start [@media(hover:none)]:gap-1 [@media(hover:none)]:bg-transparent [@media(hover:none)]:p-2 [@media(hover:none)]:opacity-100">
+                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} aria-label={tr('Migliora con l’AI', 'Improve with AI')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Wand2 size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Migliora con l’AI', 'Improve with AI')}</span></button>
+                  {i > 0 && <button type="button" onClick={() => first(src)} aria-label={tr('Metti per prima', 'Move to first')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Star size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Metti per prima', 'Move to first')}</span></button>}
+                  <button type="button" onClick={() => remove(src)} aria-label={tr('Togli la foto', 'Remove photo')} className="absolute right-2 top-2 z-10 flex h-8 w-8 [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
                 </span>
               )}
             </li>
