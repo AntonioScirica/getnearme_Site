@@ -33,7 +33,8 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
           flexDirection: "column",
         }}
       >
-        <div style={{ position: "relative", aspectRatio: "4 / 3", overflow: "hidden" }}>
+        {/* 16:9 come le copertine (1200x675): in 4:3 il titolo della copertina restava tagliato ai lati */}
+        <div style={{ position: "relative", aspectRatio: "16 / 9", overflow: "hidden" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={cover}
