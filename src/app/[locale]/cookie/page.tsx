@@ -4,6 +4,7 @@ import { Cookie } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
+import { SiteFooter } from "@/components/landing/AgenteImmoLanding";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -75,15 +76,8 @@ export default async function CookiePolicy({ params }: Props) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
-          <div className="pt-4 border-t border-slate-800">
-            <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 Agente Immo. {t.footer.rights}
-            </p>
-          </div>
-        </div>
-      </footer>
+      {/* stesso footer del resto del sito (prima uno blu scuro diverso, con l'anno scritto a mano) */}
+      <SiteFooter lang={locale === "en" ? "en" : "it"} />
     </div>
   );
 }

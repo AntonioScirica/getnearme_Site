@@ -207,7 +207,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       {/* dentro l'editor di un modello le schede spariscono: si torna con "Tutti i modelli" */}
       {!(tab === 'sito' && editing) && (
         <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 ring-1 ring-black/10 mt-6">
-          {([['sito', tr('Aspetto del sito', 'Website design')], ['immobili', tr('Immobili', 'Listings')]] as const).map(([id, l]) => (
+          {([['sito', tr('Aspetto del sito', 'Website design')], ['immobili', tr('Immobili online', 'Listings online')]] as const).map(([id, l]) => (
             <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
           ))}
         </div>

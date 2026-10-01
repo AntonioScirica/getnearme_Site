@@ -691,7 +691,7 @@ export function Featured() {
   return (
     <Container className="py-24">
       <SectionHead {...head} center={cfg.template === 'nord'} />
-      <div className={`mt-10 grid gap-6 sm:grid-cols-2 ${cols}`}>{properties.slice(0, cfg.template === 'prato' ? 8 : 6).map(p => <PropertyCard key={p.id} p={p} />)}</div>
+      <div className={`mt-10 grid gap-6 sm:grid-cols-2 ${cols}`}>{properties.slice(0, cfg.template === 'prato' ? 8 : 6).map((p, k) => <div key={p.id} className={k >= 4 ? 'max-sm:hidden' : ''}><PropertyCard p={p} /></div>)}{/* telefono: 4 case (8 una sotto l'altra facevano una pagina lunghissima), le altre in Immobili */}</div>
     </Container>
   );
 }

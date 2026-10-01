@@ -186,7 +186,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             <div className="grid gap-2 sm:grid-cols-3">
               {TOOLS.map(({ kicker, title, img }, i) => (
                 // un clic su una card fa come Inizia (sembravano cliccabili e non lo erano)
-                <div key={title} role="button" tabIndex={0} onClick={() => void save()} onKeyDown={e => { if (e.key === 'Enter') void save(); }} className={`flex cursor-pointer flex-col rounded-[20px] bg-canvas p-4 ease-smooth max-sm:flex-row max-sm:items-center max-sm:gap-4 sm:p-5 transition-shadow hover:shadow-md ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
+                <div key={title} role="button" tabIndex={0} onClick={() => void save()} onKeyDown={e => { if (e.key === 'Enter') void save(); }} className={`flex cursor-pointer flex-col rounded-[20px] bg-canvas p-4 ease-smooth max-sm:pointer-events-none max-sm:flex-row max-sm:items-center max-sm:gap-4 sm:p-5 transition-shadow sm:hover:shadow-md ${settled ? 'rise' : 'opacity-0'}`} style={{ viewTransitionName: `ob-card-${i}`, animationDelay: `${i * 0.12}s` }}>
                   {/* telefono: riga compatta come le card della home (foto piccola e domanda) */}
                   <img src={img} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />
                   <span className="flex min-w-0 flex-col max-sm:flex-1">

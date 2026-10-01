@@ -213,9 +213,9 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
           )}
         </div>}
       <button className="absolute right-3 top-3 flex h-12 w-12 items-center justify-center text-white md:right-5 md:top-5 md:h-auto md:w-auto" onClick={() => setI(null)} aria-label="Chiudi"><X size={28} /></button>
-      <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto precedente" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
-      <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto successiva" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
-      <span className="absolute bottom-5 text-sm text-white/70">{i + 1} / {photos.length}</span>
+      <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white max-md:bottom-3 max-md:top-auto max-md:translate-y-0" aria-label="Foto precedente" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
+      <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white max-md:bottom-3 max-md:top-auto max-md:translate-y-0" aria-label="Foto successiva" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
+      <span className="absolute bottom-5 text-sm text-white/70 max-md:bottom-6">{i + 1} / {photos.length}</span>{/* telefono: frecce in basso ai lati del contatore, non sopra la foto */}
     </div>,
     document.body,
   );
@@ -274,7 +274,7 @@ function Gallery({ p }: { p: SiteProperty }) {
     </div>
   );
   else body = (
-    <div className="relative grid h-[480px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-[var(--r)] md:h-[540px]">
+    <div className="relative grid aspect-[4/3] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-[var(--r)] md:aspect-auto md:h-[540px]">{/* telefono: foto in 4:3 (alta 480 fissa era un ritaglio stretto) */}
       {photos.slice(0, 5).map((src, k) => (
         <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} alt={alt(k)} zoom fit className="h-full" />{tag(src)}</button>
       ))}

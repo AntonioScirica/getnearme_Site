@@ -207,11 +207,11 @@ export function Facts({ p, className = '', full }: { p: SiteProperty; className?
   if (full && !items.length) return null; // nessun dato: niente riquadro
   if (full) return (
     // sempre le stesse colonne (i dati restano vicini): le caselle che mancano non si vedono, niente fondo grigio
-    <div className={`grid grid-cols-2 sm:grid-cols-4 ${className}`}>
+    <div className={`grid grid-cols-4 ${className}`}>{/* telefono: tutti in una riga (su 2 colonne "Bagni" restava da solo) */}
       {items.map(x => (
-        <div key={x.l} className="min-w-0 border-[var(--line)] p-4 not-last:border-r sm:p-5">
+        <div key={x.l} className="min-w-0 border-[var(--line)] p-3 not-last:border-r sm:p-5">
           <x.i size={18} className="text-[var(--c)]" />
-          <div className="mt-3 text-xl font-semibold">{x.v}</div>
+          <div className="mt-3 truncate text-lg font-semibold sm:text-xl">{x.v}</div>
           <div className="text-xs text-[var(--muted)]">{x.l}</div>
         </div>
       ))}
