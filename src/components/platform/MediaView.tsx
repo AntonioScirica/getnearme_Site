@@ -201,7 +201,7 @@ export default function MediaView() {
           <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Galleria', 'Gallery')}</h1>
           <p className="pt-1 text-sm text-muted">{tr("Le foto create con l'AI, all'ultima versione. Passa sopra per vedere com'era, aprila per tutti i passaggi.", 'Your AI photos, latest version. Hover to see the original, open one to see every step.')}</p>
         </div>
-        <a href="#/staging" className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> {tr('Nuova foto', 'New photo')}</a>
+        <a href="#/staging" onClick={() => { try { sessionStorage.removeItem('gnm-staging-chat'); } catch { /* niente */ } }} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> {tr('Nuova foto', 'New photo')}</a>
       </div>
 
       {demo && (
