@@ -113,7 +113,7 @@ export const PLACEHOLDERS: Partial<Record<keyof SiteConfig, string>> = {
   aboutText: ABOUT_DEFAULT,
   phone: '+39 333 123 4567', whatsapp: '+39 333 123 4567', email: 'nome@agenzia.it', address: 'Via del Corso 12, Roma', city: 'Roma',
   instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA RM-123456',
-  areas: 'Centro, Trastevere, Prati', years: '10', sold: '120', clients: '300',
+  areas: 'Centro, Semicentro, Periferia', years: '10', sold: '120', clients: '300',
 }
 // recensioni d'esempio: solo nell'anteprima dell'editor. Fino al 01/10/2026 erano nella configurazione iniziale e
 // finivano online: cleanSite le toglie anche dai siti gia' salvati.
@@ -125,10 +125,22 @@ const SAMPLE_REVIEWS = [
 const isSampleReview = (t: string) => SAMPLE_REVIEWS.some(x => x.text === t)
 const SAMPLE_ZONES = [
   { name: 'Centro', text: 'Case in centro storico, a due passi da negozi, servizi e mezzi.' },
-  { name: 'Trastevere', text: 'Vicoli, piazze e trattorie: appartamenti con carattere a due passi dal centro.' },
+  { name: 'Semicentro', text: 'Quartieri tranquilli e ben serviti, a pochi minuti dal centro.' },
 ]
-export function withPlaceholders(c: SiteConfig): SiteConfig {
+// citta' dell'agente dai suoi immobili (la piu' frequente in fondo agli indirizzi): niente "Immobili a Roma" a chi
+// lavora a Bari. '' se non si capisce.
+export function cityOf(props: { addr?: string }[]): string {
+  const n = new Map<string, number>()
+  for (const p of props) {
+    const c = p.addr?.split(',').map(x => x.replace(/\d+/g, '').trim()).filter(Boolean).pop() ?? ''
+    if (/^\p{Lu}[\p{L}' -]{2,}$/u.test(c) && c !== 'Italia') n.set(c, (n.get(c) ?? 0) + 1)
+  }
+  return [...n.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? ''
+}
+export function withPlaceholders(c: SiteConfig, props: { addr?: string }[] = []): SiteConfig {
   const out = { ...c } as Record<string, unknown>
+  const city = cityOf(props)
+  if (city) { out.city ||= city; out.address ||= `Via Garibaldi 12, ${city}` }
   for (const [k, v] of Object.entries(PLACEHOLDERS)) if (!out[k]) out[k] = v
   if (!c.zones.length) out.zones = SAMPLE_ZONES
   if (!c.reviews.length) out.reviews = SAMPLE_REVIEWS

@@ -212,8 +212,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
           {/* Anteprima dal vivo */}
-          <Preview zone={zoneSlug(withPlaceholders(cfg).zones[0]?.name ?? '')} wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
-            <SitePage page={page} ctx={{ cfg: withPlaceholders(cfg), name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
+          <Preview zone={zoneSlug(withPlaceholders(cfg, projects ?? []).zones[0]?.name ?? '')} wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
+            <SitePage page={page} ctx={{ cfg: withPlaceholders(cfg, projects ?? []), name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
           </Preview>
         </div>
         </div>
@@ -770,7 +770,7 @@ export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId
     if (!site) return <div className="flex h-full items-center justify-center"><ImmoLoader /></div>;
     const pub = (projects ?? []).filter(p => p.is_public).map(toSite);
     const props = [...pub, ...FAKE_PROPERTIES.filter(f => !pub.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, pub.length));
-    const cfg = withPlaceholders(site.config.template === t.id ? site.config : { ...site.config, template: t.id, primary: t.primary, font: t.font });
+    const cfg = withPlaceholders(site.config.template === t.id ? site.config : { ...site.config, template: t.id, primary: t.primary, font: t.font }, props);
     const start: Page | null = pagina === 'immobile' ? { page: 'immobile', id: props[0]?.id ?? '' } : pagina === 'zona' ? { page: 'zona', slug: zoneSlug(cfg.zones[0]?.name ?? '') }
       : pagina === 'privacy' ? { page: 'legal', doc: 'privacy' } : pagina && ['immobili', 'agente', 'servizi', 'contatti'].includes(pagina) ? { page: pagina } as Page : null;
     if (start && page.page === 'home' && !opened) { setOpened(true); setPage(start); }

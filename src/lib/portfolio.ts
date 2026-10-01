@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { cleanSite, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
+import { cityOf, cleanSite, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
 import { hasSitePlan, sitePlanHolders } from './sitePlan'
 
 // Lettura pubblica del portfolio: service role lato server, SOLO immobili is_public.
@@ -99,7 +99,9 @@ export const loadSite = cache(async (locale: string, slug: string) => {
   const brand = await getBrand(slug)
   if (!brand) return null
   const [props, cfg, base] = await Promise.all([getPublicProperties(brand.user_id), getSite(brand), portfolioBase(locale, slug)])
-  return { cfg, base, name: brand.company_name || brand.display_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties: props.map(toSiteProperty) }
+  const properties = props.map(toSiteProperty)
+  // citta' non scritta dall'agente: quella dei suoi immobili
+  return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: brand.company_name || brand.display_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
 })
 
 // Tutte le pagine pubbliche dei siti degli agenti, per la sitemap del dominio vetrina.
