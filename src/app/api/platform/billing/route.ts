@@ -26,7 +26,9 @@ export async function POST(req: NextRequest) {
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const { data: row } = await admin.from('platform_credits').select('stripe_customer_id, plan').eq('user_id', u.id).maybeSingle()
   const customer = row?.stripe_customer_id as string | undefined
-  if (!customer || !row?.plan || row.plan === 'none') return NextResponse.json({ error: 'no_plan' }, { status: 400 })
+  if (!row?.plan || row.plan === 'none') return NextResponse.json({ error: 'no_plan' }, { status: 400 })
+  // piano attivato a mano (account di prova, regalo): non c'e' un cliente Stripe, quindi niente portale
+  if (!customer) return NextResponse.json({ error: 'no_customer' }, { status: 400 })
   try {
     const s = await stripe.billingPortal.sessions.create({ configuration: STRIPE_PORTAL_CONFIG, customer, return_url: `${siteOf(req)}/it/dashboard#/piano`, locale: 'it' })
     return NextResponse.json({ url: s.url })
