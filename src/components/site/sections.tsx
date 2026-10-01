@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
-import { pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
+import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
 import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
@@ -26,7 +26,7 @@ export function splitTitle(t: string): [string, string] {
 const Accent = ({ children, color }: { children: string; color?: boolean }) =>
   <span className={`font-[family-name:var(--font-serif-accent)] font-normal italic ${color ? 'text-[var(--c)]' : 'opacity-60'}`}>{children}</span>;
 // primo paragrafo del testo "chi sono" (il resto, con i sottotitoli, sta nella pagina profilo)
-export const introOf = (cfg: SiteConfig) => cfg.aboutText.split(/\n{2,}/)[0].replace(/^## .*$/gm, '').trim();
+export const introOf = (cfg: SiteConfig) => (cfg.aboutText || ABOUT_DEFAULT).split(/\n{2,}/)[0].replace(/^## .*$/gm, '').trim();
 
 // numeri del profilo; "Mostra i numeri" spento = nessun numero, e i blocchi che li usano si riadattano
 export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
-import { pageHidden, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { ABOUT_DEFAULT, pageHidden, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
@@ -354,7 +354,7 @@ function AgentPage() {
   const stats = statsOf(cfg, properties);
   const c = contacts(cfg);
   // il primo paragrafo va in alto, il resto (con eventuali "## Sottotitoli") sotto come storia
-  const [intro, ...rest] = cfg.aboutText.split(/\n{2,}/);
+  const [intro, ...rest] = (cfg.aboutText || ABOUT_DEFAULT).split(/\n{2,}/);
   // senza foto: iniziale su fondo tenue, su telefono bassa (niente mezzo schermo vuoto)
   const photo = (cls: string) => cfg.aboutImage ? <Photo src={cfg.aboutImage} alt={name} className={cls} /> : <span className={`flex items-center justify-center bg-[var(--soft)] text-6xl font-bold text-[var(--muted)]/50 ${cls.replace('aspect-[4/5]', 'aspect-[16/9] md:aspect-[4/5]')}`}>{name.slice(0, 1)}</span>;
   const buttons = (

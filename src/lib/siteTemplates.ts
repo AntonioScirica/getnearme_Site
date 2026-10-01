@@ -107,7 +107,10 @@ export const fontCss = (ids: string[]) => {
 
 // Esempi per i campi vuoti: nell'editor sono il testo grigio dei campi e nell'anteprima riempiono il sito,
 // cosi' si vede com'e' il modello completo. Sul sito pubblicato non compaiono mai.
+// testo "Chi sono" finche' l'agente non scrive il suo (generico, va bene anche online)
+export const ABOUT_DEFAULT = 'Seguo ogni immobile come se fosse mio: valutazione, foto, visite e trattativa. Ti accompagno fino al rogito, senza sorprese.'
 export const PLACEHOLDERS: Partial<Record<keyof SiteConfig, string>> = {
+  aboutText: ABOUT_DEFAULT,
   phone: '+39 333 123 4567', whatsapp: '+39 333 123 4567', email: 'nome@agenzia.it', address: 'Via del Corso 12, Roma', city: 'Roma',
   instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA RM-123456',
   areas: 'Centro, Trastevere, Prati', years: '10', sold: '120', clients: '300',
@@ -138,8 +141,8 @@ export function defaultSite(name: string, email = ''): SiteConfig {
     heroTitle: 'Trova la casa giusta per te',
     heroSubtitle: 'Immobili selezionati e un agente che ti segue dalla prima visita al rogito.',
     heroImage: '', aboutTitle: 'Chi sono',
-    aboutText: 'Seguo ogni immobile come se fosse mio: valutazione, foto, visite e trattativa. Ti accompagno fino al rogito, senza sorprese.',
-    aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '10', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '',
+    aboutText: '', // vuoto: nell'editor l'esempio e' in grigio, sul sito esce ABOUT_DEFAULT
+    aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '',
     showPrices: true, showStats: true, showAbout: true, showContact: true,
     services: [
       { title: 'Valutazione gratuita', text: 'Mandami foto e documenti anche su WhatsApp: sopralluogo, valutazione onesta e, se decidi di vendere, penso io a tutte le pratiche.' },
@@ -177,11 +180,12 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     heroSubtitle: str(r.heroSubtitle, 200, d.heroSubtitle),
     heroImage: img(r.heroImage),
     aboutTitle: str(r.aboutTitle, 60, d.aboutTitle),
-    aboutText: str(r.aboutText, 900, d.aboutText),
+    aboutText: (x => (x === ABOUT_DEFAULT ? '' : x))(str(r.aboutText, 900, '')), // il vecchio testo d'esempio salvato = vuoto
     aboutImage: img(r.aboutImage),
     agentRole: str(r.agentRole, 60, d.agentRole),
     areas: str(r.areas, 160, ''),
-    years: str(r.years, 4, d.years).replace(/\D/g, ''),
+    // "10" era il valore d'esempio salvato fino al 01/10/2026: con vendite e clienti vuoti e' quello, non un dato vero
+    years: (x => (x === '10' && !str(r.sold, 6, '') && !str(r.clients, 6, '') ? '' : x))(str(r.years, 4, '').replace(/\D/g, '')),
     sold: str(r.sold, 6, '').replace(/\D/g, ''),
     clients: str(r.clients, 6, '').replace(/\D/g, ''),
     services: Array.isArray(r.services)
