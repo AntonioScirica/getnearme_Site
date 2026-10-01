@@ -18,7 +18,7 @@ import { tr } from './i18n';
 // (torna agli immobili, pubblico/privato) e suggerimenti dell'AI in fondo.
 export default function PropertyDetail({ project, loading, onChange }: { project?: ProjectData; loading: boolean; onChange: () => void | Promise<unknown> }) {
   // modello del sito e indirizzo: per l'avviso "sul sito si vede con lo stile del modello"
-  const [site, setSite] = useState<{ slug: string | null; template: TemplateId; config: SiteConfig; name: string; logo: string | null } | null>(null);
+  const [site, setSite] = useState<{ slug: string | null; template: TemplateId; config: SiteConfig; name: string; logo: string | null; published: boolean } | null>(null);
   const editing = true; // la barra di modifica c'e' sempre, a sinistra della pagina del sito
   const [draft, setDraft] = useState<Partial<ProjectData> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     const html = await authFetch(`/api/platform/report?id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
     if (html) { await printHtml(html); setReport('idle'); } else setReport('err');
   };
-  useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSite({ slug: d.slug ?? null, template: d.config?.template, config: d.config, name: d.name || 'La tua agenzia', logo: d.logo ?? null })).catch(() => {}); }, []);
+  useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSite({ slug: d.slug ?? null, template: d.config?.template, config: d.config, name: d.name || 'La tua agenzia', logo: d.logo ?? null, published: !!d.published })).catch(() => {}); }, []);
   // caricamento (anche subito dopo aver creato o salvato l'immobile): la forma della pagina, non una rotellina
   if (loading) return (
     <div aria-busy className="animate-pulse">
@@ -122,13 +122,14 @@ export default function PropertyDetail({ project, loading, onChange }: { project
             {pdfHint && <span className="basis-full text-right text-xs text-muted">{tr('Nella finestra di stampa scegli “Salva come PDF”, poi allega il file su WhatsApp o in una email.', 'In the print window choose “Save as PDF”, then attach the file on WhatsApp or in an email.')}</span>}
           </>}
         {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
-        {sitePlan && site?.slug && (
+        {/* sito spento: niente link (il cliente vedrebbe "sito non disponibile") */}
+        {sitePlan && site?.slug && site.published && (
           <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
             <span className="min-w-0 overflow-hidden">
               <span className="flex items-center gap-2">
                 <span className="mr-1 hidden h-5 w-px bg-line sm:block" aria-hidden />{/* divisore dopo Pubblico, entra con i pulsanti */}
                 {/* al cliente il link pubblico della casa, su WhatsApp (non quello della piattaforma, che chiede l'accesso) */}
-                <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${project.titolo || project.nome || ''}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
+                <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${(project.titolo || project.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
                 <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
               </span>
             </span>
@@ -330,7 +331,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const n = (x: string) => Math.max(0, Math.round(Number(x.replace(/[^\d,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0));
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
   // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)
-  const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); onDraft(toUp(nv)); try { localStorage.setItem(dKey, JSON.stringify(nv)); } catch { /* niente storage */ } };
+  const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); setErr(''); onDraft(toUp(nv)); try { localStorage.setItem(dKey, JSON.stringify(nv)); } catch { /* niente storage */ } };
   // all'apertura: c'era una bozza di questo immobile? si riprende (anche nell'anteprima a destra)
   useEffect(() => {
     try {

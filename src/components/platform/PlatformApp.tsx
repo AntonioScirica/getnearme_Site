@@ -624,7 +624,7 @@ function PlanCard() {
   );
   const d = (x: string | null) => (x ? new Date(x).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '');
   const name = { none: '', starter: 'Starter', plus: 'Plus', pro: 'Pro' }[c.plan];
-  const line = c.plan !== 'none' ? tr(`${c.balance} ${c.balance === 1 ? 'credito' : 'crediti'} · si ricaricano il ${d(c.renews)}`, `${c.balance} credits · top up on ${d(c.renews)}`)
+  const line = c.plan !== 'none' ? tr(`${c.balance.toLocaleString(pageLocale())} ${c.balance === 1 ? 'credito' : 'crediti'} · si ricaricano il ${d(c.renews)}`, `${c.balance.toLocaleString(pageLocale())} credits · top up on ${d(c.renews)}`)
     : c.lapsed ? tr(`Scaduto il ${d(c.until)}`, `Ended on ${d(c.until)}`) : c.balance > 0 ? tr(`${c.balance} crediti dei pacchetti`, `${c.balance} pack credits`) : tr('Nessun piano attivo', 'No active plan');
   return (
     <a href={c.plan === 'none' ? '#/piano?cambia=1' : '#/piano'} className={`mt-8 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>

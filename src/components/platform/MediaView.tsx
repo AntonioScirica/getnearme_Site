@@ -58,7 +58,7 @@ type Period = (typeof PERIODS)[number]['value'];
 const PAGE = 24;
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 // richiesta salvata come id dello stile ("modern", "empty day"...): si mostra il nome in italiano
-const presetName = (w: string) => STAGING_STYLES.find(x => x.id === w)?.label ?? STAGING_ANGLES.find(x => x.id === w)?.label ?? (w === 'planimetria' ? tr('Planimetria', 'Floor plan') : null)
+const presetName = (w: string) => ({ empty: tr('Svuota', 'Empty'), day: tr('Luminoso', 'Brighter') } as Record<string, string>)[w] ?? STAGING_STYLES.find(x => x.id === w)?.label ?? STAGING_ANGLES.find(x => x.id === w)?.label ?? (w === 'planimetria' ? tr('Planimetria', 'Floor plan') : null)
 // solo se sono tutti id di stile; una richiesta scritta a mano resta com'e' (prima diventava "mettere, un, letto")
 const nice = (t: string) => { const w = t.split(' '); return w.every(presetName) ? w.map(presetName).join(', ') : t; }
 const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: tr('Prima', 'Before') }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text ? nice(s.text) : tr('Modifica', 'Edit') }))];
@@ -295,7 +295,7 @@ export default function MediaView() {
           {/* sfumatura progressiva sotto la barra: le foto scorrono dietro e la barra resta leggibile */}
           <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
           <div className={`pointer-events-auto relative flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
-            <span className="font-medium">{sel.size} {tr('selezionate', 'selected')}</span>
+            <span className="font-medium">{sel.size} {sel.size === 1 ? tr('selezionata', 'selected') : tr('selezionate', 'selected')}</span>
             <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Seleziona tutte', 'Select all')}</button>
             <button type="button" disabled={!sel.size || dlAll} onClick={() => void downloadSel()} className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-black disabled:opacity-40">{dlAll ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} {tr('Scarica', 'Download')}</button>
             <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
