@@ -142,7 +142,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
             <div className="text-sm text-muted">{tr('Piano', 'Plan')} {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
             {portalError && <p className="text-sm text-rose-600">{portalError}</p>}
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} {c.balance === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</div>
-            <div className="text-sm text-muted">{tr(`circa ${photosFor(c.balance)} foto o ${videosFor(c.balance)} video Prima e dopo · si ricaricano a ${fmt(c.monthly)} il ${date(c.renews)}`, `about ${photosFor(c.balance)} photos or ${videosFor(c.balance)} Before and after videos · back to ${fmt(c.monthly)} on ${date(c.renews)}`)}</div>
+            <div className="text-sm text-muted">{tr(`circa ${photosFor(c.balance)} foto o ${videosFor(c.balance)} video · si ricaricano a ${fmt(c.monthly)} il ${date(c.renews)}`, `about ${photosFor(c.balance)} photos or ${videosFor(c.balance)} videos · back to ${fmt(c.monthly)} on ${date(c.renews)}`)}</div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
           {/* aprendo i piani si scorre fino a loro: stanno sotto pacchetti e codice, fuori schermo */}
@@ -162,7 +162,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
               <div key={p.id} className={`flex items-center justify-between gap-4 rounded-[24px] bg-white p-5 ${CARD_SHADOW}`}>
                 <div>
                   <div className="font-display text-2xl font-extrabold tracking-tight">{fmt(p.credits)} {tr('crediti', 'credits')}</div>
-                  <div className="text-sm text-muted">{tr(`${photosFor(p.credits)} foto o ${videosFor(p.credits)} video Prima e dopo`, `${photosFor(p.credits)} photos or ${videosFor(p.credits)} videos`)}</div>
+                  <div className="text-sm text-muted">{tr(`${photosFor(p.credits)} foto o ${videosFor(p.credits)} video`, `${photosFor(p.credits)} photos or ${videosFor(p.credits)} videos`)}</div>
                 </div>
                 <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {eur(p.eur)}</button>
               </div>
