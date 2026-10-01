@@ -85,9 +85,10 @@ function CountUp({ to, prefix = '', suffix = '' }: { to: number; prefix?: string
 }
 
 // Fascia a tutta larghezza: bianca (puntini della pagina), grigia o scura. Separa le sezioni e da' ritmo.
+// Su tablet meno aria sopra e sotto (128px lasciavano mezzo schermo vuoto).
 function Band({ id, tone = 'white', children, className = '', inner = 'max-w-6xl' }: { id?: string; tone?: 'white' | 'canvas' | 'dark'; children: ReactNode; className?: string; inner?: string }) {
   const bg = tone === 'dark' ? 'bg-ink text-white' : tone === 'canvas' ? 'bg-canvas' : '';
-  return <section id={id} className={`${bg} ${className}`}><div className={`mx-auto ${inner} px-4 py-16 md:py-32`}>{children}</div></section>;
+  return <section id={id} className={`${bg} ${className}`}><div className={`mx-auto ${inner} px-4 py-16 md:py-24 lg:py-32`}>{children}</div></section>;
 }
 
 // Titolo di sezione: numero in blu + pillola, titolo, sottotitolo
@@ -541,11 +542,11 @@ function Pricing() {
     <Band tone="canvas">
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>{L('Prezzi', "Pricing")}</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Tutto quello che ti serve,', 'Everything you need,')}<br />{L(`da ${PRICING.starter} € al mese.`, `from €${PRICING.starter} a month.`)}</h2>
+        <h2 className="mt-5 text-balance font-display text-[32px] font-extrabold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">{L('Tutto quello che ti serve,', 'Everything you need,')}<br />{L(`da ${PRICING.starter} € al mese.`, `from €${PRICING.starter} a month.`)}</h2>
         <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', "Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.")}</p>
       </Reveal>
-      {/* #prezzi porta dritto ai pacchetti (non al titolo della sezione) */}
-      <div id="prezzi" className="mx-auto mt-12 grid max-w-6xl scroll-mt-28 items-stretch gap-5 md:grid-cols-3">
+      {/* #prezzi porta dritto ai pacchetti (non al titolo della sezione); sotto lg una card sotto l'altra, in tre colonne il prezzo andava a capo */}
+      <div id="prezzi" className="mx-auto mt-12 grid max-w-lg scroll-mt-28 items-stretch gap-5 lg:max-w-6xl lg:grid-cols-3">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
@@ -589,7 +590,7 @@ function Pricing() {
 // Il filo della pagina: l'incarico lo vince chi presenta meglio la casa. Hero (promessa + prova), il perche' (scena
 // dell'acquisizione, fascia scura), le tre cose che ti diamo (01 02 03, fasce alternate), il conto, i prezzi.
 const CHECK = <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>;
-const H2 = 'mt-5 font-display text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-5xl';
+const H2 = 'mt-5 font-display text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-4xl lg:text-5xl';
 
 export default function AgenteImmoLanding({ lang = 'it', faq }: { lang?: LandingLang; faq: [string, string][] }) {
   return <Lang.Provider value={lang}><Landing faq={faq} /></Lang.Provider>;
@@ -653,7 +654,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">{L('L\'incarico va a chi arriva con la casa già arredata, un video pronto e il suo sito. Con Agente Immo ce l\'hai in un minuto, senza fotografo né web agency.', "The listing goes to the agent who shows up with the home staged, a video ready and their own website. With Agente Immo you get it in a minute, no photographer or web agency.")}</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Cta href={TRIAL_LOGIN}>{L('Prova gratis sulla tua foto', "Try it free on your photo")}</Cta>{/* Prova gratis porta sempre al login, poi alla prova */}
+            <Cta href={TRIAL_LOGIN} className="max-sm:w-full max-sm:justify-center">{L('Prova gratis sulla tua foto', "Try it free on your photo")}</Cta>{/* Prova gratis porta sempre al login, poi alla prova; telefono: a tutta larghezza */}
             <span className="hidden sm:block"><Cta ghost href="#prezzi">{L('Vedi i prezzi', "See pricing")}</Cta></span>
           </Reveal>
         </div>
@@ -690,7 +691,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             </div>
           </Reveal>
           {/* su telefono i bottoni vanno sotto le immagini */}
-          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP}>{L('Inizia gratis', "Start for free")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP} className="max-sm:w-full max-sm:justify-center">{L('Inizia gratis', "Start for free")}</Cta></div>
         </div>
       </Band>
 
@@ -717,7 +718,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
               ))}
             </div>
           </Reveal>
-          <div className="mt-14 flex justify-center md:hidden"><Cta href={SIGNUP}>{L('Crea video', "Create a video")}</Cta></div>
+          <div className="mt-14 flex justify-center md:hidden"><Cta href={SIGNUP} className="max-sm:w-full max-sm:justify-center">{L('Crea video', "Create a video")}</Cta></div>
         </div>
       </Band>
 
@@ -735,7 +736,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right" className="mt-6 md:mt-0"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
-          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP} className="max-sm:w-full max-sm:justify-center">{L('Crea il tuo sito', "Create your website")}</Cta></div>
         </div>
       </Band>
 
@@ -795,7 +796,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">{L('Il prossimo incarico, vincilo così.', "Win your next listing like this.")}</h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica una foto e guarda il risultato. Gratis.', "Upload a photo and see the result. Free.")}</p>
-            <a href={TRIAL_LOGIN} className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
+            <a href={TRIAL_LOGIN} className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 max-sm:w-full max-sm:justify-center text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
           </div>
         </Reveal>
       </section>
@@ -829,7 +830,7 @@ function Footer({ home = false }: { home?: boolean }) {
         <div>
           <a href={home ? '#top' : `/${l}`} className="flex items-center justify-center gap-2 md:justify-start"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
           <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0 leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
-          <Cta href={TRIAL_LOGIN} className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
+          <Cta href={TRIAL_LOGIN} className="mt-6 !h-10 !px-5 text-sm max-sm:w-full max-sm:justify-center">{L('Prova gratis', "Try it free")}</Cta>
         </div>
         {([
           [L('Prodotto', "Product"), [[`${base}#staging`, 'Home staging'], [`${base}#video`, L('Video per i social', "Social videos")], [`${base}#sito`, L('Il tuo sito', "Your website")], [`${base}#prezzi`, L('Prezzi', "Pricing")], [`${base}#domande`, L('Domande frequenti', "FAQ")]]],
