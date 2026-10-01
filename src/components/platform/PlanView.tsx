@@ -76,9 +76,9 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [portalError, setPortalError] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null); // pagamento non partito: avviso in basso per 4 s
   useEffect(() => { if (!buyError) return; const t = setTimeout(() => setBuyError(null), 4000); return () => clearTimeout(t); }, [buyError]);
-  const [changingRaw, setChanging] = useState(!!change);
   // "cambia piano" ha senso solo con un piano: chi non ce l'ha (anche arrivando da ?cambia=1) vede i tre piani normali
-  const changing = changingRaw && !!c && c.plan !== 'none' && !c.unlimited;
+  // con un piano attivo i piani per cambiarlo sono sempre in vista (prima si aprivano con "Cambia piano")
+  const changing = !!c && c.plan !== 'none' && !c.unlimited;
   // Pro: fatturazione in corso (annuale o trimestrale) letta da Stripe, cosi' la card mostra quella che si ha
   const [proLookup, setProLookup] = useState<string | null>(null);
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
     setBusy('');
     setBuyError(d?.url || d?.error === 'payment_failed' ? null : d?.error === 'test_account' ? tr('Gli account di prova non possono pagare.', 'Test accounts cannot pay.') : tr('Non sono riuscito ad aprire il pagamento, riprova.', 'Could not open the payment, please try again.'));
     if (d?.error === 'payment_failed') setPortalError(tr('Pagamento non riuscito: il piano non è cambiato. Controlla la carta in Gestisci abbonamento.', 'Payment failed: your plan has not changed. Check your card in Manage subscription.'));
-    else if (d?.url?.includes('ok=1')) setChanging(false);
+   
   };
   useEffect(() => {
     if (!buy) return;
@@ -146,8 +146,8 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           </div>
           <div className="flex flex-wrap items-center gap-2">
           {/* aprendo i piani si scorre fino a loro: stanno sotto pacchetti e codice, fuori schermo */}
-          <button type="button" onClick={() => { if (!changing) setTimeout(() => plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150); setChanging(v => !v); }} aria-expanded={changing}
-            className={`flex h-11 items-center rounded-full px-6 text-sm font-semibold ring-1 ease-smooth transition-colors ${changing ? 'bg-canvas ring-ink' : 'bg-white ring-black/10 hover:ring-ink'}`}>{tr('Cambia piano', 'Change plan')}</button>
+          <button type="button" onClick={() => plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="flex h-11 items-center rounded-full bg-white px-6 text-sm font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:ring-ink">{tr('Cambia piano', 'Change plan')}</button>
           <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError(tr('Portale non disponibile, riprova tra poco.', 'Portal not available, try again shortly.')); } }}
             className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}{tr('Gestisci abbonamento', 'Manage subscription')}</button>
           </div>
