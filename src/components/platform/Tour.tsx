@@ -50,7 +50,8 @@ export default function Tour({ onDone, noPlan = false, noSite = false }: { onDon
     const measure = () => {
       if (step.edit) window.dispatchEvent(new Event('agenteimmo:tour-edit'));
       if (step.demo) window.dispatchEvent(new Event('agenteimmo:tour-demo'));
-      const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
+      // la voce visibile: in alto da lg, nella barra in basso su telefono (la prima trovata poteva essere quella nascosta)
+      const el = [...document.querySelectorAll<HTMLElement>(`[data-tour="${step.target}"]`)].find(x => x.offsetWidth > 0) ?? null;
       // scorrimento immediato: la luce fa un solo movimento invece di inseguire lo scorrimento
       // si scorre solo se la voce non si vede tutta (se e' gia' li', es. l'editor che sta nascendo, niente scatti)
       if (el && !seen) {

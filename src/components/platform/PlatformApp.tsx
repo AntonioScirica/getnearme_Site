@@ -305,7 +305,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
         <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
           {NAV.map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
-            return <a key={path} href={`#${path}`} aria-current={active ? 'page' : undefined} className={`relative flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium ease-smooth transition-colors ${active ? 'text-ink' : 'text-muted'}`}>
+            return <a key={path} href={`#${path}`} data-tour={path} aria-current={active ? 'page' : undefined} className={`relative flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium ease-smooth transition-colors ${active ? 'text-ink' : 'text-muted'}`}>
               <Icon size={20} className={active ? 'text-brand' : ''} /><span className="max-w-full truncate px-1">{label}</span>
               {path === '/galleria' && news > 0 && <span className="pop absolute left-1/2 top-2 ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-white ring-2 ring-white">{news > 9 ? '9+' : news}</span>}
             </a>;
