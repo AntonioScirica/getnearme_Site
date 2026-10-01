@@ -140,6 +140,9 @@ export default async function LocaleLayout({ children, params }: Props) {
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         
+        {/* computer lenti: classe "lite" su <html> (meno animazioni, niente sfocature animate). Si decide dai core/memoria
+            e, la prima volta, misurando i fotogrammi per 2 s; la scelta resta in memoria. ponytail: soglie a occhio, da tarare */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var d=document.documentElement,k='agenteimmo:lite',v=localStorage.getItem(k);if(v==='1'){d.classList.add('lite');return}if(v==='0')return;var n=navigator;if((n.hardwareConcurrency&&n.hardwareConcurrency<=4)||(n.deviceMemory&&n.deviceMemory<=4)){d.classList.add('lite');localStorage.setItem(k,'1');return}var c=0,t0=0,slow=0,last=0;function f(t){if(document.hidden)return;if(!t0){t0=last=t}else{if(t-last>34)slow++;last=t;c++}if(t-t0<2000)requestAnimationFrame(f);else{var lite=c>20&&slow/c>0.25;if(lite)d.classList.add('lite');localStorage.setItem(k,lite?'1':'0')}}requestAnimationFrame(f)}catch(e){}})()` }} />
       </head>
       <body
         className="antialiased"

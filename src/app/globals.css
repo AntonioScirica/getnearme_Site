@@ -559,3 +559,14 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 /* uscita del tour (Iniziamo / Salta): un'animazione, non una transizione, perche' .fade tiene l'opacita' a 1 */
 @keyframes tour-out { from { opacity: 1; } to { opacity: 0; } }
 .tour-out { animation: tour-out 600ms cubic-bezier(.22,1,.36,1) both; }
+
+/* Computer lenti (classe .lite su <html>, decisa nel layout): stesse entrate ma senza sfocatura (il filtro blur animato
+   e' la cosa che scatta di piu'), niente animazioni infinite di sfondo, vetro senza backdrop-filter */
+@keyframes gnm-fade-lite { from { opacity: 0; } }
+.lite .blur-in, .lite .morph-in, .lite .rise { animation: gnm-fade-lite 300ms ease-out both; }
+.lite .float, .lite .parallax, .lite [class*="aurora"], .lite [class*="blob"] { animation: none !important; }
+.lite .glass, .lite .backdrop-blur-sm, .lite .backdrop-blur, .lite .backdrop-blur-md, .lite .backdrop-blur-lg, .lite .backdrop-blur-xl, .lite .backdrop-blur-2xl, .lite [class*="backdrop-blur-["] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.lite .glass { background: rgba(255, 255, 255, 0.97); }
+.lite .tilt { transform: none !important; }
+html.lite::view-transition-group(*), html.lite::view-transition-old(*), html.lite::view-transition-new(*) { animation: none !important; }
+.lite .ai-word { animation: gnm-fade-lite 300ms ease-out both; }

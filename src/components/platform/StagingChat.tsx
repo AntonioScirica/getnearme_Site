@@ -1735,7 +1735,7 @@ function StepSwap({ step, children }: { step: string; children: React.ReactNode 
 function Act({ icon, label, short, tip, narrow, active, disabled, onClick, cr }: { icon: React.ReactNode; label: string; short?: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void; cr?: number }) {
   const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
   const btn = narrow
-    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}{cr ? ` · ${cr}` : ''}</span></button>
+    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="flex max-w-full items-center"><span className="truncate">{short ?? label}</span>{cr ? <Cr n={cr} /> : null}</span></button>
     : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}{label}{cr !== undefined && <Cr n={cr} tight />}</button>;
   return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
 }
