@@ -8,7 +8,7 @@ import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates
 import { SitePage } from '@/components/site/pages';
 import type { PropEdit } from '@/components/site/ui';
 import { updateProject, type ProjectData } from '@/lib/projects';
-import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
+import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
 import { PublicSwitch, toSite } from './PortfolioView';
 import { useCredits } from './PlanView';
 import { printHtml } from '@/lib/printHtml';
@@ -122,7 +122,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
             <span className="min-w-0 overflow-hidden">
               <span className="flex gap-2">
                 {/* al cliente il link pubblico della casa, su WhatsApp (non quello della piattaforma, che chiede l'accesso) */}
-                <a href={`https://wa.me/?text=${encodeURIComponent(`${project.titolo || project.nome || ''} ${portfolioUrl(site.slug)}/${project.id}`.trim())}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
+                <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${project.titolo || project.nome || ''}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
                 <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
               </span>
             </span>

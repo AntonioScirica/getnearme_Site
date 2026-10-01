@@ -97,7 +97,8 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
 // Dettagli e caratteristiche dall'unico schema dei campi (lib/propertyFields)
 const ALL: Field[] = [...ESSENTIALS, ...GROUPS.flatMap(g => g.fields)];
 const SKIP = new Set(['indirizzo', 'mostra_indirizzo', 'trattativa_riservata', 'prezzo', 'contratto', 'tipologia', 'superficie', 'locali', 'camere', 'bagni', 'virtual_tour']);
-const fmt = (f: Field, v: unknown) => (typeof v === 'boolean' ? (v ? 'Sì' : 'No') : `${v}${f.unit ? ` ${f.unit}` : ''}`);
+// valori importati gia' con l'unita' ("€ 45/mese"): niente unita' ripetuta
+const fmt = (f: Field, v: unknown) => (typeof v === 'boolean' ? (v ? 'Sì' : 'No') : typeof v === 'string' && /€|\/mese|m²|kWh/i.test(v) ? v : `${v}${f.unit ? ` ${f.unit}` : ''}`);
 
 export function DetailsTable({ p }: { p: SiteProperty }) {
   const tx = useT();
@@ -106,7 +107,7 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
   type Row = [string, string, string];
   const rows: Row[] = [
     ...(p.riferimento ? [['riferimento', 'Codice', p.riferimento] as Row] : []),
-    ['tipologia', 'Tipologia', p.tipologia?.split('|')[0] || '—'],
+    ...(p.tipologia ? [['tipologia', 'Tipologia', p.tipologia.split('|')[0]] as Row] : []), // senza tipologia niente riga col trattino
     ['contratto', 'Contratto', /affitt/i.test(p.contratto ?? '') ? 'Affitto' : 'Vendita'],
     // indirizzo esatto solo se l'agente ha scelto di mostrarlo, altrimenti zona e citta'
     ['indirizzo', 'Indirizzo', d.mostra_indirizzo ? p.addr : zoneOnly(p.addr) || '—'],
@@ -200,7 +201,7 @@ export function TourBlock({ p }: { p: SiteProperty }) {
 }
 
 // Mappa della zona (Leaflet, gratis). Cerchio e non puntino: la posizione esatta resta riservata.
-export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
+export function MapBlock({ addr, bare, hidden }: { addr: string; bare?: boolean; hidden?: boolean }) {
   const tx = useT();
   const [none, setNone] = useState(false);
   const missing = useCallback(() => setNone(true), []);
@@ -210,7 +211,7 @@ export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
     <div>
       <H className="text-3xl">{tx('property.map')}</H>
       <LeafletMap addr={addr} circle onMissing={missing} className="mt-5 h-[340px] rounded-[var(--r)] bg-[var(--soft)]" />
-      <p className="mt-2 text-xs text-[var(--muted)]">Zona indicativa, l’indirizzo esatto te lo do su richiesta.</p>
+      {hidden && <p className="mt-2 text-xs text-[var(--muted)]">Zona indicativa, l’indirizzo esatto te lo do su richiesta.</p>}{/* solo per gli immobili con l'indirizzo nascosto, non per l'ufficio */}
     </div>
   );
 }

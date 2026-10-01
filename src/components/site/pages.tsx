@@ -353,7 +353,7 @@ function PropertyPage({ id }: { id: string }) {
               {p.addr && (p.details as { distanze_auto?: boolean } | undefined)?.distanze_auto !== false && <NearbyList p={p} />}
             </div></Sec>
           )}
-          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOnly(p.addr)} /></div></Sec>}
+          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOnly(p.addr)} hidden={!(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo} /></div></Sec>}
         </div>
         <aside><div className="sticky top-24"><Sec id="property.agent"><AgentCard subject={p.titolo} property={p} /></Sec></div></aside>
       </Container>
