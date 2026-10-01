@@ -1016,7 +1016,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
     <div className="relative -mx-6 h-full" onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files); }}>
-      <div ref={scroller} className="absolute inset-0 overflow-y-auto overflow-x-hidden px-6 pb-64 pt-8 sm:pb-48 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scroller} className={`absolute inset-0 overflow-y-auto overflow-x-hidden px-6 pb-64 pt-8 sm:pb-48 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${empty ? 'max-sm:overflow-hidden max-sm:pb-0' : ''}`}>{/* chat vuota su telefono: il riquadro sta nello schermo, niente scorrimento */}
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
