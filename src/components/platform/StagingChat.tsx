@@ -1801,13 +1801,14 @@ function Inspiration({ room, onPick, onUpload, onClose }: { room: string | null;
           </div>
           <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full bg-canvas px-4">
+        {/* telefono: ricerca sopra a tutta larghezza, il pulsante sotto (affiancati la ricerca restava di 3 lettere) */}
+        <div className="flex items-center gap-2 max-sm:flex-col max-sm:items-stretch">
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full bg-canvas px-4 max-sm:flex-none">
             <Search size={16} className="shrink-0 text-muted" />
             <input autoFocus value={q} onChange={e => { setQ(e.target.value); setLoading(true); }}
               placeholder={tr(base, ROOM_QUERY_EN[base] ?? base)} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
           </label>
-          <button onClick={onUpload} className="flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-inset ring-line hover:bg-canvas"><ImagePlus size={16} /> {tr('Carica dal computer', 'Upload from computer')}</button>
+          <button onClick={onUpload} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-inset ring-line hover:bg-canvas"><ImagePlus size={16} /> <span className="sm:hidden">{tr('Carica una tua foto', 'Upload your photo')}</span><span className="max-sm:hidden">{tr('Carica dal computer', 'Upload from computer')}</span></button>
         </div>
         <div className="mt-4 h-[55vh] overflow-y-auto">
           {/* scheletro della griglia mentre cerca */}
