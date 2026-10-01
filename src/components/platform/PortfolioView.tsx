@@ -250,11 +250,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         )}
         <div data-tour="site-editor" className={`blur-in grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)] ${dirty || saved !== 'idle' ? 'max-md:pb-16' : ''}`} style={{ animationDelay: '.1s' }}>
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
-          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
+          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} siteName={site.name} />
 
           {/* Anteprima dal vivo */}
           <Preview zone={zoneSlug(withPlaceholders(cfg, projects ?? []).zones[0]?.name ?? '')} wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
-            <SitePage page={page} ctx={{ cfg: withPlaceholders(cfg, projects ?? []), name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
+            <SitePage page={page} ctx={{ cfg: withPlaceholders(cfg, projects ?? []), name: cfg.agencyName || site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
           </Preview>
         </div>
         </div>
@@ -264,8 +264,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 }
 
 // Colonna dell'editor: scheda Pagina (sezioni della pagina aperta, nello stesso ordine del sito) e Generale
-function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected, getUsed }: {
-  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void; getUsed: () => Set<string>;
+function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected, getUsed, siteName = '' }: {
+  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void; getUsed: () => Set<string>; siteName?: string;
 }) {
   const [tab, setTab] = useState<'pagina' | 'generale'>('pagina');
   const fromSide = useRef(false); // sezione aperta dalla colonna: niente scorrimento (il clic dopo finiva sul campo sbagliato)
@@ -351,6 +351,11 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
           </>
         ) : (
           <div className="space-y-7">
+            {/* in cima: nome dell'agenzia e citta' (prima il nome stava solo nel profilo e andava online subito) */}
+            <Group title={tr('La tua agenzia', 'Your agency')}>
+              <Field label={tr('Nome dell’agenzia', 'Agency name')} value={cfg.agencyName} placeholder={siteName} onChange={x => set({ agencyName: x })} max={80} />
+              <Field label={tr('Città', 'City')} value={cfg.city} placeholder={eg('Treviso')} onChange={x => set({ city: x })} max={60} />
+            </Group>
             <Group title={tr('Colore e caratteri', 'Colour and fonts')}>
               <div className="flex flex-wrap items-center gap-2">
                 {COLORS.map(c => <button key={c} onClick={() => set({ primary: c })} aria-label={c} className={`h-8 w-8 rounded-full ring-offset-2 max-md:h-10 max-md:w-10 ease-smooth transition-shadow ${cfg.primary === c ? 'ring-2 ring-ink' : ''}`} style={{ background: c }} />)}

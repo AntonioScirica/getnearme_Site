@@ -43,6 +43,7 @@ export type SiteConfig = {
   whatsapp: string
   email: string
   city: string
+  agencyName: string // nome dell'agenzia sul sito (segue bozza e Pubblica); vuoto = nome del profilo
   showPrices: boolean
   showStats: boolean
   showAbout: boolean
@@ -175,7 +176,7 @@ export function defaultSite(name: string, email = ''): SiteConfig {
     heroSubtitle: 'Immobili selezionati e un agente che ti segue dalla prima visita al rogito.',
     heroImage: '', aboutTitle: 'Chi sono',
     aboutText: '', // vuoto: nell'editor l'esempio e' in grigio, sul sito esce ABOUT_DEFAULT
-    aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '',
+    aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '', agencyName: '',
     showPrices: true, showStats: true, showAbout: true, showContact: true,
     services: [], // gli esempi (SAMPLE_SERVICES) solo nell'anteprima: online solo i servizi scritti dall'agente
     zones: [],
@@ -241,6 +242,7 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     whatsapp: phone(r.whatsapp),
     email: typeof r.email === 'string' && /^[^\s@<>"]+@[^\s@<>"]+\.[a-z]{2,}$/i.test(r.email) ? r.email.slice(0, 120) : email,
     city: str(r.city, 60, ''),
+    agencyName: str(r.agencyName, 80, ''),
     showPrices: bool(r.showPrices, true),
     showStats: bool(r.showStats, true),
     showAbout: bool(r.showAbout, true),

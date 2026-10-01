@@ -108,7 +108,7 @@ export const loadSite = cache(async (locale: string, slug: string) => {
   }
   const properties = props.map(toSiteProperty).map(p => (vids.has(p.id) ? { ...p, videos: vids.get(p.id) } : p))
   // citta' non scritta dall'agente: quella dei suoi immobili
-  return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: brand.display_name || brand.company_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
+  return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: cfg.agencyName || brand.display_name || brand.company_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
 })
 
 // Tutte le pagine pubbliche dei siti degli agenti, per la sitemap del dominio vetrina.
