@@ -23,7 +23,9 @@ export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda
 // 29/09: Giorno e notte con Kling 2.5 Turbo Pro (0,35 $ + 1 GPT, ~0,37 $) -> 40; Movimento camera con Kling 1.6 standard (0,28 $) -> 30.
 // Pacchetti di crediti extra (una tantum, non scadono col mese): per chi finisce i crediti prima del rinnovo.
 // Prezzi Stripe con lookup key ai_pack_<crediti>; a credito costano un po' piu' dei piani (0,033 / 0,030 / 0,026 EUR), cosi' non li scavalcano.
-export const PACKS = [{ id: 'pack300', credits: 300, eur: 10 }, { id: 'pack500', credits: 500, eur: 15 }, { id: 'pack1500', credits: 1500, eur: 39 }] as const;
+// Pacchetti (02/10/2026): sempre piu' cari al credito dei piani (4 c contro 2,8-3,3), cosi' conviene abbonarsi.
+// Stripe: ai_pack_300 12 €, ai_pack_600 24 €, ai_pack_1500 59 € (prodotto prod_VLTvE05gUHhG5I; i prezzi vecchi 10/15/39 disattivati)
+export const PACKS = [{ id: 'pack300', credits: 300, eur: 12 }, { id: 'pack600', credits: 600, eur: 24 }, { id: 'pack1500', credits: 1500, eur: 59 }] as const;
 export type PackId = (typeof PACKS)[number]['id'];
 export const FREE_EDITS = 3;
 // Tre piani (28/09/2026): Starter foto e video; Plus foto, video e sito; Pro come Plus con piu' crediti, a trimestre o anno.
