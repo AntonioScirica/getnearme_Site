@@ -410,7 +410,9 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // Giorno e notte (-k): 1,6x, il cambio di luce di Kling e' lento (29/09); gli altri a velocita' vera
     const speed = /-k$/.test(name) ? 1.6 : 1
     const shown = cut / speed // durata della clip nel video finale
-    const total = shown + HOLD, n = Math.round(total * 30)
+    // Camminata (-km): la ripresa finisce da sola, niente fermo ne' zoom finale
+    const walkCam = /-km$/.test(name), hold = walkCam ? 0 : HOLD
+    const total = shown + hold, n = Math.round(total * 30)
     // zoom 3% ease-in-out solo nel finale, dal passaggio alla foto vera in poi (Kling e Svuota: ultimi 2 s);
     // sub-pixel (perspective con interpolazione: niente tremolio)
     const z0 = Math.round((veo ? shown - XFADE : shown) * 30)
@@ -440,7 +442,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     } else {
       await ffmpeg(['-y', '-i', raw, '-i', music, '-filter_complex',
-        `${clip},tpad=stop_mode=clone:stop_duration=${HOLD},${zoom}[1:a]${audio}`,
+        `${clip},${walkCam ? 'format=yuv420p[v];' : `tpad=stop_mode=clone:stop_duration=${HOLD},${zoom}`}[1:a]${audio}`,
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     }
     await uploadFile(await readFile(final), key, 'video/mp4')
