@@ -112,7 +112,6 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
         {/* stato e modello in una riga corta: il nome del modello porta a Il mio sito per cambiarlo */}
         <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
-        <span className="hidden h-5 w-px bg-line sm:block" aria-hidden />
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
           : <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>}
