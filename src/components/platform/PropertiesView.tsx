@@ -140,7 +140,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
             <div className="font-semibold">{demo ? tr('Queste sono case di esempio', 'These are sample properties') : tr('Non hai ancora immobili', 'No properties yet')}</div>
             <p className="mt-0.5 text-sm text-muted">{tr('Aggiungi il tuo primo immobile: qui e sulla mappa vedrai i tuoi.', 'Add your first property: your listings will show up here and on the map.')}</p>
           </div>
-          <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Aggiungi immobile', 'Add property')}</a>
+          <a href="#/nuovo" className="flex h-10 items-center justify-center rounded-full bg-brand px-5 max-sm:w-full text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Aggiungi immobile', 'Add property')}</a>
         </div>
       )}
       {!projects ? (

@@ -212,7 +212,7 @@ export default function MediaView() {
             <div className="font-semibold">{tr('Queste sono foto e video di esempio', 'These are sample photos and videos')}</div>
             <p className="mt-0.5 text-sm text-muted">{tr('Arreda la tua prima stanza: qui trovi tutto quello che crei.', 'Stage your first room: everything you create will show up here.')}</p>
           </div>
-          <a href="#/staging" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Arreda una stanza', 'Stage a room')}</a>
+          <a href="#/staging" className="flex h-10 items-center justify-center rounded-full bg-brand px-5 max-sm:w-full text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Arreda una stanza', 'Stage a room')}</a>
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 pt-6">

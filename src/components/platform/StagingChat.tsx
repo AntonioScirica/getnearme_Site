@@ -1004,7 +1004,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 <span className="text-sm text-muted">{tr('Carica una foto o trascinala qui. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.', 'Upload a photo or drag it here. A facade, a garden or a floor plan work too: I recognize it on my own. Or a video of you: you talk, step out and the room gets furnished.')}</span>
                 {/* il campo file deve stare prima del pulsante vetrina: la label attiva il primo controllo che contiene, e un <button> lo e' */}
                 {picker}
-                <span className="mt-1 flex flex-wrap items-center justify-center gap-2">
+                <span className="mt-1 flex flex-wrap items-center justify-center gap-2 max-sm:w-full max-sm:flex-col max-sm:[&>*]:w-full max-sm:[&>*]:justify-center">{/* telefono: due pulsanti uguali a tutta larghezza */}
                   <span className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><ImagePlus size={16} /> {tr('Carica foto/video', 'Upload photo/video')}</span>{/* principale: caricare (Dalla tua vetrina e' vuota per chi e' nuovo) */}
                   {/* dentro la label: senza preventDefault aprirebbe anche la scelta file */}
                   <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><LayoutGrid size={16} /> {tr('Dalla tua vetrina', 'From your showcase')}</button>
@@ -1435,7 +1435,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             <textarea ref={field} rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!narrow ? hint : !base ? tr('Carica una foto', 'Upload a photo') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Scrivi cosa cambiare', 'Write what to change') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              className="block h-[52px] min-w-0 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-5 outline-none sm:h-10 sm:py-2 sm:leading-6 placeholder:text-muted/60 disabled:cursor-not-allowed" />
+              className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />{/* una riga centrata come Telegram, cresce scrivendo */}
             {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}
             {text.trim() && base && !busy && credits && (credits.unlimited || credits.plan !== 'none' || credits.balance > 0) && (() => {
               const n = creditsOf({ prompt: text.trim(), scene }, editsDone);

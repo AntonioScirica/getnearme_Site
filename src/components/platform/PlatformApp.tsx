@@ -738,7 +738,7 @@ function Locked({ on, what, children }: { on: boolean; what: keyof typeof LOCK_T
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand/10 text-brand"><Lock size={24} /></span>
           <h2 className="mt-5 font-display text-2xl font-extrabold tracking-tight">{t}</h2>
           <p className="mt-2 text-[15px] text-muted">{d}</p>
-          <a href="#/piano?cambia=1" className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-brand px-7 text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Riattiva un piano', 'Reactivate a plan')}</a>
+          <a href="#/piano?cambia=1" className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-brand px-7 max-sm:w-full text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Riattiva un piano', 'Reactivate a plan')}</a>
         </div>
       </div>
     </div>
