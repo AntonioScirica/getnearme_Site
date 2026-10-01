@@ -202,18 +202,20 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
           <span className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Dopo</span>
         </div>
       ) : /\.mp4$/.test(photos[i]) ? <video key={photos[i]} src={photos[i]} controls autoPlay playsInline className="max-h-[86vh] max-w-[92vw] rounded-[var(--rc)]" onClick={e => e.stopPropagation()} />
-        : <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" onClick={e => e.stopPropagation()} />}
+        : <div className="relative" onClick={e => e.stopPropagation()}>
+          <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" />
+          {/* scheda in piattaforma: sopra la foto, in basso a sinistra, solo icone come sulle foto della scheda */}
+          {pe && pe.photos.includes(photos[i]) && (
+            <span className="absolute bottom-3 left-3 flex gap-2">
+              <button type="button" title="Migliora con l’AI" aria-label="Migliora con l’AI" onClick={() => { setI(null); pe.onPhoto(photos[i], 'ai'); }} className="flex h-10 w-10 items-center justify-center rounded-full bg-[#537eec] text-white shadow-lg"><Wand2 size={17} /></button>
+              {photos[i] !== pe.cover && <button type="button" title="Metti come copertina" aria-label="Metti come copertina" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg"><Star size={17} /></button>}
+            </span>
+          )}
+        </div>}
       <button className="absolute right-3 top-3 flex h-12 w-12 items-center justify-center text-white md:right-5 md:top-5 md:h-auto md:w-auto" onClick={() => setI(null)} aria-label="Chiudi"><X size={28} /></button>
       <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto precedente" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
       <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" aria-label="Foto successiva" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
       <span className="absolute bottom-5 text-sm text-white/70">{i + 1} / {photos.length}</span>
-      {/* in basso a sinistra, solo icone come sulle foto della scheda */}
-      {pe && pe.photos.includes(photos[i]) && (
-        <div className="absolute bottom-6 left-6 flex gap-2" onClick={e => e.stopPropagation()}>
-          <button type="button" title="Migliora con l’AI" aria-label="Migliora con l’AI" onClick={() => { setI(null); pe.onPhoto(photos[i], 'ai'); }} className="flex h-11 w-11 items-center justify-center rounded-full bg-[#537eec] text-white shadow-lg"><Wand2 size={18} /></button>
-          {photos[i] !== pe.cover && <button type="button" title="Metti come copertina" aria-label="Metti come copertina" onClick={() => pe.onPhoto(photos[i], 'cover')} className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-neutral-900 shadow-lg"><Star size={18} /></button>}
-        </div>
-      )}
     </div>,
     document.body,
   );
