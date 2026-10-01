@@ -73,6 +73,8 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [yearly, setYearly] = useState(buy === 'pro_yearly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [buyError, setBuyError] = useState<string | null>(null); // pagamento non partito: avviso in basso per 4 s
+  useEffect(() => { if (!buyError) return; const t = setTimeout(() => setBuyError(null), 4000); return () => clearTimeout(t); }, [buyError]);
   const [changingRaw, setChanging] = useState(!!change);
   // "cambia piano" ha senso solo con un piano: chi non ce l'ha (anche arrivando da ?cambia=1) vede i tre piani normali
   const changing = changingRaw && !!c && c.plan !== 'none' && !c.unlimited;
@@ -102,6 +104,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
     setBusy(p); setPortalError(null);
     const d = await checkout(p);
     setBusy('');
+    setBuyError(d?.url || d?.error === 'payment_failed' ? null : d?.error === 'test_account' ? tr('Gli account di prova non possono pagare.', 'Test accounts cannot pay.') : tr('Non sono riuscito ad aprire il pagamento, riprova.', 'Could not open the payment, please try again.'));
     if (d?.error === 'payment_failed') setPortalError(tr('Pagamento non riuscito: il piano non è cambiato. Controlla la carta in Gestisci abbonamento.', 'Payment failed: your plan has not changed. Check your card in Manage subscription.'));
     else if (d?.url?.includes('ok=1')) setChanging(false);
   };
@@ -166,6 +169,8 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           </div>
         </>
       )}
+      {/* pagamento non partito (pacchetto o piano): avviso in basso, sempre in vista anche su telefono, si chiude da solo */}
+      {buyError && <p role="alert" className="blur-in fixed bottom-[84px] left-1/2 z-40 w-max max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-center text-sm font-medium text-white shadow-lg md:bottom-6">{buyError}</p>}
       {/* codice: chi ha un piano ne inserisce uno; l'affiliato (anche senza piano) al posto del campo vede il suo */}
       {c && <CodeBox canRedeem={c.plan !== 'none' || !!c.unlimited} onReady={() => setCodeReady(true)} />}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
