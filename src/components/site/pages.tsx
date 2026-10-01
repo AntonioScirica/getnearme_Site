@@ -311,7 +311,8 @@ function PropertyPage({ id }: { id: string }) {
         </Container>
       )}
       <Container className="grid gap-12 py-12 lg:grid-cols-[1fr_360px]">
-        <div>
+        {/* min-w-0: la fila dei video (scorrevole) non deve allargare la colonna */}
+        <div className="min-w-0">
           {t.gallery !== 'full' && heading}
           {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}><Editable k="prezzo" value={p.prezzo ? String(p.prezzo) : ''}>{price(p.prezzo)}</Editable>{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
