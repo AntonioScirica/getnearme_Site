@@ -313,7 +313,7 @@ export function WelcomeModal() {
         </div>
         <div className="px-5 pb-5 pt-5">
           <h2 className="font-display text-2xl font-extrabold tracking-tight">{tr(`Hai ${WELCOME} crediti per provare gratis`, `You have ${WELCOME} credits to try it free`)}</h2>
-          <p className="mt-1.5 text-sm text-muted">{tr('Bastano per arredare una foto e farne un video Prima e dopo. Senza carta, senza abbonamento.', 'Enough to furnish a photo and turn it into a Before and after video. No card, no subscription.')}</p>
+          <p className="mt-1.5 text-sm text-muted">{tr('Per provare foto arredate e video per i social. Senza carta, senza abbonamento.', 'To try furnished photos and social videos. No card, no subscription.')}</p>
           <a href="#/staging" onClick={close} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Arreda la tua prima foto', 'Furnish your first photo')}</a>
           <button type="button" onClick={close} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-brand hover:text-brand/70">{tr('Più tardi', 'Later')}</button>
         </div>

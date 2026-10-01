@@ -37,11 +37,14 @@ async function packLeft(userId: string, balance: number): Promise<number> {
 }
 
 // Crediti di benvenuto (02/10/2026): 110 a chi entra la prima volta senza riga crediti, per provare gratis la
-// piattaforma (1 foto arredata e 1 video Prima e dopo). Una volta sola: la riga creata e l'evento "benvenuto".
+// piattaforma (1 foto arredata e 1 video Prima e dopo); non a chi ha gia' fatto la prova della landing. Una volta sola: la riga creata e l'evento "benvenuto".
 // true = dati adesso (la piattaforma mostra il popup).
 export const WELCOME_CREDITS = 110
 export async function grantWelcome(userId: string): Promise<boolean> {
   if (await unlimited(userId)) return false
+  // niente doppio regalo: chi ha gia' fatto la prova gratis della landing (foto e video) non li riceve
+  const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('kind', ['landing_demo', 'landing_demo_video'])
+  if (count) return false
   const { error } = await admin.from('platform_credits').insert({ user_id: userId, plan: 'none', monthly_credits: 0, balance: WELCOME_CREDITS } as never)
   if (error) return false // riga gia' presente (o richiesta parallela arrivata prima): niente doppio regalo
   await admin.from('platform_credit_events').insert({ user_id: userId, delta: WELCOME_CREDITS, reason: 'benvenuto', balance_after: WELCOME_CREDITS, meta: {} } as never)
