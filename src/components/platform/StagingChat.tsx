@@ -165,7 +165,7 @@ function Picks({ picks }: { picks: { label: string; icon: keyof typeof PICK_ICON
         return (
           <span key={p.label} className="blur-in flex items-center">
             {i > 0 && <span className="h-5 w-px bg-line" aria-hidden />}
-            <span className={`flex items-center gap-2 pr-3 ${i > 0 ? 'pl-3' : 'pl-1.5'}`}>
+            <span className={`flex items-center gap-2 whitespace-nowrap pr-3 ${i > 0 ? 'pl-3' : 'pl-1.5'}`}>
               {p.src ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
               {p.label}
             </span>
@@ -1283,11 +1283,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         </div>
                         {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} />{/* foto nello stile gia' fatta (e pagata): Riprova rilancia solo il video */}<button onClick={() => { const st = m.anim === 'walk' || m.anim === 'agent' ? m.agent?.styled : undefined; if (st) { if (!short(m, videoCr(m.anim))) void makeVideo(m, m.photo, '', st); } else patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') }); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">{tr('Riprova', 'Try again')}</button></div>}
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
-                        <div className="flex items-center gap-2 pt-3">
-                          <div className="flex min-w-0 flex-1"><Picks picks={m.picks} /></div>
-                          <ShareVideo url={m.url} className="flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 text-xs font-medium text-white shadow-sm ring-1 ring-black/5" />{/* stessa forma e altezza di Scarica */}
+                        {/* telefono: scelte su una riga, sotto Condividi e Scarica meta' e meta' */}
+                        <div className="flex items-center gap-2 pt-3 max-sm:flex-wrap">
+                          <div className="flex min-w-0 flex-1 max-sm:basis-full"><Picks picks={m.picks} /></div>
+                          <ShareVideo url={m.url} className="flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 max-sm:flex-1 max-sm:justify-center text-xs font-medium text-white shadow-sm ring-1 ring-black/5" />{/* stessa forma e altezza di Scarica */}
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
-                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
+                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas max-sm:flex-1 max-sm:justify-center ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> {tr('Scarica', 'Download')}</a>
                         </div>
                       </div>
                     )}
