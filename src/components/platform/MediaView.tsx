@@ -14,6 +14,8 @@ import ImmoLoader from '@/components/ui/ImmoLoader';
 import { pageLocale, tr } from './i18n';
 
 // Una voce = una foto di partenza: ultima versione (dopo), originale (prima) e i passaggi in mezzo.
+// video in lavorazione: della piattaforma, o della prova gratis della landing (landing:<lavoro>, lo finisce la sua rotta)
+const jobUrl = (job: string) => (job.startsWith('landing:') ? `/api/landing/demo-video?job=${encodeURIComponent(job.slice(8))}` : `/api/platform/video?job=${encodeURIComponent(job)}`);
 export type MediaItem = { id: string; video?: string; pending?: boolean; job?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
 
 export async function fetchMedia(): Promise<MediaItem[]> {
@@ -37,7 +39,7 @@ export function useGalleryNews(uid: string, onGallery: boolean): number {
       let seen = Number((() => { try { return localStorage.getItem(key); } catch { return null; } })() ?? 0);
       if (!seen) { seen = Date.now(); try { localStorage.setItem(key, String(seen)); } catch { /* niente */ } } // primo accesso: niente arretrati
       const items = await fetchMedia();
-      for (const m of items.filter(x => x.pending && x.job)) await authFetch(`/api/platform/video?job=${encodeURIComponent(m.job!)}`).catch(() => null);
+      for (const m of items.filter(x => x.pending && x.job)) await authFetch(jobUrl(m.job!)).catch(() => null);
       if (!stop) setN(items.filter(m => !m.pending && m.at > seen).length);
     };
     void check();
@@ -128,7 +130,7 @@ export default function MediaView() {
     let t: ReturnType<typeof setTimeout>;
     const tick = async () => {
       for (const job of jobs) {
-        const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(job)}`).catch(() => null);
+        const r = await authFetch(jobUrl(job)).catch(() => null);
         const v = r ? await r.json().catch(() => ({})) : {};
         if (v.url || v.error) { if (!stop) fetchMedia().then(m => { if (!stop) setItems(m); }); return; }
       }
@@ -199,7 +201,7 @@ export default function MediaView() {
       <div className="flex items-end justify-between gap-4 border-b border-line pb-6">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Galleria', 'Gallery')}</h1>
-          <p className="pt-1 text-sm text-muted">{tr("Le foto create con l'AI, all'ultima versione. Passa sopra per vedere com'era, aprila per tutti i passaggi.", 'Your AI photos, latest version. Hover to see the original, open one to see every step.')}</p>
+          <p className="pt-1 text-sm text-muted"><span className="sm:hidden">{tr("Foto e video creati con l'AI. Aprili per tutti i passaggi.", 'Photos and videos made with AI. Open one for every step.')}</span><span className="max-sm:hidden">{tr("Le foto create con l'AI, all'ultima versione. Passa sopra per vedere com'era, aprila per tutti i passaggi.", 'Your AI photos, latest version. Hover to see the original, open one to see every step.')}</span></p>{/* telefono: niente "passa sopra" */}
         </div>
         <a href="#/staging" onClick={() => { try { sessionStorage.removeItem('gnm-staging-chat'); } catch { /* niente */ } }} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> {tr('Nuova foto', 'New photo')}</a>
       </div>
@@ -214,7 +216,7 @@ export default function MediaView() {
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 pt-6">
-        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
+        <label className="flex h-10 min-w-0 flex-1 items-center max-sm:basis-full gap-2 rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
           <Search size={16} className="shrink-0 text-muted" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca per stanza, casa o richiesta', 'Search by room, property or request')} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
         </label>

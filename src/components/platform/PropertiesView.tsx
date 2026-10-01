@@ -119,10 +119,10 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
         {/* Filtri: stato e ricerca */}
         {/* telefono: filtri su una riga, sotto la ricerca a tutta larghezza col + accanto */}
         <div className="blur-in flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap" style={{ animationDelay: '.08s' }}>
-          <div className="flex max-w-full overflow-x-auto rounded-full bg-white p-1 ring-1 ring-black/10 [scrollbar-width:none]">
+          <div className="flex w-full max-w-full overflow-x-auto rounded-full bg-white p-1 ring-1 ring-black/10 [scrollbar-width:none] md:w-auto">{/* telefono: a tutta larghezza come la ricerca sotto */}
             {FILTERS.map(f => (
               <button key={f.id} onClick={() => setFilter(f.id)}
-                className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-medium ease-smooth transition-colors md:py-1.5 ${filter === f.id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{f.label}</button>
+                className={`flex-1 shrink-0 whitespace-nowrap rounded-full px-3.5 md:flex-none py-2 text-[13px] font-medium ease-smooth transition-colors md:py-1.5 ${filter === f.id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{f.label}</button>
             ))}
           </div>
           <label className="flex h-10 min-w-0 flex-1 basis-[calc(100%-48px)] items-center gap-2 rounded-full bg-white px-3.5 ring-1 ring-black/10 ease-smooth transition-shadow focus-within:ring-ink/30 md:flex-none md:basis-auto">

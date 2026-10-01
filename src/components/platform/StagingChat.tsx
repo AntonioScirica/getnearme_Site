@@ -1433,7 +1433,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               </Tooltip>
             </div>
             <textarea ref={field} rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
-              placeholder={!narrow ? hint : !base ? tr('Carica una foto per iniziare', 'Upload a photo to start') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Scrivi cosa cambiare', 'Write what to change') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
+              placeholder={!narrow ? hint : !base ? tr('Carica una foto', 'Upload a photo') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Scrivi cosa cambiare', 'Write what to change') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-[52px] min-w-0 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-5 outline-none sm:h-10 sm:py-2 sm:leading-6 placeholder:text-muted/60 disabled:cursor-not-allowed" />
             {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}

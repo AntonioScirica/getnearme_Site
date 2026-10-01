@@ -4,7 +4,7 @@ import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown, Gift, Lock } from 'lucide-react';
+import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download, BookOpen, ChevronDown, Gift, Lock } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -320,18 +320,23 @@ function PlatformInner({ userData }: { userData: UserData }) {
 // Card azione: si inclina verso il mouse (--rx/--ry), riflesso di luce (--sx/--sy) e
 // variabili --mx/--my (-1..1) per la parallasse degli elementi del collage (.par-1/2/3).
 
-function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wrapRef, wrapClass = '', wrapStyle, children }: { kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; intro?: boolean; wrapRef?: React.Ref<HTMLDivElement>; wrapClass?: string; wrapStyle?: React.CSSProperties; children: React.ReactNode }) {
+function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wrapRef, wrapClass = '', wrapStyle, children, thumb }: { thumb?: string; kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; intro?: boolean; wrapRef?: React.Ref<HTMLDivElement>; wrapClass?: string; wrapStyle?: React.CSSProperties; children: React.ReactNode }) {
   const move = tiltMove;
   const leave = (e: React.MouseEvent<HTMLElement>) => { tiltReset(e.currentTarget); onHover?.(false); };
-  const cls = `tilt group relative flex h-[22rem] w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] sm:w-80 ${active ? 'ring-2 ring-ink' : ''}`;
+  // telefono: riga compatta (foto piccola, domanda, freccia); da sm la card grande con l'illustrazione
+  const cls = `tilt group relative flex h-[22rem] w-full flex-col max-sm:h-auto max-sm:flex-row max-sm:items-center max-sm:gap-4 max-sm:p-4 overflow-hidden rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] sm:w-80 ${active ? 'ring-2 ring-ink' : ''}`;
   const props = { className: cls, onMouseMove: move, onMouseEnter: () => onHover?.(true), onMouseLeave: leave };
   const inner = (
     <>
       <span className="sheen pointer-events-none absolute inset-0 z-20" />
+      {thumb && <img src={thumb} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />}
       {/* titolo in piccolo sopra, la domanda in grande */}
-      <span className="par-1 text-sm text-muted">{title}</span>
-      <span className="par-1 mt-1 text-2xl font-bold leading-tight tracking-tight">{kicker}</span>
-      <div className="flex flex-1 items-center justify-center pt-4"><div className="relative h-40 w-full scale-110">{children}</div></div>
+      <span className="flex min-w-0 flex-col max-sm:flex-1">
+        <span className="par-1 text-sm text-muted">{title}</span>
+        <span className="par-1 mt-1 text-2xl font-bold leading-tight tracking-tight max-sm:text-lg">{kicker}</span>
+      </span>
+      <ChevronRight size={20} className="shrink-0 text-muted sm:hidden" />
+      <div className="flex flex-1 items-center justify-center pt-4 max-sm:hidden"><div className="relative h-40 w-full scale-110">{children}</div></div>
     </>
   );
   // Ingresso sul contenitore, inclinazione sulla card: due transform che non si sovrascrivono.
@@ -390,7 +395,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   }, [open, onClose]);
 
   const width = { closed: 'sm:w-80 delay-[120ms]', input: 'sm:w-[34rem]', browser: 'sm:w-[56rem]', done: 'sm:w-[56rem]' }[phase];
-  const height = { closed: 'h-[22rem] p-6', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
+  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
     <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s', viewTransitionName: 'ob-card-0' }}>
@@ -408,19 +413,21 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
       <div role={open ? undefined : 'button'} tabIndex={open ? -1 : 0}
         onClick={open ? undefined : onOpen} onKeyDown={e => { if (!open && e.key === 'Enter') onOpen(); }}
         onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
-        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] ease-smooth ${height} ${CARD_SHADOW} ${open ? 'shadow-[0_1px_3px_rgba(0,0,0,.04),0_16px_40px_-22px_rgba(0,0,0,.18)]' : ''}`}>
+        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] ease-smooth ${height} ${open ? '' : 'max-sm:flex-row max-sm:items-center max-sm:gap-4'} ${CARD_SHADOW} ${open ? 'shadow-[0_1px_3px_rgba(0,0,0,.04),0_16px_40px_-22px_rgba(0,0,0,.18)]' : ''}`}>
         {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
         <button type="button" onClick={onClose} aria-label={tr('Torna indietro', 'Go back')} tabIndex={open ? 0 : -1}
           className={`absolute z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-all hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px]' : 'right-4 top-4'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
 
+        {!open && <img src="/immo/home/card.webp" alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />}{/* telefono: riga compatta come le altre card */}
         {/* Titolo della card: svanisce e si chiude */}
-        <div className={`overflow-hidden transition-all ease-smooth ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
+        <div className={`overflow-hidden transition-all ease-smooth max-sm:flex-1 ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
           <span className="par-1 block text-sm text-muted">{tr('Miglioralo', 'Improve it')}</span>
-          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">{tr('Annuncio già online?', 'Listing already online?')}</span>
+          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight max-sm:text-lg">{tr('Annuncio già online?', 'Listing already online?')}</span>
         </div>
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
-        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 scale-95 overflow-hidden opacity-0' : 'max-h-60'} flex-1`}>
+        {!open && <ChevronRight size={20} className="shrink-0 text-muted sm:hidden" />}
+        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 scale-95 overflow-hidden opacity-0' : 'max-h-60'} flex-1 ${open ? '' : 'max-sm:hidden'}`}>
           <div className={`relative transition-all ease-smooth ${open ? 'w-72 delay-[120ms]' : 'w-48'}`}>
             <div className="par-2">
               {/* Il contenitore cambia forma (misure, angoli, sfondo: tutto animabile); la versione verticale sfuma e quella
@@ -447,7 +454,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
 
         {/* Campo link: nel browser diventa la barra indirizzi */}
         <form onSubmit={e => { e.preventDefault(); if (ok && !busy) onSubmit(); }}
-          className={`flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all ease-smooth focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
+          className={`${open ? "" : "max-sm:hidden "}flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all ease-smooth focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
             !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]'}`}>
           <span className={`flex shrink-0 gap-1.5 overflow-hidden ease-smooth transition-all ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0'}`}>
             {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
@@ -574,7 +581,7 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
 
   return (
     // pb-24: lo spazio delle pill fisse in basso (Profilo, Importa), cosi' titolo e box stanno al centro della parte libera
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center pb-24 pt-10">
+    <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center pb-36 pt-6 sm:justify-center sm:pb-24 sm:pt-10">
       <h1 className={`text-center font-display text-4xl font-bold leading-[1.2] tracking-tight ease-smooth transition-all md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
         {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${d0 + i * 0.05}s` }}>{w}&nbsp;</span>)}
         <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
@@ -593,7 +600,7 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
         </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
-        <Tile index={1} intro={intro} wrapClass={others(1)} kicker={tr('Hai un nuovo immobile?', 'Got a new property?')} title={tr('Mettilo in vetrina', 'Put it on show')} href="#/nuovo">
+        <Tile index={1} thumb="/immo/home/fan-2.webp" intro={intro} wrapClass={others(1)} kicker={tr('Hai un nuovo immobile?', 'Got a new property?')} title={tr('Mettilo in vetrina', 'Put it on show')} href="#/nuovo">
           {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
           {!noSite && <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span></span>}
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
@@ -608,7 +615,7 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
         </Tile>
 
         {/* Home staging: stanza vuota -> arredata, la linea prima/dopo scorre al passaggio del mouse */}
-        <Tile index={2} intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Home staging" title={tr('Hai una stanza vuota?', 'Got an empty room?')} href="#/staging">
+        <Tile index={2} thumb="/immo/home/demo-after.webp" intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Home staging" title={tr('Hai una stanza vuota?', 'Got an empty room?')} href="#/staging">
           {/* .par-2 imposta la sua transizione su transform: la rotazione sta su un contenitore a parte, cosi' e' morbida */}
           <div className="par-2 absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2">
             <div className="rounded-xl bg-white p-1.5 shadow-md ease-smooth transition-[rotate,scale,box-shadow] group-hover:rotate-2 group-hover:scale-[1.03] group-hover:shadow-lg">

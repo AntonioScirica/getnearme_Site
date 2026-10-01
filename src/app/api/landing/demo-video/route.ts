@@ -18,6 +18,8 @@ const PER_IP = 1
 // tetto di tutti i video di prova al giorno (~0,85 $ l'uno): LANDING_VIDEO_PER_DAY su Vercel, predefinito 20 (~17 $/giorno)
 const PER_DAY = Number(process.env.LANDING_VIDEO_PER_DAY) || 20
 const OWNER = 'landing'
+// copia del video della prova nella Galleria dell'utente: stesso nome per segnaposto e video (videos/<utente>/<nome>-prova)
+const galleryBase = (uid: string, job: string) => `videos/${uid}/${(job.split('.')[1] ?? 'video').replace(/[^\w-]/g, '-')}-prova`
 const MOCK_VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4' // cartella su R2 e firma del lavoro
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -59,6 +61,9 @@ export async function POST(req: NextRequest) {
   const empty = typeof body?.empty === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.empty) && body.empty.length < 4_000_000 ? body.empty : undefined
   // account di prova: lavoro finto
   const { status, ...r } = await startVideo(OWNER, (await isFakeUser(user?.id)) ? user!.id : '', { imageUrl: '', imageBase64: image, anim: body?.anim === 'gravity' ? 'gravity' : 'popup', empty }) // nella prova solo Popup e Dall'alto
+  // con l'account: segnaposto "in lavorazione" nella sua Galleria, cosi' entrando in piattaforma il video si vede e si
+  // finisce anche se la pagina della prova e' stata chiusa (la Galleria lo segue con landing:<lavoro>)
+  if (r.job && user) await uploadFile(Buffer.from(JSON.stringify({ job: `landing:${r.job}`, at: Date.now() })), `${galleryBase(user.id, r.job)}.job.json`, 'application/json').catch(() => {})
   // non partito: la prova si restituisce
   if (!r.job && slot) { await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); await admin.from('ai_usage').delete().eq('kind', 'landing_demo_video').eq('provider', 'counter-fp').in('model', dev ? [dev, acc] : [acc]) }
   return NextResponse.json(r, typeof status === 'number' ? { status } : undefined)
@@ -84,7 +89,7 @@ export async function GET(req: NextRequest) {
     const url = await uploadFile(clean, cleanKey, 'video/mp4')
     // con l'account: una copia anche nella sua Galleria (videos/<utente>/)
     const user = await authUser(req)
-    if (user) await uploadFile(clean, `videos/${user.id}/${Date.now()}-prova.mp4`, 'video/mp4').catch(() => {})
+    if (user) { const g = galleryBase(user.id, job); await uploadFile(clean, `${g}.mp4`, 'video/mp4').catch(() => {}); await deleteKeys([`${g}.job.json`]).catch(() => {}) }
     const res = { url, token: sealKey(cleanKey) }
     await uploadFile(Buffer.from(JSON.stringify(res)), meta, 'application/json')
     await deleteKeys([`videos/${OWNER}/${name}.mp4`]).catch(() => {})

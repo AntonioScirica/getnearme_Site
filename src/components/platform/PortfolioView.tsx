@@ -183,7 +183,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <p className="pt-1 text-sm text-muted">{tr('Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.', 'Pick a template, edit it and publish your website in 5 minutes.')}</p>
           {/* solo senza piano col sito: prima restava nella pagina nascosto e chi legge lo schermo lo trovava anche col Pro */}
           {credits && !sitePlan && <div className="blur-in">
-              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">{tr('Il sito pubblico è nei piani Plus e Pro.', 'The public website is included in the Plus and Pro plans.')} <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">{tr('Scegli un piano', 'Choose a plan')}</button></p>
+              <p className="mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-2xl bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200 sm:rounded-full">{tr('Il sito pubblico è nei piani Plus e Pro.', 'The public website is included in the Plus and Pro plans.')} <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">{tr('Scegli un piano', 'Choose a plan')}</button></p>
           </div>}
         </div>
         {url && (
@@ -220,12 +220,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div className="mt-6">
           {/* a sinistra si torna ai modelli, a destra si pubblica */}
           <div className="blur-in mb-5 flex flex-wrap items-center justify-between gap-3" style={{ animationDelay: '.2s' }}>
-          <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10">
+          <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10 max-sm:w-full max-sm:[&>button]:flex-1 max-sm:[&>button]:justify-center">{/* telefono: a tutta larghezza */}
             <button onClick={() => { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setEditing(null); }}
               className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> {tr('Tutti i modelli', 'All templates')}</button>
           </div>
           {/* Pubblica a destra, sulla stessa riga */}
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-3 text-sm max-sm:w-full max-sm:[&>button]:flex-1 max-sm:[&>button]:justify-center">
             <span className={`max-md:hidden ${dirty ? 'font-medium' : 'text-muted'}`}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? <>{tr('Bozza salvata, non ancora online', 'Draft saved, not live yet')}</> : ''}</span>
             {/* Scarta: pulsante secondario accanto a Pubblica */}
             {dirty && saved !== 'saving' && <button type="button" onClick={discard} className="flex h-10 items-center whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas">{tr('Scarta', 'Discard')}</button>}
