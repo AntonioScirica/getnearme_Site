@@ -425,7 +425,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Pronto per il portale: tutto da copiare e incollare, foto pronte, pubblicazione sul sito */}
       {done && (
         <section className={ai ? 'mt-8' : 'flex min-h-[70vh] flex-col items-center justify-center text-center'} style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
-          <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Quasi pronto per il tuo sito', 'Almost ready for your site')}</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">{cr && !siteOk ? tr('Quasi pronto', 'Almost ready') : tr('Quasi pronto per il tuo sito', 'Almost ready for your site')}</h1>
           {busy && <div className="mt-6 flex items-center gap-2 text-muted"><Loader2 size={18} className="animate-spin" /> {busy}</div>}
           {!ai && !busy && error && <button onClick={() => generate()} className="mt-5 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white">{tr('Riprova', 'Try again')}</button>}
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}

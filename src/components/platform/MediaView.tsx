@@ -58,7 +58,9 @@ type Period = (typeof PERIODS)[number]['value'];
 const PAGE = 24;
 const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 // richiesta salvata come id dello stile ("modern", "empty day"...): si mostra il nome in italiano
-const nice = (t: string) => t.split(' ').map(w => STAGING_STYLES.find(x => x.id === w)?.label ?? STAGING_ANGLES.find(x => x.id === w)?.label ?? (w === 'planimetria' ? tr('Planimetria', 'Floor plan') : w)).join(', ')
+const presetName = (w: string) => STAGING_STYLES.find(x => x.id === w)?.label ?? STAGING_ANGLES.find(x => x.id === w)?.label ?? (w === 'planimetria' ? tr('Planimetria', 'Floor plan') : null)
+// solo se sono tutti id di stile; una richiesta scritta a mano resta com'e' (prima diventava "mettere, un, letto")
+const nice = (t: string) => { const w = t.split(' '); return w.every(presetName) ? w.map(presetName).join(', ') : t; }
 const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: tr('Prima', 'Before') }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text ? nice(s.text) : tr('Modifica', 'Edit') }))];
 
 // Galleria: divisa per immobile, con ricerca (stanza, casa, richiesta), filtri e caricamento a scorrimento

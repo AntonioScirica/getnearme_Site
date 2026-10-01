@@ -142,7 +142,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
         <div className="stagger mt-10 grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map(p => <PropertyCard siteOk={siteOk} key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
-      ) : (
+      ) : !empty && ( // lista vuota: c'e' gia' la card "Non hai ancora immobili", niente secondo messaggio
         <p className="mt-12 text-center text-sm text-muted">{tr('Nessun immobile con questi filtri.', 'No properties match these filters.')}</p>
       )}
       </div>

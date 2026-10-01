@@ -150,7 +150,7 @@ const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.
 function Cr({ n, dark, tight, still }: { n: number; dark?: boolean; tight?: boolean; still?: boolean }) {
   // icona moneta: i crediti si spendono (Sparkles e' gia' l'icona dell'AI); gratis: niente pill
   if (n === 0) return null;
-  return <span title={`${n} ${tr('crediti', 'credits')}`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : still ? 'bg-black/[.06] text-muted' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
+  return <span title={`${n} ${n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : still ? 'bg-black/[.06] text-muted' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
 }
 // scelte fatte (modello, stile...): una sola pillola con un divisore verticale tra una scelta e l'altra
 function Picks({ picks }: { picks: { label: string; icon: keyof typeof PICK_ICON; src?: string }[] }) {
@@ -396,7 +396,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const setText = (v: string) => { setTextState(v); if (!v.trim()) setTextDensity(null); }; // testo vuoto: la densita' letta dalle parole si azzera
   // Detta a voce (riconoscimento del browser, Chrome/Safari/Edge): le parole finiscono nel campo, poi si invia come sempre.
   // Senza supporto (es. Firefox) il microfono non compare.
-  type Rec = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null };
+  type Rec = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null };
   const [canDictate, setCanDictate] = useState(false);
   useEffect(() => { setCanDictate(typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)); }, []); // eslint-disable-line react-hooks/set-state-in-effect
   const rec = useRef<Rec | null>(null);
@@ -411,6 +411,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const start = text.trim() ? `${text.trim()} ` : '';
     r.onresult = e => { const said = Array.from(e.results).map(x => x[0].transcript).join(''); setText(start + said); };
     r.onend = () => setListening(false);
+    // microfono negato o assente: si dice (prima non succedeva niente e sembrava rotto)
+    r.onerror = e => { setListening(false); if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') window.alert(tr('Il microfono non è disponibile: consenti il microfono a questo sito nelle impostazioni del browser.', 'The microphone is not available: allow it for this site in your browser settings.')); };
     setListening(true); touch(); r.start();
   };
   // foto di riferimento per lo stile: scelta (Unsplash o dal computer) = richiesta inviata subito
