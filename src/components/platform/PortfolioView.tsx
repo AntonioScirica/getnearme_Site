@@ -178,12 +178,10 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio sito', 'My website')}</h1>
           <p className="pt-1 text-sm text-muted">{tr('Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.', 'Pick a template, edit it and publish your website in 5 minutes.')}</p>
-          {/* avviso senza piano col sito: si apre con un movimento quando il piano e' noto (prima compariva di scatto) */}
-          <div aria-hidden={!(credits && !sitePlan)} inert={!(credits && !sitePlan)} className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${credits && !sitePlan ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-            <div className="min-h-0 overflow-hidden">
+          {/* solo senza piano col sito: prima restava nella pagina nascosto e chi legge lo schermo lo trovava anche col Pro */}
+          {credits && !sitePlan && <div className="blur-in">
               <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">{tr('Il sito pubblico è nei piani Plus e Pro.', 'The public website is included in the Plus and Pro plans.')} <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">{tr('Scegli un piano', 'Choose a plan')}</button></p>
-            </div>
-          </div>
+          </div>}
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 sm:flex-nowrap">{/* telefono: indirizzo su una riga sua, sotto l'interruttore */}
