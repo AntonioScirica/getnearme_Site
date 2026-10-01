@@ -1644,11 +1644,11 @@ const SAVE_ANIM = `
 @keyframes gnm-sv-tagold { 0%,22% { opacity: 1 } 34%,92% { opacity: 0 } 100% { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { .gnm-sv * { animation: none !important } }
 `;
-export function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
+export function SaveToProperty({ before, after, projectId, origin, onClose, done }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void; done?: boolean }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
   const [pid, setPid] = useState<string>(projectId ?? '');
   const [mode, setMode] = useState<'add' | 'plain' | 'replace'>('add');
-  const [state, setState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle');
+  const [state, setState] = useState<'idle' | 'busy' | 'ok' | 'err'>(done ? 'ok' : 'idle'); // done: solo per l'anteprima locale del messaggio finale
   // un solo immobile: scelto da solo, senza menu
   // indirizzo del sito: "Vedi l'immobile" apre la casa online se e' pubblica
   const [slug, setSlug] = useState<string | null>(null);
@@ -1674,8 +1674,8 @@ export function SaveToProperty({ before, after, projectId, origin, onClose }: { 
   const tag = 'absolute bottom-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white';
   const option = (id: 'add' | 'plain' | 'replace', title: string, text: string, visual: React.ReactNode, off?: boolean) => (
     <button type="button" onClick={() => setMode(id)} aria-pressed={chosen === id} disabled={off}
-      className={`flex min-w-0 flex-1 flex-col rounded-3xl bg-white p-2 text-left ring-1 ease-smooth transition-shadow disabled:cursor-not-allowed disabled:opacity-45 ${chosen === id ? 'ring-2 ring-brand' : 'ring-line enabled:hover:ring-ink/20'}`}>
-      <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas">{visual}</span>
+      className={`flex min-w-0 flex-1 flex-col rounded-3xl bg-white p-2 text-left ring-1 ease-smooth transition-shadow max-sm:flex-row max-sm:items-center max-sm:gap-1 disabled:cursor-not-allowed disabled:opacity-45 ${chosen === id ? 'ring-2 ring-brand' : 'ring-line enabled:hover:ring-ink/20'}`}>
+      <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas max-sm:w-28 max-sm:shrink-0 max-sm:[&_span.absolute.bottom-2]:hidden">{visual}</span>{/* telefono: card in riga, foto piccola a sinistra (impilate grandi spingevano Salva fuori schermo) */}
       <span className="block px-1.5 pb-1 pt-2.5"><span className="block text-sm font-semibold">{title}</span><span className="block text-xs leading-snug text-muted">{text}</span></span>
     </button>
   );
@@ -1684,15 +1684,21 @@ export function SaveToProperty({ before, after, projectId, origin, onClose }: { 
       <style>{SAVE_ANIM}</style>
       <div onClick={e => e.stopPropagation()} className="max-h-full w-full max-w-3xl overflow-y-auto overscroll-contain rounded-[32px] bg-white p-6 shadow-2xl">
         {state === 'ok' ? (
-          <div className="blur-in flex flex-col items-center gap-3 py-6 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check size={26} /></span>
-            <div className="text-lg font-semibold">{tr('Salvata in', 'Saved to')} {p?.titolo || p?.nome || tr('immobile', 'property')}</div>
-            <p className="text-sm text-muted">{chosen === 'add' ? tr('Sul sito la trovi con l’etichetta Prima / Dopo.', 'On the website you\'ll find it with the Before / After label.') : chosen === 'plain' ? tr('L’abbiamo aggiunta alle foto dell’immobile.', 'We added it to the property photos.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
-            <div className="flex gap-2 pt-2">
-              <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Chiudi', 'Close')}</button>
+          // fatto: la foto salvata in grande, dove e' finita e cosa vedra' il cliente, poi i due pulsanti
+          <div className="blur-in mx-auto flex max-w-md flex-col items-center text-center">
+            <span className="relative block w-full overflow-hidden rounded-2xl bg-canvas">
+              <img src={after} alt="" className="aspect-[16/10] w-full object-cover" />
+              <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow"><Check size={13} /> {tr('Salvata', 'Saved')}</span>
+              {chosen === 'add' && <span className={`${tag} right-2`}>{tr('Prima / Dopo', 'Before / After')}</span>}
+            </span>
+            <div className="mt-5 text-lg font-semibold">{tr('Foto salvata nell’immobile', 'Photo saved to the property')}</div>
+            <div className="mt-0.5 text-sm font-medium text-ink/80">{(p?.titolo || p?.nome || tr('Immobile', 'Property')).replace(/[\s.]+$/, '')}</div>
+            <p className="mt-2 text-sm text-muted">{chosen === 'add' ? tr('Sul sito il cliente la confronta con l’originale.', 'On the website the client compares it with the original.') : chosen === 'plain' ? tr('È in fondo alle foto dell’immobile, l’originale resta.', 'It\'s at the end of the property photos, the original stays.') : tr('Ha preso il posto della foto originale.', 'It replaced the original photo.')}</p>
+            <div className="mt-6 flex w-full gap-2">
+              <button onClick={onClose} className="h-11 flex-1 rounded-full bg-canvas px-5 text-sm font-semibold text-ink hover:bg-line/60">{tr('Chiudi', 'Close')}</button>
               {p?.is_public && slug
-                ? <a href={`${portfolioUrl(slug)}/${pid}`} target="_blank" rel="noopener" className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
-                : <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi l’immobile', 'View property')}</a>}
+                ? <a href={`${portfolioUrl(slug)}/${pid}`} target="_blank" rel="noopener" className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
+                : <a href={`#/immobile/${pid}`} className="flex h-11 flex-1 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">{tr('Vedi l’immobile', 'View property')}</a>}
             </div>
           </div>
         ) : <>
@@ -1719,7 +1725,7 @@ export function SaveToProperty({ before, after, projectId, origin, onClose }: { 
                 <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />{/* a colori: in bianco e nero sembrava che la foto venisse rovinata */}
                 <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: 'inset(0 0 0 var(--sv-p))' }} />
                 <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(0,0,0,.35)]" style={{ left: 'var(--sv-p)' }} />
-                <span className="absolute top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-lg ring-2 ring-brand/30" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={18} /></span>
+                <span className="absolute top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-lg ring-2 ring-brand/30 max-sm:h-7 max-sm:w-7" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={18} /></span>
               </span>
               <span className={`${tag} left-2`}>{tr('Originale, resta', 'Original, kept')}</span><span className={`${tag} right-2`}>{tr('Nuova', 'New')}</span>
             </>)}
@@ -1742,10 +1748,12 @@ export function SaveToProperty({ before, after, projectId, origin, onClose }: { 
               </span>
             </>, !canReplace)}
           </div>
-          <div className="flex items-center justify-end gap-2 pt-5">
+          {/* dubbi rimasti ai test: la copertina cambia? lo slider va anche su Facebook? */}
+          <p className="pt-3 text-xs text-muted">{chosen === 'replace' ? tr('Se l’originale era la copertina, la copertina diventa la nuova.', 'If the original was the cover, the new one becomes the cover.') : tr('La copertina resta la stessa. Il confronto si vede solo sul tuo sito.', 'The cover stays the same. The comparison only shows on your website.')}</p>
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-4 max-sm:[&>button]:flex-1">
             {state === 'err' && <span className="mr-auto text-xs text-rose-600">{tr('Non sono riuscito a salvarla, riprova.', 'I couldn\'t save it, please try again.')}</span>}
             <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
-            <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} {tr('Salva', 'Save')}</button>
+            <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} {tr('Salva', 'Save')}</button>
           </div>
         </>}
       </div>
