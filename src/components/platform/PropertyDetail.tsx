@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -237,7 +237,10 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
     before.current = new Map();
   }, [order]);
   const first = (src: string) => { snap(); setOrder(o => [src, ...o.filter(x => x !== src)]); }; // metti per prima (= copertina, salvata con l'ordine)
-  const remove = (src: string) => { if (!confirm(tr('Togliere questa foto dall’immobile?', 'Remove this photo from the listing?'))) return; setOrder(o => o.filter(x => x !== src)); onPhoto?.(src, 'remove'); };
+  // togliere: come l'ordine, vale solo con Salva (Annulla la rimette); prima la X cancellava subito
+  const remove = (src: string) => { snap(); setOrder(o => o.filter(x => x !== src)); };
+  // telefono (niente trascinamento): frecce per spostare la foto prima o dopo
+  const shift = (src: string, d: number) => { snap(); setOrder(o => { const i = o.indexOf(src), j = i + d; if (j < 0 || j >= o.length) return o; const n = [...o]; [n[i], n[j]] = [n[j], n[i]]; return n; }); };
   const [drag, setDrag] = useState<string | null>(null);
   // trascinando: dopo uno spostamento le foto scivolano (600 ms) e passano sotto il puntatore, che rimandava indietro
   // la foto (avanti e indietro all'infinito). Si ignora il passaggio sulle foto in movimento e sulla stessa due volte.
@@ -256,7 +259,7 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
           <h2 className="font-display text-2xl font-bold tracking-tight">{tr('Le foto', 'Photos')}</h2>
           {/* touch (niente hover, niente trascinamento): le azioni stanno sempre sulle foto, il testo lo dice */}
           <p className="mt-1 text-sm text-muted [@media(hover:none)]:hidden">{tr('Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.', 'Drag them to change the order clients will see them in: the first one is the cover. Hover over a photo to improve it with AI or remove it.')}</p>
-          <p className="mt-1 hidden text-sm text-muted [@media(hover:none)]:block">{tr('La prima è la copertina. Su ogni foto: la bacchetta la migliora con l’AI, la stella la mette in copertina, la X la toglie.', 'The first one is the cover. On each photo: the wand improves it with AI, the star moves it first, the X removes it.')}</p>
+          <p className="mt-1 hidden text-sm text-muted [@media(hover:none)]:block">{tr('La prima è la copertina. Su ogni foto: la bacchetta la migliora con l’AI, la stella la mette in copertina, le frecce la spostano, la X la toglie. Poi Salva.', 'The first one is the cover. On each photo: the wand improves it with AI, the star moves it first, the X removes it.')}</p>
         </div>
         <ul className="grid min-h-0 flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
@@ -272,6 +275,11 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
                   <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} aria-label={tr('Migliora con l’AI', 'Improve with AI')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Wand2 size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Migliora con l’AI', 'Improve with AI')}</span></button>
                   {i > 0 && <button type="button" onClick={() => first(src)} aria-label={tr('Metti in copertina', 'Make it the cover')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Star size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Metti in copertina', 'Make it the cover')}</span></button>}
                   <button type="button" onClick={() => remove(src)} aria-label={tr('Togli la foto', 'Remove photo')} className="absolute right-2 top-2 z-10 flex h-8 w-8 [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 items-center justify-center rounded-full bg-white text-rose-600 shadow"><X size={14} /></button>
+                  {/* telefono: frecce per spostare (il trascinamento col dito non c'e') */}
+                  <span className="absolute bottom-2 right-2 z-10 hidden gap-1 [@media(hover:none)]:flex">
+                    {i > 0 && <button type="button" onClick={() => shift(src, -1)} aria-label={tr('Sposta prima', 'Move earlier')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow"><ChevronLeft size={18} /></button>}
+                    {i < order.length - 1 && <button type="button" onClick={() => shift(src, 1)} aria-label={tr('Sposta dopo', 'Move later')} className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow"><ChevronRight size={18} /></button>}
+                  </span>
                 </span>
               )}
             </li>
@@ -279,7 +287,7 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
         </ul>
         <div className="flex items-center justify-end gap-2 border-t border-line px-7 py-4">
           <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Annulla', 'Cancel')}</button>
-          <button type="button" onClick={() => onSave(order)} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black">{tr('Salva ordine', 'Save order')}</button>
+          <button type="button" onClick={() => onSave(order)} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black">{order.length < photos.length ? tr('Salva', 'Save') : tr('Salva ordine', 'Save order')}</button>
         </div>
       </div>
     </div>,
@@ -417,7 +425,13 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
         ))}
       </div>
       {picking && <GalleryPick onClose={() => setPicking(false)} onPick={addUrls} />}
-      {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
+      {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={async o => {
+        setSorting(false);
+        const gone = photos.filter(x => !o.includes(x));
+        if (gone.length && !confirm(gone.length === 1 ? tr('Togliere 1 foto dall’immobile?', 'Remove 1 photo from the listing?') : tr(`Togliere ${gone.length} foto dall’immobile?`, `Remove ${gone.length} photos from the listing?`))) return;
+        for (const x of gone) await onPhoto(x, 'remove');
+        onReorder(o);
+      }} />}
       {/* sotto lg il pannello scorre con la pagina: Annulla e Salva restano attaccati in fondo */}
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
         {/* errore accanto a Salva, dove si guarda (in alto finiva fuori schermo) */}
