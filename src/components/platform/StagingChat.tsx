@@ -81,7 +81,10 @@ function ErrLine({ err, className = '' }: { err: string; className?: string }) {
   const plan = !!c && c.plan !== 'none';
   return (
     <p className={`blur-in relative z-10 flex flex-wrap items-center gap-x-3 gap-y-2 px-2 text-sm ${className}`}>
-      <span>{plan ? tr('Crediti finiti: aggiungi un pacchetto o passa a un piano più grande.', 'Out of credits: add a pack or move to a bigger plan.') : tr('Hai finito i crediti: per arredare foto e creare video scegli un piano.', 'You\'re out of credits: pick a plan to furnish photos and create videos.')}</span>
+      {/* con qualche credito rimasto (es. 1, una foto ne costa 3): si dice quanti, non "finiti" */}
+      <span>{c && c.balance > 0
+        ? `${tr(`Ti restano ${c.balance} ${c.balance === 1 ? 'credito' : 'crediti'}, non bastano per questa richiesta.`, `You have ${c.balance} ${c.balance === 1 ? 'credit' : 'credits'} left, not enough for this request.`)} ${plan ? tr('Aggiungi un pacchetto o passa a un piano più grande.', 'Add a pack or move to a bigger plan.') : tr('Per continuare scegli un piano.', 'Pick a plan to continue.')}`
+        : plan ? tr('Crediti finiti: aggiungi un pacchetto o passa a un piano più grande.', 'Out of credits: add a pack or move to a bigger plan.') : tr('Hai finito i crediti: per arredare foto e creare video scegli un piano.', 'You\'re out of credits: pick a plan to furnish photos and create videos.')}</span>
       <a href={plan ? '#/piano' : '#/piano?cambia=1'} className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">{plan ? tr('Ricarica crediti', 'Top up credits') : tr('Vedi i piani', 'See plans')}</a>
     </p>
   );

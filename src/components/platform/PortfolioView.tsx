@@ -232,7 +232,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'}
               className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
-              {saved === 'ok' ? tr('Online', 'Live') : tr('Pubblica', 'Publish')}
+              {saved === 'ok' ? tr('Online', 'Live') : sitePlan ? tr('Pubblica', 'Publish') : tr('Online con Plus o Pro', 'Live with Plus or Pro')}
             </button>
           </div>
           </div>
@@ -246,7 +246,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             <span className="min-w-0 truncate font-medium">{saved === 'ok' ? tr('Il tuo sito è online', 'Your website is live') : tr('Bozza salvata, non ancora online', 'Draft saved, not live yet')}</span>
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-4 font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
-              {saved === 'ok' ? tr('Online', 'Live') : tr('Pubblica', 'Publish')}
+              {saved === 'ok' ? tr('Online', 'Live') : sitePlan ? tr('Pubblica', 'Publish') : tr('Online con Plus o Pro', 'Live with Plus or Pro')}
             </button>
           </div>,
           document.body,

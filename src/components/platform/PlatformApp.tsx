@@ -204,10 +204,14 @@ function PlatformInner({ userData }: { userData: UserData }) {
             {/* Indietro dalla chat: all'immobile se la chat e' partita da li' (?project=), altrimenti alla home */}
             <button type="button" onClick={() => { const pid = new URLSearchParams(query).get('project'); go(pid ? `/immobile/${pid}` : '/'); }}
               aria-label={tr('Indietro', 'Back')} className="-ml-2 flex h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-sm font-medium text-brand ease-smooth transition-colors hover:bg-brand/10 sm:ml-0 sm:px-3"><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
+            {/* menu anche in chat (da lg; sotto c'e' la barra in basso): si va ovunque senza tornare indietro */}
+            <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 lg:flex">
+              {NAV.map(({ path, label }) => <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${path === '/staging' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>)}
+            </nav>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
             {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
               {credits && !noPlan && (
                 <span className="blur-in flex h-10 items-center rounded-full bg-white ring-1 ring-line lg:pr-1" style={{ animationDelay: '.15s' }}>
                   {/* telefono: solo la matita, la scritta da sm in su */}
@@ -294,8 +298,9 @@ function PlatformInner({ userData }: { userData: UserData }) {
           )}
         </div>
       </main>
-      {/* telefono e tablet (sotto lg): le voci del menu in una barra in basso (in chat e nel percorso Metti in vetrina no, hanno il loro fondo) */}
-      {!chat && route !== '/nuovo' && (
+      {/* telefono e tablet (sotto lg): le voci del menu in una barra in basso, anche in chat (sta sotto il campo, non lo copre);
+          nel percorso Metti in vetrina no, ha il suo fondo */}
+      {route !== '/nuovo' && (
         <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
           {NAV.map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
