@@ -614,7 +614,14 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
 // Profilo: il piano in una riga (nome, crediti, rinnovo o scadenza) e il link alla pagina del piano e alle fatture
 function PlanCard() {
   const c = useCredits();
-  if (!c || c.unlimited) return <div className="mt-8" />;
+  if (c?.unlimited) return <div className="mt-8" />;
+  // in caricamento: scheletro della stessa misura (prima la card compariva dopo e spostava tutto)
+  if (!c) return (
+    <div aria-busy className={`mt-8 flex animate-pulse items-center gap-3 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
+      <span className="flex-1"><span className="block h-4 w-28 rounded-full bg-line/70" /><span className="mt-2 block h-3.5 w-44 rounded-full bg-line/50" /></span>
+      <span className="h-4 w-24 rounded-full bg-line/50" />
+    </div>
+  );
   const d = (x: string | null) => (x ? new Date(x).toLocaleDateString(pageLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '');
   const name = { none: '', starter: 'Starter', plus: 'Plus', pro: 'Pro' }[c.plan];
   const line = c.plan !== 'none' ? tr(`${c.balance} ${c.balance === 1 ? 'credito' : 'crediti'} · si ricaricano il ${d(c.renews)}`, `${c.balance} credits · top up on ${d(c.renews)}`)
