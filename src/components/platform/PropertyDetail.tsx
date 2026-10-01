@@ -311,12 +311,22 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const initial = () => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]);
-  const reset = () => { setV(initial()); setErr(''); onClose(); }; // Annulla: si torna ai dati salvati
+  // Bozza: le modifiche non salvate restano sul dispositivo (uscendo e tornando si ritrovano), finche' Salva o Scarta
+  const dKey = `agenteimmo:prop-draft:${project.id}`;
+  const reset = () => { localStorage.removeItem(dKey); setV(initial()); setErr(''); onClose(); }; // Scarta: si torna ai dati salvati
   const dirty = JSON.stringify(v) !== JSON.stringify(initial()); // Salva e Annulla solo se qualcosa e' cambiato
   const n = (x: string) => Math.max(0, Math.round(Number(x.replace(/[^\d,.]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.')) || 0));
   const toUp = (o: Record<string, string>) => Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]);
   // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)
-  const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); onDraft(toUp(nv)); };
+  const set = (k: string, x: string) => { const nv = { ...v, [k]: x }; setV(nv); onDraft(toUp(nv)); try { localStorage.setItem(dKey, JSON.stringify(nv)); } catch { /* niente storage */ } };
+  // all'apertura: c'era una bozza di questo immobile? si riprende (anche nell'anteprima a destra)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(dKey);
+      const d = raw ? JSON.parse(raw) as Record<string, string> : null;
+      if (d && JSON.stringify(d) !== JSON.stringify(initial())) { setV(d); onDraft(toUp(d)); } else if (raw) localStorage.removeItem(dKey); // eslint-disable-line react-hooks/set-state-in-effect
+    } catch { /* bozza rovinata */ }
+  }, [dKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // valori impossibili (prezzo 3 €, 3 m²): il campo diventa rosso e si chiede di correggerlo prima di salvare
   const bad = (k: string) => { const m = k === 'prezzo' ? 50 : k === 'mq' ? 10 : 0; const n = Number(String(v[k] ?? '').replace(/\D/g, '')); return n > 0 && n < m; };
   const save = async () => {
@@ -325,7 +335,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     setBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
     setBusy(false);
-    if (r) onSaved(); else setErr(tr('Salvataggio non riuscito, riprova.', 'Save failed, please try again.'));
+    if (r) { localStorage.removeItem(dKey); onSaved(); } else setErr(tr('Salvataggio non riuscito, riprova.', 'Save failed, please try again.'));
   };
   const input = 'mt-1 h-10 w-full rounded-xl bg-canvas px-3 text-sm outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand';
   const field = (k: keyof ProjectData) => {
@@ -389,6 +399,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
         {/* errore accanto a Salva, dove si guarda (in alto finiva fuori schermo) */}
         {err && <span className="basis-full pb-1 text-right text-sm text-rose-600">{err}</span>}
+        {!err && dirty && <span className="basis-full pb-1 text-right text-sm text-muted">{tr('Bozza salvata: le modifiche restano qui finché non premi Salva', 'Draft saved: changes stay here until you press Save')}</span>}
         {report}
         <button type="button" onClick={reset} disabled={busy || !dirty} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 disabled:opacity-40 disabled:hover:bg-transparent text-brand">{tr('Annulla', 'Cancel')}</button>
         <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Salva', 'Save')}</button>
