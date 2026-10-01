@@ -185,6 +185,11 @@ const NEXT_PHOTO: [string, string][] = [
   ['Ci siamo. Dimmi cosa cambiare, oppure scegli una delle azioni qui sotto.', 'There we go. Tell me what to change, or pick one of the actions below.'],
   ['Ti convince? Se vuoi provo un colore diverso per pareti o tessuti.', 'Convinced? If you like I can try a different colour for walls or fabrics.'],
 ];
+const NEXT_EMPTY: [string, string][] = [
+  ['Stanza svuotata. Vuoi arredarla in uno stile o farne un video?', 'Room emptied. Want to furnish it in a style or make a video?'],
+  ['Ecco la stanza vuota. La arrediamo, o la salvi nell’immobile così com’è?', 'Here is the empty room. Shall we furnish it, or save it to the listing as it is?'],
+  ['Fatto, ora è vuota. Scegli uno stile qui sotto per arredarla.', 'Done, it is empty now. Pick a style below to furnish it.'],
+];
 const NEXT_VIDEO: [string, string][] = [
   ['Ecco il tuo video. Ne facciamo un altro con un modello diverso?', 'Here’s your video. Shall we make another one with a different template?'],
   ['Pronto per i social. Vuoi provare un altro stile o passiamo a un’altra stanza?', 'Ready for social. Want to try another style or move to another room?'],
@@ -1194,7 +1199,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               <button key={o.id} onClick={() => { if (short(m, fullCr(m.anim) + (o.id === 'keep' ? 0 : CREDIT_COST.arreda))) return; if (o.id === 'keep') void makeVideo(m, m.photo, KEEP_ROOM); else void styleVideo(m, o.label, { style: o.id }); }} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
                                 <span className="relative block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" />
                                   {/* crediti sulla foto, in alto a destra: il nome sotto ha tutta la riga */}
-                                  <span className="absolute right-1.5 top-1.5 rounded-full bg-white/90 shadow-sm backdrop-blur-sm"><Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) || m.anim === 'agent' || m.anim === 'walk' ? videoCr(m.anim) : CREDIT_COST.video_prep)} tight still /></span></span>
+                                  <span className="absolute right-1.5 top-1.5 rounded-full bg-white/90 shadow-sm backdrop-blur-sm"><Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + fullCr(m.anim)} tight still /></span></span>
                                 <span className="block px-2 pb-1 pt-2.5 text-[13px] font-semibold leading-snug">{o.label}</span>
                               </button>
                             ))}
@@ -1362,10 +1367,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             const last = msgs[msgs.length - 1];
             const done = last && !busy && ((last.role === 'ai' && !!last.out && !last.busy && !last.err) || (last.role === 'video' && !!last.url && !last.err));
             if (!done || zoneOwner >= 0) return null;
-            const list = last.role === 'video' ? NEXT_VIDEO : NEXT_PHOTO;
+            // stanza appena svuotata: frasi sue (prima poteva proporre "meno arredi" o di svuotarla di nuovo)
+            const emptied = last.role === 'ai' && last.req?.style === 'empty';
+            const list = last.role === 'video' ? NEXT_VIDEO : emptied ? NEXT_EMPTY : NEXT_PHOTO;
             const [it, en] = list[[...last.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % list.length];
-            // fumetto grigio come quello del riconoscimento della stanza
-            return <p key={last.id} className="blur-in w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.6s' }}>{tr(it, en)}</p>;
+            // fumetto grigio come quello del riconoscimento della stanza; dopo un video il pulsante per ripartire da un'altra foto
+            return (
+              <div key={last.id} className="blur-in flex flex-col items-start gap-2" style={{ animationDelay: '.6s' }}>
+                <p className="w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm">{tr(it, en)}</p>
+                {last.role === 'video' && <button type="button" onClick={() => setLibrary(true)} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><ImagePlus size={15} /> {tr('Carica un’altra foto', 'Upload another photo')}</button>}
+              </div>
+            );
           })()}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
           {zoneOwner < 0 && zonePicker()}
