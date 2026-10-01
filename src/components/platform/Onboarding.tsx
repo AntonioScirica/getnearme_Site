@@ -91,7 +91,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
 
   // tutte le foto dei passi dopo si scaricano subito, durante il saluto: arrivando al passo ci sono gia' (prima
   // comparivano una alla volta, a caso)
-  useEffect(() => { [...TOOLS.map(t => t.img), ...LISTINGS.map(([src]) => src), ...PLACEHOLDER_PHOTOS].forEach(src => { new Image().src = src; }); }, []);
+  useEffect(() => { [...TOOLS.map(t => t.img), ...LISTINGS.map(([src]) => src), ...PLACEHOLDER_PHOTOS, '/immo/home/sito-prato.webp'].forEach(src => { new Image().src = src; }); }, []);
 
   // Saluto breve, poi il nome (precompilato da Google se c'e').
   useEffect(() => {
@@ -160,7 +160,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
           {hello && (
             <h1 key={shown} className={`mt-6 transition-[opacity,filter] duration-[450ms] ease-smooth text-center font-display text-3xl font-bold leading-[1.2] tracking-tight md:text-4xl ${shown !== step ? 'opacity-0 blur-[6px]' : ''}`}>
               {words.map((w, i) => <span key={i} className={`ai-word ${w.startsWith('Immo') ? 'text-brand' : ''}`} style={{ animationDelay: `${i * 0.1}s` }}>{w}&nbsp;</span>)}
-              <span className="blur-in block text-muted/70" style={{ animationDelay: `${Math.max(0.1, words.length * 0.1 - 0.3)}s` }}>{sub}</span>
+              <span className={`blur-in text-muted/70 ${shown === 2 && noSite ? '' : 'block'}`} style={{ animationDelay: `${Math.max(0.1, words.length * 0.1 - 0.3)}s` }}>{sub}</span>
             </h1>
           )}
         </div>
@@ -224,8 +224,9 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
             {noSite ? (
               // senza sito nel piano: una card che spiega cosa avrebbe (niente link da scegliere)
               <div className="rounded-[20px] bg-canvas p-5 sm:p-6">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand"><Globe size={20} /></span>
-                <div className="mt-4 font-display text-xl font-bold tracking-tight">{tr('Il tuo sito da agente', 'Your agent website')}</div>
+                {/* la home del modello Prato in versione computer (immagine ferma: dentro il telefono la vera pagina usciva in versione telefono) */}
+                <img src="/immo/home/sito-prato.webp" alt="" className="aspect-[1280/730] w-full rounded-2xl object-cover object-top ring-1 ring-black/5" />
+                <div className="mt-5 font-display text-xl font-bold tracking-tight">{tr('Il tuo sito da agente', 'Your agent website')}</div>
                 <ul className="mt-4 space-y-3">
                   {SITE_PERKS.map(([Icon, it, en]) => <li key={it} className="flex items-center gap-3 text-[15px]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-brand"><Icon size={15} /></span>{tr(it, en)}</li>)}
                 </ul>
@@ -289,7 +290,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
               </span>
               <span className="flex items-center gap-2 max-sm:w-full max-sm:[&>button]:flex-1 max-sm:[&>button]:justify-center">
                 {shown === 2 && <button type="button" onClick={() => setStep(1)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-brand/10 text-brand">{tr('Indietro', 'Back')}</button>}
-                <button type="button" disabled={ctaOff} onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
+                <button type="button" disabled={ctaOff} onClick={next} className="btn-ink flex h-10 items-center gap-2 rounded-full px-5 text-sm font-semibold">{noSite ? tr('Ho capito', 'Got it') : tr('Continua', 'Continue')} <ArrowRight size={15} /></button>
               </span>
             </div>
                 </>
