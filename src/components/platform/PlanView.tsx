@@ -284,11 +284,12 @@ export function NoCreditsModal() {
   const [busy, setBusy] = useState('');
   const c = useCredits();
   const hasPlan = !!c && c.plan !== 'none' && !c.unlimited;
+  // con un piano: dritti alla pagina del piano (pacchetti e piani piu' grandi); senza: la finestra per sceglierne uno
   useEffect(() => {
-    const on = () => setOpen(true);
+    const on = () => { if (hasPlan) window.location.hash = '#/piano'; else setOpen(true); };
     window.addEventListener('agenteimmo:no-credits', on);
     return () => window.removeEventListener('agenteimmo:no-credits', on);
-  }, []);
+  }, [hasPlan]);
   if (!open) return null;
   // senza piano: foto arredata in alto, cosa si sblocca e un solo pulsante verso i piani
   if (!hasPlan) return (

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, FileDown, GripVertical, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileDown, GripVertical, ImagePlus, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage } from '@/components/site/pages';
@@ -118,7 +119,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
-        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); onChange(); }}
+        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onAdded={onChange} onSaved={() => { setDraft(null); onChange(); }}
           report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
@@ -218,8 +219,22 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 // [nome italiano (fa anche da chiave), nome inglese, campi]
 const GROUPS: [string, string, (keyof ProjectData)[]][] = [['Annuncio', 'Listing', ['titolo', 'addr']], ['Prezzo e spazi', 'Price and size', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', 'Other', ['tipologia', 'riferimento']]];
-function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onPhoto: PropEdit['onPhoto']; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
+function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, onAdded, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onPhoto: PropEdit['onPhoto']; onClose: () => void; onSaved: () => void; onAdded: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
+  // aggiungere foto dopo la creazione (anche a un immobile salvato senza foto): su R2, poi in coda all'immobile
+  const [adding, setAdding] = useState(false);
+  const addPhotos = async (files: FileList | null) => {
+    const list = [...(files ?? [])].filter(f => f.type.startsWith('image/')).slice(0, 40);
+    if (!list.length) return;
+    setAdding(true);
+    for (const f of list) {
+      const data = await new Promise<string>(res => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(f); });
+      const url = await uploadDataUrl(await downscaleDataUrl(data, 1600, 0.82), 'properties');
+      if (url) await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'add', after: url }) }).catch(() => null);
+    }
+    setAdding(false);
+    onAdded();
+  };
   const panel = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
@@ -254,6 +269,14 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
+        {!photos.length && (
+          <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl bg-canvas p-5 text-center border border-dashed border-black/15 ${adding ? 'pointer-events-none opacity-60' : 'hover:border-black/30'}`}>
+            <input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />
+            {adding ? <Loader2 size={20} className="animate-spin text-muted" /> : <ImagePlus size={20} className="text-muted" />}
+            <span className="text-sm font-semibold">{tr('Aggiungi le foto', 'Add photos')}</span>
+            <span className="text-xs text-muted">{tr('La prima diventa la copertina', 'The first one becomes the cover')}</span>
+          </label>
+        )}
         {photos.length > 0 && (
           <section className="rounded-2xl bg-canvas p-3">
             <div className="flex items-center gap-3">
@@ -265,9 +288,10 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
                 <span className="block text-xs text-muted">{photos.length} {tr('foto · ordine, copertina e AI', 'photos · order, cover and AI')}</span>
               </span>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2">
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> {tr('Riordina', 'Reorder')}</button>
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
+              <label className={`flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white ${adding ? 'pointer-events-none opacity-60' : ''}`}><input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</label>
             </div>
           </section>
         )}

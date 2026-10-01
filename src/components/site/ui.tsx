@@ -147,7 +147,8 @@ const pick = (key: string) => PLACEHOLDER_PHOTOS[[...key].reduce((h, c) => (h * 
 export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean; noActions?: boolean }) {
   const preview = useContext(Ctx)?.preview;
   const pe = useContext(Ctx)?.propEdit;
-  const shown = src || (preview ? pick(alt + className) : '');
+  // foto d'esempio solo nell'anteprima del modello, mai nella scheda di un immobile vero (sembrava una foto della casa)
+  const shown = src || (preview && !pe ? pick(alt + className) : '');
   // scheda della piattaforma: sulle foto dell'immobile due icone in basso a sinistra, Migliora con l'AI e Copertina
   // (span e non button: le gallerie hanno gia' un button intorno). Niente velo: la foto resta visibile.
   const act = (action: 'ai' | 'cover') => (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); pe!.onPhoto(src!, action); };

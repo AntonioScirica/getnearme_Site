@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
     photos = order
     cover = order[0] ?? cover
   }
+  if (!cover && photos.length) cover = photos[0] // immobile salvato senza foto: la prima aggiunta diventa la copertina
   // solo coppie ancora presenti
   for (const k of Object.keys(prima)) if (!photos.includes(k)) delete prima[k]
   const import_data = { ...d, photos, prima }

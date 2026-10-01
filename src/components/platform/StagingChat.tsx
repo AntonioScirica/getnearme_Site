@@ -75,11 +75,14 @@ const seenShow = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OPT
 const NO_CREDITS = 'no_credits';
 const QUIET = { 'x-no-modal': '1' };
 function ErrLine({ err, className = '' }: { err: string; className?: string }) {
+  const c = useCredits();
   if (err !== NO_CREDITS) return <p className={`blur-in px-2 text-sm text-rose-600 ${className}`}>{err}</p>;
+  // chi ha gia' un piano: pacchetti o piano piu' grande (pagina del piano), mai "scegli un piano"
+  const plan = !!c && c.plan !== 'none';
   return (
-    <p className={`blur-in flex flex-wrap items-center gap-x-3 gap-y-2 px-2 text-sm ${className}`}>
-      <span>{tr('Hai finito i crediti: per arredare foto e creare video scegli un piano.', 'You\'re out of credits: pick a plan to furnish photos and create videos.')}</span>
-      <a href="#/piano?cambia=1" className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">{tr('Vedi i piani', 'See plans')}</a>
+    <p className={`blur-in relative z-10 flex flex-wrap items-center gap-x-3 gap-y-2 px-2 text-sm ${className}`}>
+      <span>{plan ? tr('Crediti finiti: aggiungi un pacchetto o passa a un piano più grande.', 'Out of credits: add a pack or move to a bigger plan.') : tr('Hai finito i crediti: per arredare foto e creare video scegli un piano.', 'You\'re out of credits: pick a plan to furnish photos and create videos.')}</span>
+      <a href={plan ? '#/piano' : '#/piano?cambia=1'} className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">{plan ? tr('Ricarica crediti', 'Top up credits') : tr('Vedi i piani', 'See plans')}</a>
     </p>
   );
 }
@@ -857,7 +860,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
   const hint = !base ? tr('Prima carica una foto, poi scrivi qui cosa cambiare', 'Upload a photo first, then write here what to change')
     : busy && lastAi ? BUSY_HINTS[[...lastAi.id].reduce((h, c) => h + c.charCodeAt(0), 0) % BUSY_HINTS.length]
-    : lastAi?.err === NO_CREDITS ? tr('Per continuare scegli un piano', 'Pick a plan to continue')
+    : lastAi?.err === NO_CREDITS ? (credits && credits.plan !== 'none' ? tr('Per continuare ricarica i crediti', 'Top up credits to continue') : tr('Per continuare scegli un piano', 'Pick a plan to continue'))
     : lastAi?.err ? tr('Non è andata: riprova o chiedilo in un altro modo', 'That didn\'t work: try again or ask in a different way')
     : roomState === 'vuota' ? `${tr('La stanza è vuota: arredala? Es.', 'The room is empty: furnish it? E.g.')} ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || tr('arreda in stile moderno', 'furnish in modern style')}`
     : roomState === 'disordinata' ? tr('Es. togli il disordine e gli oggetti personali, lascia i mobili', 'E.g. remove the clutter and personal items, keep the furniture')
@@ -1385,6 +1388,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               placeholder={hint}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
+            {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}
+            {text.trim() && base && !busy && (() => {
+              const n = creditsOf({ prompt: text.trim(), scene }, editsDone);
+              return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-muted">{n ? `${n} ${n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}` : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
+            })()}
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label={tr('Invia', 'Send')}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
