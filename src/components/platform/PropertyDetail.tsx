@@ -52,6 +52,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const sitePlan = !!credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'); // come in Il mio sito
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
+  const [pdfHint, setPdfHint] = useState(false);
   const downloadReport = async (id: string) => {
     setReport('busy');
     const html = await authFetch(`/api/platform/report?id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
@@ -114,7 +115,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
-          : <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>}
+          : <>
+            {/* senza sito: al cliente la scheda in PDF (si salva dalla stampa e si allega su WhatsApp) */}
+            <button type="button" onClick={() => { setPdfHint(true); void downloadReport(project.id); }} title={tr('Salva la scheda in PDF e mandala su WhatsApp o per email', 'Save the sheet as PDF and send it on WhatsApp or by email')} className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</button>
+            <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>
+            {pdfHint && <span className="basis-full text-right text-xs text-muted">{tr('Nella finestra di stampa scegli “Salva come PDF”, poi allega il file su WhatsApp o in una email.', 'In the print window choose “Save as PDF”, then attach the file on WhatsApp or in an email.')}</span>}
+          </>}
         {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
         {sitePlan && site?.slug && (
           <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>

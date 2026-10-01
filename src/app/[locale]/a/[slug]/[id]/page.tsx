@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { zoneOnly } from '@/lib/siteTemplates';
 import { notFound } from 'next/navigation';
-import { loadSite, siteUrl } from '@/lib/portfolio';
+import { getOfflineBrand, loadSite, siteUrl } from '@/lib/portfolio';
 import { SitePage } from '@/components/site/pages';
+import SiteOffline from '@/components/site/SiteOffline';
 
 export const revalidate = 60;
 type Props = { params: Promise<{ locale: string; slug: string; id: string }> };
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicPropertyPage({ params }: Props) {
   const { locale, slug, id } = await params;
   const s = await loadSite(locale, slug);
+  if (!s) { const off = await getOfflineBrand(slug); if (!off) notFound(); return <SiteOffline name={off.name} email={off.email} />; } // sito spento: pagina gentile
   if (!s || s.cfg.hidden.includes('page:immobile') || !s.properties.some(x => x.id === id)) notFound(); // anche se l'agente ha nascosto le schede
   const p = s.properties.find(x => x.id === id)!;
   // annuncio per Google: prezzo, foto, indirizzo (solo zona se l'agente non mostra l'indirizzo esatto)
