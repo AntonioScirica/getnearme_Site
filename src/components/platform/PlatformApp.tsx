@@ -193,7 +193,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
-      <WelcomeModal />
+      {/* appena finito l'onboarding: il regalo solo a transizione finita (tour attivato), prima compariva sopra i passi che sfumavano */}
+      {(!morph || tour) && <WelcomeModal />}
       <DemoDownload />
       {tour && !chat && credits && !welcomeOpen && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
