@@ -11,6 +11,7 @@ import { alertCapReached } from '@/lib/landingAlert'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
 import { fakePhoto, isFakeUser } from '@/lib/fakeAi'
+import { viaHaiku } from '@/lib/photoClassify'
 import { STYLE_LOOK } from '@/lib/stagingPrompts'
 import { finish } from '@/lib/finish'
 
@@ -66,6 +67,11 @@ export async function POST(req: NextRequest) {
   }
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) { await alertCapReached(admin, 'foto', PER_DAY); return NextResponse.json({ error: 'busy' }, { status: 429 }) }
+  // foto che non e' di una casa (selfie, meme, schermata): si ferma qui, prima di spendere la generazione e la prova.
+  // Se il controllo stesso fallisce (rete, chiave) si lascia passare: meglio una prova in piu' che bloccare chi ha una casa vera
+  const check = await sharp(Buffer.from(image.split(',')[1], 'base64')).rotate().resize({ width: 768, height: 768, fit: 'inside' }).jpeg({ quality: 80 }).toBuffer()
+  const notHouse = await viaHaiku({ imageBase64: `data:image/jpeg;base64,${check.toString('base64')}` }, user?.id ?? '').then(() => false, (e: Error) => e.message === 'haiku_failed')
+  if (notHouse) return NextResponse.json({ error: 'not_house', left: PER_IP - used }, { status: 422 })
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
   const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: user?.id ?? null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
   // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)
