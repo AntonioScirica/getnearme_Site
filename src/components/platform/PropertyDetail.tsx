@@ -290,8 +290,13 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const [adding, setAdding] = useState(false);
   const [addMenu, setAddMenu] = useState(false);
   const [picking, setPicking] = useState(false); // scelta di foto gia' fatte (Galleria) da aggiungere all'immobile
-  const addUrls = async (urls: string[]) => {
-    setPicking(false); setAdding(true);
+  const addUrls = async (all: string[]) => {
+    setPicking(false);
+    // gia' nell'immobile: si dice (prima non cambiava niente e nessuno lo spiegava)
+    const urls = all.filter(u => !photos.includes(u));
+    if (urls.length < all.length) alert(urls.length ? tr('Alcune foto erano già nell’immobile: aggiungo le altre.', 'Some photos were already in the property: adding the others.') : tr('Queste foto sono già nell’immobile.', 'These photos are already in the property.'));
+    if (!urls.length) return;
+    setAdding(true);
     for (const url of urls) await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'add', after: url }) }).catch(() => null);
     setAdding(false); onAdded();
   };
