@@ -146,6 +146,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
     fetchProjects().then(p => { if (on) { setProjects(p); setCheckedId(wantedId); } }).catch(() => { if (on) setCheckedId(wantedId); });
     return () => { on = false; };
   }, [wantedId, projects, checkedId]);
+  // cambio pagina: si riparte dall'alto (restava lo scorrimento della pagina prima, es. dopo aver creato un immobile)
+  useEffect(() => { document.querySelector('main')?.scrollTo(0, 0); window.scrollTo(0, 0); }, [route]);
   useEffect(() => {
     reload();
     try { localStorage.setItem('agenteimmo:has-account', '1'); } catch { /* niente storage */ } // /accedi poi si apre sull'accesso

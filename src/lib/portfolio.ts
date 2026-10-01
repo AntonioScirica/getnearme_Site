@@ -46,7 +46,7 @@ const PROPERTY_COLS = 'id, titolo, nome, descrizione, addr, prezzo, mq, locali, 
 // Sito spento o piano scaduto: nome e email dell'agente per una pagina "non disponibile" invece del 404 nudo
 export async function getOfflineBrand(slug: string): Promise<{ name: string; email: string } | null> {
   const { data } = await admin.from('user_brand').select('company_name, display_name, company_email').eq('portfolio_slug', slug).maybeSingle()
-  return data ? { name: (data.company_name || data.display_name || '') as string, email: (data.company_email || '') as string } : null
+  return data ? { name: (data.display_name || data.company_name || '') as string, email: (data.company_email || '') as string } : null
 }
 
 export async function getBrand(slug: string): Promise<PortfolioBrand | null> {
@@ -79,7 +79,7 @@ export async function portfolioBase(locale: string, slug: string): Promise<strin
 // Sito vetrina scelto dall'agente (template, colori, testi), ripulito.
 export async function getSite(brand: PortfolioBrand): Promise<SiteConfig> {
   const { data } = await admin.auth.admin.getUserById(brand.user_id)
-  return cleanSite(data.user?.user_metadata?.vetrina_site, brand.company_name || brand.display_name || '', brand.company_email || '')
+  return cleanSite(data.user?.user_metadata?.vetrina_site, brand.display_name || brand.company_name || '', brand.company_email || '')
 }
 
 // Immobile pubblico nella forma usata dai siti vetrina (foto, zona e contratto da import_data).
@@ -108,7 +108,7 @@ export const loadSite = cache(async (locale: string, slug: string) => {
   }
   const properties = props.map(toSiteProperty).map(p => (vids.has(p.id) ? { ...p, videos: vids.get(p.id) } : p))
   // citta' non scritta dall'agente: quella dei suoi immobili
-  return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: brand.company_name || brand.display_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
+  return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: brand.display_name || brand.company_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
 })
 
 // Tutte le pagine pubbliche dei siti degli agenti, per la sitemap del dominio vetrina.

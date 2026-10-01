@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const { data: row } = await admin.from('projects').select(COLS).eq('id', id).in('user_id', await getTeamUserIds(admin, u.id)).maybeSingle()
   if (!row) return NextResponse.json({ error: 'not_found' }, { status: 404 })
   const { data: b } = await admin.from('user_brand').select('portfolio_slug, company_name, display_name, company_email, logo_colored_h, logo_black_h, site_published').eq('user_id', u.id).maybeSingle()
-  const name = b?.company_name || b?.display_name || u.user_metadata?.full_name || 'Agente immobiliare'
+  const name = b?.display_name || b?.company_name || u.user_metadata?.full_name || 'Agente immobiliare'
   const cfg = cleanSite(u.user_metadata?.vetrina_site, name, b?.company_email || u.email || '')
   const slug = (b?.portfolio_slug as string | null) ?? null
   // link all'annuncio online solo se davvero raggiungibile: sito acceso, piano col sito, immobile pubblico

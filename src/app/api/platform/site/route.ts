@@ -17,7 +17,8 @@ async function user(req: NextRequest) {
 
 async function brandOf(userId: string) {
   const { data } = await admin.from('user_brand').select('portfolio_slug, company_name, display_name, company_email, logo_colored_h, logo_black_h, site_published').eq('user_id', userId).maybeSingle()
-  return { slug: data?.portfolio_slug ?? null, name: data?.company_name || data?.display_name || '', email: data?.company_email || '', logo: data?.logo_colored_h || data?.logo_black_h || null, published: !!data?.site_published }
+  // nome sul sito: quello del profilo della piattaforma (display_name); company_name e' del vecchio kit dell'estensione
+  return { slug: data?.portfolio_slug ?? null, name: data?.display_name || data?.company_name || '', email: data?.company_email || '', logo: data?.logo_colored_h || data?.logo_black_h || null, published: !!data?.site_published }
 }
 
 export async function GET(req: NextRequest) {

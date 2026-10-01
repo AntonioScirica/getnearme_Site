@@ -16,6 +16,7 @@ import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, t
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { CopyIcon } from './ImproveView';
 import CountUp from './CountUp';
+import { useCredits } from './PlanView';
 import { pageLocale, tr, trf } from './i18n';
 
 // "Mettilo sul tuo sito": hai appena preso un immobile, AgenteImmo lo mette sul tuo sito (che si
@@ -82,7 +83,11 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const restored = useRef(false);
   const [zoneBusy, setZoneBusy] = useState(false);
   const [savedAt, setSavedAt] = useState(0); // "Bozza salvata" per un attimo dopo ogni modifica
-  const [publish, setPublish] = useState(true); // pubblica anche sul sito dell'agente
+  const [publishOn, setPublish] = useState(true); // pubblica anche sul sito dell'agente
+  // solo con un piano col sito (Plus, Pro): con Starter o senza piano niente interruttore acceso per finta
+  const cr = useCredits();
+  const siteOk = !!cr && (!!cr.unlimited || cr.plan === 'plus' || cr.plan === 'pro');
+  const publish = publishOn && siteOk;
   const [slug, setSlug] = useState<string | null>(null);
   const done = step >= STEPS.length;
   useEffect(() => { authFetch('/api/platform/portfolio').then(r => r.json()).then(x => setSlug(x.slug ?? null)).catch(() => {}); }, []);
@@ -441,13 +446,20 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               {photos.length > 0 && <ReadyPhotos photos={photos} title={ai.titolo} />}
 
               {/* Sito dell'agente */}
+              {cr && !siteOk ? (
+                <div className="rise card p-5 text-sm" style={{ animationDelay: '.3s' }}>
+                  <span className="font-semibold">{tr('La casa resta salvata qui, la vedi solo tu', 'The property stays saved here, only you can see it')}</span>
+                  <span className="block text-muted">{tr('Il tuo sito con le case è nei piani Plus e Pro.', 'Your website with your properties comes with Plus and Pro.')} <a href="#/piano?cambia=1" className="font-medium text-brand">{tr('Vedi i piani', 'See plans')}</a></span>
+                </div>
+              ) : (
               <div className="rise card p-5" style={{ animationDelay: '.3s' }}>
                 <button type="button" role="switch" aria-checked={publish} onClick={() => setPublish(v => !v)} className="flex w-full items-center justify-between gap-4 text-left">
-                  <span><span className="text-sm font-semibold">{tr('Pubblica nella tua vetrina AgenteImmo', 'Publish in your AgenteImmo showcase')}</span>
+                  <span><span className="text-sm font-semibold">{tr('Pubblica nella tua vetrina Agente Immo', 'Publish in your Agente Immo showcase')}</span>
                     <span className="block text-xs text-muted">{slug ? tr(`Comparirà su ${portfolioUrl(slug).replace(/^https?:\/\//, '')}`, `It will appear on ${portfolioUrl(slug).replace(/^https?:\/\//, '')}`) : tr('Comparirà nella tua pagina con tutte le tue case.', 'It will appear on your page with all your properties.')}</span></span>
                   <span className={`relative h-7 w-12 shrink-0 rounded-full ease-smooth transition-colors ${publish ? 'bg-brand' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow ease-smooth transition-all ${publish ? 'left-6' : 'left-1'}`} /></span>
                 </button>
               </div>
+              )}
 
               {/* Cose vicine: attivo di base. Distanze dai servizi nella descrizione e "Cosa c'e' vicino" sulla scheda del sito.
                   Cambiandolo, titolo e descrizione si riscrivono */}
