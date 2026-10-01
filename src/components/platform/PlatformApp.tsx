@@ -356,6 +356,9 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   const flow = phase === 'browser' || phase === 'done';
   const busy = stage === 'opening' || stage === 'scanning';
   const ok = /^https?:\/\//i.test(url.trim());
+  // oltre 2 minuti: si dice che ci sta mettendo piu' del solito e si puo' annullare (prima restava appeso senza uscita)
+  const [slow, setSlow] = useState(false);
+  useEffect(() => { setSlow(false); if (!busy) return; const t = setTimeout(() => setSlow(true), 120_000); return () => clearTimeout(t); }, [busy]); // eslint-disable-line react-hooks/set-state-in-effect
 
   useEffect(() => {
     if (phase !== 'input') return;
@@ -435,7 +438,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
             className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base'}`} />
           {busy ? (
-            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <span className="text-muted">{tr('circa 1-2 min', 'about 1-2 min')}</span></span>
+            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <span className="text-muted">{slow ? tr('ci sta mettendo più del solito', 'taking longer than usual') : tr('circa 1-2 min', 'about 1-2 min')}</span>{slow && <button type="button" onClick={onNew} className="ml-1 font-semibold text-brand">{tr('Annulla', 'Cancel')}</button>}</span>
           ) : phase === 'done' ? (
             <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">{tr('Nuova analisi', 'New analysis')}</button>
           ) : (

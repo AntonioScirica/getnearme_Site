@@ -141,7 +141,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   };
   const dirty = JSON.stringify(cfg) !== JSON.stringify(site.config);
   const discard = () => { if (confirm(tr('Scartare la bozza e tornare al sito pubblicato?', 'Discard the draft and go back to the published site?'))) { localStorage.removeItem(draftKey(site.slug)); setCfg(site.config); } };
-  const set = (p: Partial<SiteConfig>) => setCfg(c => ({ ...c!, ...p }));
+  const set = (p: Partial<SiteConfig>) => { setCfg(c => ({ ...c!, ...p })); setSaved(x => (x === 'ok' ? 'idle' : x)); };
   // Bozza: ogni modifica resta salvata da sola (anche uscendo dalla pagina), online va solo con Pubblica.
   // Pubblica: salva le modifiche e, se il sito era spento, lo mette online.
   // Senza piano col sito si va ai piani (prima sembrava riuscito e la pagina pubblica dava 404).
@@ -156,7 +156,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       const p = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: true }) }).then(r => r.json()).catch(() => ({}));
       if (p.published) setSite(s => ({ ...s!, published: true }));
     }
-    setSaved('ok'); setTimeout(() => setSaved('idle'), 2400);
+    setSaved('ok'); // la conferma resta finche' non si cambia di nuovo qualcosa (prima spariva subito)
   };
 
   const pub = (projects ?? []).filter(p => p.is_public);
@@ -775,7 +775,7 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
 
 // both: "Non pubblico" a sinistra e "Pubblico" a destra dell'interruttore, evidenziato quello attivo
 // Il clic sposta subito l'interruttore (poi si salva): mentre si salva c'e' la rotellina sul pallino e non si riclicca
-export function PublicSwitch({ on: saved, onClick, labels = [tr('Pubblico', 'Public'), tr('Privato', 'Private')], both = false }: { on: boolean; onClick: () => void | Promise<unknown>; labels?: [string, string]; both?: boolean }) {
+export function PublicSwitch({ on: saved, onClick, labels = [tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')], both = false }: { on: boolean; onClick: () => void | Promise<unknown>; labels?: [string, string]; both?: boolean }) {
   const [pending, setPending] = useState<boolean | null>(null);
   const on = pending ?? saved;
   const click = async () => {

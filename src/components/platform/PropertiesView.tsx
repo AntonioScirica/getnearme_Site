@@ -10,6 +10,7 @@ import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { addFitButton } from '@/components/ui/LeafletMap';
 import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 import { pageLocale, tr } from './i18n';
+import { useCredits } from './PlanView';
 
 // Pagina Immobili: in alto la mappa con tutti gli immobili (pin con la foto, clic = scheda),
 // sotto la lista. Le coordinate arrivano dall'indirizzo (Nominatim) e restano in cache nel browser.
@@ -71,6 +72,9 @@ function ensureLeafletCss() {
 }
 
 export default function PropertiesView({ projects: real, onChange }: { projects: ProjectData[] | null; onChange?: () => void }) {
+  // "In vetrina" sulle card solo se il sito c'e' davvero (Plus, Pro): con Starter la casa non e' online
+  const cr = useCredits();
+  const siteOk = !!cr && (!!cr.unlimited || cr.plan === 'plus' || cr.plan === 'pro');
   // nessun immobile ancora: case d'esempio a Roma (mappa e lista piene), con l'invito a mettere in vetrina la prima.
   // ponytail: in sviluppo si aggiungono sempre i finti
   // durante il tour solo le case d'esempio (evento 'agenteimmo:tour-demo' dal Tour)
@@ -136,7 +140,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
         </div>
       ) : shown.length ? (
         <div className="stagger mt-10 grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map(p => <PropertyCard key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
+          {shown.map(p => <PropertyCard siteOk={siteOk} key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
       ) : (
         <p className="mt-12 text-center text-sm text-muted">{tr('Nessun immobile con questi filtri.', 'No properties match these filters.')}</p>
@@ -160,7 +164,7 @@ function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
   );
 }
 
-function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void }) {
+function PropertyCard({ p, demo, onHover, onChange, siteOk }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void; siteOk?: boolean }) {
   const score = (p.import_data as { score?: number } | undefined)?.score;
   const [menu, setMenu] = useState(false);
   const [up, setUp] = useState(false); // menu verso l'alto se sotto non c'e' posto (fondo della pagina o barra in basso)
@@ -189,6 +193,7 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
         {menu && (
           <div className={`blur-in absolute right-0 ${up ? 'bottom-12 md:bottom-10' : 'top-12 md:top-10'} w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5`}>
             <a href={`#/immobile/${p.id}`} className="flex h-11 items-center md:h-9 gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> {tr('Modifica', 'Edit')}</a>
+            <span className="my-1 block h-px bg-line" aria-hidden />{/* Elimina staccato da Modifica: meno tocchi per sbaglio */}
             <button type="button" onClick={remove} className="flex h-11 w-full items-center md:h-9 gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>
         )}
@@ -202,7 +207,7 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
         <div className="absolute left-3 right-16 top-3 flex min-w-0 gap-1.5">
           {demo && <span className="shrink-0 whitespace-nowrap rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md">{tr('Esempio', 'Sample')}</span>}
-          {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{tr('In vetrina', 'Live')}</span>}
+          {p.is_public && siteOk && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{tr('In vetrina', 'Live')}</span>}
           {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>
         <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
