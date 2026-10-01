@@ -322,7 +322,7 @@ function PropertyPage({ id }: { id: string }) {
           {t.gallery !== 'full' && heading}
           {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}><Editable k="prezzo" value={p.prezzo ? String(p.prezzo) : ''}>{price(p.prezzo)}</Editable>{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
-          <div className="mt-6 flex flex-wrap items-center gap-2"><ShareBar title={p.titolo} /><ReportButton id={p.id} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
+          <div className="mt-6 flex flex-wrap items-center gap-2">{!propEdit && <ShareBar title={p.titolo} />}<ReportButton id={p.id} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
           {(desc || propEdit) && (
             <Sec id="property.desc"><div className="mt-12">
               <H className="text-3xl">{tx('property.desc')}</H>

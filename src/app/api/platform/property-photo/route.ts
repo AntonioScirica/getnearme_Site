@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
     else if (i >= 0) photos.splice(i + 1, 0, b.after)
     else photos.push(b.after)
     // l'originale del prima/dopo e' la foto di partenza; se anche quella era AI, si risale alla vera originale
-    if (before) prima[b.after] = prima[before] ?? before
+    // Prima e dopo: la nuova si confronta con l'originale. Sostituisci: la nuova prende il posto, niente confronto
+    if (before && b.mode === 'add') prima[b.after] = prima[before] ?? before
+    if (b.mode === 'replace') { delete prima[b.after]; delete prima[before] }
     if (b.mode === 'replace' && cover === before) cover = b.after
     photos = [...new Set(photos)].slice(0, 40)
   } else if (b.mode === 'remove') {
