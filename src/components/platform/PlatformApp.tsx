@@ -190,7 +190,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
       {/* il regalo dei crediti dopo il tour (finito o saltato): mai sopra l'onboarding o il tour */}
       {!tour && !tourPending() && <WelcomeModal />}
       <DemoDownload />
-      {tour && !chat && credits && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
+      {tour && !chat && credits && <Tour noPlan={noPlan} noSite={!(credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro')} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-lg:flex'}`}>
