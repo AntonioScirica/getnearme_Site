@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import AuthCta from "@/components/AuthCta";
 
-// Invito a meta' articolo: carta chiara, Prova gratis come nella home (login, poi la prova).
+// Invito a meta' articolo: carta chiara, Prova gratis come nella home (login, poi la prova). Su telefono il pulsante va a tutta larghezza.
 export default function InlineCta({ locale }: { locale: string }) {
   return (
     <div
@@ -31,7 +31,7 @@ export default function InlineCta({ locale }: { locale: string }) {
         locale={locale}
         href={`/${locale}/accedi?next=/${locale}/prova`}
         dashLabel="Vai alla dashboard"
-        className="inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-full bg-ink px-5 text-sm font-semibold text-white"
+        className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-ink px-5 text-sm font-semibold text-white max-sm:w-full"
       >
         Prova gratis <ArrowRight size={16} />
       </AuthCta>

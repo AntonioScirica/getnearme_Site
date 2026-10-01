@@ -35,7 +35,8 @@ export default async function TerminiServizio({ params }: Props) {
     <div className="min-h-screen bg-white font-sans text-slate-900">
       <Navbar locale={locale as Locale} />
 
-      <main className="pt-32 pb-20 px-4 max-w-4xl mx-auto">
+      {/* telefono: la barra e' gia' nel flusso, 128px sopra lasciavano un vuoto */}
+      <main className="pt-32 max-sm:pt-8 pb-20 px-4 max-w-4xl mx-auto">
         <div className="mb-8">
           <Link href={`/${locale}`} className="text-blue-500 hover:text-blue-600 text-sm font-medium">
             {t.nav.backToHome}

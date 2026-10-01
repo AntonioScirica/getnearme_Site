@@ -91,7 +91,7 @@ export default async function Page({ params }: Props) {
             <span key={item}>{i > 0 && ' / '}{i < crumbs.length - 1 ? <Link href={item.replace('https://agenteimmo.me', '')} className="hover:text-ink">{name}</Link> : <span>{name}</span>}</span>
           ))}
         </nav>
-        <h1 className="mt-4 font-display text-4xl font-extrabold leading-[1.1] tracking-tight md:text-5xl">{g.h1}</h1>
+        <h1 className="mt-4 font-display text-[32px] font-extrabold sm:text-4xl leading-[1.1] tracking-tight md:text-5xl">{g.h1}</h1>
         <p className="mt-5 text-lg leading-relaxed text-muted">{g.intro}</p>
         <p className="mt-3 text-sm text-muted">Aggiornata il <time dateTime={g.updated}>{date}</time></p>
 
@@ -135,7 +135,7 @@ export default async function Page({ params }: Props) {
           <p className="mx-auto mt-3 max-w-lg text-white/70">Foto arredate con l&apos;AI, video per i social e il tuo sito, per ogni immobile. Senza fotografo né web agency.</p>
           {/* chi arriva da Google cerca "quanto costa": il prezzo detto subito */}
           <p className="mx-auto mt-4 max-w-lg text-sm font-semibold text-white">Da {PRICING.starter} € al mese con {PRICING.starterCredits} crediti: {photosFor(PRICING.starterCredits)} foto arredate. Disdici quando vuoi.</p>
-          <Link href={TRY} className="mt-7 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink">Provalo gratis sulla tua foto <ArrowRight size={16} /></Link>
+          <Link href={TRY} className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink max-sm:w-full">Provalo gratis sulla tua foto <ArrowRight size={16} /></Link>
         </aside>
       </main>
     </div>
