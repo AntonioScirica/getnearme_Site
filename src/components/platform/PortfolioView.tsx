@@ -218,7 +218,17 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         {/* barra e sito entrano con la stessa dissolvenza della pagina (prima comparivano di scatto dopo lo scheletro) */}
         {/* i dati d'esempio dell'anteprima (lib/siteTemplates PLACEHOLDERS, SAMPLE_REVIEWS) non vanno mai online: si dice chiaro */}
         <p className="blur-in mb-4 flex items-start gap-2 rounded-2xl bg-brand/5 px-4 py-3 text-sm text-ink/80 ring-1 ring-brand/15"><Info size={16} className="mt-0.5 shrink-0 text-brand" />{tr('Telefono, email, P.IVA, numeri, zone e recensioni che vedi qui sono esempi finché non metti i tuoi. Sul sito pubblicato compaiono solo i tuoi dati: le parti senza dati non si vedono.', 'Phone, email, VAT, numbers, areas and reviews shown here are examples until you add yours. Your published site only shows your own data: sections without data are hidden.')}</p>
-        <div data-tour="site-editor" className="blur-in grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]" style={{ animationDelay: '.1s' }}>
+        {/* telefono: con modifiche da pubblicare (o appena pubblicate) la barra resta in basso, sopra il menu */}
+        {(dirty || saved !== 'idle') && (
+          <div className="blur-in fixed inset-x-4 bottom-[84px] z-30 flex items-center justify-between gap-3 rounded-full bg-white p-1.5 pl-5 text-sm shadow-[0_10px_40px_-15px_rgba(0,0,0,.35)] ring-1 ring-line md:hidden">
+            <span className="min-w-0 truncate font-medium">{saved === 'ok' ? tr('Il tuo sito è online', 'Your website is live') : tr('Modifiche non pubblicate', 'Unpublished changes')}</span>
+            <button onClick={save} disabled={(!dirty && online) || saved === 'saving'} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-4 font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
+              {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
+              {saved === 'ok' ? tr('Online', 'Live') : tr('Salva e pubblica', 'Save and publish')}
+            </button>
+          </div>
+        )}
+        <div data-tour="site-editor" className={`blur-in grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)] ${dirty || saved !== 'idle' ? 'max-md:pb-16' : ''}`} style={{ animationDelay: '.1s' }}>
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
@@ -282,13 +292,13 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
             {page.page !== 'home' && (() => {
               const key = `page:${page.page}`, on = !cfg.hidden.includes(key);
               return (
-                <div className={`mb-3 flex items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5 text-sm ${on ? 'bg-canvas' : 'bg-rose-50'}`}>
+                <label className={`mb-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5 text-sm max-md:min-h-11 ${on ? 'bg-canvas' : 'bg-rose-50'}`}>
                   <span>{on ? tr('Pagina visibile nel sito', 'Page visible on the website') : <span className="text-rose-700">{tr('Pagina nascosta: non è nel menu e il suo link non si apre', 'Hidden page: it is not in the menu and its link does not open')}</span>}</span>
-                  <button type="button" role="switch" aria-checked={on} onClick={() => set({ hidden: on ? [...cfg.hidden, key] : cfg.hidden.filter(x => x !== key) })}
+                  <button type="button" role="switch" aria-checked={on} aria-label={tr('Pagina visibile nel sito', 'Page visible on the website')} onClick={() => set({ hidden: on ? [...cfg.hidden, key] : cfg.hidden.filter(x => x !== key) })}
                     className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
                     <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${on ? 'translate-x-4' : ''}`} />
                   </button>
-                </div>
+                </label>
               );
             })()}
             <p className="mb-4 text-xs text-muted">{tr('Tocca o clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.', 'Tap or click an element in the preview to edit it, or open a section below.')}</p>
@@ -323,8 +333,8 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
           <div className="space-y-7">
             <Group title={tr('Colore e caratteri', 'Colour and fonts')}>
               <div className="flex flex-wrap items-center gap-2">
-                {COLORS.map(c => <button key={c} onClick={() => set({ primary: c })} aria-label={c} className={`h-8 w-8 rounded-full ring-offset-2 ease-smooth transition-shadow ${cfg.primary === c ? 'ring-2 ring-ink' : ''}`} style={{ background: c }} />)}
-                <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full ring-1 ring-black/10" title={tr('Altro colore', 'Other colour')} style={{ background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' }}>
+                {COLORS.map(c => <button key={c} onClick={() => set({ primary: c })} aria-label={c} className={`h-8 w-8 rounded-full ring-offset-2 max-md:h-10 max-md:w-10 ease-smooth transition-shadow ${cfg.primary === c ? 'ring-2 ring-ink' : ''}`} style={{ background: c }} />)}
+                <label className="relative h-8 w-8 cursor-pointer overflow-hidden rounded-full ring-1 ring-black/10 max-md:h-10 max-md:w-10" title={tr('Altro colore', 'Other colour')} style={{ background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' }}>
                   <input type="color" value={cfg.primary} onChange={e => set({ primary: e.target.value })} className="absolute inset-0 cursor-pointer opacity-0" />
                 </label>
               </div>
@@ -412,9 +422,10 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   const label = fieldLabel(k);
   const v = cfg[k];
   if (typeof v === 'boolean') return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm"><span>{label}{k === 'whatsappButton' && v && !cfg.whatsapp && <span className="block text-xs text-rose-600">{tr('Compare solo con il numero WhatsApp in Recapiti', 'Shows only with a WhatsApp number in Contact details')}</span>}</span>
+    // tutta la riga attiva l'interruttore (label), alta 44 su telefono
+    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm max-md:min-h-11"><span>{label}{k === 'whatsappButton' && v && !cfg.whatsapp && <span className="block text-xs text-rose-600">{tr('Compare solo con il numero WhatsApp in Recapiti', 'Shows only with a WhatsApp number in Contact details')}</span>}</span>
       {/* interruttore: pista 40x24, pallino 20 centrato (2px di margine), scorre di 16 */}
-      <button type="button" role="switch" aria-checked={v} onClick={() => set({ [k]: !v })}
+      <button type="button" role="switch" aria-checked={v} aria-label={label} onClick={() => set({ [k]: !v })}
         className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${v ? 'bg-brand' : 'bg-line'}`}>
         <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${v ? 'translate-x-4' : ''}`} />
       </button>
