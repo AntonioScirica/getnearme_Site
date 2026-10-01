@@ -465,7 +465,21 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const lastActive = useRef(0);
   const touch = useCallback(() => { lastActive.current = Date.now(); }, []);
 
-  useEffect(() => { toBottom(); }, [msgs.length, selecting, toBottom]);
+  // Modifica su una foto piu' in alto: si resta su quella foto (prima scendeva in fondo e ci si perdeva)
+  const toZone = useCallback(() => {
+    requestAnimationFrame(() => {
+      const z = scroller.current?.querySelector('[data-zone]');
+      if (z) z.scrollIntoView({ block: 'end', behavior: 'smooth' }); else toBottom();
+    });
+  }, [toBottom]);
+  const topNext = useRef<string | null>(null);
+  useEffect(() => {
+    const id = topNext.current;
+    if (!id) { toBottom(); return; }
+    topNext.current = null;
+    requestAnimationFrame(() => scroller.current?.querySelector(`[data-mid="${id}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  }, [msgs.length, toBottom]);
+  useEffect(() => { if (selecting) toZone(); }, [selecting, toZone]);
   useEffect(() => {
     if (!busy) return;
     const t = setInterval(() => setTick(x => x + 1), 3500);
@@ -666,7 +680,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     await run(id, { ...m.req, variant: -1 }, m.before);
   };
   // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
-  const askVideo = (photo: string) => { touch(); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: CREATE_VIDEO }, { id: uid(), role: 'video', step: 'template', photo, picks: [] }]); toBottom(); };
+  // Crea video: si scorre all'inizio delle card (non in fondo, dove si vedevano solo le ultime)
+  const askVideo = (photo: string) => { touch(); const id = uid(); topNext.current = id; setMsgs(ms => [...ms, { id: uid(), role: 'user', text: CREATE_VIDEO }, { id, role: 'video', step: 'template', photo, picks: [] }]); };
   type VideoMsg = Extract<Msg, { role: 'video' }>;
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
     setMsgs(ms => ms.map(m => {
@@ -988,12 +1003,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     setZoneClosing(true);
     setTimeout(() => { clearZone(); setSelecting(false); setZoneClosing(false); }, 300);
   };
-  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker example={(kind && ZONE_EX[kind.replace(/^(room|scene):/, '')]) || undefined} inline={inline} src={base} region={region} onChange={setRegion} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
+  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker example={(kind && ZONE_EX[kind.replace(/^(room|scene):/, '')]) || undefined} inline={inline} src={base} region={region} onChange={setRegion} onLoad={toZone} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
 
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
     <div className="relative -mx-6 h-full" onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files); }}>
-      <div ref={scroller} className="absolute inset-0 overflow-y-auto overflow-x-hidden px-6 pb-48 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scroller} className="absolute inset-0 overflow-y-auto overflow-x-hidden px-6 pb-64 pt-8 sm:pb-48 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
@@ -1031,7 +1046,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             <div key={m.id} className="blur-in flex justify-start"><p className="max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm">{m.text}</p></div>
           ) : m.role === 'video' ? (
             // video: tutta la larghezza, un solo contenitore che cambia contenuto a ogni scelta (le scelte fatte restano in alto)
-            <div key={m.id} className="blur-in">
+            <div key={m.id} data-mid={m.id} className="blur-in scroll-mt-24">
               {/* sfondo grigio da messaggio solo nel passo in cui si scrive; card, anteprime e video stanno sul foglio */}
               {/* AutoSize taglia cio' che esce: la sua area si allarga con margini negativi e lo stesso padding dentro,
                   cosi' l'ombra delle card in hover (fino a ~60 px sotto, ~30 ai lati) resta visibile e l'impaginazione non cambia */}
@@ -1058,19 +1073,19 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     )}
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">{/* telefono: 2 colonne, si vedono piu' stili senza scorrere */}
                         {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente') /* Con te in video: solo dopo aver mandato un video */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
                           const off = templateOff(t.id) // i disponibili prima, i non disponibili in fondo
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
                             <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const solo = one?.length === 1 ? one[0].id : m.step === 'anim' ? t.id as VideoAnim : undefined; if (solo && directVideo(solo) && (kind === 'scene:esterno' || kind === 'scene:giardino')) { if (short(m, fullCr(solo))) return; patchV(m.id, { anim: solo }); void makeVideo({ ...m, anim: solo, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }, m.photo, '', m.photo); return; } /* facciate e giardini: c'e' solo "Com'e' ora", niente passo dello stile */ const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
-                              onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
+                              onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-white p-1.5 text-left sm:rounded-[28px] sm:p-2 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
-                              <video src={t.sample} autoPlay loop muted playsInline className={`aspect-video w-full rounded-[20px] object-cover ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
-                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{/* prezzo intero del video: Prima e dopo 100 (1 alle foto + 99 al video) */}{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => fullCr(a.id))) : fullCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>
-                              <span className="block px-3 pt-3 font-semibold">{t.label}</span>
-                              <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
-                              {off && <span className="absolute left-4 top-4 z-30 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' ? tr('Solo foto esterne', 'Exterior photos only') : tr('Solo stanze', 'Rooms only')}</span>}
+                              <video src={t.sample} autoPlay loop muted playsInline className={`aspect-[4/3] w-full rounded-[18px] object-cover sm:aspect-video sm:rounded-[20px] ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
+                              {!off && <span className="absolute right-3 top-3 z-30 rounded-full bg-white/95 px-2 py-0.5 text-[11px] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{/* prezzo intero del video: Prima e dopo 100 (1 alle foto + 99 al video) */}{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => fullCr(a.id))) : fullCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>}
+                              <span className="block px-2 pt-2 text-sm font-semibold sm:px-3 sm:pt-3 sm:text-base">{t.label}</span>
+                              <span className="mx-2 mb-2 line-clamp-2 text-[11px] leading-snug text-muted sm:mx-3 sm:mb-3 sm:text-xs">{t.desc}</span>
+                              {off && <span className="absolute left-3 top-3 z-30 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold sm:left-4 sm:top-4 sm:px-3 sm:py-1 sm:text-xs text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' ? tr('Solo foto esterne', 'Exterior photos only') : tr('Solo stanze', 'Rooms only')}</span>}
                             </button>
                           </div>
                           );
@@ -1099,16 +1114,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     )}
                     {m.step === 'vchoice' && (
                       // video appena mandato: quale template video (il caricamento continua in sottofondo)
-                      <div className="grid gap-3 px-1 sm:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-3 px-1">
                         {VIDEO_TEMPLATES.filter(t => t.anims[0].id === 'agent' || t.anims[0].id === 'walk').map((t, k) => (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
                             <button onClick={() => { if (!short(m, fullCr(t.anims[0].id))) void agentContinue({ ...m, err: undefined }, t.anims[0].id); }} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)}
-                              className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
+                              className="tilt group relative flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-white p-1.5 text-left sm:rounded-[28px] sm:p-2 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
-                              <video src={t.sample} autoPlay loop muted playsInline className={`aspect-video w-full rounded-[20px] object-cover ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
-                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{videoCr(t.anims[0].id)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>
-                              <span className="block px-3 pt-3 font-semibold">{t.label}</span>
-                              <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
+                              <video src={t.sample} autoPlay loop muted playsInline className={`aspect-[4/3] w-full rounded-[18px] object-cover sm:aspect-video sm:rounded-[20px] ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
+                              <span className="absolute right-3 top-3 z-30 rounded-full bg-white/95 px-2 py-0.5 text-[11px] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{videoCr(t.anims[0].id)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>
+                              <span className="block px-2 pt-2 text-sm font-semibold sm:px-3 sm:pt-3 sm:text-base">{t.label}</span>
+                              <span className="mx-2 mb-2 line-clamp-2 text-[11px] leading-snug text-muted sm:mx-3 sm:mb-3 sm:text-xs">{t.desc}</span>
                             </button>
                           </div>
                         ))}
@@ -1583,15 +1598,16 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
   );
   // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
   // prima la card si allunga (AutoSize), poi il campo compare: solo dissolvenza, uno spostamento verso il basso finiva tagliato dal bordo
+  // data-zone: la chat scorre fino a far vedere anche il campo e Modifica sotto la foto (scroll-mb: sopra la barra di scrittura)
   if (inline) return (
-    <div className="relative">
+    <div data-zone className="relative scroll-mb-56 sm:scroll-mb-44">
       {photo}
       {/* in chiusura l'animazione d'ingresso va tolta, altrimenti il suo "both" tiene l'opacita' a 1 e il campo sparisce di colpo */}
       <div className="duration-300 ease-smooth transition-opacity" style={closing ? { opacity: 0 } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div>
     </div>
   );
   return (
-    <div className="flex justify-start">
+    <div data-zone className="flex scroll-mb-56 justify-start sm:scroll-mb-44">
     <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl bg-white p-2 ${CARD_SHADOW}`}>
       <div className="w-fit max-w-full">
       {photo}
