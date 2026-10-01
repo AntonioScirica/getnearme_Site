@@ -238,8 +238,8 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
   const move = (over: string) => {
     if (!drag) return;
     if (drag === over) { lastOver.current = null; return; } // di nuovo sulla foto trascinata: si puo' tornare indietro
-    if (over === lastOver.current || performance.now() < lock.current) return;
-    lastOver.current = over; lock.current = performance.now() + 350;
+    if (over === lastOver.current || performance.now() < lock.current) return; // eslint-disable-line react-hooks/purity
+    lastOver.current = over; lock.current = performance.now() + 350; // eslint-disable-line react-hooks/purity
     snap(); setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; });
   };
   return createPortal(

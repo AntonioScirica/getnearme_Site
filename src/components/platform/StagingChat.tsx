@@ -4,7 +4,7 @@ import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
-import { Anvil, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -394,6 +394,25 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [text, setTextState] = useState('');
   const setText = (v: string) => { setTextState(v); if (!v.trim()) setTextDensity(null); }; // testo vuoto: la densita' letta dalle parole si azzera
+  // Detta a voce (riconoscimento del browser, Chrome/Safari/Edge): le parole finiscono nel campo, poi si invia come sempre.
+  // Senza supporto (es. Firefox) il microfono non compare.
+  type Rec = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null };
+  const [canDictate, setCanDictate] = useState(false);
+  useEffect(() => { setCanDictate(typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)); }, []); // eslint-disable-line react-hooks/set-state-in-effect
+  const rec = useRef<Rec | null>(null);
+  const [listening, setListening] = useState(false);
+  const dictate = () => {
+    if (listening) { rec.current?.stop(); return; }
+    const W = window as unknown as { SpeechRecognition?: new () => Rec; webkitSpeechRecognition?: new () => Rec };
+    const R = W.SpeechRecognition ?? W.webkitSpeechRecognition;
+    if (!R) return;
+    const r = new R(); rec.current = r;
+    r.lang = pageLang() === 'en' ? 'en-US' : 'it-IT'; r.interimResults = true; r.continuous = false;
+    const start = text.trim() ? `${text.trim()} ` : '';
+    r.onresult = e => { const said = Array.from(e.results).map(x => x[0].transcript).join(''); setText(start + said); };
+    r.onend = () => setListening(false);
+    setListening(true); touch(); r.start();
+  };
   // foto di riferimento per lo stile: scelta (Unsplash o dal computer) = richiesta inviata subito
   const [inspo, setInspo] = useState(false); // pannello "Cerca ispirazione" (Unsplash)
   const styleInput = useRef<HTMLInputElement>(null);
@@ -1408,6 +1427,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               // telefono: sul bordo del campo, in alto a destra, cosi' il testo ha tutta la riga
               return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-muted max-sm:absolute max-sm:-top-3 max-sm:right-4 max-sm:py-0.5 max-sm:ring-1 max-sm:ring-line">{n ? <span className="inline-flex items-center gap-1"><Coins size={12} />{n} {n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</span> : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
             })()}
+            {canDictate && <button type="button" onClick={dictate} disabled={!base || busy} aria-label={listening ? tr('Ferma la dettatura', 'Stop dictation') : tr('Detta a voce', 'Dictate')} title={listening ? tr('Ferma la dettatura', 'Stop dictation') : tr('Detta a voce', 'Dictate')}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors disabled:opacity-40 ${listening ? 'animate-pulse bg-rose-500 text-white' : 'text-muted enabled:hover:bg-canvas enabled:hover:text-ink'}`}><Mic size={19} /></button>}
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label={tr('Invia', 'Send')}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
