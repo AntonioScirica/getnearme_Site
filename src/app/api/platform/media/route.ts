@@ -9,6 +9,14 @@ type Entry = { text: string; room: string; from?: string }
 
 // Galleria: una voce per foto di partenza. Le modifiche fatte una sull'altra (campo "from" nei file .meta)
 // diventano una catena: si mostra l'ultima versione, con il prima dell'inizio e tutti i passaggi.
+// nome del video dal suffisso del file (vedi videoJob: -p Prima e dopo, -kc Cantiere...): prima erano tutti "Video"
+const VIDEO_NAMES: [RegExp, string][] = [
+  [/-prova\.mp4$/, 'Video della prova'], [/-k[hf]\.mp4$/, 'Volo nel cantiere'], [/-kc\.mp4$/, 'Cantiere'], [/-km\.mp4$/, 'Camminata'],
+  [/-ka\.mp4$/, 'Con te in video'], [/-kw\.mp4$/, 'Camminata nel tuo video'], [/-k\.mp4$/, 'Giorno e notte'],
+  [/-g\.mp4$/, 'Prima e dopo, dall’alto'], [/-d\.mp4$/, 'Prima e dopo, particelle'], [/-[pf]\.mp4$/, 'Prima e dopo'],
+]
+const videoName = (key: string) => `Video ${VIDEO_NAMES.find(([re]) => re.test(key))?.[1] ?? ''}`.trim()
+
 export async function GET(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -56,7 +64,7 @@ export async function GET(req: NextRequest) {
     const vall = new Set(vkeys.map(k => k.key))
     const videos = vkeys.filter(k => k.key.endsWith('.mp4')).map(({ key, at: t }) => {
       const cover = key.replace(/\.mp4$/, '-arredata.jpg')
-      return { id: key, video: publicUrl(key), dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: 'Video', room: '', steps: [], all: 'video', keys: [key] }
+      return { id: key, video: publicUrl(key), dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: videoName(key), room: '', steps: [], all: videoName(key).toLowerCase(), keys: [key] }
     })
     // video in lavorazione (segnaposto <nome>.job.json senza il suo .mp4, degli ultimi 30 minuti): la Galleria li segue
     const pending = await Promise.all(vkeys.filter(k => k.key.endsWith('.job.json') && !vall.has(k.key.replace(/\.job\.json$/, '.mp4')) && Date.now() - k.at < 30 * 60_000).map(async ({ key, at: t }) => {
