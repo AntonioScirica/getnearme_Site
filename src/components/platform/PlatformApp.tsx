@@ -25,7 +25,7 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
-import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal, useCredits } from './PlanView';
+import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal, useCredits, WelcomeModal } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { tr, lp, pageLocale } from './i18n';
 import ImmoLoader from '@/components/ui/ImmoLoader';
@@ -185,6 +185,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
+      <WelcomeModal />
       <DemoDownload />
       {tour && !chat && credits && <Tour noPlan={noPlan} noSite={credits.plan === 'starter'} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>

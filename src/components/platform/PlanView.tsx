@@ -19,7 +19,13 @@ const date = (s: string | null) => (s ? new Date(s).toLocaleDateString(pageLocal
 export function useCredits(): Credits | null {
   const [c, setC] = useState<Credits | null>(null);
   useEffect(() => {
-    const load = () => authFetch('/api/platform/credits').then(r => (r.ok ? r.json() : null)).then(d => d && setC(d)).catch(() => {});
+    const load = () => authFetch('/api/platform/credits').then(r => (r.ok ? r.json() : null)).then((d: (Credits & { welcome?: boolean }) | null) => {
+      if (!d) return;
+      setC(d);
+      // crediti di benvenuto appena dati: popup (anche se adesso c'e' l'onboarding, lo mostra la piattaforma dopo) e
+      // rilettura per gli altri contatori, che magari avevano letto il saldo a zero un attimo prima
+      if (d.welcome) { try { sessionStorage.setItem('agenteimmo:welcome', '1'); } catch { /* niente */ } window.dispatchEvent(new Event('agenteimmo:welcome')); window.dispatchEvent(new Event('agenteimmo:credits')); }
+    }).catch(() => {});
     load();
     window.addEventListener('agenteimmo:credits', load);
     return () => window.removeEventListener('agenteimmo:credits', load);
@@ -286,6 +292,36 @@ function CodeBox({ onReady, canRedeem }: { onReady?: () => void; canRedeem: bool
     </div>
   );
 }
+
+// Crediti di benvenuto: una volta, appena dati (vedi grantWelcome)
+export function WelcomeModal() {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const check = () => { try { if (sessionStorage.getItem('agenteimmo:welcome')) setOpen(true); } catch { /* niente */ } };
+    check();
+    window.addEventListener('agenteimmo:welcome', check);
+    return () => window.removeEventListener('agenteimmo:welcome', check);
+  }, []);
+  if (!open) return null;
+  const close = () => { try { sessionStorage.removeItem('agenteimmo:welcome'); } catch { /* niente */ } setOpen(false); };
+  return (
+    <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={close}>
+      <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-2 shadow-2xl">
+        <div className="relative overflow-hidden rounded-[24px]">
+          <img src="/immo/home/demo-after.webp" alt="" className="aspect-[16/9] w-full object-cover" />
+          <span className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold backdrop-blur"><Gift size={12} className="text-brand" /> {tr('Un regalo per iniziare', 'A gift to get started')}</span>
+        </div>
+        <div className="px-5 pb-5 pt-5">
+          <h2 className="font-display text-2xl font-extrabold tracking-tight">{tr(`Hai ${WELCOME} crediti per provare gratis`, `You have ${WELCOME} credits to try it free`)}</h2>
+          <p className="mt-1.5 text-sm text-muted">{tr('Bastano per arredare una foto e farne un video Prima e dopo. Senza carta, senza abbonamento.', 'Enough to furnish a photo and turn it into a Before and after video. No card, no subscription.')}</p>
+          <a href="#/staging" onClick={close} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">{tr('Arreda la tua prima foto', 'Furnish your first photo')}</a>
+          <button type="button" onClick={close} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-brand hover:text-brand/70">{tr('Più tardi', 'Later')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+const WELCOME = 110; // come WELCOME_CREDITS in lib/credits (server)
 
 // Crediti finiti: finestra con la scelta del piano (si apre su ogni risposta 402)
 export function NoCreditsModal() {
