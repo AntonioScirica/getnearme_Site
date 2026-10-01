@@ -24,6 +24,15 @@ export type ListingToSave = {
   riferimento?: string // codice dell'agenzia (dal file)
 }
 
+// Contatti dell'agenzia che ha pubblicato l'annuncio (telefoni, email, siti, sede): non vanno sul sito di chi importa.
+// Via le righe che li contengono; il resto della descrizione resta com'e'.
+const CONTACT_LINE = /([\w.+-]+@[\w-]+\.[\w.]+)|(\bwww\.|https?:\/\/)|\b(tel|cell|telefono|cellulare|whatsapp|sede|ufficio|e-?mail|contattaci|chiama)\b\.?\s*[:.\d]/i
+// numero di telefono: almeno 9 cifre di seguito (anche con spazi, punti, barre); date e prezzi ne hanno meno
+const PHONE = (l: string) => (l.match(/\+?\d[\d\s./-]{7,}\d/g) ?? []).some(x => x.replace(/\D/g, '').length >= 9)
+// riga breve con solo il nome dell'agenzia (es. "GASTONE DI PAOLA IMMOBILIARE")
+const AGENCY = (l: string) => l.trim().length < 50 && /\b(immobiliare|agenzia|real estate)\b/i.test(l)
+export const stripContacts = (t: string) => t.split('\n').filter(l => !CONTACT_LINE.test(l) && !PHONE(l) && !AGENCY(l)).join('\n').replace(/\n{3,}/g, '\n\n').trim()
+
 export async function saveListingProject(userId: string, b: ListingToSave): Promise<{ id: string; photos: number; skipped: number }> {
   const l = b.listing
   const titolo = str(b.titolo, 200)
@@ -45,7 +54,7 @@ export async function saveListingProject(userId: string, b: ListingToSave): Prom
     user_id: userId,
     nome: titolo,
     titolo,
-    descrizione: str(b.descrizione, 10000),
+    descrizione: stripContacts(str(b.descrizione, 10000)),
     // scheda estratta dall'AI prima, dati dei selettori dell'estensione come ripiego
     addr: str(d.indirizzo, 300) || str(l.address, 300),
     tipologia: str(d.tipologia, 100) || str(info.type, 100),
