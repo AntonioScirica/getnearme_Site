@@ -82,7 +82,7 @@ function ChatHistory() {
   const when = (d: number) => (d === 0 ? tr('Oggi', 'Today') : d === 1 ? tr('Ieri', 'Yesterday') : tr(`${d} giorni fa`, `${d} days ago`));
   return (
     <div ref={box} className="relative">
-      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label={tr('Storico delle chat', 'Chat history')} title={tr('Storico delle chat', 'Chat history')} className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink hover:bg-line'}`}><History size={16} /></button>
+      <button type="button" onClick={() => { if (!open) setList(null); setOpen(o => !o); }} aria-expanded={open} aria-label={tr('Storico delle chat', 'Chat history')} title={tr('Storico delle chat', 'Chat history')} className="group flex h-10 w-10 items-center justify-center md:h-8 md:w-8"><span className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink group-hover:bg-line'}`}><History size={16} /></span></button>
       {open && (
         <div className="blur-in absolute -right-1 top-11 z-50 w-80 rounded-[24px] bg-white p-2 shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
           <div className="px-3 pb-2 pt-1.5 text-xs text-muted">{tr('Le chat restano 30 giorni. Foto e video li trovi sempre in Galleria.', 'Chats are kept for 30 days. Your photos and videos are always in the Gallery.')}</div>
@@ -189,14 +189,15 @@ function PlatformInner({ userData }: { userData: UserData }) {
           {chat ? (<>
             {/* Indietro dalla chat: all'immobile se la chat e' partita da li' (?project=), altrimenti alla home */}
             <button type="button" onClick={() => { const pid = new URLSearchParams(query).get('project'); go(pid ? `/immobile/${pid}` : '/'); }}
-              className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-brand ease-smooth transition-colors hover:bg-brand/10"><ArrowLeft size={18} /> {tr('Indietro', 'Back')}</button>
+              aria-label={tr('Indietro', 'Back')} className="-ml-2 flex h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-sm font-medium text-brand ease-smooth transition-colors hover:bg-brand/10 sm:ml-0 sm:px-3"><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
             {/* a destra, solo quando si sa il piano (niente scatti): prima i crediti, poi Nuova chat con lo storico dentro */}
             <div className="ml-auto flex items-center gap-2">
               {credits && !noPlan && (
-                <span className="blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ring-line" style={{ animationDelay: '.15s' }}>
-                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} className="flex h-full items-center pl-4 pr-3 text-sm font-semibold">{tr('Nuova chat', 'New chat')}</button>
+                <span className="blur-in flex h-10 items-center rounded-full bg-white ring-1 ring-line md:pr-1" style={{ animationDelay: '.15s' }}>
+                  {/* telefono: solo la matita, la scritta da sm in su */}
+                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} aria-label={tr('Nuova chat', 'New chat')} className="flex h-full min-w-10 items-center justify-center whitespace-nowrap text-sm font-semibold sm:pl-4 sm:pr-3"><SquarePen size={16} className="sm:hidden" /><span className="hidden sm:inline">{tr('Nuova chat', 'New chat')}</span></button>
                   <span className="mr-1 h-5 w-px bg-line" aria-hidden />
                   <ChatHistory />
                 </span>

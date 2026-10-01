@@ -855,6 +855,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }, ...(src?.role === 'ai' ? [{ ...src, id: uid(), busy: false, reveal: 'slider' as const, err: undefined }] : [])]);
     setBase(url); clearZone(); setSelecting(false);
   };
+  // telefono: suggerimento corto nel campo (quello lungo finiva tagliato)
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => { const m = matchMedia('(max-width: 639px)'); const f = () => setNarrow(m.matches); f(); m.addEventListener('change', f); return () => m.removeEventListener('change', f); }, []);
   // Suggerimento nel campo: segue quello che sta succedendo (foto, stanza riconosciuta, lavoro in corso, esito)
   const lastAi = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai');
   const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
@@ -938,6 +941,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // selezione zona: prende il posto del messaggio che contiene la foto di lavoro, cosi' la card si trasforma sul posto
   // card del risultato stretta (foto verticale): i pulsanti diventano solo icone
   const isNarrow = (src: string) => (ratios[src] ?? 1.5) < 1;
+  // azioni sotto il risultato: su telefono sempre in colonne (icona sopra, nome sotto), in riga uscivano dalla card
+  const actNarrow = (src: string) => narrow || isNarrow(src);
   const zoneOwner = selecting && base ? msgs.findLastIndex(m => (m.role === 'ai' && m.out === base) || (m.role === 'user' && m.image === base)) : -1;
   const cancelZone = () => {
     setZoneClosing(true);
@@ -1293,22 +1298,22 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
                 {m.err && <ErrLine err={m.err} className="pt-2" />}
                 {m.out && !m.busy && (
-                  <div className={`blur-in flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted ${isNarrow(m.before) ? 'justify-center' : 'justify-end'}`}>
+                  <div className={`blur-in flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted ${actNarrow(m.before) ? 'justify-center' : 'justify-end'}`}>
                     {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza.
                         Niente didascalia: la richiesta e' gia' nel messaggio sopra. Foto verticale (card stretta): icona sopra e nome sotto */}
                                         {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
-                    <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-start'}`}>
-                      <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label={tr('Modifica', 'Edit')} onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
-                      {!isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
+                    <div className={`flex w-full items-center gap-1 ${actNarrow(m.before) ? '' : 'justify-start'}`}>
+                      <Act narrow={actNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label={tr('Modifica', 'Edit')} onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
+                      {!actNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
                       {/* dalla planimetria nessun video (nessun modello adatto) */}
-                      {!m.req?.planimetria && <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label={tr('Crea video', 'Create video')} tip={tr('I mobili compaiono uno alla volta', 'Furniture appears one piece at a time')} disabled={busy} onClick={() => askVideo(m.out!)} />}
-                      {m.req && !isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
-                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label={tr('Rifai', 'Redo')} tip={tr('Stesso stile, un\'altra versione', 'Same style, another version')} disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
+                      {!m.req?.planimetria && <Act narrow={actNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label={tr('Crea video', 'Create video')} tip={tr('I mobili compaiono uno alla volta', 'Furniture appears one piece at a time')} disabled={busy} onClick={() => askVideo(m.out!)} />}
+                      {m.req && !actNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
+                      {m.req && <Act narrow={actNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label={tr('Rifai', 'Redo')} tip={tr('Stesso stile, un\'altra versione', 'Same style, another version')} disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
                       {base !== m.out && (
                         <>
                           <span className="ml-auto mr-1 h-4 w-px bg-line" aria-hidden />
                           <Tooltip label={tr('Ricomincia da qui', 'Start over from here')}>
-                            <button onClick={() => restartFrom(i, m.out!)} aria-label={tr('Ricomincia da qui', 'Start over from here')} className="flex h-8 w-8 items-center justify-center rounded-full text-brand hover:bg-brand/5"><RotateCcw size={15} /></button>
+                            <button onClick={() => restartFrom(i, m.out!)} aria-label={tr('Ricomincia da qui', 'Start over from here')} className="flex h-10 w-10 items-center justify-center rounded-full text-brand hover:bg-brand/5 sm:h-8 sm:w-8"><RotateCcw size={15} /></button>
                           </Tooltip>
                         </>
                       )}
@@ -1385,9 +1390,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               </Tooltip>
             </div>
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
-              placeholder={hint}
+              placeholder={!narrow ? hint : !base ? tr('Carica una foto per iniziare', 'Upload a photo to start') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Scrivi cosa cambiare', 'Write what to change') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
+              className="block h-[52px] min-w-0 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] leading-5 outline-none sm:h-10 sm:py-2 sm:leading-6 placeholder:text-muted/60 disabled:cursor-not-allowed" />
             {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}
             {text.trim() && base && !busy && (() => {
               const n = creditsOf({ prompt: text.trim(), scene }, editsDone);
@@ -1673,7 +1678,7 @@ function StepSwap({ step, children }: { step: string; children: React.ReactNode 
 function Act({ icon, label, short, tip, narrow, active, disabled, onClick, cr }: { icon: React.ReactNode; label: string; short?: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void; cr?: number }) {
   const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
   const btn = narrow
-    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}</span></button>
+    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}{cr ? ` · ${cr}` : ''}</span></button>
     : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}{label}{cr !== undefined && <Cr n={cr} tight />}</button>;
   return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
 }
