@@ -76,6 +76,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [plan, setPlan] = useState<string | null>(null);
   const [ai, setAi] = useState<AiResult | null>(null);
+  const [manual, setManual] = useState(false); // senza crediti: titolo e descrizione li scrive l'agente, l'immobile si salva lo stesso
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const restored = useRef(false);
@@ -161,8 +162,17 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       }
       // tutti i dati compilati, con etichetta e valore leggibili (es. "Classe energetica: G", "Spese condominiali: 120 €/mese")
       const dati = ALL_FIELDS.filter(f => visible(f, d)).map(f => { const v = formatValue(f, d[f.key]); return v ? `${f.label}: ${v}` : null; }).filter(Boolean);
-      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { dati, ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      const res = await authFetch('/api/platform/describe', { method: 'POST', headers: { 'x-no-modal': '1' }, body: JSON.stringify({ property: { dati, ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      if (res.status === 402) {
+        // niente crediti per l'AI: bozza di titolo e descrizione dai dati, l'agente la rifinisce e salva
+        const city = d.indirizzo ? String(d.indirizzo).split(',').slice(-1)[0].trim() : '';
+        const titolo = [d.tipologia, d.locali ? `${d.locali} ${tr('locali', 'rooms')}` : '', city].filter(Boolean).join(', ').slice(0, 60);
+        setManual(true);
+        setAi({ titolo, descrizione: [note, ...dati].filter(Boolean).join('\n'), score: 0, suggerimenti: [] });
+        return;
+      }
       if (!res.ok) throw new Error();
+      setManual(false);
       setAi(await res.json());
     } catch { setError(tr('Generazione non riuscita. Riprova.', 'Generation failed. Please try again.')); } finally { setBusy(null); }
   };
@@ -408,6 +418,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
               {/* Titolo e descrizione */}
               <div className="rise card p-5" style={{ animationDelay: '.12s' }}>
+                {manual && <p className="mb-4 rounded-2xl bg-canvas px-4 py-3 text-sm text-muted">{tr('Titolo e descrizione scritti dall’AI sono nei piani. Intanto ti abbiamo preparato una bozza con i tuoi dati: sistemala e salva l’immobile.', 'AI titles and descriptions come with a plan. Meanwhile here is a draft from your details: edit it and save the property.')} <a href="#/piano?cambia=1" className="font-medium text-brand">{tr('Vedi i piani', 'See plans')}</a></p>}
                 <div className="text-xs font-semibold text-muted">{tr('Titolo', 'Title')} <span className={`ml-1 font-normal ${ai.titolo.length > 60 ? 'text-rose-600' : ''}`}>{ai.titolo.length}/60</span></div>
                 <div className="relative mt-1.5">
                   <input value={ai.titolo} onChange={e => setAi({ ...ai, titolo: e.target.value })} className="w-full rounded-2xl bg-canvas px-4 py-3 pr-12 font-medium outline-none ease-smooth transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15" />

@@ -491,7 +491,10 @@ function CheckoutAgencyContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isSignup, setIsSignup] = useState(true);
+  // /accedi senza altro = accesso; dai pulsanti della landing (next= o buy=) = registrazione, tranne per chi ha gia' un
+  // account su questo browser (segno messo dalla piattaforma)
+  const [isSignup, setIsSignup] = useState(!!nextParam || !!buy);
+  useEffect(() => { try { if (localStorage.getItem('agenteimmo:has-account')) setIsSignup(false); } catch { /* niente storage */ } }, []); // eslint-disable-line react-hooks/set-state-in-effect
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

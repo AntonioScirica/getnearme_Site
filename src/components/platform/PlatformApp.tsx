@@ -148,6 +148,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   }, [wantedId, projects, checkedId]);
   useEffect(() => {
     reload();
+    try { localStorage.setItem('agenteimmo:has-account', '1'); } catch { /* niente storage */ } // /accedi poi si apre sull'accesso
     authFetch('/api/platform/portfolio').then(r => r.json()).then(d => setProfile({ name: d.name, slug: d.slug })).catch(() => setProfile(null));
   }, []);
 

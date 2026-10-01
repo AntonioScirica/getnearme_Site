@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
+import { isFakeUser } from '@/lib/fakeAi'
 import { FORFETTARIO_FOOTER, PACKS, STRIPE_PORTAL_CONFIG } from '@/lib/pricing'
 
 // chiave mancante al build (raccolta dati delle pagine su Vercel): non si crea l'errore qui, le chiamate falliscono solo a runtime
@@ -17,6 +18,8 @@ const siteOf = (req: NextRequest) => { const o = req.nextUrl.origin; return /^ht
 export async function POST(req: NextRequest) {
   const u = await authUser(req)
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  // account di prova degli agenti simulati: mai una sessione Stripe con le chiavi live
+  if (process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') && await isFakeUser(u.id)) return NextResponse.json({ error: 'test_account' }, { status: 403 })
   const body = await req.json().catch(() => null) as { plan?: string; back?: string; pack?: string } | null
   // pacchetto di crediti extra (pagamento singolo): solo con un piano attivo
   const pack = PACKS.find(x => x.id === body?.pack)

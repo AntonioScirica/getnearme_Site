@@ -30,9 +30,12 @@ export async function POST(req: NextRequest) {
   try { b = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   if (deepProfanity(b)) return NextResponse.json({ error: 'profanity' }, { status: 400 })
   const l = b.listing
-  const titolo = str(b.titolo, 200)
-  if (!l || !titolo) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  if (!l) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   const info = l.propertyInfo && typeof l.propertyInfo === 'object' ? l.propertyInfo : {}
+  // portale senza titolo: se ne compone uno dai dati (tipologia, locali, zona), mai un salvataggio rifiutato per questo
+  const fi = info as Record<string, unknown>
+  const titolo = str(b.titolo, 200) || str(fi.titolo, 200) || str(l.title, 200)
+    || [str(fi.tipologia, 60), str(fi.locali, 10) && `${str(fi.locali, 10)} locali`, str(fi.zona, 80)].filter(Boolean).join(', ') || 'Immobile'
   if (JSON.stringify(info).length > 30000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
   const details = b.details && typeof b.details === 'object' && !Array.isArray(b.details) ? b.details : {}
   if (JSON.stringify(details).length > 20000) return NextResponse.json({ error: 'too_large' }, { status: 400 })

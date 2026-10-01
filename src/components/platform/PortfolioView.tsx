@@ -141,7 +141,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio sito', 'My website')}</h1>
           <p className="pt-1 text-sm text-muted">{tr('Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.', 'Pick a template, edit it and publish your website in 5 minutes.')}</p>
           {/* avviso senza piano col sito: si apre con un movimento quando il piano e' noto (prima compariva di scatto) */}
-          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${credits && !sitePlan ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+          <div aria-hidden={!(credits && !sitePlan)} inert={!(credits && !sitePlan)} className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${credits && !sitePlan ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
             <div className="min-h-0 overflow-hidden">
               <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">{tr('Il sito pubblico è nei piani Plus e Pro.', 'The public website is included in the Plus and Pro plans.')} <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">{tr('Scegli un piano', 'Choose a plan')}</button></p>
             </div>
@@ -218,6 +218,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
   cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void; getUsed: () => Set<string>;
 }) {
   const [tab, setTab] = useState<'pagina' | 'generale'>('pagina');
+  const fromSide = useRef(false); // sezione aperta dalla colonna: niente scorrimento (il clic dopo finiva sul campo sbagliato)
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   const scroller = useRef<HTMLDivElement>(null);
   // sezioni nell'ordine in cui compaiono nell'anteprima (ogni modello le dispone a modo suo)
@@ -233,6 +234,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
   useEffect(() => {
     if (!selected) return;
     setTab('pagina'); // eslint-disable-line react-hooks/set-state-in-effect
+    if (fromSide.current) { fromSide.current = false; return; }
     // scorre solo la colonna, non la pagina
     setTimeout(() => { const el = refs.current[selected], box = scroller.current; if (el && box) box.scrollTo({ top: el.offsetTop - 8, behavior: 'smooth' }); }, 60);
   }, [selected]);
@@ -276,7 +278,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
                 return (
                   <div key={sec.id} ref={el => { refs.current[sec.id] = el; }} className={`scroll-mt-2 rounded-2xl ring-1 ease-smooth transition-colors ${open ? 'ring-brand/40' : 'ring-black/10'}`}>
                     <div className="flex items-center gap-2 p-3">
-                      <button onClick={() => setSelected(open ? null : sec.id)} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold ${off ? 'text-muted line-through' : ''}`}>
+                      <button onClick={() => { fromSide.current = true; setSelected(open ? null : sec.id); }} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold ${off ? 'text-muted line-through' : ''}`}>
                         <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? '' : '-rotate-90'}`} />{secLabel(sec)}
                       </button>
                       {sec.hideable && <button onClick={() => toggleHide(sec.id)} title={off ? tr('Mostra la sezione', 'Show section') : tr('Nascondi la sezione', 'Hide section')} className="text-muted hover:text-ink">{off ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
@@ -340,8 +342,9 @@ function FontPicker({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig
   ];
   return (
     <>
-      {/* tutti i caratteri caricati qui, per vederli nel menu */}
-      <link rel="stylesheet" href={fontCss(FONTS.map(f => f.id))} precedence="default" />
+      {/* tutti i caratteri caricati qui, per vederli nel menu. Niente precedence: il foglio sospenderebbe il render e
+          l'editor si rimonterebbe, perdendo le modifiche non pubblicate (giro 3 dei test) */}
+      <link rel="stylesheet" href={fontCss(FONTS.map(f => f.id))} />
       <Dropdown value={value} options={options} className="h-11 w-full justify-between bg-canvas px-4 text-sm"
         onChange={v => (v === 'serif' || v === 'sans' ? set({ font: v, headingFont: '' }) : set({ headingFont: v }))} />
     </>
@@ -621,9 +624,10 @@ function ListEditor<T extends Record<string, string>>({ items, fields, onChange,
     <>
       {items.map((it, i) => (
         <div key={i} className="space-y-2 rounded-2xl bg-canvas p-3">
-          {fields.map(([k, label, m, area]) => area
-            ? <textarea key={k} rows={4} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full resize-y rounded-xl bg-white px-3 py-2 text-sm outline-none" />
-            : <input key={k} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full rounded-xl bg-white px-3 py-2 text-sm font-medium outline-none" />)}
+          {fields.map(([k, label, m, area]) => <div key={k}>{area
+            ? <textarea rows={4} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full resize-y rounded-xl bg-white px-3 py-2 text-sm outline-none" />
+            : <input value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full rounded-xl bg-white px-3 py-2 text-sm font-medium outline-none" />}
+            <Limit n={it[k]?.length ?? 0} max={m} /></div>)}
           <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-muted hover:text-rose-600"><Trash2 size={13} /> {tr('Togli', 'Remove')}</button>
         </div>
       ))}
@@ -644,9 +648,12 @@ function Field({ label, value, onChange, max, area, placeholder }: { label: stri
       {area
         ? <textarea rows={3} value={value} placeholder={placeholder} maxLength={max} onChange={e => onChange(e.target.value)} className={`${cls} resize-none`} />
         : <input value={value} placeholder={placeholder} maxLength={max} onChange={e => onChange(e.target.value)} className={cls} />}
+      <Limit n={value.length} max={max} />
     </label>
   );
 }
+// limite di caratteri raggiunto: si dice (prima un testo incollato veniva tagliato senza avviso)
+const Limit = ({ n, max }: { n: number; max: number }) => (n >= max ? <span className="mt-1 block text-[11px] text-rose-600">{tr(`Massimo ${max} caratteri: il resto è stato tagliato`, `Max ${max} characters: the rest was cut`)}</span> : null);
 
 
 // Foto: carica dal computer, oppure scegli tra quelle degli immobili (Auto = la prima)

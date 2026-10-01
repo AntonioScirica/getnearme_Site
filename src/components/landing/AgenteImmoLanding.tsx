@@ -578,10 +578,11 @@ function Landing({ faq }: { faq: [string, string][] }) {
   const scrolled = useScrolled();
   const [logged, setLogged] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setLogged(!!session?.user));
+    // gia' dentro: il sito porta dritto alla home della piattaforma
+    supabase.auth.getSession().then(({ data: { session } }) => { if (session?.user) window.location.replace(APP); else setLogged(false); });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, x) => setLogged(!!x?.user));
     return () => subscription.unsubscribe();
-  }, []);
+  }, [APP]);
   const [siteRef, siteOn] = useInView('-15%');
   const [videoRef, videoOn] = useInView('-10%');
   // i video (1,5 MB) si scaricano solo quando la sezione arriva in vista: prima non rubano banda al primo schermo
@@ -604,7 +605,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             {/* dentro: solo Dashboard; fuori: solo Prova gratis */}
             {logged
               ? <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">Dashboard</Cta>
-              : <Cta href={TRIAL_LOGIN} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">{L('Prova gratis', "Try it free")}</Cta>}
+              : <><a href={`/${l}/accedi`} className="ml-auto shrink-0 rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink md:ml-0">{L('Accedi', 'Sign in')}</a><Cta href={TRIAL_LOGIN} className="!h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">{L('Prova gratis', "Try it free")}</Cta></>}
           </nav>
         </div>
       </header>

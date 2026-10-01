@@ -1326,7 +1326,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             if (!done || zoneOwner >= 0) return null;
             const list = last.role === 'video' ? NEXT_VIDEO : NEXT_PHOTO;
             const [it, en] = list[[...last.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % list.length];
-            return <p key={last.id} className="blur-in px-2 pt-1 text-[15px] text-ink" style={{ animationDelay: '.6s' }}>{tr(it, en)}</p>;
+            // fumetto grigio come quello del riconoscimento della stanza
+            return <p key={last.id} className="blur-in w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.6s' }}>{tr(it, en)}</p>;
           })()}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
           {zoneOwner < 0 && zonePicker()}

@@ -101,7 +101,7 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
   } as CSSProperties;
   // carattere dei titoli scelto dall'agente: il foglio di Google Fonts va nella pagina (React lo sposta nel <head>)
   const fontHref = fontCss([ctx.cfg.headingFont]);
-  return <Ctx.Provider value={ctx}>{fontHref && <link rel="stylesheet" href={fontHref} precedence="default" />}<div data-site-root style={style} className="relative min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
+  return <Ctx.Provider value={ctx}>{/* niente precedence: nell'editor sospenderebbe e rimonterebbe la pagina (modifiche perse) */}{fontHref && <link rel="stylesheet" href={fontHref} />}<div data-site-root style={style} className="relative min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
 }
 
 export const pathOf = (base: string, p: Page): string =>

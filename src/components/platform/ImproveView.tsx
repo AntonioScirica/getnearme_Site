@@ -225,7 +225,7 @@ const GRAVITA: Record<Problem['gravita'], { label: string; cls: string }> = {
 };
 
 export function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listing; analysis: Analysis; onSaved?: () => void; onRestart: () => void }) {
-  const [titolo, setTitolo] = useState(a.titolo);
+  const [titolo, setTitolo] = useState(a.titolo || text(a.fields?.titolo) || listing.title || '');
   const [descrizione, setDescrizione] = useState(a.descrizione);
   // riscrittura su richiesta (gratis con Gemini, altrimenti 1 credito)
   const [riscritto, setRiscritto] = useState(a.riscritto !== false);
