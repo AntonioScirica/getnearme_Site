@@ -8,7 +8,7 @@ import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileT
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
 // Le animazioni entrano quando la sezione arriva in vista (blur-in), niente scatti.
 
-import { PRICING } from '@/lib/pricing';
+import { CREDIT_COST, PRICING } from '@/lib/pricing';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
 import { deviceId } from '@/lib/deviceId';
@@ -499,6 +499,10 @@ function TryIt({ gate = false }: { gate?: boolean }) {
   );
 }
 
+// esempio sotto i piani: una casa = 4 foto arredate + 1 video
+const EXAMPLE_CREDITS = 4 * CREDIT_COST.arreda + CREDIT_COST.video;
+const perMonth = (credits: number) => Math.floor(credits / EXAMPLE_CREDITS);
+
 function Pricing() {
   const L = useL(), en = useEn();
   // Piano scelto: con l'accesso gia' fatto dritti a Stripe; altrimenti accesso e poi Stripe (?buy=). Annullando si torna qui.
@@ -508,7 +512,10 @@ function Pricing() {
     e.preventDefault();
     if (!(await startCheckout(b, { back: en ? 'en' : 'it' }))) window.location.href = buyHref(b);
   };
-  const [yearly, setYearly] = useState(true);
+  const [yearly, setYearly] = useState(false);
+  // dopo la prova gratis (segno in localStorage) non serve piu' invitare a provarla
+  const [tried, setTried] = useState(false);
+  useEffect(() => { try { setTried(!!localStorage.getItem('agenteimmo:demo-used')); } catch { /* niente storage */ } }, []); // eslint-disable-line react-hooks/set-state-in-effect
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
   const billed = en ? (yearly ? `€${PRICING.yearly * 12} billed yearly` : `€${PRICING.quarterly * 3} billed every 3 months`) : yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
   return (
@@ -555,7 +562,8 @@ function Pricing() {
           <Cta href={buyHref(yearly ? 'pro_yearly' : 'pro_quarterly')} onClick={buyClick(yearly ? 'pro_yearly' : 'pro_quarterly')} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>
       </div>
-      <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href={TRIAL_LOGIN} className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L('. Prezzi finali, senza IVA aggiunta.', ". Final prices, no VAT added.")}</p>
+      <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-relaxed text-muted">{L(`Esempio: un trilocale con 4 foto arredate e 1 video Prima e dopo usa ${EXAMPLE_CREDITS} crediti. Con Starter ne prepari ${perMonth(PRICING.starterCredits)} al mese, con Plus ${perMonth(PRICING.plusCredits)}, con Pro ${perMonth(PRICING.credits)}.`, `Example: a two-bedroom flat with 4 furnished photos and 1 before and after video uses ${EXAMPLE_CREDITS} credits. With Starter you do ${perMonth(PRICING.starterCredits)} a month, with Plus ${perMonth(PRICING.plusCredits)}, with Pro ${perMonth(PRICING.credits)}.`)}</p>
+      <p className="mt-3 text-center text-sm text-muted">{tried ? L('Scegli un piano, disdici quando vuoi.', 'Choose a plan, cancel anytime.') : <>{L('Prima di scegliere,', "Before choosing,")} <a href={TRIAL_LOGIN} className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>.</>}</p>
     </Band>
   );
 }

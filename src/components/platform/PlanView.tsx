@@ -69,7 +69,7 @@ async function checkout(plan: Buy | PackId) {
 // buy = piano scelto sulla landing (anche prima del login): si va dritti a Stripe
 export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy; change?: boolean }) {
   const c = useCredits();
-  const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
+  const [yearly, setYearly] = useState(buy === 'pro_yearly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
   const [changingRaw, setChanging] = useState(!!change);
@@ -206,7 +206,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           <button type="button" disabled={!!busy || (changing && proMine)} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}{changing ? (proMine ? tr('Il tuo piano', 'Your plan') : c?.plan === 'pro' ? (yearly ? tr('Passa all\'annuale', 'Switch to yearly') : tr('Passa al trimestrale', 'Switch to quarterly')) : tr('Passa a Pro', 'Switch to Pro')) : tr('Scegli Pro', 'Choose Pro')}</button>
         </div>
       </div>
-      <p className="mt-5 text-center text-xs text-muted">{tr('Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).', 'Secure payment with Stripe. We ask for your company name and VAT details for the invoice. Final prices, no VAT added (Italian flat-rate scheme).')}</p>
+      <p className="mt-5 text-center text-xs text-muted">{tr('Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica.', 'Secure payment with Stripe. We ask for your company name and VAT details for the invoice.')}</p>
       </>)}
     </div>
   );

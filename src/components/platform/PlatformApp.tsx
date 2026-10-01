@@ -160,9 +160,10 @@ function PlatformInner({ userData }: { userData: UserData }) {
     // arrivato scegliendo un piano sulla landing: finito l'onboarding si va dritti al pagamento
     if (/^#\/piano\?buy=/.test(location.hash)) { setProfile(p); return; }
     // hashchange lanciato a mano: e' sincrono, cosi' la home e' gia' nel DOM quando il browser cattura lo stato nuovo
-    // tour solo a transizione finita: finche' dura, le card della home stanno sopra a tutto (anche sopra il velo)
+    // tour appena finisce la transizione (il logo e' arrivato in alto a sinistra), entra in dissolvenza:
+    // non prima, finche' dura le card della home stanno sopra a tutto (anche sopra il velo)
     localStorage.setItem(TOUR_KEY, '1');
-    const tourLater = () => setTimeout(() => setTour(true), 800);
+    const tourLater = () => setTour(true);
     const swap = () => flushSync(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setMorphAt('/'); setProfile(p); });
     if (!document.startViewTransition) { swap(); tourLater(); return; }
     document.startViewTransition(swap).finished.finally(tourLater);
@@ -309,7 +310,7 @@ function ScoreBadge({ on }: { on: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on]);
   const color = n >= 75 ? 'bg-emerald-500' : n >= 55 ? 'bg-amber-400' : 'bg-rose-500';
-  return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg ease-smooth transition-colors ${color}`}>{n}{n >= 75 && ' ✓'}</span>;
+  return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg ease-smooth transition-colors ${color}`}>{n}%{n >= 75 && ' ✓'}</span>;
 }
 
 const TITLE_WORDS = (name?: string) => (name ? tr(`Ciao ${name.split(' ')[0]}, da dove partiamo?`, `Hi ${name.split(' ')[0]}, where do we start?`) : tr('Da dove partiamo?', 'Where do we start?')).split(' ');
