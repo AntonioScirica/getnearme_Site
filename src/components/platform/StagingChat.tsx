@@ -1020,7 +1020,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
-            <div className="flex min-h-[calc(100vh-22rem)] flex-col items-center justify-center">
+            <div className="flex min-h-[calc(100vh-22rem)] flex-col items-center justify-center max-sm:min-h-[calc(100dvh-21.5rem)]">{/* telefono: box al centro tra la barra in alto e il campo in basso */}
               {/* telefono: niente titolo, il riquadro della foto dice gia' tutto (il titolo finiva tagliato sotto la barra) */}
               <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight max-sm:hidden md:text-5xl md:leading-[1.2]">
                 <span className="blur-in inline-block">Home staging</span>
