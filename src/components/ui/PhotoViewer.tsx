@@ -42,7 +42,7 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
           : cmp && list.length > 1
             ? <div onClick={e => e.stopPropagation()} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); drag(e); }} onPointerMove={e => { if (e.buttons) drag(e); }}
                 className="blur-in relative cursor-ew-resize touch-none select-none overflow-hidden rounded-2xl shadow-2xl">
-                <img src={list[0].src} alt={tr('Prima', 'Before')} draggable={false} className="block max-h-[calc(100vh-9rem)] max-w-[92vw] object-contain" />
+                <img src={list[0].src} alt={tr('Prima', 'Before')} draggable={false} className="block max-h-[calc(100svh-13rem)] max-w-[92vw] object-contain sm:max-h-[calc(100vh-9rem)]" />
                 <img src={list[list.length - 1].src} alt={tr('Dopo', 'After')} draggable={false} className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: `inset(0 0 0 ${pos}%)` }} />
                 <span className="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(0,0,0,.4)]" style={{ left: `${pos}%` }} />
                 <span className="pointer-events-none absolute top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-lg" style={{ left: `${pos}%` }}><ChevronsLeftRight size={18} /></span>
@@ -58,7 +58,7 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
       )}
       <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ease-smooth transition-colors hover:bg-white/25"><X size={20} /></button>
       {!video && list.length > 1 && (
-        <div className="flex shrink-0 flex-col items-center" onClick={e => e.stopPropagation()}>
+        <div className="flex max-w-full shrink-0 flex-col items-center" onClick={e => e.stopPropagation()}>
           {/* passaggi: chiusi non occupano spazio; aprendoli la fascia cresce (righe della griglia 0fr -> 1fr)
               e la foto si rimpicciolisce insieme, senza scatti */}
           {list.length > 2 && (
@@ -76,15 +76,16 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
             </div></div>
             </div>
           )}
-          <div className="flex items-center gap-2">
+          {/* telefono: segmenti piu' stretti e Tutti i passaggi va a capo sotto, tutto dentro lo schermo */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <div className="flex rounded-full bg-white/15 p-1 backdrop-blur">
               {([[tr('Prima', 'Before'), 0], [tr('Prima/Dopo', 'Before/After'), -1], [tr('Dopo', 'After'), list.length - 1]] as const).map(([l, j]) => {
                 const on = j < 0 ? cmp : !cmp && i === j;
-                return <button key={l} onClick={() => { if (j < 0) setCmp(true); else { setCmp(false); setI(j); } }} className={`h-9 rounded-full px-5 text-sm font-semibold ease-smooth transition-colors ${on ? 'bg-white text-ink' : 'text-white hover:bg-white/10'}`}>{l}</button>;
+                return <button key={l} onClick={() => { if (j < 0) setCmp(true); else { setCmp(false); setI(j); } }} className={`h-10 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold ease-smooth sm:h-9 sm:px-5 transition-colors ${on ? 'bg-white text-ink' : 'text-white hover:bg-white/10'}`}>{l}</button>;
               })}
             </div>
             {list.length > 2 && (
-              <button onClick={() => setAll(v => !v)} aria-pressed={all} className={`flex h-11 outline-none focus-visible:ring-2 focus-visible:ring-white/60 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${all ? 'bg-white text-ink' : 'bg-white/15 text-white hover:bg-white/25'}`}>
+              <button onClick={() => setAll(v => !v)} aria-pressed={all} className={`flex h-11 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-white/60 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${all ? 'bg-white text-ink' : 'bg-white/15 text-white hover:bg-white/25'}`}>
                 <Layers size={15} /> {tr('Tutti i passaggi', 'All steps')} ({list.length - 1})
               </button>
             )}

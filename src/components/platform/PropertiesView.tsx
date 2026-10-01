@@ -104,19 +104,20 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
           {tr('Immobili', 'Properties')}{projects && !demo && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
         </h1>
         {/* Filtri: stato e ricerca */}
-        <div className="blur-in flex items-center gap-2" style={{ animationDelay: '.08s' }}>
-          <div className="flex rounded-full bg-white p-1 ring-1 ring-black/10">
+        {/* telefono: filtri su una riga, sotto la ricerca a tutta larghezza col + accanto */}
+        <div className="blur-in flex w-full flex-wrap items-center gap-2 md:w-auto md:flex-nowrap" style={{ animationDelay: '.08s' }}>
+          <div className="flex max-w-full overflow-x-auto rounded-full bg-white p-1 ring-1 ring-black/10 [scrollbar-width:none]">
             {FILTERS.map(f => (
               <button key={f.id} onClick={() => setFilter(f.id)}
-                className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium ease-smooth transition-colors ${filter === f.id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{f.label}</button>
+                className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-medium ease-smooth transition-colors md:py-1.5 ${filter === f.id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{f.label}</button>
             ))}
           </div>
-          <label className="flex h-10 items-center gap-2 rounded-full bg-white px-3.5 ring-1 ring-black/10 ease-smooth transition-shadow focus-within:ring-ink/30">
+          <label className="flex h-10 min-w-0 flex-1 basis-[calc(100%-48px)] items-center gap-2 rounded-full bg-white px-3.5 ring-1 ring-black/10 ease-smooth transition-shadow focus-within:ring-ink/30 md:flex-none md:basis-auto">
             <Search size={15} className="text-muted" />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca via, città, rif.', 'Search street, city, ref.')} className="w-40 bg-transparent text-[13px] outline-none placeholder:text-muted/60" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca via, città, rif.', 'Search street, city, ref.')} className="w-full min-w-0 bg-transparent text-[13px] outline-none placeholder:text-muted/60 md:w-40" />
           </label>
           {/* in alto solo se c'e' gia' qualche immobile: con la lista vuota c'e' la card sotto */}
-          {!empty && !demo && <a href="#/nuovo" className="flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-black"><Plus size={15} /> {tr('Aggiungi immobile', 'Add property')}</a>}
+          {!empty && !demo && <a href="#/nuovo" aria-label={tr('Aggiungi immobile', 'Add property')} className="flex h-10 w-10 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-ink text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-black md:w-auto md:px-4"><Plus size={15} /> <span className="hidden md:inline">{tr('Aggiungi immobile', 'Add property')}</span></a>}
         </div>
       </div>
 
@@ -162,6 +163,7 @@ function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
 function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void }) {
   const score = (p.import_data as { score?: number } | undefined)?.score;
   const [menu, setMenu] = useState(false);
+  const [up, setUp] = useState(false); // menu verso l'alto se sotto non c'e' posto (fondo della pagina o barra in basso)
   const [busy, setBusy] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -183,11 +185,11 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
     {busy && <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[24px] bg-white/60 backdrop-blur-[2px]"><Loader2 size={22} className="animate-spin text-muted" /></div>}
     {!demo && (
       <div className="absolute right-3 top-3 z-20 ease-smooth transition-transform group-hover/card:-translate-y-1">{/* sale con la card */}
-        <button type="button" onClick={() => setMenu(m => !m)} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={menu} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
+        <button type="button" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = e.currentTarget.closest('main')?.getBoundingClientRect().bottom ?? innerHeight; setUp(b - r.bottom < 112); setMenu(m => !m); }} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={menu} className="flex h-10 w-10 items-center md:h-8 md:w-8 justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
         {menu && (
-          <div className="blur-in absolute right-0 top-10 w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
-            <a href={`#/immobile/${p.id}`} className="flex h-9 items-center gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> {tr('Modifica', 'Edit')}</a>
-            <button type="button" onClick={remove} className="flex h-9 w-full items-center gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
+          <div className={`blur-in absolute right-0 ${up ? 'bottom-12 md:bottom-10' : 'top-12 md:top-10'} w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5`}>
+            <a href={`#/immobile/${p.id}`} className="flex h-11 items-center md:h-9 gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> {tr('Modifica', 'Edit')}</a>
+            <button type="button" onClick={remove} className="flex h-11 w-full items-center md:h-9 gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>
         )}
       </div>
