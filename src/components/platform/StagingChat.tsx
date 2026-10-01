@@ -1612,9 +1612,10 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
             <div><h2 className="text-lg font-semibold">{tr('Salva nell’immobile', 'Save to property')}</h2><p className="text-sm text-muted">{projects?.length === 1 ? tr(`In ${p?.titolo || p?.nome || 'immobile'}, scegli come.`, `In ${p?.titolo || p?.nome || 'property'}, choose how.`) : tr('Scegli dove metterla e come.', 'Choose where to put it and how.')}</p></div>
             <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
           </div>
-          {projects?.length !== 1 && <div className="mt-4">
+          {/* sopra le due scelte: il menu aperto restava nascosto sotto le card */}
+          {projects?.length !== 1 && <div className="relative z-20 mt-4">
             {projects === null ? <div className="h-11 animate-pulse rounded-full bg-canvas" /> : (
-              <Dropdown value={pid} options={[{ value: '', label: tr('Scegli l’immobile', 'Choose the property') }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
+              <Dropdown value={pid} options={[{ value: '', label: tr('Scegli l’immobile', 'Choose the property') }, ...projects.map(x => ({ value: x.id, label: [x.titolo || x.nome, x.addr].filter(Boolean).join(' · ') || tr('Immobile', 'Property') }))]}
                 onChange={setPid} className="h-11 w-full justify-between rounded-full bg-canvas px-4 text-sm font-medium" />
             )}
           </div>}

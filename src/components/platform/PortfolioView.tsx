@@ -115,10 +115,19 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   };
   const dirty = JSON.stringify(cfg) !== JSON.stringify(site.config);
   const set = (p: Partial<SiteConfig>) => setCfg(c => ({ ...c!, ...p }));
+  // Salva e pubblica: un solo gesto. Salva le modifiche e, se il sito era spento, lo mette online.
+  // Senza piano col sito si va ai piani (prima sembrava riuscito e la pagina pubblica dava 404).
   const save = async () => {
+    if (!sitePlan) { go('/piano?cambia=1'); return; }
     setSaved('saving');
     const d = await authFetch('/api/platform/site', { method: 'PUT', body: JSON.stringify(cfg) }).then(r => r.json()).catch(() => ({}));
-    if (d.config) { setSite(s => ({ ...s!, config: d.config })); setCfg(d.config); setSaved('ok'); setTimeout(() => setSaved('idle'), 1800); } else setSaved('idle');
+    if (!d.config) { setSaved('idle'); return; }
+    setSite(s => ({ ...s!, config: d.config })); setCfg(d.config);
+    if (!site.published) {
+      const p = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: true }) }).then(r => r.json()).catch(() => ({}));
+      if (p.published) setSite(s => ({ ...s!, published: true }));
+    }
+    setSaved('ok'); setTimeout(() => setSaved('idle'), 2400);
   };
 
   const pub = (projects ?? []).filter(p => p.is_public);
@@ -187,11 +196,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
           {/* Pubblica a destra, sulla stessa riga */}
           <div className="flex items-center gap-3 text-sm">
-            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? tr('Sito aggiornato', 'Website updated') : dirty ? tr('Modifiche non pubblicate', 'Unpublished changes') : ''}</span>
-            <button onClick={save} disabled={!dirty || saved === 'saving'}
+            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? tr('Modifiche non pubblicate', 'Unpublished changes') : ''}</span>
+            <button onClick={save} disabled={(!dirty && online) || saved === 'saving'}
               className="flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
-              {saved === 'ok' ? tr('Pubblicato', 'Published') : tr('Pubblica modifiche', 'Publish changes')}
+              {saved === 'ok' ? tr('Online', 'Live') : tr('Salva e pubblica', 'Save and publish')}
             </button>
           </div>
           </div>
