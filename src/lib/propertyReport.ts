@@ -14,7 +14,8 @@ import { FONTS, zoneOnly, type SiteConfig, type SiteProperty } from './siteTempl
 import type { Poi } from './zone'
 
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
-const eur = (n: number) => `${Math.round(n).toLocaleString('it-IT')} €`
+// punto delle migliaia a mano: sul server toLocaleString('it-IT') puo' uscire senza ("8700 €")
+const eur = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} €`
 const far = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`)
 const walk = (m: number) => `${Math.max(1, Math.round(m / 80))} min a piedi`
 const ENERGY_SCALE = ['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G']
@@ -93,7 +94,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
       <div class="cols">
         <div class="numbers">${numbers.map(([v, l]) => `<div class="num"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')}</div>
         <div class="text">
-          ${paras.length ? `<p class="lead">${esc(paras[0]).replace(/\n/g, '<br>')}</p>${paras.slice(1, 5).map(t => `<p>${esc(t).replace(/\n/g, '<br>')}</p>`).join('')}` : ''}
+          ${paras.length ? `<p class="lead">${esc(paras[0]).replace(/\n/g, '<br>')}</p>${paras.slice(1, 10).map(t => `<p>${esc(t).replace(/\n/g, '<br>')}</p>`).join('')}` : ''}
           ${extras.length ? `<p class="extras"><span class="eyebrow">Dotazioni</span>${extras.map(esc).join(' <i>·</i> ')}</p>` : ''}
         </div>
       </div>
@@ -134,8 +135,9 @@ export function buildPropertyReportHtml(a: ReportInput): string {
 
   // 5. zona e costi, chiusura con l'agente
   const poisHtml = pois.length ? `<div><h2>Cosa c'è vicino</h2><div class="list">${pois.map(x => `<div class="row"><span><b>${esc(x.nome)}</b><br><em>${esc(x.categoria)}</em></span><b>${far(x.distanza)}<br><em>${walk(x.distanza)}</em></b></div>`).join('')}</div><p class="note">Distanze in linea d'aria da OpenStreetMap.</p></div>` : ''
-  const costsHtml = costs ? `<div><h2>Quanto costa davvero</h2><div class="list">${([['Prezzo richiesto', costs.listingPrice], [`Agenzia (~${costs.agencyPercentage}% + IVA)`, costs.agencyCost], ['Notaio (stima)', costs.notaryCost], ['Imposte (stima)', costs.taxesCost], ['Perizia e assicurazione', costs.otherCosts]] as const).map(([l, v]) => `<div class="row"><span>${esc(l)}</span><b>${eur(v)}</b></div>`).join('')}</div><div class="total"><span class="eyebrow">Totale stimato</span><b>${eur(costs.totalEstimated)}</b></div><p class="note">Stima indicativa per l'acquisto come prima casa: le cifre reali dipendono da mutuo, notaio e accordi con l'agenzia.</p></div>` : ''
-  const contact = ([['phone', cfg.phone, `tel:${cfg.phone}`], ['mail', cfg.email, `mailto:${cfg.email}`], ['web', site, a.url]] as const).filter(([, v]) => v)
+  const costsHtml = costs ? `<div><h2>Quanto costa davvero</h2><div class="list">${([['Prezzo richiesto', costs.listingPrice], [`Agenzia (circa ${String(Math.round(costs.agencyPercentage * 10) / 10).replace('.', ',')}% + IVA)`, costs.agencyCost], ['Notaio (stima)', costs.notaryCost], ['Imposte (stima)', costs.taxesCost], ['Perizia e assicurazione', costs.otherCosts]] as const).map(([l, v]) => `<div class="row"><span>${esc(l)}</span><b>${eur(v)}</b></div>`).join('')}</div><div class="total"><span class="eyebrow">Totale stimato</span><b>${eur(costs.totalEstimated)}</b></div><p class="note">Stima indicativa per l'acquisto come prima casa: le cifre reali dipendono da mutuo, notaio e accordi con l'agenzia.</p></div>` : ''
+  const phone = cfg.phone || cfg.whatsapp // senza telefono nel sito, quello di WhatsApp
+  const contact = ([['phone', phone, `tel:${phone}`], ['mail', cfg.email, `mailto:${cfg.email}`], ['web', site, a.url]] as const).filter(([, v]) => v)
   pages.push(`<section class="page last">
     ${head(pages.length + 1, 'Zona e costi')}
     <div class="body top">
