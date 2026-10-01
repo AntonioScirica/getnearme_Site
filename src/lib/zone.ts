@@ -27,12 +27,29 @@ const dist = (a: number, b: number, c: number, d: number) => {
   return Math.round(2 * 6371000 * Math.asin(Math.sqrt(h)))
 }
 
+// Indirizzo -> coordinate (Nominatim). "Via Mazzini 20, Verona" a testo libero finiva a Villafranca di Verona: con la
+// citta' in fondo si cerca prima la via dentro i confini della citta', poi a testo libero.
+type Hit = { lat: string; lon: string; display_name: string }
+const nomi = (qs: string) => fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&${qs}`, {
+  headers: { 'User-Agent': UA, 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
+}).then(r => (r.ok ? r.json() : null)).catch(() => null) as Promise<(Hit & { boundingbox?: string[] })[] | null>
+export async function geocode(address: string): Promise<Hit | null> {
+  const parts = address.split(',').map(x => x.trim()).filter(Boolean)
+  const city = parts.length > 1 ? parts[parts.length - 1].replace(/\d+/g, '').trim() : ''
+  if (city) {
+    const b = (await nomi(`city=${encodeURIComponent(city)}`))?.[0]?.boundingbox
+    if (b) {
+      const hit = (await nomi(`q=${encodeURIComponent(parts.slice(0, -1).join(', '))}&viewbox=${b[2]},${b[1]},${b[3]},${b[0]}&bounded=1`))?.[0]
+      if (hit) return hit
+    }
+  }
+  return (await nomi(`q=${encodeURIComponent(address)}`))?.[0] ?? null
+}
+
 export async function lookupZone(address: string, radius = RADIUS): Promise<Zone | null> {
-  const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(address)}`, {
-    headers: { 'User-Agent': UA, 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
-  }).then(r => r.json()).catch(() => null) as { lat: string; lon: string; display_name: string }[] | null
-  if (!geo?.[0]) return null
-  const lat = Number(geo[0].lat), lon = Number(geo[0].lon)
+  const g = await geocode(address)
+  if (!g) return null
+  const lat = Number(g.lat), lon = Number(g.lon)
 
   const q = `[out:json][timeout:25];(${CATS.map(c => `nwr${c.filter}(around:${radius},${lat},${lon});`).join('')});out center tags;`
   // Overpass pubblico risponde 429 quando e' carico: provo i mirror in ordine
@@ -44,7 +61,7 @@ export async function lookupZone(address: string, radius = RADIUS): Promise<Zone
     }).then(r => (r.ok ? r.json() : null)).catch(() => null)
     if (data) break
   }
-  if (!data) return { lat, lon, luogo: geo[0].display_name, pois: [] }
+  if (!data) return { lat, lon, luogo: g.display_name, pois: [] }
 
   const pois: Poi[] = []
   for (const c of CATS) {
@@ -56,7 +73,7 @@ export async function lookupZone(address: string, radius = RADIUS): Promise<Zone
       .sort((a, b) => a.d - b.d).slice(0, c.max)
     for (const it of items) pois.push({ categoria: c.label, nome: it.nome, distanza: it.d, lat: it.y, lon: it.x })
   }
-  return { lat, lon, luogo: geo[0].display_name, pois }
+  return { lat, lon, luogo: g.display_name, pois }
 }
 
 // Ri-applica il filtro della categoria sui tag (Overpass restituisce tutto insieme).

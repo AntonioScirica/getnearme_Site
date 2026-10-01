@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { geocode } from '@/lib/zone'
 
 // Indirizzo -> coordinate (Nominatim, gratis) dal nostro server: il browser a volte viene bloccato (CORS o
 // limiti di uso). Cache in memoria per un giorno e limite per IP: niente proxy aperto verso Nominatim.
@@ -17,10 +18,8 @@ export async function GET(req: NextRequest) {
   if (recent.length >= 60) return NextResponse.json({ error: 'too_many' }, { status: 429 })
   hits.set(ip, [...recent, Date.now()])
 
-  const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(q)}`, {
-    headers: { 'User-Agent': 'Agente Immo/1.0 (https://agenteimmo.me)', 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
-  }).then(x => (x.ok ? x.json() : null)).catch(() => null) as { lat: string; lon: string }[] | null
-  const v = r?.[0] ? { lat: Number(r[0].lat), lon: Number(r[0].lon) } : null
+  const g = await geocode(q)
+  const v = g ? { lat: Number(g.lat), lon: Number(g.lon) } : null
   cache.set(q, { at: Date.now(), v })
   return NextResponse.json(v ?? { error: 'not_found' }, { status: v ? 200 : 404, headers })
 }
