@@ -62,7 +62,7 @@ const STEPS: Step[] = [
   { id: 'esterni', title: tr('Spazi esterni e auto', 'Outdoor space and parking'), sub: tr('Tra le ricerche più usate dai compratori.', 'Among the searches buyers use most.'), keys: ['esterni', 'superficie_esterna', 'posto_auto', 'cantina'], optional: true },
   { id: 'costi', title: tr('Costi e disponibilità', 'Costs and availability'), sub: tr('Le prime domande che fanno al telefono.', 'The first questions people ask on the phone.'), keys: ['spese_condominiali', 'portineria', 'accesso_disabili', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
   { id: 'note', title: tr('Codice e tour virtuale', 'Reference and virtual tour'), sub: tr('Il codice di riferimento è quello del tuo gestionale: serve a ritrovare l\'immobile e ad aggiornarlo quando reimporti il file.', 'The reference code is the one from your CRM: it helps find the property and update it when you re-import the file.'), keys: ['riferimento', 'virtual_tour'], optional: true },
-  { id: 'foto', title: tr('Le foto', 'The photos'), sub: tr('Carica le foto e riordinale trascinandole: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', 'Upload the photos and drag to reorder them: the first one is the cover. You can enhance them with AI later, whenever you like.'), keys: [] },
+  { id: 'foto', title: tr('Le foto', 'The photos'), sub: tr('Carica le foto e mettile in ordine: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', 'Upload the photos and put them in order: the first one is the cover. You can enhance them with AI later, whenever you like.'), keys: [] },
 ];
 
 const filled = (v: Details[string]) => v !== undefined && v !== '' && v !== false && !(Array.isArray(v) && !v.length);
@@ -244,8 +244,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         </div>
         <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">{tr('Importa da link o CSV', 'Import from link or CSV')}</a>
       </div>
-      <div className="mt-4 flex gap-1">
-        {STEPS.map((s, i) => <button key={s.id} onClick={() => i <= step && go(i)} aria-label={s.title} title={s.title} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i < step || done ? 'bg-brand' : i === step ? 'bg-ink' : 'bg-line'}`} />)}
+      {/* telefono: ogni segmento ha un'area di tocco alta 40px attorno alla barretta */}
+      <div className="mt-1 flex gap-1 sm:mt-4">
+        {STEPS.map((s, i) => <button key={s.id} onClick={() => i <= step && go(i)} aria-label={s.title} title={s.title} className="flex h-10 flex-1 items-center sm:h-1.5"><span className={`block h-1.5 w-full rounded-full ease-smooth transition-colors ${i < step || done ? 'bg-brand' : i === step ? 'bg-ink' : 'bg-line'}`} /></button>)}
       </div>
       </>}
 
@@ -271,8 +272,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                   <button onClick={() => setPlan(null)} aria-label={tr('Togli la planimetria', 'Remove the floor plan')} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={16} /></button>
                 </div>
               ) : (
-                <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white py-4 text-muted ease-smooth transition hover:border-brand hover:text-brand">
-                  <LayoutTemplate size={18} /><span className="text-sm font-medium">{tr('Aggiungi planimetria', 'Add floor plan')}</span><span className="text-xs">{tr('facoltativa, aumenta i contatti', 'optional, brings more leads')}</span>
+                <label className="mt-3 flex cursor-pointer flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-3xl border-2 border-dashed border-line bg-white px-4 py-4 text-center text-muted ease-smooth transition hover:border-brand hover:text-brand">
+                  <LayoutTemplate size={18} /><span className="text-sm font-medium">{tr('Aggiungi planimetria', 'Add floor plan')}</span><span className="basis-full text-xs sm:basis-auto">{tr('facoltativa, aumenta i contatti', 'optional, brings more leads')}</span>
                   <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} />
                 </label>
               )} />}
@@ -320,7 +321,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className="mt-4"><Toggle f={F.trattativa_riservata} v={d.trattativa_riservata} set={v => set('trattativa_riservata', v)} /></div>
               </div>
               <NumberField f={F.superficie} v={d.superficie} set={v => set('superficie', v)} big suffix="m²" />
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid gap-3 sm:grid-cols-3">{/* telefono: un contatore per riga */}
                 {['locali', 'camere', 'bagni'].map(k => <Counter key={k} f={F[k]} v={d[k]} set={v => set(k, v)} />)}
               </div>
             </>}
@@ -532,11 +533,12 @@ function Toggle({ f, v, set }: { f: Field; v: Details[string]; set: SetV }) {
 function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: SetV; inline?: boolean }) {
   const n = Number(v) || 0;
   return (
-    <div className={inline ? 'flex items-center justify-between' : 'card p-4 text-center'}>
+    // telefono: etichetta a sinistra e - valore + a destra; da sm la card centrata come prima
+    <div className={inline ? 'flex items-center justify-between' : 'card flex items-center justify-between gap-3 p-4 sm:block sm:text-center'}>
       <div className={`text-sm font-medium ${inline ? '' : 'text-muted'}`}>{trf(f.label)}{f.unit && <span className="text-muted"> ({trf(f.unit)})</span>}</div>
-      <div className={`flex items-center justify-center gap-3 ${inline ? '' : 'mt-3'}`}>
+      <div className={`flex shrink-0 items-center justify-center gap-3 ${inline ? '' : 'sm:mt-3'}`}>
         <button type="button" aria-label={tr('Meno', 'Less')} onClick={() => set(n > 1 ? n - 1 : undefined)} disabled={!n} className="flex h-10 w-10 items-center justify-center rounded-full bg-canvas ease-smooth transition active:scale-90 disabled:opacity-30"><Minus size={16} /></button>
-        <span className="w-8 font-display text-2xl font-bold">{n || '–'}</span>
+        <span className="w-8 text-center font-display text-2xl font-bold">{n || '–'}</span>
         <button type="button" aria-label={tr('Più', 'More')} onClick={() => set(n + 1)} className="flex h-10 w-10 items-center justify-center btn-primary rounded-full ease-smooth transition active:scale-90"><Plus size={16} /></button>
       </div>
     </div>
@@ -621,7 +623,7 @@ function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPh
       <label onDragOver={e => e.preventDefault()} onDrop={e => { if (e.dataTransfer.files.length) { e.preventDefault(); onAdd(e.dataTransfer.files); } }}
         className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white text-muted ease-smooth transition hover:border-brand hover:text-brand ${photos.length ? 'py-6' : 'py-16'}`}>
         <ImagePlus size={photos.length ? 22 : 34} />
-        <span className="text-sm font-medium">{photos.length ? tr('Aggiungi altre foto', 'Add more photos') : tr('Trascina qui le foto o clicca per sceglierle', 'Drag the photos here or click to choose them')}</span>
+        <span className="text-sm font-medium">{photos.length ? tr('Aggiungi altre foto', 'Add more photos') : <><span className="[@media(hover:none)]:hidden">{tr('Trascina qui le foto o clicca per sceglierle', 'Drag the photos here or click to choose them')}</span><span className="hidden [@media(hover:none)]:inline">{tr('Tocca per scegliere le foto', 'Tap to choose the photos')}</span></>}</span>
         {!photos.length && <span className="text-xs">{tr('Consigliate almeno 10: tutte le stanze, esterni e vista', 'At least 10 recommended: every room, the outside and the view')}</span>}
         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
       </label>
@@ -638,11 +640,12 @@ function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPh
               {/* immagine assoluta: non allunga la riga della griglia; verticali intere con lo sfondo sfocato */}
               <div key={srcOf(p)} className="blur-in pointer-events-none absolute inset-0"><FitImage src={srcOf(p)} /></div>
               <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-xs text-white">{i === 0 ? <><Star size={11} /> {tr('Copertina', 'Cover')}</> : <><GripVertical size={11} /> {i + 1}</>}</span>
-              <button onClick={() => setPhotos(ps => ps.filter(x => x.id !== p.id))} aria-label={tr('Rimuovi foto', 'Remove photo')} className="absolute right-2 top-2 rounded-full bg-white/90 p-1 opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100"><X size={14} /></button>
+              <button onClick={() => setPhotos(ps => ps.filter(x => x.id !== p.id))} aria-label={tr('Rimuovi foto', 'Remove photo')} className="absolute right-2 top-2 flex items-center justify-center rounded-full bg-white/90 p-1 opacity-0 max-md:h-9 max-md:w-9 ease-smooth transition group-hover:opacity-100 max-md:opacity-100"><X size={14} /></button>
               <div className="absolute inset-x-2 bottom-2 flex justify-between opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100">
-                <button onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={tr('Sposta prima', 'Move earlier')} className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowLeft size={14} /></button>
-                {i > 0 && <button onClick={() => move(i, 0)} className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium">{tr('Copertina', 'Cover')}</button>}
-                <button onClick={() => move(i, i + 1)} disabled={i === photos.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowRight size={14} /></button>
+                <button onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={tr('Sposta prima', 'Move earlier')} className="flex items-center justify-center rounded-full bg-white/90 p-1.5 disabled:opacity-0 max-md:h-9 max-md:w-9"><ArrowLeft size={14} /></button>
+                {/* telefono: solo la stella, 36x36 (la scritta non ci stava tra le frecce) */}
+                {i > 0 && <button onClick={() => move(i, 0)} aria-label={tr('Copertina', 'Cover')} className="flex items-center justify-center rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium max-md:h-9 max-md:w-9 max-md:p-0"><Star size={14} className="md:hidden" /><span className="max-md:hidden">{tr('Copertina', 'Cover')}</span></button>}
+                <button onClick={() => move(i, i + 1)} disabled={i === photos.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className="flex items-center justify-center rounded-full bg-white/90 p-1.5 disabled:opacity-0 max-md:h-9 max-md:w-9"><ArrowRight size={14} /></button>
               </div>
             </li>
           ))}
