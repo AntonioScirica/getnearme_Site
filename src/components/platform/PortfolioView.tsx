@@ -223,7 +223,9 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
           {/* Pubblica a destra, sulla stessa riga */}
           <div className="flex items-center gap-3 text-sm">
-            <span className={`max-md:hidden ${dirty ? 'font-medium' : 'text-muted'}`}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? <>{tr('Bozza salvata, non ancora online', 'Draft saved, not live yet')} <button type="button" onClick={discard} className="ml-1 font-medium text-brand">{tr('Scarta', 'Discard')}</button></> : ''}</span>
+            <span className={`max-md:hidden ${dirty ? 'font-medium' : 'text-muted'}`}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? <>{tr('Bozza salvata, non ancora online', 'Draft saved, not live yet')}</> : ''}</span>
+            {/* Scarta: pulsante secondario accanto a Pubblica */}
+            {dirty && saved !== 'saving' && <button type="button" onClick={discard} className="flex h-10 items-center whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas">{tr('Scarta', 'Discard')}</button>}
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'}
               className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
