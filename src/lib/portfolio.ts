@@ -108,8 +108,19 @@ export const loadSite = cache(async (locale: string, slug: string) => {
   }
   const properties = props.map(toSiteProperty).map(p => (vids.has(p.id) ? { ...p, videos: vids.get(p.id) } : p))
   // citta' non scritta dall'agente: quella dei suoi immobili
-  return { cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: cfg.agencyName || brand.display_name || brand.company_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
+  return { test: await isTestOwner(brand.user_id), cfg: cfg.city ? cfg : { ...cfg, city: cityOf(properties) }, base, name: cfg.agencyName || brand.display_name || brand.company_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties }
 })
+
+// Account di prova (agenti simulati, email @agenteimmo-test.local): il loro sito resta visibile ma fuori da Google
+// (niente sitemap, noindex), prima finivano nella sitemap con le case finte
+const testOwners = new Map<string, boolean>()
+export async function isTestOwner(userId: string): Promise<boolean> {
+  if (!testOwners.has(userId)) {
+    const { data } = await admin.auth.admin.getUserById(userId)
+    testOwners.set(userId, !!data.user?.email?.endsWith('@agenteimmo-test.local'))
+  }
+  return testOwners.get(userId)!
+}
 
 // Tutte le pagine pubbliche dei siti degli agenti, per la sitemap del dominio vetrina.
 // ponytail: un giro su tutti gli agenti con immobili pubblici (una lettura della config per agente); a migliaia di siti, sitemap index per agente
@@ -121,6 +132,7 @@ export async function allSitePages(): Promise<{ url: string; lastModified?: stri
   const out: { url: string; lastModified?: string }[] = []
   const withPlan = await sitePlanHolders((brands ?? []).map(b => b.user_id as string))
   for (const b of (brands ?? []).filter(b => withPlan.has(b.user_id as string))) {
+    if (await isTestOwner(b.user_id as string)) continue
     const slug = b.portfolio_slug as string
     const cfg = await getSite(b as PortfolioBrand)
     const mine = (pub ?? []).filter(p => p.user_id === b.user_id)

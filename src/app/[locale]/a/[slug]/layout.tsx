@@ -16,6 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     applicationName: s.name, appleWebApp: { title: s.name }, manifest: null,
     description, keywords: [], authors: [{ name: s.name }], creator: s.name, publisher: s.name,
     alternates: { canonical: siteUrl(slug) },
+    ...(s.test ? { robots: { index: false, follow: false } } : {}), // account di prova: fuori da Google
     openGraph: { type: 'website', locale: 'it_IT', siteName: s.name, url: siteUrl(slug), title: s.name, description, images: image ? [image] : [] },
     twitter: { card: 'summary_large_image', title: s.name, description, images: image ? [image] : [] },
   };
