@@ -82,6 +82,9 @@ export async function GET(req: NextRequest) {
     const clean = Buffer.from(await (await fetch(r.url)).arrayBuffer())
     const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.mp4`
     const url = await uploadFile(clean, cleanKey, 'video/mp4')
+    // con l'account: una copia anche nella sua Galleria (videos/<utente>/)
+    const user = await authUser(req)
+    if (user) await uploadFile(clean, `videos/${user.id}/${Date.now()}-prova.mp4`, 'video/mp4').catch(() => {})
     const res = { url, token: sealKey(cleanKey) }
     await uploadFile(Buffer.from(JSON.stringify(res)), meta, 'application/json')
     await deleteKeys([`videos/${OWNER}/${name}.mp4`]).catch(() => {})

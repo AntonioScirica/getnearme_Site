@@ -384,7 +384,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
     for (let i = 0; i < 60; i++) {
       await new Promise(res => setTimeout(res, 5000));
-      const g = await fetch(`/api/landing/demo-video?job=${encodeURIComponent(d.job)}`).then(x => x.json()).catch(() => null) as { url?: string; token?: string; status?: string; error?: string } | null;
+      const g = await fetch(`/api/landing/demo-video?job=${encodeURIComponent(d.job)}`, { headers: await auth() }).then(x => x.json()).catch(() => null) as { url?: string; token?: string; status?: string; error?: string } | null;
       if (g?.url) { setVBusy(false); setVideoToken(g.token ?? null); try { localStorage.setItem('agenteimmo:demo-video', '1'); } catch { /* niente storage */ } return setVideo(g.url); }
       if (g?.error) return fail(g.error);
     }
