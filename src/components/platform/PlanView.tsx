@@ -150,12 +150,12 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} {c.balance === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</div>
             <div className="text-sm text-muted">{tr(`circa ${photosFor(c.balance)} foto o ${videosFor(c.balance)} video · si ricaricano a ${fmt(c.monthly)} il ${date(c.renews)}`, `about ${photosFor(c.balance)} photos or ${videosFor(c.balance)} videos · back to ${fmt(c.monthly)} on ${date(c.renews)}`)}</div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 max-sm:grid max-sm:w-full">{/* telefono: pulsanti a tutta larghezza */}
           {/* aprendo i piani si scorre fino a loro: stanno sotto pacchetti e codice, fuori schermo */}
           <button type="button" onClick={() => plansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="flex h-11 items-center rounded-full bg-white px-6 text-sm font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:ring-ink">{tr('Cambia piano', 'Change plan')}</button>
+            className="flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:ring-ink">{tr('Cambia piano', 'Change plan')}</button>
           <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError(tr('Portale non disponibile, riprova tra poco.', 'Portal not available, try again shortly.')); } }}
-            className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}{tr('Gestisci abbonamento', 'Manage subscription')}</button>
+            className="flex h-11 items-center justify-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}{tr('Gestisci abbonamento', 'Manage subscription')}</button>
           </div>
         </div>
       )}

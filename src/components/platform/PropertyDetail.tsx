@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -39,6 +39,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       setVideos((d.items ?? []).filter(x => x.video && x.casa === pid).map(x => x.video!))).catch(() => {});
   }, [pid]);
   const grid = useRef<HTMLDivElement>(null);
+  const [addingSlot, setAddingSlot] = useState(false); // foto dai riquadri vuoti della scheda
   // in modifica (da lg): barra e sito alti quanto lo schermo e fermi, si scorre solo dentro ciascuno.
   // Si porta la griglia in cima (prima l'altezza inseguiva lo scorrimento della pagina e tutto si spostava)
   useEffect(() => {
@@ -90,6 +91,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   };
   const propEdit: PropEdit = {
     photos, cover: project.cover, busy, editing, // in modifica le foto hanno il velo e i pulsanti sempre in vista
+    adding: addingSlot, onAdd: async files => { setAddingSlot(true); await uploadPhotos(project.id, files); setAddingSlot(false); await onChange(); },
     onPhoto: async (src, action) => {
       if (action === 'ai') {
         // senza piano: subito il popup dei piani (in chat non si potrebbe fare niente); con il piano la foto va in chat
@@ -124,7 +126,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <>
-            <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
+            {/* telefono: tre righe (stato, interruttore, pulsanti) separate da un divisore */}<span className="pr-2 max-sm:basis-full max-sm:border-t max-sm:border-line max-sm:pt-3"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
             {/* casa non online (sito spento o casa non pubblica): al cliente la scheda in PDF */}
             {site && !(site.published && project.is_public) && <button type="button" onClick={() => void sendSheet()} disabled={sending} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>}
           </>
@@ -136,7 +138,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
         {/* sito spento: niente link (il cliente vedrebbe "sito non disponibile") */}
         {sitePlan && site?.slug && site.published && (
-          <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] max-sm:basis-full ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
+          <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] max-sm:basis-full max-sm:border-line ${project.is_public ? 'max-sm:border-t max-sm:pt-3' : 'max-sm:hidden'} ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
             <span className="min-w-0 overflow-hidden">
               {/* telefono: Manda al cliente e Vedi sul sito su una riga, meta' e meta' */}
               <span className="flex items-center gap-2 max-sm:grid max-sm:grid-cols-2">
@@ -327,8 +329,18 @@ function DetailField({ f, v, set }: { f: Field; v: Details[string]; set: (x: Det
   if (f.type === 'text') return <TextField f={f} v={v} set={set} />;
   return <Chips f={f} v={v} set={set} multi={f.type === 'multi'} />;
 }
+// foto dal computer in coda all'immobile (su R2, ridotte a 1600 px): da Modifica e dai riquadri vuoti della scheda
+async function uploadPhotos(projectId: string, files: FileList) {
+  for (const f of [...files].filter(f => f.type.startsWith('image/')).slice(0, 40)) {
+    const data = await new Promise<string>(res => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(f); });
+    const url = await uploadDataUrl(await downscaleDataUrl(data, 1600, 0.82), 'properties');
+    if (url) await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId, mode: 'add', after: url }) }).catch(() => null);
+  }
+}
+
 function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, onAdded, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onPhoto: PropEdit['onPhoto']; onClose: () => void; onSaved: () => void; onAdded: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
+  const [shut, setShut] = useState(false); // sotto lg: pannello chiuso con la freccia
   // aggiungere foto dopo la creazione (anche a un immobile salvato senza foto): su R2, poi in coda all'immobile
   const [adding, setAdding] = useState(false);
   const [addMenu, setAddMenu] = useState(false);
@@ -344,14 +356,9 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     setAdding(false); onAdded();
   };
   const addPhotos = async (files: FileList | null) => {
-    const list = [...(files ?? [])].filter(f => f.type.startsWith('image/')).slice(0, 40);
-    if (!list.length) return;
+    if (!files?.length) return;
     setAdding(true);
-    for (const f of list) {
-      const data = await new Promise<string>(res => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.readAsDataURL(f); });
-      const url = await uploadDataUrl(await downscaleDataUrl(data, 1600, 0.82), 'properties');
-      if (url) await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'add', after: url }) }).catch(() => null);
-    }
+    await uploadPhotos(project.id, files);
     setAdding(false);
     onAdded();
   };
@@ -411,10 +418,12 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   };
   return (
     <div ref={panel} className="blur-in flex min-h-0 flex-col rounded-[28px] bg-white shadow-sm ring-1 ring-black/5 lg:h-full lg:overflow-hidden">
-      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+      {/* telefono: la freccia chiude e riapre il pannello (resta la pagina del sito sotto) */}
+      <button type="button" onClick={() => setShut(o => !o)} aria-expanded={!shut} className={`flex items-center justify-between px-5 py-4 text-left lg:pointer-events-none ${shut ? '' : 'border-b border-line'}`}>
         <h2 className="font-display text-lg font-bold">{tr('Modifica immobile', 'Edit listing')}</h2>
-      </div>
-      <div className="flex-1 space-y-6 px-5 py-5 lg:overflow-y-auto lg:overscroll-contain">
+        <ChevronDown size={20} className={`text-muted ease-smooth transition-transform lg:hidden ${shut ? '' : 'rotate-180'}`} />
+      </button>
+      <div className={`flex-1 space-y-6 px-5 py-5 lg:overflow-y-auto lg:overscroll-contain ${shut ? 'max-lg:hidden' : ''}`}>
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
         {!photos.length && (
           <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl bg-canvas p-5 text-center border border-dashed border-black/15 ${adding ? 'pointer-events-none opacity-60' : 'hover:border-black/30'}`}>
@@ -481,7 +490,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
         onReorder(o);
       }} />}
       {/* sotto lg il pannello scorre con la pagina: Annulla e Salva restano attaccati in fondo */}
-      <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
+      <div className={`sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static ${shut ? 'max-lg:hidden' : ''}`}>
         {/* errore accanto a Salva, dove si guarda (in alto finiva fuori schermo) */}
         {err && <span className="basis-full pb-1 text-right text-sm text-rose-600">{err}</span>}
         {!err && dirty && <span className="basis-full pb-1 text-right text-sm text-muted">{tr('Bozza salvata: le modifiche restano qui finché non premi Salva', 'Draft saved: changes stay here until you press Save')}</span>}

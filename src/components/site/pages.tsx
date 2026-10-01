@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Expand, ImagePlus, Loader2, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
 import { ABOUT_DEFAULT, pageHidden, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
@@ -221,8 +221,23 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
   );
 }
 
+// scheda in piattaforma: dove mancano foto un riquadro tratteggiato che si clicca per aggiungerle (dal computer)
+function AddSlot({ className = '', big = false }: { className?: string; big?: boolean }) {
+  const pe = useSite().propEdit;
+  if (!pe?.onAdd) return null;
+  return (
+    <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--line)] bg-[var(--soft)] text-center text-[var(--muted)] transition-colors hover:border-[var(--c)] hover:text-[var(--c)] ${pe.adding ? 'pointer-events-none opacity-60' : ''} ${className}`}>
+      <input type="file" accept="image/*" multiple className="hidden" onChange={e => { if (e.target.files?.length) pe.onAdd!(e.target.files); e.target.value = ''; }} />
+      {pe.adding ? <Loader2 size={big ? 28 : 20} className="animate-spin" /> : <ImagePlus size={big ? 28 : 20} />}
+      <span className={big ? 'text-base font-semibold' : 'text-sm font-medium'}>{big ? 'Aggiungi le foto' : 'Aggiungi foto'}</span>
+      {big && <span className="text-xs">La prima diventa la copertina</span>}
+    </label>
+  );
+}
+
 function Gallery({ p }: { p: SiteProperty }) {
-  const { t } = useSite();
+  const { t, propEdit } = useSite();
+  const canAdd = !!propEdit?.onAdd;
   const photos = p.photos?.length ? p.photos : p.cover ? [p.cover] : [];
   // etichetta sulle foto AI che hanno l'originale: aprendole si vede il prima/dopo
   const tag = (src: string) => p.prima?.[src] ? <span className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-900 shadow"><Sparkles size={11} /> Prima / Dopo</span> : null;
@@ -233,7 +248,8 @@ function Gallery({ p }: { p: SiteProperty }) {
   const vids = p.videos ?? [];
   const all = (photos.length > 1 || vids.length > 0) && <button onClick={() => setI(0)} className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-lg"><Expand size={14} /> {photos.length} foto{vids.length ? ` · ${vids.length} video` : ''}</button>;
   let body: ReactNode;
-  if (t.gallery === 'slider') body = (
+  if (!photos.length && canAdd) body = <AddSlot big className={`h-[420px] md:h-[540px] ${t.gallery === 'full' ? '' : 'rounded-[var(--r)]'}`} />;
+  else if (t.gallery === 'slider') body = (
     <div>
       <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--r)]">
         <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} alt={alt(cur)} fit className="h-full" /></button>{tag(photos[cur])}
@@ -246,6 +262,7 @@ function Gallery({ p }: { p: SiteProperty }) {
       {/* miniature: spazio intorno per l'anello della selezionata (lo scorrimento orizzontale lo tagliava); niente azioni, troppo piccole */}
       <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto p-1 [scrollbar-width:none]">
         {photos.map((src, k) => <button key={k} onClick={() => setCur(k)} className={`h-20 w-28 shrink-0 overflow-hidden rounded-[calc(var(--r)*0.6)] transition-opacity ${k === cur ? 'ring-2 ring-[var(--c)] ring-offset-2' : 'opacity-60 hover:opacity-100'}`}><Photo src={src} alt={alt(k)} className="h-full" noActions /></button>)}
+        {canAdd && <AddSlot className="h-20 w-28 shrink-0 rounded-[calc(var(--r)*0.6)] !gap-1 [&>span]:text-xs" />}
       </div>
     </div>
   );
@@ -261,6 +278,8 @@ function Gallery({ p }: { p: SiteProperty }) {
       {photos.slice(0, 5).map((src, k) => (
         <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} alt={alt(k)} zoom fit className="h-full" />{tag(src)}</button>
       ))}
+      {/* in piattaforma i posti vuoti della griglia (meno di 5 foto) si cliccano per aggiungerne */}
+      {canAdd && Array.from({ length: Math.max(0, 5 - photos.length) }, (_, k) => <AddSlot key={`add${k}`} className="hidden md:flex" />)}
       {all}
     </div>
   );

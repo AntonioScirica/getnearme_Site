@@ -75,7 +75,7 @@ export type SiteCtx = {
   propEdit?: PropEdit;
 };
 // texts: testi modificabili al clic sulla pagina (spento: si modifica dalla barra a sinistra)
-export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; editing?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void };
+export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; editing?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void; onAdd?: (files: FileList) => void; adding?: boolean };
 
 // Testo dell'immobile modificabile al clic (solo nella scheda della piattaforma): si salva uscendo dal campo
 export function Editable({ k, value, children, multiline = false, className = '' }: { k: Parameters<PropEdit['onField']>[0]; value: string; children: ReactNode; multiline?: boolean; className?: string }) {

@@ -648,12 +648,12 @@ function PlanCard() {
   const line = c.plan !== 'none' ? tr(`${c.balance.toLocaleString(pageLocale())} ${c.balance === 1 ? 'credito' : 'crediti'} · si ricaricano il ${d(c.renews)}`, `${c.balance.toLocaleString(pageLocale())} credits · top up on ${d(c.renews)}`)
     : c.lapsed ? tr(`Scaduto il ${d(c.until)}`, `Ended on ${d(c.until)}`) : c.balance > 0 ? tr(`${c.balance} crediti dei pacchetti`, `${c.balance} pack credits`) : tr('Nessun piano attivo', 'No active plan');
   return (
-    <a href={c.plan === 'none' ? '#/piano?cambia=1' : '#/piano'} className={`mt-8 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${c.plan === 'none' ? 'max-sm:flex-wrap max-sm:gap-4' : ''} ${CARD_SHADOW}`}>
+    <a href={c.plan === 'none' ? '#/piano?cambia=1' : '#/piano'} className={`mt-8 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md max-sm:flex-wrap max-sm:gap-4 ${CARD_SHADOW}`}>
       <span className="flex-1"><span className="block font-semibold">{name ? tr(`Piano ${name}`, `${name} plan`) : tr('Il tuo piano', 'Your plan')}</span><span className="block text-sm text-muted">{line}</span></span>
       {/* senza piano: pulsante pieno (era un link); telefono a tutta larghezza sotto il testo */}
       {c.plan === 'none'
         ? <span className="flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 max-sm:w-full">{c.lapsed ? tr('Riattiva', 'Reactivate') : tr('Scegli un piano', 'Choose a plan')}</span>
-        : <span className="text-sm font-medium text-brand">{tr('Piano e fatture', 'Plan and invoices')}</span>}
+        : <span className="text-sm font-medium text-brand max-sm:flex max-sm:h-11 max-sm:w-full max-sm:items-center max-sm:justify-center max-sm:rounded-full max-sm:bg-canvas max-sm:font-semibold max-sm:text-ink">{tr('Piano e fatture', 'Plan and invoices')}</span>}
     </a>
   );
 }
