@@ -1632,7 +1632,10 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
           </div>
           {/* sopra le due scelte: il menu aperto restava nascosto sotto le card */}
           {projects?.length !== 1 && <div className="relative z-20 mt-4">
-            {projects === null ? <div className="h-11 animate-pulse rounded-full bg-canvas" /> : (
+            {projects === null ? <div className="h-11 animate-pulse rounded-full bg-canvas" /> : !projects.length ? (
+              // nessun immobile: si dice dove sta gia' la foto e come crearne uno (prima: elenco vuoto, vicolo cieco)
+              <p className="rounded-2xl bg-canvas px-4 py-3 text-sm">{tr('Non hai ancora immobili. La foto è già salvata in Galleria.', 'You have no properties yet. The photo is already saved in the Gallery.')} <a href="#/nuovo" className="font-semibold text-brand">{tr('Crea un immobile', 'Create a property')}</a></p>
+            ) : (
               <Dropdown value={pid} options={[{ value: '', label: tr('Scegli l’immobile', 'Choose the property') }, ...projects.map(x => ({ value: x.id, label: [x.titolo || x.nome, x.addr].filter(Boolean).join(' · ') || tr('Immobile', 'Property') }))]}
                 onChange={setPid} className="h-11 w-full justify-between rounded-full bg-canvas px-4 text-sm font-medium" />
             )}

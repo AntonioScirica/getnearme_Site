@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -177,6 +177,42 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 
 // Finestra per riordinare le foto: tutte grandi, si trascinano (maniglia e numero su ognuna), la prima e' la copertina.
 // Si salva con Salva ordine; Annulla lascia tutto com'era.
+// Foto della Galleria (arredate, svuotate...) da mettere nell'immobile: un tocco per sceglierle, poi Aggiungi
+function GalleryPick({ onPick, onClose }: { onPick: (urls: string[]) => void; onClose: () => void }) {
+  const [items, setItems] = useState<string[] | null>(null);
+  const [sel, setSel] = useState<string[]>([]);
+  useEffect(() => {
+    authFetch('/api/platform/media').then(r => r.json()).then((d: { items?: { dopo?: string; video?: string }[] }) =>
+      setItems((d.items ?? []).filter(x => x.dopo && !x.video).map(x => x.dopo!))).catch(() => setItems([]));
+  }, []);
+  return createPortal(
+    <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-[32px] bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-3 px-6 pt-6">
+          <div><h2 className="font-display text-2xl font-bold tracking-tight">{tr('Dalla Galleria', 'From Gallery')}</h2><p className="mt-1 text-sm text-muted">{tr('Tocca le foto da mettere nell’immobile.', 'Tap the photos to add to the property.')}</p></div>
+          <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={18} /></button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          {items === null ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-muted" /></div>
+            : !items.length ? <p className="py-10 text-center text-sm text-muted">{tr('La Galleria è vuota: le foto che arredi in chat finiscono qui.', 'The Gallery is empty: photos you furnish in chat end up here.')}</p>
+            : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{items.map(u => {
+              const on = sel.includes(u);
+              return <button key={u} type="button" onClick={() => setSel(s => (on ? s.filter(x => x !== u) : [...s, u]))} className={`relative aspect-[4/3] overflow-hidden rounded-2xl ring-offset-2 ${on ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
+                <img src={u} alt="" className="h-full w-full object-cover" />
+                {on && <span className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white"><Check size={15} /></span>}
+              </button>;
+            })}</div>}
+        </div>
+        <div className="flex justify-end gap-2 border-t border-line px-6 py-4">
+          <button type="button" onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium text-brand hover:bg-brand/10">{tr('Annulla', 'Cancel')}</button>
+          <button type="button" disabled={!sel.length} onClick={() => onPick(sel)} className="h-10 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40">{sel.length ? tr(`Aggiungi ${sel.length}`, `Add ${sel.length}`) : tr('Aggiungi', 'Add')}</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: string[]; onPhoto?: PropEdit['onPhoto']; onClose: () => void; onSave: (order: string[]) => void }) {
   const [order, setOrder] = useState(photos);
   // cambio d'ordine animato (FLIP): si fotografano le posizioni prima, dopo il render ogni foto scivola dalla vecchia alla nuova
@@ -196,7 +232,16 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
   const first = (src: string) => { snap(); setOrder(o => [src, ...o.filter(x => x !== src)]); }; // metti per prima (= copertina, salvata con l'ordine)
   const remove = (src: string) => { if (!confirm(tr('Togliere questa foto dall’immobile?', 'Remove this photo from the listing?'))) return; setOrder(o => o.filter(x => x !== src)); onPhoto?.(src, 'remove'); };
   const [drag, setDrag] = useState<string | null>(null);
-  const move = (over: string) => { if (!drag || drag === over) return; snap(); setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; }); };
+  // trascinando: dopo uno spostamento le foto scivolano (600 ms) e passano sotto il puntatore, che rimandava indietro
+  // la foto (avanti e indietro all'infinito). Si ignora il passaggio sulle foto in movimento e sulla stessa due volte.
+  const lock = useRef(0), lastOver = useRef<string | null>(null);
+  const move = (over: string) => {
+    if (!drag) return;
+    if (drag === over) { lastOver.current = null; return; } // di nuovo sulla foto trascinata: si puo' tornare indietro
+    if (over === lastOver.current || performance.now() < lock.current) return;
+    lastOver.current = over; lock.current = performance.now() + 350;
+    snap(); setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; });
+  };
   return createPortal(
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-4xl flex-col rounded-[32px] bg-white shadow-2xl">
@@ -204,11 +249,11 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
           <h2 className="font-display text-2xl font-bold tracking-tight">{tr('Le foto', 'Photos')}</h2>
           {/* touch (niente hover, niente trascinamento): le azioni stanno sempre sulle foto, il testo lo dice */}
           <p className="mt-1 text-sm text-muted [@media(hover:none)]:hidden">{tr('Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.', 'Drag them to change the order clients will see them in: the first one is the cover. Hover over a photo to improve it with AI or remove it.')}</p>
-          <p className="mt-1 hidden text-sm text-muted [@media(hover:none)]:block">{tr('La prima è la copertina. Su ogni foto: la bacchetta la migliora con l’AI, la stella la mette per prima, la X la toglie.', 'The first one is the cover. On each photo: the wand improves it with AI, the star moves it first, the X removes it.')}</p>
+          <p className="mt-1 hidden text-sm text-muted [@media(hover:none)]:block">{tr('La prima è la copertina. Su ogni foto: la bacchetta la migliora con l’AI, la stella la mette in copertina, la X la toglie.', 'The first one is the cover. On each photo: the wand improves it with AI, the star moves it first, the X removes it.')}</p>
         </div>
         <ul className="grid min-h-0 flex-1 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
-            <li key={src} ref={el => { if (el) tiles.current.set(src, el); else tiles.current.delete(src); }} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
+            <li key={src} ref={el => { if (el) tiles.current.set(src, el); else tiles.current.delete(src); }} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => { setDrag(null); lastOver.current = null; }} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
               className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-2xl bg-canvas ease-smooth transition-[opacity,transform,box-shadow] active:cursor-grabbing ${drag === src ? 'scale-95 opacity-40' : 'hover:shadow-lg'} ${i === 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
               <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
               <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? tr('Copertina', 'Cover') : i + 1}</span>
@@ -218,7 +263,7 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
                 // in hover: velo su tutta la foto, azioni al centro una sotto l'altra, togli in alto a destra (sopra la maniglia)
                 <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 ease-smooth transition-opacity group-hover:opacity-100 [@media(hover:none)]:flex-row [@media(hover:none)]:items-end [@media(hover:none)]:justify-start [@media(hover:none)]:gap-1 [@media(hover:none)]:bg-transparent [@media(hover:none)]:p-2 [@media(hover:none)]:opacity-100">
                   <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} aria-label={tr('Migliora con l’AI', 'Improve with AI')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Wand2 size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Migliora con l’AI', 'Improve with AI')}</span></button>
-                  {i > 0 && <button type="button" onClick={() => first(src)} aria-label={tr('Metti per prima', 'Move to first')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Star size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Metti per prima', 'Move to first')}</span></button>}
+                  {i > 0 && <button type="button" onClick={() => first(src)} aria-label={tr('Metti in copertina', 'Make it the cover')} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 [@media(hover:none)]:min-w-0 [@media(hover:none)]:px-0"><Star size={13} /> <span className="[@media(hover:none)]:hidden">{tr('Metti in copertina', 'Make it the cover')}</span></button>}
                   <button type="button" onClick={() => remove(src)} aria-label={tr('Togli la foto', 'Remove photo')} className="absolute right-2 top-2 z-10 flex h-8 w-8 [@media(hover:none)]:h-10 [@media(hover:none)]:w-10 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
                 </span>
               )}
@@ -243,6 +288,12 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
   // aggiungere foto dopo la creazione (anche a un immobile salvato senza foto): su R2, poi in coda all'immobile
   const [adding, setAdding] = useState(false);
+  const [picking, setPicking] = useState(false); // scelta di foto gia' fatte (Galleria) da aggiungere all'immobile
+  const addUrls = async (urls: string[]) => {
+    setPicking(false); setAdding(true);
+    for (const url of urls) await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'add', after: url }) }).catch(() => null);
+    setAdding(false); onAdded();
+  };
   const addPhotos = async (files: FileList | null) => {
     const list = [...(files ?? [])].filter(f => f.type.startsWith('image/')).slice(0, 40);
     if (!list.length) return;
@@ -315,7 +366,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> {tr('Riordina', 'Reorder')}</button>
               <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
-              <label className={`col-span-2 flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white ${adding ? 'pointer-events-none opacity-60' : ''}`}><input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</label>
+              <label className={`flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white ${adding ? 'pointer-events-none opacity-60' : ''}`}><input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addPhotos(e.target.files); e.target.value = ''; }} />{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</label>
+              <button type="button" onClick={() => setPicking(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Images size={14} /> {tr('Dalla Galleria', 'From Gallery')}</button>
             </div>
           </section>
         )}
@@ -331,6 +383,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
           </section>
         ))}
       </div>
+      {picking && <GalleryPick onClose={() => setPicking(false)} onPick={addUrls} />}
       {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       {/* sotto lg il pannello scorre con la pagina: Annulla e Salva restano attaccati in fondo */}
       <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-1 rounded-b-[28px] border-t border-line bg-white px-3 py-3 sm:gap-2 sm:px-5 lg:static">
