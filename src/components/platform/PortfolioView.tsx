@@ -41,6 +41,8 @@ export const toSite = (p: ProjectData): SiteProperty => {
         contratto: d.contratto ?? String((d as { details?: { contratto?: unknown } }).details?.contratto ?? '') };
 };
 
+const draftKey = (slug: string | null) => `agenteimmo:site-draft:${slug ?? ''}`; // per sito: piu' account sullo stesso browser
+
 export default function PortfolioView({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {
   const [tab, setTab] = useState<'sito' | 'immobili'>('sito');
   const [site, setSite] = useState<Site | null>(null);
@@ -84,6 +86,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     return () => clearInterval(t);
   }, [demo]);
   const credits = useCredits();
+  // bozza del sito: si salva da sola a ogni modifica, finche' non si pubblica
+  useEffect(() => {
+    if (!cfg || !site) return;
+    if (JSON.stringify(cfg) === JSON.stringify(site.config)) localStorage.removeItem(draftKey(site.slug));
+    else localStorage.setItem(draftKey(site.slug), JSON.stringify(cfg));
+  }, [cfg, site]);
   // video per immobile (dalla Galleria): le schede dell'anteprima li mostrano come il sito pubblicato
   const [vids, setVids] = useState<Record<string, string[]>>({});
   useEffect(() => {
@@ -94,7 +102,13 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     }).catch(() => {});
   }, []);
   useEffect(() => {
-    authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); setEditing(d.config.template); }); // si entra dritti nell'editor del modello in uso (scelto nell'onboarding); Tutti i modelli per cambiarlo
+    authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => {
+      // bozza non pubblicata (salvata da sola su questo dispositivo): si riprende da li'
+      let draft: SiteConfig | null = null;
+      try { draft = JSON.parse(localStorage.getItem(draftKey(d.slug)) ?? 'null'); } catch { /* bozza rovinata: si ignora */ }
+      const c = draft?.template ? { ...d.config, ...draft } : d.config;
+      setSite(d); setCfg(c); setEditing(c.template);
+    }); // si entra dritti nell'editor del modello in uso (scelto nell'onboarding); Tutti i modelli per cambiarlo
   }, []);
 
   // caricamento: scheletro con la stessa forma della pagina (titolo, indirizzo, schede, card dei modelli)
@@ -126,8 +140,10 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     if (d.published !== next) setSite(s => ({ ...s!, published: !next }));
   };
   const dirty = JSON.stringify(cfg) !== JSON.stringify(site.config);
+  const discard = () => { if (confirm(tr('Scartare la bozza e tornare al sito pubblicato?', 'Discard the draft and go back to the published site?'))) { localStorage.removeItem(draftKey(site.slug)); setCfg(site.config); } };
   const set = (p: Partial<SiteConfig>) => setCfg(c => ({ ...c!, ...p }));
-  // Salva e pubblica: un solo gesto. Salva le modifiche e, se il sito era spento, lo mette online.
+  // Bozza: ogni modifica resta salvata da sola (anche uscendo dalla pagina), online va solo con Pubblica.
+  // Pubblica: salva le modifiche e, se il sito era spento, lo mette online.
   // Senza piano col sito si va ai piani (prima sembrava riuscito e la pagina pubblica dava 404).
   const save = async () => {
     if (!sitePlan) { go('/piano?cambia=1'); return; }
@@ -135,6 +151,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     const d = await authFetch('/api/platform/site', { method: 'PUT', body: JSON.stringify(cfg) }).then(r => r.json()).catch(() => ({}));
     if (!d.config) { setSaved('idle'); return; }
     setSite(s => ({ ...s!, config: d.config })); setCfg(d.config);
+    localStorage.removeItem(draftKey(site.slug)); // pubblicata: la bozza non serve piu'
     if (!site.published) {
       const p = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: true }) }).then(r => r.json()).catch(() => ({}));
       if (p.published) setSite(s => ({ ...s!, published: true }));
@@ -203,16 +220,16 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           {/* a sinistra si torna ai modelli, a destra si pubblica */}
           <div className="blur-in mb-5 flex flex-wrap items-center justify-between gap-3" style={{ animationDelay: '.2s' }}>
           <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10">
-            <button onClick={() => { if (!dirty || confirm(tr('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?', 'You have unpublished changes. Go back to the templates and discard them?'))) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
+            <button onClick={() => { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setEditing(null); }}
               className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> {tr('Tutti i modelli', 'All templates')}</button>
           </div>
           {/* Pubblica a destra, sulla stessa riga */}
           <div className="flex items-center gap-3 text-sm">
-            <span className={`max-md:hidden ${dirty ? 'font-medium' : 'text-muted'}`}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? tr('Modifiche non pubblicate', 'Unpublished changes') : ''}</span>
+            <span className={`max-md:hidden ${dirty ? 'font-medium' : 'text-muted'}`}>{saved === 'ok' ? tr('Il tuo sito è online con le modifiche', 'Your website is live with the changes') : dirty ? <>{tr('Bozza salvata, non ancora online', 'Draft saved, not live yet')} <button type="button" onClick={discard} className="ml-1 font-medium text-brand">{tr('Scarta', 'Discard')}</button></> : ''}</span>
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'}
               className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
-              {saved === 'ok' ? tr('Online', 'Live') : tr('Salva e pubblica', 'Save and publish')}
+              {saved === 'ok' ? tr('Online', 'Live') : tr('Pubblica', 'Publish')}
             </button>
           </div>
           </div>
@@ -223,10 +240,10 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             Nel body: dentro la pagina un antenato con transform (fade-up) rende fixed relativo a lui */}
         {(dirty || saved !== 'idle') && createPortal(
           <div className="blur-in fixed inset-x-4 bottom-[84px] z-30 flex items-center justify-between gap-3 rounded-full bg-white p-1.5 pl-5 text-sm shadow-[0_10px_40px_-15px_rgba(0,0,0,.35)] ring-1 ring-line md:hidden">
-            <span className="min-w-0 truncate font-medium">{saved === 'ok' ? tr('Il tuo sito è online', 'Your website is live') : tr('Modifiche non pubblicate', 'Unpublished changes')}</span>
+            <span className="min-w-0 truncate font-medium">{saved === 'ok' ? tr('Il tuo sito è online', 'Your website is live') : tr('Bozza salvata, non ancora online', 'Draft saved, not live yet')}</span>
             <button onClick={save} disabled={(!dirty && online) || saved === 'saving'} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-4 font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
-              {saved === 'ok' ? tr('Online', 'Live') : tr('Salva e pubblica', 'Save and publish')}
+              {saved === 'ok' ? tr('Online', 'Live') : tr('Pubblica', 'Publish')}
             </button>
           </div>,
           document.body,
