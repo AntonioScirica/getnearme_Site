@@ -247,6 +247,9 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const set = (k: string, x: string) => setV(o => { const nv = { ...o, [k]: x }; onDraft(toUp(nv)); return nv; });
   const save = async () => {
     if (busy) return;
+    // valori impossibili (prezzo 3 €, 3 m²): si chiede di correggerli prima di salvare
+    const low = (k: string, m: number) => { const n = Number(String(v[k] ?? '').replace(/\D/g, '')); return n > 0 && n < m; };
+    if (low('prezzo', 50) || low('mq', 10)) { setErr(tr('Prezzo o superficie sembrano troppo bassi: controllali.', 'Price or floor area look too low: please check them.')); return; }
     setBusy(true); setErr('');
     const r = await updateProject(project.id, toUp(v));
     setBusy(false);

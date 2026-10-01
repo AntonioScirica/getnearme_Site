@@ -13,6 +13,7 @@ export type Field = {
   placeholder?: string;
   hint?: string;
   weight?: number;                       // peso nell'indicatore di completezza (0 = non conta)
+  min?: number;                          // sotto questo valore e' quasi certo un errore di battitura (3 €, 3 m²): si avvisa e non si va avanti
   when?: (d: Details) => boolean;        // campo visibile solo se... (es. solo affitto)
 };
 
@@ -28,9 +29,9 @@ export const ESSENTIALS: Field[] = [
   { key: 'tipologia', label: 'Tipologia', type: 'chips', weight: 5, options: ['Appartamento', 'Attico', 'Mansarda', 'Loft', 'Villa', 'Villetta a schiera', 'Casa indipendente', 'Terratetto', 'Rustico / Casale'] },
   { key: 'indirizzo', label: 'Indirizzo', type: 'text', placeholder: 'Via Roma 12, Milano', weight: 5 },
   { key: 'mostra_indirizzo', label: 'Mostra l\'indirizzo esatto nell\'annuncio', type: 'toggle', hint: 'Se spento mostriamo solo zona e città.' },
-  { key: 'prezzo', label: 'Prezzo', type: 'number', unit: '€', weight: 5 },
+  { key: 'prezzo', label: 'Prezzo', type: 'number', unit: '€', weight: 5, min: 50 },
   { key: 'trattativa_riservata', label: 'Trattativa riservata', type: 'toggle' },
-  { key: 'superficie', label: 'Superficie commerciale', type: 'number', unit: 'm²', weight: 5 },
+  { key: 'superficie', label: 'Superficie commerciale', type: 'number', unit: 'm²', weight: 5, min: 10 },
   { key: 'locali', label: 'Locali', type: 'stepper', weight: 3 },
   { key: 'camere', label: 'Camere da letto', type: 'stepper', weight: 3 },
   { key: 'bagni', label: 'Bagni', type: 'stepper', weight: 3 },

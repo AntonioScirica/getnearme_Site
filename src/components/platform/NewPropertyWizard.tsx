@@ -124,7 +124,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const set = (k: string, v: Details[string]) => setD(prev => ({ ...prev, [k]: v }));
   const comp = useMemo(() => completeness(d, photos.length), [d, photos.length]);
   const cur = STEPS[step];
-  const canNext = !cur || cur.optional || cur.keys.every(k => k === 'mostra_indirizzo' || k === 'trattativa_riservata' || (k === 'prezzo' ? filled(d.prezzo) || !!d.trattativa_riservata : ['locali', 'camere', 'bagni'].includes(k) || filled(d[k])));
+  // valori impossibili (prezzo 3 €, 3 m²): non si va avanti finche' non si correggono
+  const tooLow = (k: string) => !!F[k]?.min && filled(d[k]) && Number(d[k]) < F[k].min!;
+  const canNext = !cur || cur.keys.every(k => !tooLow(k)) && (cur.optional || cur.keys.every(k => k === 'mostra_indirizzo' || k === 'trattativa_riservata' || (k === 'prezzo' ? filled(d.prezzo) || !!d.trattativa_riservata : ['locali', 'camere', 'bagni'].includes(k) || filled(d[k]))));
   // tornando dal riepilogo a un passo, si rientra all'annuncio con un clic (senza rifare i passi ne' rigenerare)
   const [back, setBack] = useState(false);
   const go = (n: number) => { setDir(n > step ? 1 : -1); setStep(n); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
@@ -552,6 +554,7 @@ function NumberField({ f, v, set, big, suffix, disabled, placeholder, raw }: { f
           className={`min-w-0 flex-1 bg-transparent px-5 outline-none ${big ? 'py-4 font-display text-3xl font-bold' : 'py-3 text-base'}`} />
         {(suffix ?? f.unit) && <span className={`pr-5 text-muted ${big ? 'text-xl' : 'text-sm'}`}>{suffix ?? trf(f.unit)}</span>}
       </div>
+      {f.min && v !== undefined && Number(v) > 0 && Number(v) < f.min && <p className="mt-1.5 text-sm text-rose-600">{tr(`Sembra troppo basso: controlla (almeno ${f.min} ${suffix ?? trf(f.unit)}).`, `Looks too low: please check (at least ${f.min} ${suffix ?? trf(f.unit)}).`)}</p>}
     </div>
   );
 }
