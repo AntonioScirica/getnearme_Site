@@ -5,6 +5,7 @@
 // Esce a 1K: l'ingrandimento lo fa matchInputShape (sharp), gratis.
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
+import { fakePhoto, isFakeUser } from '@/lib/fakeAi'
 
 const MODEL = 'gemini-3.1-flash-image'
 // Lite per le modifiche mirate (zona, clic, richiesta scritta): stesso risultato nella prova del 27/09, meta' prezzo
@@ -60,6 +61,7 @@ async function toInline(src: string): Promise<{ mime_type: string; data: string 
 
 // Ritorna la foto (base64 JPEG/PNG) o null. userId '' = prova anonima dalla landing.
 export async function nanoBanana(o: { userId: string; image: string; prompt: string; styleRef?: string; extra?: string[]; kind?: string; lite?: boolean; aspect?: string }): Promise<string | null> {
+  if (await isFakeUser(o.userId)) { await new Promise(r => setTimeout(r, 4000)); return fakePhoto(o.image) } // account di prova: niente Google
   const model = o.lite ? LITE : MODEL
   const key = process.env.GEMINI_API_KEY
   if (!key) return null

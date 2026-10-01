@@ -7,6 +7,7 @@ import { join } from 'path'
 import sharp from 'sharp'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
+import { FAKE_VIDEO, isFakeUser } from '@/lib/fakeAi'
 import { DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
@@ -122,6 +123,10 @@ const FAL_USD_PER_S: [RegExp, number, string][] = [
 ]
 // bill: chi paga il video; si registra in ai_usage appena fal accetta il lavoro (anche se poi il montaggio fallisce)
 export const fal = async (url: string, body?: { duration?: unknown } & Record<string, unknown>, bill?: { userId: string; kind: string; seconds?: number }) => {
+  // account di prova: lavoro finto (id fake-...), pronto subito con un video d'esempio; il montaggio vero gira lo stesso
+  const fakeId = url.match(/\/requests\/(fake-[\w-]+)(\/status)?$/)
+  if (fakeId) return fakeId[2] ? { status: 'COMPLETED' } : { video: { url: FAKE_VIDEO } }
+  if (body && bill && await isFakeUser(bill.userId)) return { request_id: `fake-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` }
   const j = await fetch(url, {
     method: body ? 'POST' : 'GET', headers: { Authorization: `Key ${process.env.FAL_API_KEY}`, 'Content-Type': 'application/json' },
     ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(30_000),
@@ -275,7 +280,8 @@ export async function renderVideo(owner: string, logUser: string, frames: string
     const furnishedUrl = `${process.env.R2_PUBLIC_URL}/${key}-finale.jpg`, emptyUrl = `${process.env.R2_PUBLIC_URL}/${key}-vuota.jpg`
     // pezzi che ci sono nella foto arredata e non nella vuota: nomi semplici, quantita' esatte
     const t1 = Date.now()
-    const msg = await new Anthropic().messages.create({
+    const fake = await isFakeUser(logUser) // account di prova: elenco fisso, niente Sonnet
+    const msg = fake ? null : await new Anthropic().messages.create({
       model: 'claude-sonnet-5', max_tokens: 3000,
       messages: [{ role: 'user', content: [
         { type: 'text', text: 'Image 1 is a room before, image 2 is the same room after home staging.' },
@@ -284,8 +290,8 @@ export async function renderVideo(owner: string, logUser: string, frames: string
         { type: 'text', text: 'List every object that is in image 2 and not in image 1: rugs, furniture, cushions, throws, plants, books, decor. Look carefully and count exactly, largest pieces first. Use short simple names, no adjectives about shape. Reply only with JSON {"items": ["..."]}.' },
       ] }],
     })
-    await logUsage({ userId: logUser, kind: 'video_items' }, false, Date.now() - t1, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, 'claude-sonnet-5')
-    const txt = msg.content.find(c => c.type === 'text')?.text ?? ''
+    if (msg) await logUsage({ userId: logUser, kind: 'video_items' }, false, Date.now() - t1, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, 'claude-sonnet-5')
+    const txt = msg ? msg.content.find(c => c.type === 'text')?.text ?? '' : '{"items":["divano","tavolino","tappeto","lampada"]}'
     const items = ((JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[] }).items ?? []).filter(x => typeof x === 'string')
     if (!items.length) return { error: 'nothing_to_animate', status: 422 }
 

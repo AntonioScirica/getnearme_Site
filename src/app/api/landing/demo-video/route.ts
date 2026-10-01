@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
 import { alertCapReached } from '@/lib/landingAlert'
 import { pollVideo, startVideo } from '@/lib/videoJob'
+import { isFakeUser } from '@/lib/fakeAi'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -56,7 +57,8 @@ export async function POST(req: NextRequest) {
 
   // Svuota: image = foto originale, empty = stanza svuotata dalla prova; video in avanti, i mobili spariscono
   const empty = typeof body?.empty === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.empty) && body.empty.length < 4_000_000 ? body.empty : undefined
-  const { status, ...r } = await startVideo(OWNER, '', { imageUrl: '', imageBase64: image, anim: body?.anim === 'gravity' ? 'gravity' : 'popup', empty }) // nella prova solo Popup e Dall'alto
+  // account di prova: lavoro finto
+  const { status, ...r } = await startVideo(OWNER, (await isFakeUser(user?.id)) ? user!.id : '', { imageUrl: '', imageBase64: image, anim: body?.anim === 'gravity' ? 'gravity' : 'popup', empty }) // nella prova solo Popup e Dall'alto
   // non partito: la prova si restituisce
   if (!r.job && slot) { await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); await admin.from('ai_usage').delete().eq('kind', 'landing_demo_video').eq('provider', 'counter-fp').in('model', dev ? [dev, acc] : [acc]) }
   return NextResponse.json(r, typeof status === 'number' ? { status } : undefined)

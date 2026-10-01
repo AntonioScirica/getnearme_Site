@@ -4,6 +4,7 @@
 // sempre alta (input_fidelity ignorato). La cucina fissa viene rifatta nello stile scelto tenendo posizione e layout (scelta del 28/09).
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
+import { fakePhoto, isFakeUser } from '@/lib/fakeAi'
 
 // GPT Image 2.5 (8/9/2026): 'gpt-image-2.5-flare' veloce, 'gpt-image-2.5-sunburst' di precisione; stesso prezzo del 2. Scelta con GPT_IMAGE_MODEL.
 const MODEL = process.env.GPT_IMAGE_MODEL || 'gpt-image-2.5-sunburst' // Sunburst: l'unico che ha tenuto la cucina com'era (prova del 28/09)
@@ -12,6 +13,7 @@ export const GPT_IMAGE_USD: Record<string, number> = { low: 0.014, medium: 0.020
 // extra: altre immagini di riferimento (la copia con la zona in rosso); quality: livello per questa chiamata (predefinito GPT_IMAGE_QUALITY)
 // mask: PNG RGBA della stessa misura della foto, trasparente dove modificare (inpainting nativo di OpenAI)
 export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string; extra?: string[]; quality?: string; mask?: Buffer }): Promise<string | null> {
+  if (await isFakeUser(o.userId)) { await new Promise(r => setTimeout(r, 4000)); return fakePhoto(o.image) } // account di prova: niente OpenAI
   const key = process.env.OPENAI_API_KEY
   if (!key) return null
   const t0 = Date.now()

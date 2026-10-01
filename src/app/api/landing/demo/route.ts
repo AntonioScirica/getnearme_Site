@@ -10,6 +10,7 @@ import { authUser } from '@/lib/platformAuth'
 import { alertCapReached } from '@/lib/landingAlert'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
+import { fakePhoto, isFakeUser } from '@/lib/fakeAi'
 import { STYLE_LOOK } from '@/lib/stagingPrompts'
 import { finish } from '@/lib/finish'
 
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
   const img = `data:image/jpeg;base64,${src.toString('base64')}`
   const empty = style === 'empty' && !custom
   // GPT Image 2.5 Sunburst, come in piattaforma (0,014 $ a qualita' bassa)
-  const nb = await gptImage({ userId: '', image: img, prompt: stagePrompt({ task: empty ? 'empty' : 'furnish', room: '', style: look }), kind: 'landing_demo_image', quality: process.env.GPT_EDIT_QUALITY || 'low' })
+  const nb = (await isFakeUser(user?.id)) ? await fakePhoto(img) : await gptImage({ userId: '', image: img, prompt: stagePrompt({ task: empty ? 'empty' : 'furnish', room: '', style: look }), kind: 'landing_demo_image', quality: process.env.GPT_EDIT_QUALITY || 'low' })
   const staged = nb
   if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()

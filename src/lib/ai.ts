@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { AI_MOCK, mockDelay, mockFor } from './aiMock'
+import { isFakeUser } from './fakeAi'
 
 // Unico punto di accesso all'AI della piattaforma (describe, analyze): Claude, output sempre JSON
 // validato dallo schema. (RunPod tolto il 28/09: niente piu' modelli self-hosted.)
@@ -15,6 +16,11 @@ type Result<T> = { ok: true; data: T } | { ok: false; error: 'refused' | 'empty'
 
 export async function generateJson<T>(args: Args): Promise<Result<T>> {
   if (AI_MOCK) { await mockDelay(); return { ok: true, data: mockFor<T>(args.usage.kind) } } // niente costi, niente log
+  // account di prova: esempio fisso se c'e', altrimenti Haiku (frazioni di centesimo) al posto di Opus/Sonnet
+  if (await isFakeUser(args.usage.userId)) {
+    if (['analyze', 'describe'].includes(args.usage.kind)) { await mockDelay(); return { ok: true, data: mockFor<T>(args.usage.kind) } }
+    args = { ...args, model: 'claude-haiku-4-5-20251001' }
+  }
   const t0 = Date.now()
   const tokens: Tokens = {}
   const r = await viaClaude<T>(args, tokens)
