@@ -1644,7 +1644,7 @@ const SAVE_ANIM = `
 @keyframes gnm-sv-tagold { 0%,22% { opacity: 1 } 34%,92% { opacity: 0 } 100% { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { .gnm-sv * { animation: none !important } }
 `;
-function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
+export function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
   const [pid, setPid] = useState<string>(projectId ?? '');
   const [mode, setMode] = useState<'add' | 'plain' | 'replace'>('add');
@@ -1697,7 +1697,7 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
           </div>
         ) : <>
           <div className="flex items-start justify-between gap-3">
-            <div><h2 className="text-lg font-semibold">{tr('Salva nell’immobile', 'Save to property')}</h2><p className="text-sm text-muted">{projects?.length === 1 ? tr(`In ${p?.titolo || p?.nome || 'immobile'}, scegli come.`, `In ${p?.titolo || p?.nome || 'property'}, choose how.`) : tr('Scegli dove metterla e come.', 'Choose where to put it and how.')}</p></div>
+            <div><h2 className="text-lg font-semibold">{tr('Salva nell’immobile', 'Save to property')}</h2><p className="text-sm text-muted">{projects?.length === 1 ? tr(`In ${(p?.titolo || p?.nome || 'immobile').replace(/[\s.]+$/, '')}, scegli come.`, `In ${(p?.titolo || p?.nome || 'property').replace(/[\s.]+$/, '')}, choose how.`) : tr('Scegli dove metterla e come.', 'Choose where to put it and how.')}</p></div>
             <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
           </div>
           {/* sopra le due scelte: il menu aperto restava nascosto sotto le card */}
@@ -1710,27 +1710,29 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
                 onChange={setPid} className="h-11 w-full justify-between rounded-full bg-canvas px-4 text-sm font-medium" />
             )}
           </div>}
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            {option('add', tr('Prima e dopo', 'Before and after'), tr('Aggiunge la foto nuova: sul sito si confronta con l’originale.', 'Adds the new photo: on the website it\'s compared with the original.'), <>
+          {/* rassicura: con le prime due l'originale non si tocca (paura di perdere la foto) */}
+          <p className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-700"><Check size={15} /> {tr('La tua foto originale non viene cancellata.', 'Your original photo is not deleted.')}{canReplace ? tr(' Tranne con Sostituisci.', ' Except with Replace.') : ''}</p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            {option('add', tr('Prima e dopo', 'Before and after'), tr('Sul sito trascini la barra e confronti.', 'On the website you drag the bar and compare.'), <>
               {/* un solo valore animato (--sv-p) muove insieme taglio, linea e maniglia; la vecchia in bianco e nero */}
               <span className="gnm-sv absolute inset-0" style={{ animation: 'gnm-sv-p 7s cubic-bezier(.65,0,.35,1) infinite' }}>
-                <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover grayscale" />
+                <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />{/* a colori: in bianco e nero sembrava che la foto venisse rovinata */}
                 <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: 'inset(0 0 0 var(--sv-p))' }} />
                 <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(0,0,0,.35)]" style={{ left: 'var(--sv-p)' }} />
-                <span className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-md" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={14} /></span>
+                <span className="absolute top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-lg ring-2 ring-brand/30" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={18} /></span>
               </span>
-              <span className={`${tag} left-2`}>{tr('Prima', 'Before')}</span><span className={`${tag} right-2`}>{tr('Dopo', 'After')}</span>
+              <span className={`${tag} left-2`}>{tr('Originale, resta', 'Original, kept')}</span><span className={`${tag} right-2`}>{tr('Nuova', 'New')}</span>
             </>)}
-            {option('plain', tr('Aggiungi', 'Add'), tr('Aggiunge la foto nuova e tiene anche l’altra, senza confronto.', 'Adds the new photo and keeps the other one too, no comparison.'), <>
+            {option('plain', tr('Aggiungi', 'Add'), tr('Due foto normali, una dopo l’altra.', 'Two normal photos, one after the other.'), <>
               {/* le due foto affiancate: l'originale resta, la nuova si aggiunge */}
-              <span className="absolute inset-0 grid grid-cols-2 gap-1">
+              <span className="absolute inset-0 grid grid-cols-2 gap-2 bg-white">{/* spazio netto: non sembrano unite come nello slider */}
                 <img src={before} alt="" className="h-full w-full object-cover" />
                 <img src={after} alt="" className="h-full w-full object-cover" />
               </span>
-              <span className={`${tag} left-2`}>{tr('Resta', 'Kept')}</span><span className={`${tag} right-2`}>{tr('Nuova', 'New')}</span>
+              <span className={`${tag} left-2`}>{tr('Originale, resta', 'Original, kept')}</span><span className={`${tag} right-2`}>{tr('Nuova', 'New')}</span>
             </>)}
-            {/* sempre visibile, spenta quando la foto di partenza non e' di quell'immobile: si capisce che esiste */}
-            {option('replace', tr('Sostituisci', 'Replace'), canReplace ? tr('La foto nuova prende il posto dell’originale.', 'The new photo replaces the original.') : tr('Solo se parti da una foto di questo immobile.', 'Only if you start from a photo of this property.'), <>
+            {/* solo quando la foto di partenza e' di quell'immobile (spenta confondeva: "ma sono partito da questa casa") */}
+            {canReplace && option('replace', tr('Sostituisci', 'Replace'), tr('La nuova prende il posto della vecchia.', 'The new one takes the old one\'s place.'), <>
               {/* la nuova scende dall'alto e copre l'originale, che arretra e si scurisce; poi ricomincia */}
               <span className="gnm-sv absolute inset-0">
                 <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-old 7s cubic-bezier(.65,0,.35,1) infinite' }} />
