@@ -168,18 +168,18 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
         </div>
         {url && (
-          <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
+          <div data-tour="site-link" className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 sm:flex-nowrap">{/* telefono: indirizzo su una riga sua, sotto l'interruttore */}
           {/* interruttore solo con un piano che include il sito (senza, c'e' l'avviso Plus e Pro) */}
           {credits && sitePlan && <PublicSwitch on={online} onClick={publish} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both />}
-          <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'pointer-events-none select-none opacity-50'}`} aria-disabled={!online}>{/* sito non online: indirizzo solo da vedere, niente link, copia o apri */}
+          <div className={`flex h-10 min-w-0 basis-full items-center gap-1 rounded-full bg-white pl-4 pr-0 text-sm ring-1 ring-line ease-smooth transition-opacity sm:basis-auto sm:pr-1 ${online ? '' : 'pointer-events-none select-none opacity-50'}`} aria-disabled={!online}>{/* sito non online: indirizzo solo da vedere, niente link, copia o apri */}
             <Globe size={15} className="shrink-0 text-muted" />
-            <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
+            <a href={url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate px-1.5 font-medium hover:text-brand sm:flex-initial">{url.replace(/^https?:\/\//, '')}</a>
             <Tooltip label={copied ? tr('Copiato', 'Copied') : tr('Copia il link', 'Copy link')}>
               <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label={tr('Copia il link', 'Copy link')}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
+                className="flex h-10 w-10 shrink-0 items-center sm:h-8 sm:w-8 justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
             </Tooltip>
             <Tooltip label={tr('Apri il sito', 'Open website')}>
-              <a href={url} target="_blank" rel="noreferrer" aria-label={tr('Apri il sito', 'Open website')} className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ExternalLink size={15} /></a>
+              <a href={url} target="_blank" rel="noreferrer" aria-label={tr('Apri il sito', 'Open website')} className="flex h-10 w-10 shrink-0 items-center sm:h-8 sm:w-8 justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ExternalLink size={15} /></a>
             </Tooltip>
           </div>
           </div>
@@ -291,17 +291,18 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
                 </div>
               );
             })()}
-            <p className="mb-4 text-xs text-muted">{tr('Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.', 'Click an element in the preview to edit it, or open a section below.')}</p>
+            <p className="mb-4 text-xs text-muted">{tr('Tocca o clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.', 'Tap or click an element in the preview to edit it, or open a section below.')}</p>
             <div className="space-y-2">
               {secs.map(sec => {
                 const open = selected === sec.id, off = hidden.has(sec.id);
                 return (
                   <div key={sec.id} ref={el => { refs.current[sec.id] = el; }} className={`scroll-mt-2 rounded-2xl ring-1 ease-smooth transition-colors ${open ? 'ring-brand/40' : 'ring-black/10'}`}>
-                    <div className="flex items-center gap-2 p-3">
-                      <button onClick={() => { fromSide.current = true; setSelected(open ? null : sec.id); }} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold ${off ? 'text-muted line-through' : ''}`}>
+                    {/* tutta la riga apre la sezione (44px su telefono), l'occhio ha la sua area da 40 */}
+                    <div className="flex items-center gap-2 p-3 max-md:p-1 max-md:pl-3">
+                      <button onClick={() => { fromSide.current = true; setSelected(open ? null : sec.id); }} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold max-md:min-h-11 ${off ? 'text-muted line-through' : ''}`}>
                         <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? '' : '-rotate-90'}`} />{secLabel(sec)}
                       </button>
-                      {sec.hideable && <button onClick={() => toggleHide(sec.id)} title={off ? tr('Mostra la sezione', 'Show section') : tr('Nascondi la sezione', 'Hide section')} className="text-muted hover:text-ink">{off ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
+                      {sec.hideable && <button onClick={() => toggleHide(sec.id)} title={off ? tr('Mostra la sezione', 'Show section') : tr('Nascondi la sezione', 'Hide section')} aria-label={off ? tr('Mostra la sezione', 'Show section') : tr('Nascondi la sezione', 'Hide section')} className="flex items-center justify-center text-muted hover:text-ink max-md:h-10 max-md:w-10">{off ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
                     </div>
                     {open && (
                       <div className="space-y-3 border-t border-black/5 p-3">
@@ -592,10 +593,12 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
+  const [w, setW] = useState(1280);
   const [h, setH] = useState(0);
   useEffect(() => {
     const ro = new ResizeObserver(() => {
-      if (box.current) setK(box.current.clientWidth / 1280);
+      // telefono: il sito a grandezza vera, largo quanto il riquadro (versione mobile, leggibile e toccabile)
+      if (box.current) { const cw = box.current.clientWidth, W = window.innerWidth < 768 ? cw : 1280; setW(W); setK(cw / W); }
       if (inner.current) setH(inner.current.offsetHeight);
     });
     if (box.current) ro.observe(box.current);
@@ -613,14 +616,15 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
       </div>
       {wa && <span className="pointer-events-none absolute bottom-4 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)]"><MessageCircle size={21} fill="currentColor" /></span>}
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
-        <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
+        <span className="hidden gap-1.5 sm:flex">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
         {/* menu delle pagine del sito (le pillole non stavano piu' nella barra) */}
         <PageMenu current={page.page} firstId={firstId} onPick={id => onPage(pageOf(id, firstId, zone))} />
         {/* stesse misure di prima, piu' visibile: icone e colore pieno su quello attivo (Modifica in blu) */}
-        <div className="ml-auto flex items-center rounded-full bg-canvas p-1">
+        {/* telefono: solo icone, alte 36 (le scritte uscivano dalla card) */}
+        <div className="ml-auto flex shrink-0 items-center rounded-full bg-canvas p-1">
           {([[false, tr('Naviga', 'Browse'), Eye], [true, tr('Modifica', 'Edit'), Pencil]] as const).map(([v, l, I]) => (
-            <button key={l} onClick={() => { setEditMode(v); if (v && !editMode) { setHint(true); setTimeout(() => setHint(false), 1800); } }} className={`flex items-center gap-1.5 rounded-full px-4 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
+            <button key={l} aria-label={l} onClick={() => { setEditMode(v); if (v && !editMode) { setHint(true); setTimeout(() => setHint(false), 1800); } }} className={`flex h-9 items-center gap-1.5 rounded-full px-3.5 font-medium ease-smooth transition-colors sm:h-auto sm:px-4 sm:py-1 ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> <span className="hidden sm:inline">{l}</span></button>
           ))}
         </div>
       </div>
@@ -628,7 +632,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
         onClickCapture={e => { if ((e.target as HTMLElement).closest('a')) e.preventDefault(); }}>
         {/* overflow nascosto: il sito rimpicciolito occupa comunque la sua altezza piena nel layout e sotto restava spazio vuoto */}
         <div style={{ height: h * k, overflow: 'hidden' }}>
-          <div ref={inner} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
+          <div ref={inner} style={{ width: w, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
         </div>
       </div>
     </div>
