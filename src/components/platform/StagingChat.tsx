@@ -1021,11 +1021,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
             <div className="flex min-h-[calc(100vh-22rem)] flex-col items-center justify-center">
-              <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight md:text-5xl md:leading-[1.2]">
+              {/* telefono: niente titolo, il riquadro della foto dice gia' tutto (il titolo finiva tagliato sotto la barra) */}
+              <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight max-sm:hidden md:text-5xl md:leading-[1.2]">
                 <span className="blur-in inline-block">Home staging</span>
                 <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>{tr('Carica una foto e chiedi.', 'Upload a photo and ask.')}</span>
               </h1>
-              <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
+              <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer max-sm:mt-0 flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
                 <span className="text-lg font-semibold">{tr('Carica la foto della stanza', 'Upload a photo of the room')}</span>
                 <span className="text-sm text-muted"><span className="sm:hidden">{tr('Foto di stanza, facciata o planimetria, oppure un tuo video.', 'A room, facade or floor plan photo, or a video of you.')}</span><span className="max-sm:hidden">{tr('Carica una foto o trascinala qui. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.', 'Upload a photo or drag it here. A facade, a garden or a floor plan work too: I recognize it on my own. Or a video of you: you talk, step out and the room gets furnished.')}</span></span>
