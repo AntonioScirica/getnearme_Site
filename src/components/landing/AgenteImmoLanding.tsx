@@ -287,8 +287,8 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (force || mark) { void Promise.resolve().then(() => { setUsed(true); setLeft(0); }); return; } // dopo il render (niente setState sincrono nell'effetto)
     // pagina /prova: foto e richiesta subito (niente foto d'esempio che poi cambia); se la prova e' gia' usata si tolgono
     if (!gate) void Promise.resolve().then(restore);
-    // all'apertura solo account e IP: l'impronta del dispositivo si calcola solo quando si avvia la prova
-    void auth().then(h => fetch('/api/landing/demo', { headers: h })).then(r => r.json()).then((d: { left?: number }) => {
+    // all'apertura account, IP e impronta del dispositivo: chi ha gia' fatto la prova lo vede subito, anche in incognito
+    void Promise.all([auth(), deviceId().catch(() => '')]).then(([h, d]) => { device.current = d; return fetch(`/api/landing/demo${d ? `?d=${d}` : ''}`, { headers: h }); }).then(r => r.json()).then((d: { left?: number }) => {
       if (d.left === 0) { setUsed(true); setLeft(0); setBefore(null); setBusy(false); }
     }).catch(() => {});
   }, []);
@@ -344,7 +344,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (gate) return toTrial(null, true);
     if (!img || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
-    if (!device.current) device.current = await deviceId().catch(() => ''); // impronta del dispositivo solo quando si avvia la prova
+    if (!device.current) device.current = await deviceId().catch(() => '');
     const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(await auth()) }, body: JSON.stringify({ image: img, style: st, prompt: tx, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
