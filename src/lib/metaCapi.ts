@@ -8,11 +8,11 @@ import type Stripe from 'stripe'
 const PIXEL = '1023519243879273'
 const sha = (s: string) => createHash('sha256').update(s.trim().toLowerCase()).digest('hex')
 
-export async function capiPurchase(cs: Stripe.Checkout.Session) {
+export async function capiPurchase(cs: Stripe.Checkout.Session, coupon = '') {
   const token = process.env.META_CAPI_TOKEN
   const m = cs.metadata ?? {}
   const value = (cs.amount_total ?? 0) / 100
-  if (!token || m.ads !== '1' || value <= 0) return
+  if (!token || m.ads !== '1') return // anche a 0 € (primo mese gratis col codice): e' comunque un cliente nuovo
   const email = cs.customer_details?.email
   const user_data = {
     ...(email ? { em: [sha(email)] } : {}),
@@ -25,7 +25,7 @@ export async function capiPurchase(cs: Stripe.Checkout.Session) {
   const data = [{
     event_name: 'Purchase', event_time: Math.floor(Date.now() / 1000), event_id: cs.id, action_source: 'website',
     event_source_url: 'https://agenteimmo.me/it/dashboard', user_data,
-    custom_data: { value, currency: (cs.currency ?? 'eur').toUpperCase(), content_name: m.pack || m.plan || '' },
+    custom_data: { value, currency: (cs.currency ?? 'eur').toUpperCase(), content_name: m.pack || m.plan || '', ...(coupon ? { coupon } : {}) },
   }]
   try {
     const r = await fetch(`https://graph.facebook.com/v21.0/${PIXEL}/events?access_token=${encodeURIComponent(token)}`, {

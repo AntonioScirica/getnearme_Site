@@ -73,10 +73,26 @@ export async function POST(req: NextRequest) {
     // il conto Stripe e' lo stesso di GetNearMe: marchio di Agente Immo solo su questo checkout (la nota del forfettario resta in fattura)
     branding_settings: { display_name: 'Agente Immo', icon: { type: 'url', url: `${SITE}/immo/logo-cerchio-stripe.png` }, logo: { type: 'url', url: `${SITE}/immo/logo-cerchio-stripe.png` }, button_color: '#537eec', border_style: 'pill' },
     allow_promotion_codes: true,
-    // sid e valore: l'evento Purchase nel browser (stesso eventID dell'invio dal server, Meta lo conta una volta)
-    success_url: `${siteOf(req)}/it/dashboard#/piano?ok=1&sid={CHECKOUT_SESSION_ID}&v=${(price.unit_amount ?? 0) / 100}&k=${pack ? pack.id : plan}`,
+    // sid: l'evento Purchase nel browser (stesso eventID dell'invio dal server, Meta lo conta una volta; importo dal GET qui sotto)
+    success_url: `${siteOf(req)}/it/dashboard#/piano?ok=1&sid={CHECKOUT_SESSION_ID}`,
     // partito dalla landing: annullando si torna ai prezzi della landing, non alla piattaforma
     cancel_url: body?.back === 'it' || body?.back === 'en' ? `${siteOf(req)}/${body.back}#prezzi` : `${siteOf(req)}/it/dashboard#/piano`,
   })
   return NextResponse.json({ url: session.url })
+}
+
+// Dopo il pagamento (ritorno a #/piano?ok=1&sid=...): quanto ha pagato davvero e con quale codice sconto, per l'evento
+// Purchase nel browser. Solo la propria sessione.
+export async function GET(req: NextRequest) {
+  const u = await authUser(req)
+  const sid = req.nextUrl.searchParams.get('sid') ?? ''
+  if (!u || !/^cs_[\w]{10,200}$/.test(sid)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  const cs = await stripe.checkout.sessions.retrieve(sid, { expand: ['discounts.promotion_code'] }).catch(() => null)
+  if (!cs || cs.client_reference_id !== u.id) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+  return NextResponse.json({ value: (cs.amount_total ?? 0) / 100, currency: (cs.currency ?? 'eur').toUpperCase(), coupon: promoCode(cs), item: cs.metadata?.pack || cs.metadata?.plan || '' })
+}
+// codice sconto usato (es. LUCIANA-IMMO), se c'e'
+const promoCode = (cs: Stripe.Checkout.Session) => {
+  const p = cs.discounts?.[0]?.promotion_code
+  return p && typeof p === 'object' ? p.code : ''
 }

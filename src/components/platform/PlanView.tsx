@@ -82,8 +82,12 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   useEffect(() => {
     if (!ok) return;
     const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
-    const sid = q.get('sid'), v = Number(q.get('v'));
-    if (sid?.startsWith('cs_') && v > 0) track('Purchase', { value: v, currency: 'EUR', content_name: q.get('k') ?? '', transaction_id: sid }, sid);
+    const sid = q.get('sid');
+    if (!sid?.startsWith('cs_')) return;
+    // importo vero (con il codice sconto applicato) e codice usato, dalla sessione Stripe
+    authFetch(`/api/platform/checkout?sid=${encodeURIComponent(sid)}`).then(r => (r.ok ? r.json() : null)).then((d: { value: number; currency: string; coupon: string; item: string } | null) => {
+      if (d) track('Purchase', { value: d.value, currency: d.currency, content_name: d.item, transaction_id: sid, ...(d.coupon ? { coupon: d.coupon } : {}) }, sid);
+    }).catch(() => {});
   }, [ok]);
   const [yearly, setYearly] = useState(buy === 'pro_yearly');
   const [busy, setBusy] = useState<string>(buy ?? '');

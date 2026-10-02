@@ -1,5 +1,6 @@
 'use client';
 
+import { identify } from '@/lib/analytics';
 import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
@@ -123,6 +124,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
   const news = useGalleryNews(userData.id, route === '/galleria');
+  useEffect(() => identify(userData.id), [userData.id]); // eventi GA4 legati all'account
   // abbonamento finito senza rinnovo (e niente crediti): foto, immobili e sito si vedono sfocati col lucchetto.
   // Chi non ha mai pagato no: puo' entrare e provare come sempre.
   const lapsed = !!credits && !!credits.lapsed && !credits.unlimited && credits.balance <= 0;

@@ -30,12 +30,17 @@ declare global {
 type Item = { e: FbEvent; p: Record<string, unknown>; id: string; at: number; fb?: 1; ga?: 1 }
 const Q = 'agenteimmo:events'
 const DONE = 'agenteimmo:events-done'
+const UID = 'agenteimmo:uid'
+let uidSet = false
 const load = (k: string) => { try { return JSON.parse(localStorage.getItem(k) ?? '[]') } catch { return [] } }
 
 // manda quello che si puo' (Pixel col consenso marketing, GA4 con quello statistiche); il resto aspetta, al massimo 1 giorno
 export function flush() {
   if (typeof window === 'undefined') return
   const c = readConsent()
+  // account collegato (identify): GA4 lega gli eventi all'utente (user_id = id interno, niente email)
+  const uid = localStorage.getItem(UID)
+  if (uid && c?.stats && window.gtag && !uidSet) { try { window.gtag('set', { user_id: uid }); uidSet = true } catch { /* ga non pronto */ } }
   const left = (load(Q) as Item[]).filter(it => {
     if (Date.now() - it.at > 86_400_000) return false
     if (!it.fb && c?.ads && window.fbq) { try { window.fbq('track', it.e, it.p, { eventID: it.id }); it.fb = 1 } catch { /* pixel non pronto */ } }
@@ -69,3 +74,10 @@ export const fbCookies = () => {
 
 // da mandare al checkout: consenso marketing e cookie del Pixel, cosi' il server sa se puo' mandare l'acquisto a Meta
 export const adsInfo = () => (readConsent()?.ads ? { ads: true, ...fbCookies() } : {})
+
+// account entrato in piattaforma: da qui gli eventi GA4 portano il suo id (per sapere quale account ha fatto cosa)
+export function identify(userId: string) {
+  if (typeof window === 'undefined' || !userId) return
+  try { if (localStorage.getItem(UID) !== userId) { localStorage.setItem(UID, userId); uidSet = false } } catch { /* niente storage */ }
+  flush()
+}

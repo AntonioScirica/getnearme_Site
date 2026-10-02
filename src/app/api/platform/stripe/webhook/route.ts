@@ -16,6 +16,13 @@ const planOf = (s: Stripe.Subscription): 'starter' | 'plus' | 'pro' => { const p
 
 // Webhook Stripe dei piani di Agente Immo (endpoint separato da quello dell'estensione). Manda anche le email degli
 // acquisti (lib/platformEmails). ponytail: se Stripe riprova un evento gia' riuscito a meta', l'email puo' partire due volte (raro).
+// codice sconto della sessione (es. LUCIANA-IMMO) per l'evento Purchase a Meta
+const couponOf = async (cs: Stripe.Checkout.Session) => {
+  const p = cs.discounts?.[0]?.promotion_code
+  if (!p) return ''
+  return typeof p === 'string' ? ((await stripe.promotionCodes.retrieve(p).catch(() => null))?.code ?? '') : p.code
+}
+
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature') ?? ''
   let ev: Stripe.Event
@@ -31,7 +38,7 @@ export async function POST(req: NextRequest) {
       if (cs.metadata?.app === 'agenteimmo' && cs.mode === 'payment' && cs.metadata.pack && cs.payment_status === 'paid') {
         const userId = cs.metadata.user_id || cs.client_reference_id
         const credits = Number(cs.metadata.credits)
-        if (userId && credits > 0) { await grantPack(userId, credits, cs.metadata.pack, cs.id); await sendPlatformEmail(userId, { kind: 'pack', credits }); await capiPurchase(cs) }
+        if (userId && credits > 0) { await grantPack(userId, credits, cs.metadata.pack, cs.id); await sendPlatformEmail(userId, { kind: 'pack', credits }); await capiPurchase(cs, await couponOf(cs)) }
         return NextResponse.json({ ok: true })
       }
       if (cs.metadata?.app !== 'agenteimmo' || cs.mode !== 'subscription' || !cs.subscription) return NextResponse.json({ ok: true })
@@ -41,7 +48,7 @@ export async function POST(req: NextRequest) {
       const customer = String(cs.customer)
       await activatePlan(userId, { plan: planOf(sub), paidUntil: paidUntil(sub), customer, subscription: sub.id })
       await sendPlatformEmail(userId, { kind: 'plan_started', plan: planOf(sub) })
-      await capiPurchase(cs)
+      await capiPurchase(cs, await couponOf(cs))
       const sdi = cs.custom_fields?.find(f => f.key === 'sdi')?.text?.value ?? ''
       await stripe.customers.update(customer, { invoice_settings: { footer: FOOTER }, metadata: { app: 'agenteimmo', user_id: userId, sdi_pec: sdi.slice(0, 200) } })
     } else if (ev.type === 'invoice.paid') {
