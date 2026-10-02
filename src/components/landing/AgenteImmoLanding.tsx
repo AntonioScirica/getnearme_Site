@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/analytics';
 import Link from 'next/link';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Menu, Sparkles, Upload, Users, Wand2, X } from 'lucide-react';
@@ -351,6 +352,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (typeof d?.left === 'number') setLeft(d.left);
     if (d?.error === 'login') return window.location.replace(TRIAL_LOGIN); // sessione scaduta
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
+    if (d?.image) track('StartTrial', { content_name: st }, 'trial');
     if (d?.image) { setPhotoToken(d.token ?? null); setEmptied(st === 'empty' && !tx); return setAfter(d.image); } // foto pronta: prima si guarda, poi Crea video o Scarica
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'not_house' ? L('Questa foto non sembra una casa. Carica una stanza, una facciata o un giardino: la prova non è stata usata.', "This doesn't look like a home. Upload a room, a facade or a garden: your free try wasn't used.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };

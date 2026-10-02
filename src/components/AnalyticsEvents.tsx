@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { track } from "@/lib/analytics";
+import { flush, track } from "@/lib/analytics";
 
-// Site-wide conversion-event wiring:
-//  - Lead: any click on a "book a demo" CTA (Cal.com uses [data-cal-link]).
-// Purchase/Subscribe fire on the Stripe success pages themselves
-// (/checkout/success, /checkout/video-success) — no Stripe config change needed.
+// Su ogni pagina: clic su "prenota una demo" (Lead) e invio degli eventi rimasti in coda (lib/analytics), riprovando
+// per 30 s mentre Pixel e GA4 si caricano (lazyOnload) o appena arriva il consenso ai cookie.
 export default function AnalyticsEvents() {
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -14,7 +12,10 @@ export default function AnalyticsEvents() {
       if (el) track("Lead", { content_name: "demo_booking" });
     };
     document.addEventListener("click", onClick, true);
-    return () => document.removeEventListener("click", onClick, true);
+    window.addEventListener("agenteimmo:consent", flush);
+    let n = 0;
+    const t = setInterval(() => { flush(); if (++n >= 30) clearInterval(t); }, 1000);
+    return () => { document.removeEventListener("click", onClick, true); window.removeEventListener("agenteimmo:consent", flush); clearInterval(t); };
   }, []);
 
   return null;

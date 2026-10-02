@@ -1,5 +1,6 @@
 'use client';
 
+import { adsInfo, track } from '@/lib/analytics';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Coins, Copy, Gift, Loader2, Sparkles, UserRound, X } from 'lucide-react';
@@ -68,7 +69,7 @@ export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
 
 async function checkout(plan: Buy | PackId) {
   const isPack = PACKS.some(p => p.id === plan);
-  const d = await authFetch('/api/platform/checkout', { method: 'POST', body: JSON.stringify(isPack ? { pack: plan } : { plan }) }).then(r => r.json()).catch(() => null);
+  const d = await authFetch('/api/platform/checkout', { method: 'POST', body: JSON.stringify({ ...(isPack ? { pack: plan } : { plan }), ...adsInfo() }) }).then(r => r.json()).catch(() => null);
   if (d?.url) window.location.href = d.url;
   return d as { url?: string; error?: string } | null;
 }
@@ -77,6 +78,13 @@ async function checkout(plan: Buy | PackId) {
 // buy = piano scelto sulla landing (anche prima del login): si va dritti a Stripe
 export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy; change?: boolean }) {
   const c = useCredits();
+  // ritorno da Stripe dopo un acquisto: evento Purchase (eventID = sessione Stripe, come quello del server)
+  useEffect(() => {
+    if (!ok) return;
+    const q = new URLSearchParams(location.hash.split('?')[1] ?? '');
+    const sid = q.get('sid'), v = Number(q.get('v'));
+    if (sid?.startsWith('cs_') && v > 0) track('Purchase', { value: v, currency: 'EUR', content_name: q.get('k') ?? '', transaction_id: sid }, sid);
+  }, [ok]);
   const [yearly, setYearly] = useState(buy === 'pro_yearly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);

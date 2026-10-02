@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { activatePlan, endPlan, extendPaid, grantPack, userForSubscription } from '@/lib/credits'
 import { FORFETTARIO_FOOTER as FOOTER } from '@/lib/pricing'
+import { capiPurchase } from '@/lib/metaCapi'
 import { sendPlatformEmail } from '@/lib/platformEmails'
 
 export const runtime = 'nodejs'
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
       if (cs.metadata?.app === 'agenteimmo' && cs.mode === 'payment' && cs.metadata.pack && cs.payment_status === 'paid') {
         const userId = cs.metadata.user_id || cs.client_reference_id
         const credits = Number(cs.metadata.credits)
-        if (userId && credits > 0) { await grantPack(userId, credits, cs.metadata.pack, cs.id); await sendPlatformEmail(userId, { kind: 'pack', credits }) }
+        if (userId && credits > 0) { await grantPack(userId, credits, cs.metadata.pack, cs.id); await sendPlatformEmail(userId, { kind: 'pack', credits }); await capiPurchase(cs) }
         return NextResponse.json({ ok: true })
       }
       if (cs.metadata?.app !== 'agenteimmo' || cs.mode !== 'subscription' || !cs.subscription) return NextResponse.json({ ok: true })
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
       const customer = String(cs.customer)
       await activatePlan(userId, { plan: planOf(sub), paidUntil: paidUntil(sub), customer, subscription: sub.id })
       await sendPlatformEmail(userId, { kind: 'plan_started', plan: planOf(sub) })
+      await capiPurchase(cs)
       const sdi = cs.custom_fields?.find(f => f.key === 'sdi')?.text?.value ?? ''
       await stripe.customers.update(customer, { invoice_settings: { footer: FOOTER }, metadata: { app: 'agenteimmo', user_id: userId, sdi_pec: sdi.slice(0, 200) } })
     } else if (ev.type === 'invoice.paid') {

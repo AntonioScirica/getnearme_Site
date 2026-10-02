@@ -1,5 +1,6 @@
 'use client';
 
+import { adsInfo } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 
 // Dal piano scelto (landing o pagina di accesso) dritti al checkout Stripe, senza passare dalla pagina dei piani.
@@ -13,7 +14,7 @@ export async function startCheckout(plan: Buy, o: { replace?: boolean; back?: 'i
   if (!session) return false;
   const d = await fetch('/api/platform/checkout', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-    body: JSON.stringify({ plan, back: o.back }),
+    body: JSON.stringify({ plan, back: o.back, ...adsInfo() }),
   }).then(r => r.json()).catch(() => null) as { url?: string } | null;
   if (!d?.url) return false;
   if (o.replace) window.location.replace(d.url); else window.location.href = d.url;

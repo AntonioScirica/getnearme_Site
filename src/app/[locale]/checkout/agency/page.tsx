@@ -1,5 +1,6 @@
 'use client';
 
+import { track } from '@/lib/analytics';
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -592,6 +593,9 @@ function CheckoutAgencyContent() {
     setCheckingSubscription(true);
 
     await saveConsent(userId, userEmail, terms, marketing);
+    // account appena creato (email o Google): evento registrazione per le campagne, una volta per utente
+    const { data: { user: fresh } } = await supabase.auth.getUser();
+    if (fresh?.created_at && Date.now() - Date.parse(fresh.created_at) < 15 * 60_000) track('CompleteRegistration', { method: fresh.app_metadata?.provider ?? 'email' }, `reg-${userId}`);
 
     try {
       const { data } = await supabase

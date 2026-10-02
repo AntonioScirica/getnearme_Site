@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   // account di prova degli agenti simulati: mai una sessione Stripe con le chiavi live
   if (process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') && await isFakeUser(u.id)) return NextResponse.json({ error: 'test_account' }, { status: 403 })
-  const body = await req.json().catch(() => null) as { plan?: string; back?: string; pack?: string } | null
+  const body = await req.json().catch(() => null) as { plan?: string; back?: string; pack?: string; ads?: boolean; fbp?: string; fbc?: string } | null
   // pacchetto di crediti extra (pagamento singolo): solo con un piano attivo
   const pack = PACKS.find(x => x.id === body?.pack)
   const lookup = pack ? `ai_pack_${pack.credits}` : PRICES[body?.plan as keyof typeof PRICES]
@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
   const { data: row } = await admin.from('platform_credits').select('stripe_customer_id, stripe_subscription_id, plan').eq('user_id', u.id).maybeSingle()
   if (pack && (!row?.plan || row.plan === 'none')) return NextResponse.json({ error: 'no_plan' }, { status: 400 })
   const meta: Record<string, string> = pack ? { app: 'agenteimmo', user_id: u.id, plan, pack: pack.id, credits: String(pack.credits) } : { app: 'agenteimmo', user_id: u.id, plan }
+  // consenso marketing del browser: solo allora il webhook manda l'acquisto a Meta (Conversions API, lib/metaCapi)
+  const ck = (v: unknown) => (typeof v === 'string' && /^fb\.\d\.\d+\.[\w-]{1,200}$/.test(v) ? v : '')
+  const ads: Record<string, string> = body?.ads === true ? { ads: '1', ip: (req.headers.get('x-forwarded-for')?.split(',')[0] ?? '').trim().slice(0, 45), ua: (req.headers.get('user-agent') ?? '').slice(0, 450), ...(ck(body.fbp) ? { fbp: ck(body.fbp) } : {}), ...(ck(body.fbc) ? { fbc: ck(body.fbc) } : {}) } : {}
   // cambio piano con un abbonamento attivo: pagina di Stripe dove l'agente vede il nuovo prezzo e quanto paga oggi e
   // conferma lui (niente addebiti con un clic dalla piattaforma). Stesso abbonamento, niente secondo abbonamento.
   // I crediti del nuovo piano li mette il webhook (customer.subscription.updated).
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest) {
     line_items: [{ price: price.id, quantity: 1 }],
     customer, customer_update: { address: 'auto', name: 'auto' },
     client_reference_id: u.id,
-    metadata: meta,
+    metadata: { ...meta, ...ads },
     ...(pack ? { invoice_creation: { enabled: true } } : { subscription_data: { metadata: meta } }),
     locale: 'it',
     billing_address_collection: 'required',
@@ -70,7 +73,8 @@ export async function POST(req: NextRequest) {
     // il conto Stripe e' lo stesso di GetNearMe: marchio di Agente Immo solo su questo checkout (la nota del forfettario resta in fattura)
     branding_settings: { display_name: 'Agente Immo', icon: { type: 'url', url: `${SITE}/immo/logo-cerchio-stripe.png` }, logo: { type: 'url', url: `${SITE}/immo/logo-cerchio-stripe.png` }, button_color: '#537eec', border_style: 'pill' },
     allow_promotion_codes: true,
-    success_url: `${siteOf(req)}/it/dashboard#/piano?ok=1`,
+    // sid e valore: l'evento Purchase nel browser (stesso eventID dell'invio dal server, Meta lo conta una volta)
+    success_url: `${siteOf(req)}/it/dashboard#/piano?ok=1&sid={CHECKOUT_SESSION_ID}&v=${(price.unit_amount ?? 0) / 100}&k=${pack ? pack.id : plan}`,
     // partito dalla landing: annullando si torna ai prezzi della landing, non alla piattaforma
     cancel_url: body?.back === 'it' || body?.back === 'en' ? `${siteOf(req)}/${body.back}#prezzi` : `${siteOf(req)}/it/dashboard#/piano`,
   })
