@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check, ChevronLeft, Loader2, Mail, MapPin } from 'lucide-react';
 import { track } from '@/lib/analytics';
@@ -89,6 +89,13 @@ export default function ValuationWizard() {
   const [err, setErr] = useState('');
   const [sent, setSent] = useState('');
   const top = useRef<HTMLDivElement>(null);
+  // dalle pagine "Prezzo case <città>": ?citta=Milano -> esempio con la città e città aggiunta all'indirizzo se manca
+  const [city, setCity] = useState('');
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get('citta')?.replace(/[^\p{L}' .-]/gu, '').trim().slice(0, 40);
+    if (c) setCity(c); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
+  const withCity = (a: string) => (city && !a.includes(',') && !a.toLowerCase().includes(city.toLowerCase()) ? `${a}, ${city}` : a);
 
   const set = <K extends keyof Data>(k: K, v: Data[K]) => setD(p => ({ ...p, [k]: v }));
   const toggle = (x: Data['extra'][number]) => setD(p => ({ ...p, extra: p.extra.includes(x) ? p.extra.filter(e => e !== x) : [...p.extra, x] }));
@@ -100,7 +107,7 @@ export default function ValuationWizard() {
     if (address.trim().length < 6) { setErr('Scrivi via, numero civico e città, ad esempio: Via Roma 10, Milano.'); return; }
     setBusy(true); setErr('');
     try {
-      const r = await fetch(`/api/valutazione?address=${encodeURIComponent(address.trim())}`);
+      const r = await fetch(`/api/valutazione?address=${encodeURIComponent(withCity(address.trim()))}`);
       const j = await r.json().catch(() => ({}));
       if (r.ok && j.comune) { setFound({ luogo: String(j.luogo).replace(/, Italia$/, ""), comune: j.comune }); go(1); }
       else if (r.status === 404) setErr('Non troviamo questo indirizzo. Controlla la via e aggiungi la città, ad esempio: Via Roma 10, Milano.');
@@ -123,7 +130,7 @@ export default function ValuationWizard() {
     try {
       const r = await fetch('/api/valutazione', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...d, address: address.trim(), email: email.trim(), name: name.trim(), phone: phone.trim(), privacy, consent_agents: agents, consent_marketing: marketing, website: trap }),
+        body: JSON.stringify({ ...d, address: withCity(address.trim()), email: email.trim(), name: name.trim(), phone: phone.trim(), privacy, consent_agents: agents, consent_marketing: marketing, website: trap }),
       });
       const j = await r.json().catch(() => ({}));
       if (r.ok) { track('Lead', { content_name: 'valutazione' }); setSent(email.trim()); top.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -162,9 +169,9 @@ export default function ValuationWizard() {
       <div className="mt-7">
         {step === 0 && (
           <form onSubmit={e => { e.preventDefault(); checkAddress(); }}>
-            <Question title="Dove si trova la casa?" hint="Scrivi via, numero civico e città. Ci serve per trovare i prezzi della tua zona.">
+            <Question title="Dove si trova la casa?" hint={city ? `Scrivi via e numero civico: la città (${city}) la aggiungiamo noi. Ci serve per trovare i prezzi della tua zona.` : 'Scrivi via, numero civico e città. Ci serve per trovare i prezzi della tua zona.'}>
               <label className="block text-[15px] font-semibold">Indirizzo
-                <input value={address} onChange={e => setAddress(e.target.value)} autoComplete="street-address" placeholder="Es. Via Roma 10, Milano" className={field} maxLength={200} />
+                <input value={address} onChange={e => setAddress(e.target.value)} autoComplete="street-address" placeholder={`Es. Via Roma 10, ${city || 'Milano'}`} className={field} maxLength={200} />
               </label>
             </Question>
             <button type="submit" disabled={busy} className={`${next} mt-6`}>{busy ? <><Loader2 size={20} className="animate-spin" /> Cerco l&apos;indirizzo</> : <>Continua <ArrowRight size={20} /></>}</button>
