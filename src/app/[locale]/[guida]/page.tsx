@@ -34,6 +34,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // Chi arriva da Google sulle guide: inviti a provare sparsi nella pagina, tutti verso la prova sulla home
 const TRY = '/it/accedi?next=/it/prova'; // Prova gratis porta sempre al login, poi alla prova
+// guide su prezzo e valutazione: in "Leggi anche" anche la pagina per i proprietari (valutazione OMI gratuita)
+const VALUATION_GUIDES = new Set(['valutazione-immobile-acquisizione', 'casa-che-non-si-vende', 'annuncio-immobiliare-senza-contatti', 'lettera-acquisizione-immobili', 'script-telefonata-proprietari']);
 function TryCard({ compact = false }: { compact?: boolean }) {
   return (
     <Link href={TRY} className={`not-prose group my-10 flex items-center gap-5 rounded-[28px] bg-canvas p-3 pr-6 no-underline ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-md ${compact ? '' : 'mt-8'}`}>
@@ -124,6 +126,9 @@ export default async function Page({ params }: Props) {
         <nav aria-label="Leggi anche" className="mt-14">
           <div className="font-display text-xl font-bold">Leggi anche</div>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {VALUATION_GUIDES.has(g.slug) && (
+              <li><Link href="/it/quanto-vale-la-mia-casa" className="block h-full rounded-[24px] bg-canvas p-5 ease-smooth transition-colors hover:bg-line/60"><span className="font-semibold">Quanto vale la mia casa? Valutazione gratuita</span><span className="mt-1 block text-sm text-muted">La stima online dalle quotazioni OMI della zona, da girare anche ai proprietari: arriva per email in un minuto.</span></Link></li>
+            )}
             {related.map(r => (
               <li key={r.slug}><Link href={`/it/${r.slug}`} className="block h-full rounded-[24px] bg-canvas p-5 ease-smooth transition-colors hover:bg-line/60"><span className="font-semibold">{r.label}</span><span className="mt-1 block text-sm text-muted">{r.description}</span></Link></li>
             ))}

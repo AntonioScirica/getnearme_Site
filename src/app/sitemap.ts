@@ -12,6 +12,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Home in italiano e inglese; guide solo in italiano
   entries.push({ url: `${baseUrl}/it`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 });
   entries.push({ url: `${baseUrl}/en`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 });
+  // strumento per i proprietari: valutazione casa gratuita (quotazioni OMI)
+  entries.push({ url: `${baseUrl}/it/quanto-vale-la-mia-casa`, lastModified: new Date("2026-10-05"), changeFrequency: "monthly", priority: 0.9 });
   GUIDES.forEach((g, i) => entries.push({ url: `${baseUrl}/it/${g.slug}`, lastModified: new Date(g.updated), changeFrequency: "monthly", priority: i === 0 ? 0.9 : 0.8 }));
 
   // Pagine legali per ogni lingua

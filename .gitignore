@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dati OMI importati (scripts/omi-import.mjs) e forniture con il codice fiscale nel nome
+/data/omi/
+QI*.zip
