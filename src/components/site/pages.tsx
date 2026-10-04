@@ -309,7 +309,7 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
 }
 
 function PropertyPage({ id }: { id: string }) {
-  const { properties, cfg, t, propEdit } = useSite();
+  const { properties, cfg, t, propEdit, embed } = useSite();
   const tx = useT();
   const p = properties.find(x => x.id === id) ?? properties[0];
   const [more, setMore] = useState(false);
@@ -325,7 +325,7 @@ function PropertyPage({ id }: { id: string }) {
   );
   const heading = (
     <>
-      {t.gallery === 'full' && crumbs}
+      {t.gallery === 'full' && !embed && crumbs}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
@@ -341,7 +341,7 @@ function PropertyPage({ id }: { id: string }) {
         <div className="relative"><Gallery key={p.cover} p={p} />{/* telefono: il testo sta sopra il pulsante delle foto, non sotto */}<Container className="absolute inset-x-0 bottom-20 text-white md:bottom-10">{heading}</Container></div>
       ) : (
         <Container className="pt-8">
-          <div className="text-[var(--muted)]">{crumbs}</div>
+          {!embed && <div className="text-[var(--muted)]">{crumbs}</div>}
           <Gallery key={p.cover} p={p} />
         </Container>
       )}
@@ -666,7 +666,7 @@ export function SitePage({ ctx, page }: { ctx: SiteCtx; page: Page }) {
       <div className="relative">
         {page.page === 'home' ? <HomePage /> : page.page === 'immobili' ? <ListingsPage key={JSON.stringify(page.f ?? {})} initial={page.f} /> : page.page === 'immobile' ? <PropertyPage key={page.id} id={page.id} />
           : page.page === 'servizi' ? <ServicesPage /> : page.page === 'contatti' ? <ContactPage /> : page.page === 'zona' ? <ZonePage slug={page.slug} /> : page.page === 'legal' ? <><Sec id="header"><Header /></Sec><LegalPage doc={page.doc} /><Sec id="footer"><Footer /></Sec></> : <AgentPage />}
-        <WhatsAppFloat />
+        {!ctx.embed && <WhatsAppFloat />}
       </div>
     </SiteRoot>
   );

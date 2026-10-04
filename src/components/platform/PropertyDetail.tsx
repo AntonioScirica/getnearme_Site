@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -53,6 +53,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
   // Manda al cliente senza sito: link pubblico della scheda su WhatsApp (prima: stampa, salva PDF e allega)
   const [sending, setSending] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false); // codice per mettere la scheda in un altro sito
   const sendSheet = async () => {
     setSending(true);
     const w = window.open('', '_blank'); // aperta subito (dopo l'attesa il browser la bloccherebbe come popup)
@@ -146,11 +147,13 @@ export default function PropertyDetail({ project, loading, onChange }: { project
                 {/* al cliente il link pubblico della casa, su WhatsApp (non quello della piattaforma, che chiede l'accesso) */}
                 <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${(project.titolo || project.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 max-sm:h-11 max-sm:px-2"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
                 <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60 max-sm:h-11 max-sm:px-2">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
+                <button type="button" onClick={() => setEmbedOpen(true)} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60 max-sm:hidden"><Code2 size={14} /> {tr('Incorpora', 'Embed')}</button>
               </span>
             </span>
           </span>
         )}
       </div>
+      {embedOpen && site?.slug && <EmbedCode url={`${portfolioUrl(site.slug)}/${project.id}`} id={project.id} title={project.titolo || project.nome || ''} onClose={() => setEmbedOpen(false)} />}
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-6 lg:sticky lg:top-6 lg:h-[calc(100svh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
@@ -499,5 +502,35 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
         <button type="button" onClick={save} disabled={busy || !dirty} className="flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white hover:bg-black disabled:bg-line disabled:text-muted">{busy && <Loader2 size={15} className="animate-spin" />} {tr('Salva', 'Save')}</button>
       </div>
     </div>
+  );
+}
+
+// Incorpora: codice da incollare nel sito dell'agenzia (o in un altro sito) per mostrare la scheda completa dell'immobile:
+// un riquadro che si allunga da solo (la scheda manda la sua altezza, vedi components/site/EmbedHeight).
+function EmbedCode({ url, id, title, onClose }: { url: string; id: string; title: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const origin = new URL(url).origin;
+  const fid = `agenteimmo-${id.slice(0, 8)}`;
+  const code = `<iframe id="${fid}" src="${url}/embed" title="${title.replace(/"/g, '&quot;')}" loading="lazy" style="width:100%;border:0;min-height:900px"></iframe>
+<script>window.addEventListener('message',function(e){if(e.origin==='${origin}'&&e.data&&e.data.agenteimmoEmbed==='${id}'){document.getElementById('${fid}').style.height=e.data.h+'px'}});</script>`;
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className={`w-full max-w-xl rounded-[32px] bg-white p-6 ${CARD_SHADOW}`} onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-xl font-bold tracking-tight">{tr('Metti questa casa su un altro sito', 'Put this home on another website')}</h2>
+            <p className="mt-1 text-sm text-muted">{tr('Copia il codice e incollalo nella pagina del tuo sito (blocco HTML o codice incorporato). Si vede la scheda completa: foto, dati, mappa e i tuoi contatti.', 'Copy the code and paste it into your website page (HTML or embed block). It shows the full listing: photos, details, map and your contacts.')}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
+        </div>
+        <textarea readOnly value={code} onFocus={e => e.currentTarget.select()} rows={6} className="mt-4 w-full resize-none rounded-2xl bg-canvas p-4 font-mono text-xs leading-relaxed text-ink/80 outline-none ring-1 ring-line" />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <a href={`${url}/embed`} target="_blank" rel="noopener" className="text-sm font-medium text-brand hover:underline">{tr('Vedi l’anteprima', 'See the preview')}</a>
+          <button type="button" onClick={() => { void navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+            className="flex h-11 items-center justify-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand max-sm:w-full">{copied ? <Check size={16} /> : <Copy size={16} />} {copied ? tr('Copiato', 'Copied') : tr('Copia il codice', 'Copy code')}</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }

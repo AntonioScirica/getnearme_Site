@@ -73,6 +73,8 @@ export type SiteCtx = {
   onText?: (key: string) => void;
   // piattaforma, scheda dell'immobile: i dati si modificano sulla pagina (testi al clic, azioni sulle foto)
   propEdit?: PropEdit;
+  // scheda immobile incorporata in un altro sito (iframe): niente intestazione, piede e simili, i link si aprono a parte
+  embed?: boolean;
 };
 // texts: testi modificabili al clic sulla pagina (spento: si modifica dalla barra a sinistra)
 export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; editing?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void; onAdd?: (files: FileList) => void; adding?: boolean };
@@ -103,7 +105,7 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
   } as CSSProperties;
   // carattere dei titoli scelto dall'agente: il foglio di Google Fonts va nella pagina (React lo sposta nel <head>)
   const fontHref = fontCss([ctx.cfg.headingFont]);
-  return <Ctx.Provider value={ctx}>{/* niente precedence: nell'editor sospenderebbe e rimonterebbe la pagina (modifiche perse) */}{fontHref && <link rel="stylesheet" href={fontHref} />}<div data-site-root style={style} className="relative min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
+  return <Ctx.Provider value={ctx}>{/* niente precedence: nell'editor sospenderebbe e rimonterebbe la pagina (modifiche perse) */}{fontHref && <link rel="stylesheet" href={fontHref} />}<div data-site-root style={style} className={`relative ${ctx.embed ? '' : 'min-h-screen'} font-body antialiased selection:bg-[var(--c)] selection:text-white`}>{children}</div></Ctx.Provider>;
 }
 
 export const pathOf = (base: string, p: Page): string =>
@@ -111,11 +113,12 @@ export const pathOf = (base: string, p: Page): string =>
 
 // Link del sito: sul sito vero e' un <a href>, nell'anteprima cambia pagina dentro l'editor
 export function SiteLink({ to, className = '', children, ...rest }: { to: Page; className?: string; children: ReactNode; 'aria-label'?: string; onMouseEnter?: () => void }) {
-  const { base, preview, go, editMode, cfg } = useSite();
+  const { base, preview, go, editMode, cfg, embed } = useSite();
   // pagina nascosta dall'agente: il collegamento resta come testo, senza portare a una pagina che non c'e'
   if (to.page !== 'home' && pageHidden(cfg, to.page)) return <span className={className}>{children}</span>;
   if (preview) return <a role="link" tabIndex={0} className={`cursor-pointer ${className}`} onClick={() => { if (!editMode) go?.(to); }} {...rest}>{children}</a>;
-  return <a href={pathOf(base, to)} className={className} {...rest}>{children}</a>;
+  // incorporata: il sito dell'agente si apre in una scheda nuova, non dentro il riquadro
+  return <a href={pathOf(base, to)} className={className} {...(embed ? { target: '_blank', rel: 'noopener' } : {})} {...rest}>{children}</a>;
 }
 
 export function H({ as: Tag = 'h2', className = '', children }: { as?: 'h1' | 'h2' | 'h3'; className?: string; children: ReactNode }) {
@@ -289,10 +292,12 @@ export function useT() {
 
 const LABELS: Record<string, string> = Object.fromEntries(Object.values(PAGE_SECTIONS).flat().map(x => [x.id, x.label]));
 
+const EMBED_HIDE = new Set(['header', 'footer', 'cta', 'property.similar'])
 // Sezione del sito: sparisce se l'agente l'ha nascosta; nell'editor si evidenzia e si seleziona al clic
 export function Sec({ id, children }: { id: string; children: ReactNode }) {
-  const { cfg, preview, editMode, selected, onSelect } = useSite();
+  const { cfg, preview, editMode, selected, onSelect, embed } = useSite();
   if (cfg.hidden.includes(id)) return null;
+  if (embed && EMBED_HIDE.has(id)) return null;
   if (!preview || !editMode) return <>{children}</>;
   const on = selected === id;
   return (
