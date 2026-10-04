@@ -3,7 +3,7 @@ import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, room
 import { gptImage } from '@/lib/gptImage'
 import { overDailyCap } from '@/lib/ai'
 import { stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
-import { planBox, cropTo, pasteBack } from '@/lib/planCrop'
+import { planBox, cropTo, pasteBack, camView } from '@/lib/planCrop'
 import { canAfford, spend, noteFree, editsOn, type Action } from '@/lib/credits'
 import { createHash } from 'crypto'
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; plan?: string; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[]; density?: string }
+  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; plan?: string; camera?: { x?: unknown; y?: unknown; a?: unknown; fov?: unknown }; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[]; density?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -136,7 +136,20 @@ export async function POST(req: NextRequest) {
       kind = body.angle ? 'luce' : body.planimetria ? 'planimetria' : furnishReq ? 'arreda' : 'modifica'
     }
     used = req.prompt
-    if (kind === 'planimetria') {
+    // Foto da un punto della planimetria: la pianta e una copia con la fotocamera disegnata in rosso (punto e cono), foto
+    // della stanza vista da li' in 3:2. Prima prova del 02/10: la stanza e la direzione tornano, misure non al centimetro.
+    const cam = body.plan === 'camera' ? planCam(body.camera) : null
+    if (body.plan === 'camera' && !cam) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+    if (cam) {
+      kind = 'planimetria_foto'
+      const style = STYLE_LOOK[body.style ?? 'modern'] ?? STYLE_LOOK.modern
+      used = `The first image is the floor plan of an Italian apartment. The second image is the same floor plan with a red camera drawn on it: the solid red dot is exactly where the photographer stands, the red cone shows the direction the camera faces and its field of view (about ${cam.fov} degrees). Create one photorealistic interior photo of this apartment taken from exactly that spot, at eye height (1.5 m), looking exactly along the cone. Read the plan: identify which room the dot is in, its shape and size, and where walls, doors, door openings and windows (thin double lines on the outer walls) are. Show exactly what falls inside the cone: the walls, windows and doors in front and to the sides must be in the positions the plan gives them as seen from that spot; anything behind the camera is not visible. If the cone looks through an opening into another room, show that room beyond. Furnish the rooms realistically for their use, ${style}. Professional Italian real estate listing photo, natural daylight from the windows, straight verticals, wide-angle lens matching the field of view. No text, no labels, no measurements, no red marks, no floor plan lines in the photo.`
+      const marked = await camCopy(src, cam)
+      // cosa si vede davvero da li' (muri che bloccano, stanze nascoste): letto da Claude e passato a GPT come vincolo
+      const view = await camView(Buffer.from(marked.split(',')[1], 'base64'), cam.fov, userId)
+      if (view) used += `\n\nWhat the camera sees, worked out from the plan (follow it exactly, it overrides your own reading of the plan):\n${view}\nNothing listed under NOT VISIBLE may appear in the photo, not even partially through a door.`
+      b64 = await gptImage({ userId, image: src, prompt: used, extra: [marked], kind, size: '1536x1024', quality: process.env.GPT_IMAGE_QUALITY || 'medium' })
+    } else if (kind === 'planimetria') {
       // planimetria: si ritaglia il solo appartamento (niente intestazione, timbri, cantina a parte), GPT a qualita' piena,
       // poi il risultato torna al suo posto sul foglio. Intera, la catastale veniva reinventata da GPT e da Nano Banana
       // (prove del 29/09 in ~/Desktop/prove-planimetria)
@@ -158,7 +171,7 @@ export async function POST(req: NextRequest) {
   // risultato alle proporzioni dell'originale + finitura fotografica (grana, contrasto locale: meno "piatto");
   // Luminoso no: e' gia' la foto vera con l'esposizione corretta
   let shapedBuf: Buffer | null = null
-  const shaped = async () => (shapedBuf ??= body.angle === 'day' ? await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl) : await finish(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl, !body.planimetria && (!body.angle || body.angle === 'day'))))
+  const shaped = async () => (shapedBuf ??= body.plan === 'camera' ? await finish(Buffer.from(b64, 'base64')) : body.angle === 'day' ? await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl) : await finish(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl, !body.planimetria && (!body.angle || body.angle === 'day'))))
   // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
   const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
@@ -230,4 +243,24 @@ async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x
     await writeFile(`${dir}/3-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
     await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\nzona: ${JSON.stringify(d.region)}\n\nprompt:\n${d.prompt}\n`)
   } catch (e) { console.error('debugDump', e) }
+}
+
+// fotocamera della planimetria: x, y tra 0 e 1 sul disegno, angolo in gradi (0 = destra, senso orario), ampiezza 45-100
+function planCam(c: unknown): { x: number; y: number; a: number; fov: number } | null {
+  const o = (c ?? {}) as Record<string, unknown>
+  const n = (v: unknown, lo: number, hi: number) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : null)
+  const x = n(o.x, 0, 1), y = n(o.y, 0, 1), a = n(o.a, -360, 360), fov = n(o.fov, 45, 100)
+  return x === null || y === null || a === null || fov === null ? null : { x, y, a, fov }
+}
+// copia della pianta con la fotocamera in rosso: punto pieno e cono lungo un terzo del lato corto
+async function camCopy(src: string, c: { x: number; y: number; a: number; fov: number }): Promise<string> {
+  const buf = src.startsWith('data:') ? Buffer.from(src.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+  const img = sharp(buf).rotate()
+  const { width: w = 1000, height: h = 1000 } = await img.metadata()
+  const m = Math.min(w, h), L = m * 0.34, cx = c.x * w, cy = c.y * h
+  const ray = (d: number) => [cx + Math.cos(d * Math.PI / 180) * L, cy + Math.sin(d * Math.PI / 180) * L]
+  const [x1, y1] = ray(c.a - c.fov / 2), [x2, y2] = ray(c.a + c.fov / 2)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><path d="M${cx},${cy} L${x1},${y1} A${L},${L} 0 0 1 ${x2},${y2} Z" fill="rgba(255,0,0,.28)" stroke="#ff0000" stroke-width="${Math.max(3, m * 0.006)}"/><circle cx="${cx}" cy="${cy}" r="${Math.max(8, m * 0.018)}" fill="#ff0000"/></svg>`
+  const out = await img.composite([{ input: Buffer.from(svg) }]).jpeg({ quality: 90 }).toBuffer()
+  return `data:image/jpeg;base64,${out.toString('base64')}`
 }

@@ -1,4 +1,5 @@
 'use client';
+import type React from 'react';
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -26,7 +27,7 @@ const MSGS = [tr('Guardo la foto', 'Looking at the photo'), tr('Applico la modif
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export type Region = { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] };
-export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean; plan?: 'bw' | '3d'; region?: Region; points?: { x: number; y: number }[]; projectId?: string; room?: string; variant?: number; reference?: string; styleRef?: string; edits?: number; density?: 'poco' | 'ricco' };
+export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean; plan?: 'bw' | '3d' | 'camera'; camera?: { x: number; y: number; a: number; fov: number }; region?: Region; points?: { x: number; y: number }[]; projectId?: string; room?: string; variant?: number; reference?: string; styleRef?: string; edits?: number; density?: 'poco' | 'ricco' };
 export type Reveal = 'burst' | 'line' | 'slider' | null;
 
 
@@ -63,9 +64,10 @@ export function useAiPhoto() {
 }
 
 // Riquadro foto: originale con alone blu mentre lavora, poi slider prima/dopo con Scarica.
-export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, onSave, saveActive, since, className = 'aspect-[3/2] max-h-[60vh]' }: {
+// single: il risultato non e' la stessa foto modificata (es. foto da un punto della planimetria): niente prima/dopo, solo il risultato
+export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, onSave, saveActive, since, single, overlay, className = 'aspect-[3/2] max-h-[60vh]' }: {
   since?: number;
-  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; onUnpark?: () => void; onSave?: () => void; saveActive?: boolean; className?: string;
+  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; onUnpark?: () => void; onSave?: () => void; saveActive?: boolean; className?: string; single?: boolean; overlay?: React.ReactNode;
 }) {
   const [saved, setSaved] = useState(false);
   // larghezza vera dell'etichetta (Scarica / Scaricato): serve un numero per animare il passaggio a cerchio
@@ -83,7 +85,9 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
   const tag = 'absolute z-[12] rounded-full bg-[rgba(33,31,28,.72)] px-3 py-1.5 text-[11px] font-bold text-white';
   return (
     <div className={`relative w-full overflow-hidden rounded-2xl bg-canvas ${className}`}>
-      <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      {/* single (foto da un punto): la pianta intera mentre lavora, con sopra la fotocamera scelta (overlay) */}
+      <img src={src} alt="" className={`absolute inset-0 h-full w-full ${single ? 'bg-white object-contain' : 'object-cover'}`} />
+      {overlay}
       {aurora && (
         <div className="pointer-events-none absolute inset-0 z-[6]" style={{ animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' }}>
           <div className="absolute inset-0" style={{
@@ -104,13 +108,14 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
           )}
         </div>
       )}
-      {out && (reveal === 'line' || reveal === 'slider') && (
+      {single && out && <img src={out} alt="" className="blur-in absolute inset-0 h-full w-full object-cover" />}
+      {!single && out && (reveal === 'line' || reveal === 'slider') && (
         <InlineSlider before={src} after={out} isVertical={false} showImages={reveal === 'slider'} interactive={reveal === 'slider'} parked={parked} />
       )}
-      {reveal === 'slider' && out && (
+      {(reveal === 'slider' || (single && !busy)) && out && (
         <>
-          <span className={`blur-in bottom-3 left-3 ${tag}`}>{tr('Prima', 'Before')}</span>
-          <span className={`blur-in bottom-3 right-3 ${tag}`}>{tr('Dopo', 'After')}</span>
+          {!single && <span className={`blur-in bottom-3 left-3 ${tag}`}>{tr('Prima', 'Before')}</span>}
+          {!single && <span className={`blur-in bottom-3 right-3 ${tag}`}>{tr('Dopo', 'After')}</span>}
           {/* un solo pulsante: Scarica (dopo il clic "Scaricato" per 2 s); con `parked` (Modifica aperta) si stringe e diventa la X.
               Sta sopra la selezione (z-30) cosi' non ci sono mai due pulsanti uno sull'altro. */}
           {/* Salva (nell'immobile) accanto a Scarica, stesso stile; con Modifica aperta non c'e' (opacity-0 non basta: blur-in la riporta a 1) */}

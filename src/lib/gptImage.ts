@@ -12,7 +12,8 @@ export const GPT_IMAGE_USD: Record<string, number> = { low: 0.014, medium: 0.020
 
 // extra: altre immagini di riferimento (la copia con la zona in rosso); quality: livello per questa chiamata (predefinito GPT_IMAGE_QUALITY)
 // mask: PNG RGBA della stessa misura della foto, trasparente dove modificare (inpainting nativo di OpenAI)
-export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string; extra?: string[]; quality?: string; mask?: Buffer }): Promise<string | null> {
+// size: formato d'uscita fisso, indipendente dalla foto (es. la foto vista da un punto della planimetria): niente bande
+export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string; extra?: string[]; quality?: string; mask?: Buffer; size?: '1536x1024' | '1024x1536' | '1024x1024' }): Promise<string | null> {
   if (await isFakeUser(o.userId)) { await new Promise(r => setTimeout(r, 4000)); return fakePhoto(o.image) } // account di prova: niente OpenAI
   const key = process.env.OPENAI_API_KEY
   if (!key) return null
@@ -22,7 +23,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
   try {
     const src = o.image.startsWith('data:') ? Buffer.from(o.image.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(o.image, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
     const { width = 0, height = 0 } = await sharp(src).rotate().metadata()
-    const size = width > height * 1.15 ? '1536x1024' : height > width * 1.15 ? '1024x1536' : '1024x1024'
+    const size = o.size ?? (width > height * 1.15 ? '1536x1024' : height > width * 1.15 ? '1024x1536' : '1024x1024')
     // GPT risponde solo in 3:2, 2:3 o 1:1: con una foto di altro formato (16:9 dei video, 4:3 delle macchine) la
     // allungava inventando soffitto e pavimento, e il prima/dopo non combaciava piu'. Si mettono bande grigie piatte
     // fino al formato di GPT, gli si chiede di lasciarle, e alla fine si ritagliano: inquadratura identica alla foto
@@ -30,7 +31,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     const [TW, TH] = size.split('x').map(Number)
     const fitW = Math.min(TW, Math.round(TH * width / height)), fitH = Math.min(TH, Math.round(TW * height / width))
     const padX = Math.floor((TW - fitW) / 2), padY = Math.floor((TH - fitH) / 2)
-    const bars = padX > TW * 0.01 || padY > TH * 0.01
+    const bars = !o.size && (padX > TW * 0.01 || padY > TH * 0.01)
     const frame = (b: Buffer, mode: 'photo' | 'mask' = 'photo') => bars
       ? sharp(b).rotate().resize(fitW, fitH, { fit: 'fill' }).extend({ top: padY, bottom: TH - fitH - padY, left: padX, right: TW - fitW - padX, background: mode === 'mask' ? { r: 0, g: 0, b: 0, alpha: 1 } : '#808080' }).png().toBuffer()
       : sharp(b).rotate().png().toBuffer()

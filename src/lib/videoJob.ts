@@ -66,7 +66,10 @@ const NEG_REVERSE = `${NEG_VEO}, falling objects, flying objects, new furniture 
 // Particelle (invertito: le scie dorate entrano e formano i mobili, come nel reel di GetNearMe): niente divieti su scie e bagliori
 const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, different camera angle, cross-fade, double exposure, ghosting, transparent walls, morphing, duplicated furniture, extra furniture, new furniture appearing, replaced furniture, objects sliding, falling objects, people, hands, tripod, camera equipment, text, letters, captions, watermark, exposure change, flicker, smoke, fire, flames, explosion, large debris'
 // template con i flussi Kling di GetNearMe (vedi gnmVideoPrompts); Popup, Dall'alto e Particelle su Veo
-const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true }
+// Dalla pianta alla stanza (-kp): pianta 3D dall'alto (stessa pianta, tagliata all'altezza dei muri) e discesa dentro la stanza
+const PLAN_TOP_3D = 'Turn this floor plan into a photorealistic 3D cutaway view of the same furnished apartment seen straight from above, like a dollhouse with no roof: walls with real thickness cut at about 2 m height, floors, doors and windows exactly where the plan has them, every room furnished realistically for its use in a simple modern style, soft natural daylight. Keep exactly the same layout, room shapes and proportions as the plan. Fill the whole frame with the apartment on a plain light background. No text, no labels, no measurements, no plan lines.'
+const PLAN_DIVE = 'One continuous cinematic camera move with no cuts: the camera starts high above the 3D cutaway apartment looking straight down, then smoothly descends and tilts forward, flying down between the walls into one room, and slows to a stop at eye height inside that room, ending exactly on the last image. The layout of the apartment never changes; walls, doors and furniture stay solid and consistent. Calm, smooth, elegant movement.'
+const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true }
 // Volo nel cantiere (30/09, prove in ~/Desktop/prove-video-template/costruzione-fpv, versione 21): intro FPV fissa nel
 // cantiere fino allo scavo (templates/volo-cantiere su R2, fatta una volta), poi la camera esce dallo scavo e si ribalta
 // scoprendo il palazzo dell'agente quasi finito, che si completa fino alla foto vera. Verticale (-kf) o, con una foto
@@ -90,7 +93,7 @@ const VANISH: Record<Anim, string> = {
   particles: 'Each object dissolves on the spot into a cloud of fine, soft golden dust particles that drift slightly upward and fade away, leaving the bare floor and walls exactly as in the last image. Objects never slide or fly. ',
   // invertito: i mobili compaiono a scatti, uno per volta, come in stop-motion
   stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
-  cantiere: '', daynight: '', camera: '', fpv: '',
+  cantiere: '', daynight: '', camera: '', fpv: '', planwalk: '',
 }
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
@@ -141,12 +144,12 @@ export const fal = async (url: string, body?: { duration?: unknown } & Record<st
 }
 
 export type VideoResult = { job?: string; url?: string; id?: string; status?: number | 'working'; error?: string }
-export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv'
-export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv'] as const).find(x => x === a) ?? 'popup'
+export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv' | 'planwalk'
+export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv', 'planwalk'] as const).find(x => x === a) ?? 'popup'
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean }): Promise<VideoResult & FramesResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -190,6 +193,18 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       } else if (anim === 'camera') {
         // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
         ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_camera' })).request_id]
+      } else if (anim === 'planwalk') {
+        // Dalla pianta alla stanza: la planimetria in 3D vista dall'alto, poi insieme: discesa dall'alto dentro la stanza
+        // fino alla foto (scattata da un punto della pianta) e camminata in avanti dalla foto. Due clip montate di seguito.
+        if (!o.plan) return { error: 'bad_request', status: 400 }
+        const top = await gptImage({ userId: logUser, image: o.plan, prompt: PLAN_TOP_3D, kind: 'video_planwalk', size: landscape ? '1536x1024' : '1024x1536', quality: process.env.GPT_IMAGE_QUALITY || 'medium' })
+        if (!top) return { error: 'ai_failed', status: 502 }
+        const topUrl = await uploadJpeg(await sharp(Buffer.from(top, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-pianta3d.jpg`)
+        const [a, b] = await Promise.all([
+          fal(KLING_TURBO_URL, { image_url: topUrl, tail_image_url: fullUrl, prompt: PLAN_DIVE, negative_prompt: 'cut, jump cut, fade, morphing walls, layout changing, fisheye, distortion, people, text, labels', duration: '5' }, { userId: logUser, kind: 'video_planwalk' }),
+          fal(KLING16_URL, { image_url: fullUrl, prompt: WALK_INTERIOR, negative_prompt: WALK_INTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_planwalk' }),
+        ])
+        ids = [a.request_id, b.request_id]
       } else if (anim === 'fpv') {
         // il palazzo quasi finito (dalla foto), poi insieme: flip dallo scavo dell'intro al palazzo, e chiusura fino alla foto
         const almost = await frame(FPV_ALMOST, 'quasi')
@@ -208,7 +223,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         ids = [(await kling(empty, fullUrl, GNM_STOPMOTION)).request_id]
       }
       if (ids.some(x => !x)) { console.error('video kling submit', ids); return { error: 'ai_failed', status: 502 } }
-      const kname = `${name}${anim === 'fpv' ? (landscape ? '-kh' : '-kf') : ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : '-k'}`
+      const kname = `${name}${anim === 'fpv' ? (landscape ? '-kh' : '-kf') : anim === 'planwalk' ? '-kp' : ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : '-k'}`
       const id = ids.join('+')
       const job = `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}`
       await markPending(owner, kname, job)
@@ -344,7 +359,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-ka|-kw|-kf|-kh|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-kp|-ka|-kw|-kf|-kh|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -353,7 +368,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   // Kling (flussi GetNearMe): una clip, o due per il cantiere (scavo -> struttura, struttura -> casa).
   // Dall'alto (-g) e' su Kling con l'id k_...: clip in avanti, poi dissolvenza sulla foto vera come i video Veo.
   const gk = id.startsWith('k_')
-  const kling = /-k[cmawfh]?$/.test(name) || gk
+  const kling = /-k[cmpawfh]?$/.test(name) || gk
   const base = kling ? KLING_BASE : FAL
   const ids = id.replace(/^k_/, '').split('+')
   const st = await Promise.all(ids.map(r => fal(`${base}/requests/${r}/status`)))
@@ -388,7 +403,10 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
       return { url, id, fresh: true }
     }
     // due clip del cantiere una dopo l'altra (ricodifica leggera, crf 14)
-    if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
+    // Dalla pianta alla stanza (-kp): due modelli Kling diversi, misure non sempre uguali: stessa misura prima di unirle
+    const same = "scale='if(gt(iw,ih),1280,720)':'if(gt(iw,ih),720,1280)',setsar=1,fps=30"
+    if (parts.length > 1 && /-kp$/.test(name)) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', `[0:v]${same}[a];[1:v]${same}[b];[a][b]concat=n=2:v=1:a=0[v]`, '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
+    else if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
     // Con te in video (-ka): montaggio suo (video dell'agente + trasformazione), vedi agentVideo
     if (/-k[aw]$/.test(name)) {
@@ -411,7 +429,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     const speed = /-k$/.test(name) ? 1.6 : 1
     const shown = cut / speed // durata della clip nel video finale
     // Camminata (-km): la ripresa finisce da sola, niente fermo ne' zoom finale
-    const walkCam = /-km$/.test(name), hold = walkCam ? 0 : HOLD
+    const walkCam = /-k[mp]$/.test(name), hold = walkCam ? 0 : HOLD // anche Dalla pianta alla stanza (-kp): finisce camminando
     const total = shown + hold, n = Math.round(total * 30)
     // zoom 3% ease-in-out solo nel finale, dal passaggio alla foto vera in poi (Kling e Svuota: ultimi 2 s);
     // sub-pixel (perspective con interpolazione: niente tremolio)

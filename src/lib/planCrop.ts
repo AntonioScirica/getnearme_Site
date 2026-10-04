@@ -44,3 +44,31 @@ export async function pasteBack(img: Buffer, out: Buffer, b: Box): Promise<strin
   const page = await sharp({ create: { width, height, channels: 3, background: '#ffffff' } }).composite([{ input: piece, left: b.left, top: b.top }]).png().toBuffer()
   return page.toString('base64')
 }
+
+// Foto da un punto della planimetria: prima di disegnare, Claude legge la pianta con la fotocamera rossa e scrive cosa si
+// vede davvero da li' (muri pieni che bloccano la vista, porte, stanze dietro). GPT da solo "vedeva" anche un bagno che
+// si apre solo dalla camera (prova del 02/10). ~0,03 $ con Opus.
+export async function camView(marked: Buffer, fov: number, userId: string): Promise<string | null> {
+  const img = await sharp(marked).rotate().resize(1600, 1600, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()
+  const t0 = Date.now()
+  try {
+    const resp = await new Anthropic().messages.create({
+      model: 'claude-opus-5-5', max_tokens: 6000, // Opus ragiona prima di rispondere: con 900 token il ragionamento li consumava tutti e il testo restava vuoto
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img.toString('base64') } },
+        { type: 'text', text: `This is an apartment floor plan. A photographer stands at the solid red dot, eye height 1.5 m, and the red cone is the camera's horizontal field of view (about ${fov} degrees). Work out precisely what the photo will show. Solid wall lines block the view completely; only door openings (gaps in walls, door swing arcs), open passages and windows let you see beyond. A room is visible ONLY if there is a straight line of sight from the dot through an opening into it within the cone; rooms reachable only through another room's door (for example an en-suite bathroom accessed from a bedroom) are NOT visible unless that inner door is also in direct line of sight. Assume doors drawn with a swing arc are open; a door seen at a sharp angle shows only a sliver of the room.
+Reply in English, plain text, no preamble, in this order:
+1. ROOM: the room the photographer is in, its approximate size and shape.
+2. VISIBLE, from left to right across the frame: each wall, corner, door opening, window, passage and what can be seen through it (which room, how much of it), with rough distance from the camera.
+3. NOT VISIBLE: rooms and doors that must NOT appear (behind walls, behind the camera or outside the cone).
+Be exact and brief.` },
+      ] }],
+    })
+    await logUsage({ userId, kind: 'planimetria_vista' }, false, Date.now() - t0, { input: resp.usage.input_tokens, output: resp.usage.output_tokens }, true, 'claude-opus-5-5').catch(() => {})
+    const txt = resp.content.map(b => (b.type === 'text' ? b.text : '')).join('').trim()
+    return txt || null
+  } catch (e) {
+    console.error('camView', e)
+    return null
+  }
+}
