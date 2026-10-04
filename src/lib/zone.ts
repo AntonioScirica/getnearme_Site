@@ -30,24 +30,84 @@ const dist = (a: number, b: number, c: number, d: number) => {
 // Indirizzo -> coordinate (Nominatim). "Via Mazzini 20, Verona" a testo libero finiva a Villafranca di Verona: con la
 // citta' in fondo si cerca prima la via dentro i confini della citta', poi a testo libero.
 type Hit = { lat: string; lon: string; display_name: string }
+// null = servizio non raggiungibile o limitato (429), [] = nessun risultato: sono due cose diverse
 const nomi = (qs: string) => fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&${qs}`, {
   headers: { 'User-Agent': UA, 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
 }).then(r => (r.ok ? r.json() : null)).catch(() => null) as Promise<(Hit & { boundingbox?: string[] })[] | null>
-export async function geocode(address: string): Promise<Hit | null> {
+
+// Riserva quando Nominatim non risponde o ci limita: Photon (komoot, stessi dati OpenStreetMap). Si cerca dentro i
+// confini della citta' e si accetta solo un risultato con la stessa via (civico se c'e', altrimenti la via): Photon a
+// testo libero restituisce anche fontane o chiese col nome simile.
+type PhotonF = { geometry: { coordinates: [number, number] }; properties: { name?: string; street?: string; housenumber?: string; city?: string; countrycode?: string; extent?: number[] } }
+const photon = (qs: string) => fetch(`https://photon.komoot.io/api/?limit=5&${qs}`, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(8000) })
+  .then(r => (r.ok ? r.json() : null)).then(d => (d?.features ?? null) as PhotonF[] | null).catch(() => null)
+const norm = (s = '') => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+// "Via Roma 5, Milano", "Via Roma, 5, Centro, Milano", "Via Roma, 5" (senza citta'): via, civico e citta'.
+// La citta' e' l'ultima parte solo se ha lettere (prima "120" finiva come citta' vuota e il civico si perdeva).
+function parseAddr(address: string) {
   const parts = address.split(',').map(x => x.trim()).filter(Boolean)
-  const city = parts.length > 1 ? parts[parts.length - 1].replace(/\d+/g, '').trim() : ''
+  const isNum = (x: string) => /^\d+\s*[a-z]?(\/\w+)?$/i.test(x)
+  const last = parts[parts.length - 1] ?? ''
+  const city = parts.length > 1 && !isNum(last) ? last.replace(/\d+/g, '').trim() : ''
+  const m = (parts[0] ?? '').match(/^(.*?)[\s,]+(\d+\s*[a-z]?)$/i)
+  const street = (m ? m[1] : parts[0] ?? '').trim()
+  const num = (m?.[2] ?? parts.slice(1).find(isNum) ?? '').replace(/\s+/g, '').split('/')[0]
+  return { parts, city, street, num }
+}
+
+async function viaPhoton(address: string): Promise<Hit | 'down' | null> {
+  const { city, street, num } = parseAddr(address)
+  let bbox = ''
   if (city) {
-    const b = (await nomi(`city=${encodeURIComponent(city)}`))?.[0]?.boundingbox
+    const c = await photon(`q=${encodeURIComponent(city)}&layer=city`)
+    if (!c) return 'down'
+    const e = c.find(f => f.properties.countrycode === 'IT')?.properties.extent
+    if (e) bbox = `&bbox=${e[0]},${e[3]},${e[2]},${e[1]}`
+  }
+  const hit = (f: PhotonF): Hit => ({ lat: String(f.geometry.coordinates[1]), lon: String(f.geometry.coordinates[0]), display_name: [f.properties.street ?? f.properties.name, f.properties.housenumber, f.properties.city].filter(Boolean).join(', ') })
+  // stessa via: tutte le parole cercate ci sono ("Via Mazzini" trova "Via Giuseppe Mazzini")
+  const same = (v?: string) => { const w = new Set(norm(v).split(' ')); return !!v && norm(street).split(' ').every(x => w.has(x)) }
+  const it = (f: PhotonF) => f.properties.countrycode === 'IT' && (!city || norm(f.properties.city) === norm(city))
+  if (num) {
+    const h = await photon(`q=${encodeURIComponent(`${street} ${num}`)}&layer=house${bbox}`)
+    if (!h) return 'down'
+    const f = h.find(f => it(f) && same(f.properties.street) && norm(f.properties.housenumber) === norm(num))
+    if (f) return hit(f)
+  }
+  const st = await photon(`q=${encodeURIComponent(street)}&layer=street${bbox}`)
+  if (!st) return 'down'
+  const f = st.find(f => it(f) && same(f.properties.name))
+  return f ? hit(f) : null
+}
+
+// Indirizzo -> coordinate (Nominatim). "Via Mazzini 20, Verona" a testo libero finiva a Villafranca di Verona: con la
+// citta' in fondo si cerca prima la via dentro i confini della citta', poi a testo libero; se Nominatim non risponde, Photon.
+// Lancia un errore solo se nessuno dei due servizi risponde (cosi' non si scambia un limite per "indirizzo inesistente").
+export async function geocode(address: string): Promise<Hit | null> {
+  const { parts, city } = parseAddr(address)
+  let down = false
+  if (city) {
+    const c = await nomi(`city=${encodeURIComponent(city)}`)
+    if (!c) down = true
+    const b = c?.[0]?.boundingbox
     if (b) {
-      const hit = (await nomi(`q=${encodeURIComponent(parts.slice(0, -1).join(', '))}&viewbox=${b[2]},${b[1]},${b[3]},${b[0]}&bounded=1`))?.[0]
-      if (hit) return hit
+      const r = await nomi(`q=${encodeURIComponent(parts.slice(0, -1).join(', '))}&viewbox=${b[2]},${b[1]},${b[3]},${b[0]}&bounded=1`)
+      if (!r) down = true
+      if (r?.[0]) return r[0]
     }
   }
-  return (await nomi(`q=${encodeURIComponent(address)}`))?.[0] ?? null
+  if (!down) {
+    const r = await nomi(`q=${encodeURIComponent(address)}`)
+    if (r?.[0]) return r[0]
+    if (!r) down = true
+  }
+  const p = await viaPhoton(address)
+  if (p === 'down') { if (down) throw new Error('geocode_down'); return null }
+  return p
 }
 
 export async function lookupZone(address: string, radius = RADIUS): Promise<Zone | null> {
-  const g = await geocode(address)
+  const g = await geocode(address).catch(() => null)
   if (!g) return null
   const lat = Number(g.lat), lon = Number(g.lon)
 

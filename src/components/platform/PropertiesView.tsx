@@ -27,7 +27,7 @@ const place = (p: ProjectData) => p.addr?.split(',').map(s => s.trim()).filter(B
 const title = (p: ProjectData) => p.titolo || p.nome || tr('Immobile', 'Property');
 
 // ponytail: geocoding dal browser, uno al secondo (limite Nominatim); salvare lat/lon sul progetto se gli immobili diventano centinaia
-const GEO_KEY = 'gnm-geo-2'; // -2: posizioni rifatte con la ricerca dentro la citta' (01/10/2026)
+const GEO_KEY = 'gnm-geo-4'; // -3: rifatte dopo il 02/10/2026 (prima un limite di Nominatim veniva salvato come "non trovato")
 function useGeo(projects: ProjectData[] | null) {
   // null finche' non leggo la cache: localStorage solo dopo il montaggio (altrimenti errore di idratazione)
   const [geo, setGeo] = useState<Record<string, LatLon | 0> | null>(null);
@@ -302,8 +302,14 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     if (!ready || !m || !Lf) return;
     Object.values(markers.current).forEach(x => x.remove());
     markers.current = {};
+    // stesso punto (es. due immobili sulla stessa via, posizionati a livello di via): pin sfalsati in cerchio, se no se ne vede uno
+    const used: Record<string, number> = {};
+    const spot = (p: ProjectData): LatLon => {
+      const [y, x] = geo[p.addr.trim()] as LatLon, k = `${y.toFixed(5)},${x.toFixed(5)}`, i = used[k] = (used[k] ?? -1) + 1;
+      return i ? [y + 0.00035 * Math.cos(i * 2.4), x + 0.00045 * Math.sin(i * 2.4)] : [y, x];
+    };
     for (const p of pinned) {
-      const ll = geo[p.addr.trim()] as LatLon;
+      const ll = spot(p);
       // foto come sfondo (cover): riempie sempre il cerchio, anche con le regole di Leaflet sulle <img> dei marker
       const html = `<div class="pin transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] hover:scale-110" style="width:48px;height:48px;border-radius:9999px;border:3px solid #fff;box-shadow:${PIN_SHADOW};background:#f4f4f5 ${p.cover ? `url('${encodeURI(p.cover)}')` : ''} center/cover no-repeat;box-sizing:border-box"></div>`;
       const mk = Lf.marker(ll, { icon: Lf.divIcon({ html, className: '', iconSize: [48, 48], iconAnchor: [24, 24] }), riseOnHover: true })
@@ -312,7 +318,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       markers.current[p.id] = mk;
     }
     if (pinned.length) {
-      const b = Lf.latLngBounds(pinned.map(p => geo[p.addr.trim()] as LatLon));
+      const b = Lf.latLngBounds(Object.values(markers.current).map(mk => mk.getLatLng()));
       // una sola vista con tutti gli immobili, il piu' vicino possibile (spazio per navbar e sfumatura)
       m.setMinZoom(0); m.setMaxZoom(19);
       m.fitBounds(b, { paddingTopLeft: [60, 110], paddingBottomRight: [60, 220], maxZoom: 16, animate: false });

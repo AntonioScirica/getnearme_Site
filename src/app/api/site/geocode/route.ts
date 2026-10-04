@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
   if (recent.length >= 60) return NextResponse.json({ error: 'too_many' }, { status: 429 })
   hits.set(ip, [...recent, Date.now()])
 
-  const g = await geocode(q)
+  // servizi di geocoding non raggiungibili: 503 e niente cache, il browser riprova alla visita dopo (non e' "non trovato")
+  const g = await geocode(q).catch(() => undefined)
+  if (g === undefined) return NextResponse.json({ error: 'unavailable' }, { status: 503 })
   const v = g ? { lat: Number(g.lat), lon: Number(g.lon) } : null
   cache.set(q, { at: Date.now(), v })
   return NextResponse.json(v ?? { error: 'not_found' }, { status: v ? 200 : 404, headers })
