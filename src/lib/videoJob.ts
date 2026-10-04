@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { STYLE_LOOK } from '@/lib/stagingPrompts'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { spawn } from 'child_process'
 import { mkdtemp, readFile, rename, rm, writeFile } from 'fs/promises'
@@ -150,7 +151,7 @@ export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmo
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string; room?: string }): Promise<VideoResult & FramesResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string; room?: string; look?: string }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -191,8 +192,10 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         const finished = await frame(RENO_FINISHED_IMAGE, 'finita')
         // la foto del cantiere in piu': serve solo a capire che stanza e' (cucina, bagno o soggiorno), prova del 05/10
         // stanza gia' riconosciuta dalla chat (o scelta dall'agente): si arreda per quell'uso, altrimenti la deduce dalla foto
-        const roomEn = o.room ? RENO_ROOMS[o.room] : undefined
-        const furnished = finished && await frame(RENO_FURNISHED_IMAGE + (roomEn ? ` This room is ${roomEn}: furnish it as ${roomEn}.` : ''), 'arredata-reno', finished, [fullUrl])
+        const roomEn = o.room ? RENO_ROOMS[o.room] ?? `the room the agent calls "${o.room}" (Italian)` : undefined
+        // stile scelto dall'agente (Moderno, Nordico, Luxury, Boho): sostituisce il moderno semplice del prompt
+        const look = o.look && STYLE_LOOK[o.look] ? RENO_FURNISHED_IMAGE.replace('in a simple modern style typical of an Italian real estate listing', `in this style: ${STYLE_LOOK[o.look]}`) : RENO_FURNISHED_IMAGE
+        const furnished = finished && await frame(look + (roomEn ? ` This room is ${roomEn}: furnish it as ${roomEn}.` : ''), 'arredata-reno', finished, [fullUrl])
         if (!finished || !furnished) return { error: 'ai_failed', status: 502 }
         const [a, b] = await Promise.all([kling(fullUrl, finished, RENO_1), kling(finished, furnished, RENO_2)])
         ids = [a.request_id, b.request_id]
