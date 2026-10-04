@@ -101,11 +101,11 @@ type Msg =
   | { id: string; role: 'video'; renderAt?: number; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; plan?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
-type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk';
+type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura';
 // scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
 type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'cam' | 'agent' | 'style' | 'keep' | 'photo'; src?: string };
 const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, cam: VideoIcon, agent: UserRound, style: Palette, keep: Sofa, photo: ImageIcon };
-const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam', planwalk: 'cam' };
+const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam', planwalk: 'cam', ristruttura: 'build' };
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
   // solo per le foto nate da "Foto da un punto" della planimetria (il messaggio video ha la pianta): primo della lista
@@ -119,6 +119,10 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   // un'animazione sola: dal template si passa subito alla scelta della stanza
   { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Dal cantiere alla casa finita', 'From construction site to finished home'), sample: VIDEO_SAMPLES.cantiere, anims: [
     { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Dal cantiere alla casa finita', 'From construction site to finished home'), sample: VIDEO_SAMPLES.cantiere },
+  ] },
+  // stanza in cantiere: muri grezzi e impianti a vista diventano la stanza finita, poi arredata (solo interni)
+  { id: 'ristrutturazione', label: tr('Ristrutturazione', 'Renovation'), desc: tr('Dalla stanza in cantiere alla stanza finita e arredata', 'From a room under construction to a finished, furnished room'), sample: VIDEO_SAMPLES.ristruttura, anims: [
+    { id: 'ristruttura', label: tr('Ristrutturazione', 'Renovation'), desc: tr('Dalla stanza in cantiere alla stanza finita e arredata', 'From a room under construction to a finished, furnished room'), sample: VIDEO_SAMPLES.ristruttura },
   ] },
   { id: 'volo-cantiere', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Un volo tra le fondamenta, poi il palazzo si svela finito', 'A flight over the foundations, then the finished building is revealed'), sample: VIDEO_SAMPLES.fpv, anims: [
     { id: 'fpv', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Un volo tra le fondamenta, poi il palazzo si svela finito', 'A flight over the foundations, then the finished building is revealed'), sample: VIDEO_SAMPLES.fpv },
@@ -149,10 +153,10 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
   && (isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef);
 // crediti di un video per animazione; Cantiere e Giorno/notte partono subito dopo la scelta (niente passo Prima/Dopo)
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
-const videoCr = (anim?: VideoAnim) => anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : CREDIT_COST.video_render;
+const videoCr = (anim?: VideoAnim) => anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' || anim === 'ristruttura' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : CREDIT_COST.video_render;
 // attesa tipica del video, misurata sulle prove del 29-30/09 (generazione su fal + foto GPT + montaggio, coda compresa)
-const waitFor = (anim?: VideoAnim) => anim === 'cantiere' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
-const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera' || anim === 'fpv' || anim === 'planwalk';
+const waitFor = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'ristruttura' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
+const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera' || anim === 'fpv' || anim === 'planwalk' || anim === 'ristruttura';
 // crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
 const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' ? 0 : CREDIT_COST.video_prep);
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso

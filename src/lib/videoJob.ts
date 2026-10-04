@@ -8,7 +8,7 @@ import sharp from 'sharp'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
 import { FAKE_VIDEO, isFakeUser } from '@/lib/fakeAi'
-import { DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
+import { RENO_FINISHED_IMAGE, RENO_FURNISHED_IMAGE, RENO_1, RENO_2, DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
@@ -69,7 +69,7 @@ const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, di
 // Dalla pianta alla stanza (-kp): pianta 3D dall'alto (stessa pianta, tagliata all'altezza dei muri) e discesa dentro la stanza
 const PLAN_TOP_3D = 'Turn this floor plan into a photorealistic 3D cutaway view of the same furnished apartment seen straight from above, like a dollhouse with no roof: walls with real thickness cut at about 2 m height, floors, doors and windows exactly where the plan has them, every room furnished realistically for its use in a simple modern style, soft natural daylight. Keep exactly the same layout, room shapes and proportions as the plan. Fill the whole frame with the apartment on a plain light background. No text, no labels, no measurements, no plan lines.'
 const PLAN_DIVE = 'One continuous cinematic camera move with no cuts: the camera starts high above the 3D cutaway apartment looking straight down, then smoothly descends and tilts forward, flying down between the walls into one room, and slows to a stop at eye height inside that room, ending exactly on the last image. The layout of the apartment never changes; walls, doors and furniture stay solid and consistent. Calm, smooth, elegant movement.'
-const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true }
+const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true, ristruttura: true }
 // Volo nel cantiere (30/09, prove in ~/Desktop/prove-video-template/costruzione-fpv, versione 21): intro FPV fissa nel
 // cantiere fino allo scavo (templates/volo-cantiere su R2, fatta una volta), poi la camera esce dallo scavo e si ribalta
 // scoprendo il palazzo dell'agente quasi finito, che si completa fino alla foto vera. Verticale (-kf) o, con una foto
@@ -93,7 +93,7 @@ const VANISH: Record<Anim, string> = {
   particles: 'Each object dissolves on the spot into a cloud of fine, soft golden dust particles that drift slightly upward and fade away, leaving the bare floor and walls exactly as in the last image. Objects never slide or fly. ',
   // invertito: i mobili compaiono a scatti, uno per volta, come in stop-motion
   stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
-  cantiere: '', daynight: '', camera: '', fpv: '', planwalk: '',
+  cantiere: '', daynight: '', camera: '', fpv: '', planwalk: '', ristruttura: '',
 }
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
@@ -144,8 +144,8 @@ export const fal = async (url: string, body?: { duration?: unknown } & Record<st
 }
 
 export type VideoResult = { job?: string; url?: string; id?: string; status?: number | 'working'; error?: string }
-export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv' | 'planwalk'
-export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv', 'planwalk'] as const).find(x => x === a) ?? 'popup'
+export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv' | 'planwalk' | 'ristruttura'
+export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv', 'planwalk', 'ristruttura'] as const).find(x => x === a) ?? 'popup'
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
@@ -171,8 +171,8 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     // intermedi li fa GPT Image 2.5 Sunburst (0,014 $ l'uno) partendo dalla foto.
     // (con Svuota la foto e' gia' vuota: resta il flusso Veo in avanti)
     if (KLING[anim] && !o.empty) {
-      const frame = async (prompt: string, label: string, ref = fullUrl) => {
-        const out = await gptImage({ userId: logUser, image: ref, prompt, kind: `video_${anim}`, quality: process.env.GPT_EDIT_QUALITY || 'low' })
+      const frame = async (prompt: string, label: string, ref = fullUrl, extra?: string[]) => {
+        const out = await gptImage({ userId: logUser, image: ref, prompt, kind: `video_${anim}`, quality: process.env.GPT_EDIT_QUALITY || 'low', ...(extra ? { extra } : {}) })
         if (!out) return null
         return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
       }
@@ -184,6 +184,14 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         const excavation = structure && await frame(GNM_EXCAVATION_IMAGE, 'scavo', structure)
         if (!structure || !excavation) return { error: 'ai_failed', status: 502 }
         const [a, b] = await Promise.all([kling(excavation, structure, GNM_CANTIERE_1), kling(structure, fullUrl, GNM_CANTIERE_2)])
+        ids = [a.request_id, b.request_id]
+      } else if (anim === 'ristruttura') {
+        // stanza in cantiere (la foto) -> finita vuota -> arredata: 2 clip montate di seguito, prezzo e montaggio del Cantiere (-kc)
+        const finished = await frame(RENO_FINISHED_IMAGE, 'finita')
+        // la foto del cantiere in piu': serve solo a capire che stanza e' (cucina, bagno o soggiorno), prova del 05/10
+        const furnished = finished && await frame(RENO_FURNISHED_IMAGE, 'arredata-reno', finished, [fullUrl])
+        if (!finished || !furnished) return { error: 'ai_failed', status: 502 }
+        const [a, b] = await Promise.all([kling(fullUrl, finished, RENO_1), kling(finished, furnished, RENO_2)])
         ids = [a.request_id, b.request_id]
       } else if (anim === 'daynight') {
         // interni: la stanza di sera con le sue luci accese; esterni: la casa di notte (reel di GetNearMe)

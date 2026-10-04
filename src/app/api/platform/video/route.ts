@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   // phase 'frames': solo Prima e Dopo (la chat li mostra); 'render': Veo dal token di Prima/Dopo approvati; senza: tutto di seguito
   let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string; interior?: boolean; plan?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
-  const anim = parseAnim(body.anim), action = anim === 'fpv' ? 'video_fpv' : anim === 'cantiere' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : anim === 'camera' ? 'video_camera' : anim === 'planwalk' ? 'video_planwalk' : 'video'
+  const anim = parseAnim(body.anim), action = anim === 'fpv' ? 'video_fpv' : anim === 'cantiere' || anim === 'ristruttura' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : anim === 'camera' ? 'video_camera' : anim === 'planwalk' ? 'video_planwalk' : 'video'
   if (body.phase === 'render') {
     if (typeof body.frames !== 'string') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     if (!(await canAfford(userId, 'video_render'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video_render }, { status: 402 })
