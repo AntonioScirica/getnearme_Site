@@ -24,7 +24,7 @@ interface LegalPage {
 
 const privacyIt: LegalPage = {
   title: "Informativa sulla Privacy",
-  lastUpdated: "Ultimo aggiornamento: 30 settembre 2026",
+  lastUpdated: "Ultimo aggiornamento: 5 ottobre 2026",
   description: "Come Agente Immo tratta i dati personali di chi usa la piattaforma per agenti immobiliari su agenteimmo.me.",
   blocks: [
     { type: "h2", text: "1. Titolare del trattamento" },
@@ -54,8 +54,9 @@ const privacyIt: LegalPage = {
     { type: "p", text: "Ti chiediamo di non caricare foto in cui si riconoscono persone, documenti o altri dati personali di terzi, se non hai titolo per farlo." },
     { type: "h3", text: "3.3. Annunci importati da un link" },
     { type: "p", text: "Quando incolli il link di un annuncio, il nostro server legge la pagina pubblica dell'annuncio e ne estrae dati sull'immobile (testo, caratteristiche, foto). Nella pagina possono comparire nomi e contatti dell'agenzia che l'ha pubblicato: li usiamo solo per compilare la scheda dell'immobile su tua richiesta." },
-    { type: "h3", text: "3.4. Sito personale e richieste di contatto" },
-    { type: "p", text: "Se pubblichi il tuo sito personale trattiamo i contenuti che scegli di mostrare (immobili, testi, foto, contatti). Le richieste inviate dai visitatori con il modulo di contatto (nome, email, telefono, messaggio, immobile) vengono inoltrate via email all'agente e non vengono archiviate nel nostro database." },
+    { type: "h3", text: "3.4. Sito personale, richieste di contatto e visite" },
+    { type: "p", text: "Se pubblichi il tuo sito personale trattiamo i contenuti che scegli di mostrare (immobili, testi, foto, contatti). Le richieste inviate dai visitatori con il modulo di contatto (nome, email, telefono, messaggio e immobile di interesse) ti arrivano per email e vengono salvate nella sezione Richieste del tuo profilo, dove puoi gestirle. Per quelle richieste il titolare sei tu; noi le trattiamo per tuo conto come responsabile del trattamento (art. 28 GDPR)." },
+    { type: "p", text: "Contiamo inoltre le visite alle pagine degli immobili del tuo sito per mostrarti quante persone le hanno viste: salviamo solo un numero per immobile e per giorno, senza dati che identifichino i visitatori. Per non contare due volte la stessa persona il browser del visitatore conserva per un giorno un segno tecnico; l'indirizzo IP è usato solo per bloccare gli abusi e non viene salvato." },
     { type: "h3", text: "3.5. Pagamenti e fatturazione" },
     { type: "p", text: "I pagamenti sono gestiti da Stripe. Noi conserviamo l'identificativo cliente e dell'abbonamento, il piano, le date di rinnovo e i dati di fatturazione che inserisci (per esempio ragione sociale, partita IVA, codice destinatario o PEC). Non vediamo né conserviamo i numeri completi delle carte." },
     { type: "h3", text: "3.6. Prova gratuita" },
@@ -96,7 +97,8 @@ const privacyIt: LegalPage = {
       "Account, profilo, immobili e sito personale: finché l'account è attivo. Vengono cancellati quando elimini l'account.",
       "Conversazioni della chat: 30 giorni, poi vengono cancellate. Foto e video generati restano nella Galleria.",
       "Foto e video della Galleria e file caricati: finché non li elimini tu o finché non elimini l'account.",
-      "Richieste di contatto dei siti personali: non le archiviamo; restano nella casella email dell'agente e nei registri tecnici di invio del fornitore email per il periodo previsto dal fornitore.",
+      "Richieste di contatto dei siti personali: finché l'agente non le elimina o non elimina l'account; restano anche nella sua casella email e nei registri tecnici di invio del fornitore email per il periodo previsto dal fornitore.",
+      "Conteggio delle visite agli immobili: numeri aggregati per giorno, senza dati personali, per la durata dell'account.",
       "Dati della prova gratuita (hash di IP e dispositivo, legati all'account): per il tempo necessario a garantire che la prova sia usata una sola volta, e comunque non oltre 12 mesi, poi li cancelliamo automaticamente. Foto e video della prova seguono le regole della Galleria.",
       "Dati di pagamento e fatture: 10 anni, come previsto dalla legge (art. 2220 del Codice civile), anche dopo l'eliminazione dell'account.",
       "Registri tecnici e di sicurezza con indirizzo IP: al massimo 90 giorni.",
@@ -132,7 +134,7 @@ const privacyIt: LegalPage = {
 
 const privacyEn: LegalPage = {
   title: "Privacy Policy",
-  lastUpdated: "Last Updated: 30 September 2026",
+  lastUpdated: "Last Updated: 5 October 2026",
   description: "How Agente Immo processes the personal data of people who use the platform for real estate agents on agenteimmo.me.",
   blocks: [
     { type: "h2", text: "1. Data Controller" },
@@ -162,8 +164,9 @@ const privacyEn: LegalPage = {
     { type: "p", text: "Please do not upload photos in which people, documents or other personal data of third parties can be recognized unless you are entitled to do so." },
     { type: "h3", text: "3.3. Listings Imported from a Link" },
     { type: "p", text: "When you paste the link to a listing, our server reads the public listing page and extracts property data (text, features, photos). The page may show the name and contact details of the agency that published it: we use them only to fill in the property record at your request." },
-    { type: "h3", text: "3.4. Personal Website and Contact Requests" },
-    { type: "p", text: "If you publish your personal website, we process the content you choose to show (properties, texts, photos, contact details). Requests sent by visitors through the contact form (name, email, phone number, message, property) are forwarded by email to the agent and are not stored in our database." },
+    { type: "h3", text: "3.4. Personal Website, Contact Requests and Views" },
+    { type: "p", text: "If you publish your personal website, we process the content you choose to show (properties, texts, photos, contact details). Requests sent by visitors through the contact form (name, email, phone number, message and property of interest) are sent to you by email and saved in the Requests section of your profile, where you can manage them. You are the controller of those requests; we process them on your behalf as a processor (Art. 28 GDPR)." },
+    { type: "p", text: "We also count views of the property pages on your website to show you how many people saw them: we only store a number per property per day, with no data identifying visitors. To avoid counting the same person twice, the visitor's browser keeps a technical marker for one day; the IP address is used only to block abuse and is not stored." },
     { type: "h3", text: "3.5. Payments and Invoicing" },
     { type: "p", text: "Payments are handled by Stripe. We keep the customer and subscription IDs, the plan, the renewal dates and the billing details you enter (for example company name, VAT number, e-invoicing recipient code or certified email). We never see or store full card numbers." },
     { type: "h3", text: "3.6. Free Trial" },
@@ -204,7 +207,8 @@ const privacyEn: LegalPage = {
       "Account, profile, properties and personal website: as long as the account is active. They are deleted when you delete your account.",
       "Chat conversations: 30 days, then they are deleted. Generated photos and videos remain in the Gallery.",
       "Gallery photos and videos and uploaded files: until you delete them or delete your account.",
-      "Contact requests from personal websites: we do not store them; they remain in the agent's mailbox and in the email provider's delivery logs for the period set by that provider.",
+      "Contact requests from personal websites: until the agent deletes them or deletes the account; they also remain in the agent's mailbox and in the email provider's delivery logs for the period set by that provider.",
+      "Property view counts: aggregated numbers per day, with no personal data, for the lifetime of the account.",
       "Free trial data (IP and device hashes, linked to the account): for as long as needed to ensure the trial is used only once, and in any case no longer than 12 months, after which we delete them automatically. Trial photos and videos follow the Gallery rules.",
       "Payment data and invoices: 10 years, as required by Italian law (Art. 2220 of the Civil Code), also after account deletion.",
       "Technical and security logs containing IP addresses: up to 90 days.",
