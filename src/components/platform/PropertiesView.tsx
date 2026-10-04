@@ -4,7 +4,8 @@ import { deleteProject, patchProjectDetails } from '@/lib/projects';
 import { isClosed, statusOf, STATUS_LABELS, STATUSES, type PropertyStatus } from '@/lib/siteTemplates';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker } from 'leaflet';
-import { ArrowUpRight, ChevronLeft, ChevronRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2, Check } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2, Check, Eye } from 'lucide-react';
+import { useViews, type Views } from './useViews';
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
@@ -85,6 +86,8 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
   // "In vetrina" sulle card solo se il sito c'e' davvero (Plus, Pro): con Starter la casa non e' online
   const cr = useCredits();
   const siteOk = !!cr && (!!cr.unlimited || cr.plan === 'plus' || cr.plan === 'pro');
+  // visite alle schede sul sito negli ultimi 30 giorni (occhio sulle card)
+  const views = useViews(siteOk ? (real ?? []).map(p => p.id) : []);
   // nessun immobile ancora: case d'esempio a Roma (mappa e lista piene), con l'invito a mettere in vetrina la prima.
   // ponytail: in sviluppo si aggiungono sempre i finti
   // durante il tour solo le case d'esempio (evento 'agenteimmo:tour-demo' dal Tour)
@@ -150,7 +153,7 @@ export default function PropertiesView({ projects: real, onChange }: { projects:
         </div>
       ) : shown.length ? (
         <div className="stagger mt-10 grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map(p => <PropertyCard siteOk={siteOk} videos={vids[p.id]} key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
+          {shown.map(p => <PropertyCard siteOk={siteOk} videos={vids[p.id]} views={demo ? undefined : views?.[p.id]} key={p.id} p={p} demo={demo} onChange={onChange} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
       ) : !empty && ( // lista vuota: c'e' gia' la card "Non hai ancora immobili", niente secondo messaggio
         <p className="mt-12 text-center text-sm text-muted">{tr('Nessun immobile con questi filtri.', 'No properties match these filters.')}</p>
@@ -174,7 +177,7 @@ function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
   );
 }
 
-function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void; siteOk?: boolean; videos?: string[] }) {
+function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [], views }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void; onChange?: () => void; siteOk?: boolean; videos?: string[]; views?: Views }) {
   // carosello: tutte le foto e poi i video dell'immobile, con le frecce (sul telefono sempre visibili)
   const photos = (p.import_data as { photos?: unknown } | undefined)?.photos;
   const media = [...(Array.isArray(photos) && photos.length ? photos.filter((x): x is string => typeof x === 'string') : p.cover ? [p.cover] : []), ...videos];
@@ -257,7 +260,10 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: 
       </div>
       <div className="mt-3.5 px-1">
         <div className="line-clamp-2 font-semibold leading-snug">{title(p)}</div>
-        <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-muted"><MapPin size={13} className="shrink-0" />{place(p)}</div>
+        <div className="mt-1 flex items-center gap-1 text-[13px] text-muted"><MapPin size={13} className="shrink-0" /><span className="min-w-0 flex-1 truncate">{place(p)}</span>
+          {/* visite alla scheda sul sito negli ultimi 30 giorni (solo se e' online o ne ha avute) */}
+          {views && (p.is_public || views.d30 > 0) && <span title={tr(`${views.d30} visite negli ultimi 30 giorni`, `${views.d30} views in the last 30 days`)} className="ml-2 flex shrink-0 items-center gap-1 tabular-nums"><Eye size={13} />{views.d30}</span>}
+        </div>
         <Facts p={p} className="mt-2" />
       </div>
     </a>

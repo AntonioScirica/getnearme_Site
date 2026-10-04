@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { isClosed, statusOf, STATUS_KEYS, STATUS_LABELS, STATUSES, TEMPLATES, type PropertyStatus, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -12,6 +12,7 @@ import { patchProjectDetails, updateProject, type ProjectData } from '@/lib/proj
 import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
 import { PublicSwitch, toSite } from './PortfolioView';
 import { useCredits } from './PlanView';
+import { useViews } from './useViews';
 import { printHtml } from '@/lib/printHtml';
 import { tr, trf } from './i18n';
 import { Chips, Counter, EnergyScale, NumberField, TextField, Toggle } from './NewPropertyWizard';
@@ -50,6 +51,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   }, [editing, project?.id]); // anche quando l'immobile arriva (prima la griglia non c'era ancora)
   const planKnown = !!credits; // finche' non si sa il piano, niente interruttore ne' invito (niente salto)
   const sitePlan = !!credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'); // come in Il mio sito
+  // visite alla scheda sul sito (solo qui, non nel report PDF)
+  const views = useViews(sitePlan && project ? [project.id] : [])?.[project?.id ?? ''];
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
   // Manda al cliente senza sito: link pubblico della scheda su WhatsApp (prima: stampa, salva PDF e allega)
@@ -131,6 +134,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
         {/* stato e modello in una riga corta: il nome del modello porta a Il mio sito per cambiarlo */}
         <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
+        {sitePlan && views && (project.is_public || views.total > 0) && <span className="blur-in flex items-center gap-1.5 whitespace-nowrap text-muted max-sm:basis-full"><Eye size={15} className="shrink-0" /><span><b className="font-semibold text-ink">{views.d30}</b> {views.d30 === 1 ? tr('visita negli ultimi 30 giorni', 'view in the last 30 days') : tr('visite negli ultimi 30 giorni', 'views in the last 30 days')} · {views.total} {tr('in totale', 'in total')}</span></span>}
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <>
             {/* telefono: tre righe (stato, interruttore, pulsanti) separate da un divisore */}<span className="flex flex-wrap items-center gap-x-4 gap-y-2 pr-2 max-sm:basis-full max-sm:border-t max-sm:border-line max-sm:pt-3"><StatusPicker project={project} onSaved={statusSaved} /><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>

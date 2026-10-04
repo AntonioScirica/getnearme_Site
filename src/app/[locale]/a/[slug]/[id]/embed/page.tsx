@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { loadSite, siteUrl } from '@/lib/portfolio';
 import { SitePage } from '@/components/site/pages';
 import EmbedHeight from '@/components/site/EmbedHeight';
+import ViewBeacon from '@/components/site/ViewBeacon';
 
 // Scheda immobile da incorporare in un altro sito (iframe): la stessa pagina della scheda, con foto, dati, mappa e
 // contatti dell'agente, senza intestazione e piede del sito. Fuori da Google: la pagina vera resta quella del sito.
@@ -20,5 +21,5 @@ export default async function EmbedPropertyPage({ params }: Props) {
   const { locale, slug, id } = await params;
   const s = await loadSite(locale, slug);
   if (!s || s.cfg.hidden.includes('page:immobile') || !s.properties.some(x => x.id === id)) notFound();
-  return <><SitePage ctx={{ ...s, embed: true }} page={{ page: 'immobile', id }} /><EmbedHeight id={id} /></>;
+  return <><SitePage ctx={{ ...s, embed: true }} page={{ page: 'immobile', id }} /><EmbedHeight id={id} /><ViewBeacon slug={slug} id={id} /></>;
 }

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getOfflineBrand, loadSite, siteUrl } from '@/lib/portfolio';
 import { SitePage } from '@/components/site/pages';
 import SiteOffline from '@/components/site/SiteOffline';
+import ViewBeacon from '@/components/site/ViewBeacon';
 
 export const revalidate = 60;
 type Props = { params: Promise<{ locale: string; slug: string; id: string }> };
@@ -35,5 +36,5 @@ export default async function PublicPropertyPage({ params }: Props) {
       : p.prezzo && s.cfg.showPrices && !(p.details as { trattativa_riservata?: boolean } | undefined)?.trattativa_riservata ? { offers: { '@type': 'Offer', price: p.prezzo, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', seller: { '@type': 'RealEstateAgent', name: s.name } } } : {}),
     ...(addr ? { contentLocation: { '@type': 'Place', address: addr } } : {}),
   };
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, '\\u003c') }} /><SitePage ctx={s} page={{ page: 'immobile', id }} /></>;
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, '\\u003c') }} /><SitePage ctx={s} page={{ page: 'immobile', id }} /><ViewBeacon slug={slug} id={id} /></>;
 }
