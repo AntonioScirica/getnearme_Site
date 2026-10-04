@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
 import { getPublishedPosts } from "@/lib/blog";
 import { GUIDES } from "@/lib/guides";
+import { CITIES } from "@/lib/omiCitta";
 
 const baseUrl = "https://agenteimmo.me";
 
@@ -14,6 +15,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   entries.push({ url: `${baseUrl}/en`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 });
   // strumento per i proprietari: valutazione casa gratuita (quotazioni OMI)
   entries.push({ url: `${baseUrl}/it/quanto-vale-la-mia-casa`, lastModified: new Date("2026-10-05"), changeFrequency: "monthly", priority: 0.9 });
+  // per chi vende casa: hub, indice dei prezzi per città e una pagina per città (quotazioni OMI, aggiornate a semestre)
+  entries.push({ url: `${baseUrl}/it/vendere-casa`, lastModified: new Date("2026-10-05"), changeFrequency: "monthly", priority: 0.8 });
+  entries.push({ url: `${baseUrl}/it/prezzi-case`, lastModified: new Date("2026-10-05"), changeFrequency: "monthly", priority: 0.8 });
+  CITIES.forEach(c => entries.push({ url: `${baseUrl}/it/prezzi-case/${c.slug}`, lastModified: new Date("2026-10-05"), changeFrequency: "monthly", priority: 0.7 }));
   GUIDES.forEach((g, i) => entries.push({ url: `${baseUrl}/it/${g.slug}`, lastModified: new Date(g.updated), changeFrequency: "monthly", priority: i === 0 ? 0.9 : 0.8 }));
 
   // Pagine legali per ogni lingua

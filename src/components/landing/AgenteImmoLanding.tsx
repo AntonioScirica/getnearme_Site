@@ -32,7 +32,7 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 
 // guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
 // ponytail: le guide per chi inizia (come diventare, provvigione) restano online ma non si linkano da qui: la landing parla ad agenti gia' in attivita'
-const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
+const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/vendere-casa', 'Per chi vende casa'], ['/it/prezzi-case', 'Prezzi delle case per città']];
 
 const TRIAL_KEY = 'agenteimmo:prova'; // foto e richiesta messe da parte prima del login
 const EXAMPLE = '/immo/home/demo-after.webp'; // si modifica la stanza finita dell'esempio, non il cantiere

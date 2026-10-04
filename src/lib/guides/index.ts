@@ -10,6 +10,9 @@ import { costoPortaliAgenzie, contattiSenzaPortali, gestionaleGratuito, alternat
 import { messaggiAcquisire, trovareClienti, agenteIndipendente, personalBranding } from './clienti';
 import { videoMarketing, cosaPubblicareInstagram, planimetriaAnnuncio, presentazioneAcquisizione } from './marketing';
 import { whatsappBusinessAgenzia, agenziaGoogleMaps, recensioniGoogleAgenzia, vetrinaAgenziaImmobiliare, chatgptAgentiImmobiliari } from './semplici';
+import { comeValutareCasa, quotazioniOmi, superficieCommerciale } from './proprietari-valore';
+import { quantoCostaVendere, documentiVendereCasa, plusvalenzaVenditaCasa } from './proprietari-costi';
+import { vendereCasaVelocemente, vendereSenzaAgenzia, quandoConvieneVendere, cosaFarePrimaDiVendere } from './proprietari-vendita';
 import type { Guide } from './types';
 
 // Pilastro per primo; le satelliti rimandano al pilastro e tra loro ("Leggi anche": le 6 che seguono in quest'ordine,
@@ -24,6 +27,9 @@ export const GUIDES: Guide[] = [
   personalBranding, recensioniGoogleAgenzia, agenziaGoogleMaps, whatsappBusinessAgenzia, vetrinaAgenziaImmobiliare,
   software, gestionale, gestionaleGratuito, alternativeGetrixMiogest, crm, sitoWeb, contattiSenzaPortali, costoPortaliAgenzie,
   comeDiventare, agenteIndipendente,
+  // per chi vende casa (audience 'proprietari'): "Leggi anche" a giro solo tra queste, nell'ordine del percorso
+  comeValutareCasa, quotazioniOmi, superficieCommerciale, quantoCostaVendere, documentiVendereCasa, plusvalenzaVenditaCasa,
+  quandoConvieneVendere, cosaFarePrimaDiVendere, vendereCasaVelocemente, vendereSenzaAgenzia,
 ];
 export const guideBySlug = (slug: string) => GUIDES.find(g => g.slug === slug);
 export type { Guide };

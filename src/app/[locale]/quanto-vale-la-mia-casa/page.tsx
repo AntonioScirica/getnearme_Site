@@ -6,6 +6,7 @@ import { locales } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
 import { FACTOR_TABLE } from '@/lib/valuation';
 import ValuationWizard from '@/components/valuation/ValuationWizard';
+import { CITIES } from '@/lib/omiCitta';
 
 // Pagina SEO per i proprietari: "quanto vale la mia casa", valutazione gratuita online basata sulle quotazioni OMI.
 // Il risultato arriva per email (lead in valuation_leads): qui solo il percorso a passi e le spiegazioni. Solo in italiano.
@@ -132,6 +133,11 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
               <h2>Stima online o perizia: che differenza c&apos;è</h2>
               <p>La stima online ti dice in un minuto in che fascia di prezzo si trova la tua casa: è utile per capire se vale la pena vendere, per confrontare le proposte delle agenzie o per fissare un prezzo di partenza realistico.</p>
               <p>Una perizia, invece, la fa un tecnico abilitato dopo aver visto la casa e i documenti: serve per un mutuo, una successione o una causa. Se vuoi un prezzo preciso per vendere, il passo successivo è far vedere la casa a un agente immobiliare della zona.</p>
+            </section>
+            <section id="citta">
+              <h2>Prezzi delle case nella tua città</h2>
+              <p>Vuoi prima farti un&apos;idea dei prezzi della tua città, zona per zona? Abbiamo raccolto le quotazioni OMI delle principali città italiane: <Link href="/it/prezzi-case">prezzi delle case al metro quadro per città</Link>. Ad esempio {CITIES.slice(0, 8).map((c, i, a) => <span key={c.slug}><Link href={`/it/prezzi-case/${c.slug}`}>{c.nome}</Link>{i < a.length - 2 ? ', ' : i === a.length - 2 ? ' e ' : ''}</span>)}.</p>
+              <p>Se stai pensando di vendere, in <Link href="/it/vendere-casa">Vendere casa</Link> trovi le guide per i proprietari: <Link href="/it/come-valutare-una-casa">come valutare una casa</Link>, <Link href="/it/quanto-costa-vendere-casa">quanto costa vendere casa</Link>, <Link href="/it/documenti-per-vendere-casa">i documenti che servono</Link> e altre.</p>
             </section>
             <section id="domande">
               <h2>Domande frequenti</h2>
