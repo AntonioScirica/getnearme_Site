@@ -12,7 +12,7 @@ import { SiteFooter } from '@/components/landing/AgenteImmoLanding';
 // prezzi delle case per città. Solo in italiano.
 const URL = 'https://agenteimmo.me/it/vendere-casa';
 const TITLE = 'Vendere casa: guide, prezzi e valutazione gratuita';
-const DESCRIPTION = 'Vendere casa passo passo: quanto vale, quanto costa vendere, documenti, tasse e tempi. Guide semplici, prezzi al metro quadro per città e valutazione gratis.';
+const DESCRIPTION = 'Vendere casa passo passo: quanto vale, quanto costa vendere, documenti, tasse e tempi. Guide semplici, prezzi al m² per città e valutazione gratis.';
 const TOP = ['milano', 'roma', 'napoli', 'torino', 'bologna', 'firenze', 'genova', 'palermo', 'bari', 'venezia', 'verona', 'catania'];
 
 export function generateStaticParams() {
