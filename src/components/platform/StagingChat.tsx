@@ -759,7 +759,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (directVideo(m.anim)) {
       const src = styled ?? photo;
       patchV(m.id, { step: 'render', anim: m.anim, photo, picks, err: undefined });
-      const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src }), anim: m.anim, ...(m.plan ? { plan: m.plan } : {}), ...(kind?.startsWith('room:') || m.plan ? { interior: true } : {}), ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+      const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src }), anim: m.anim, ...(m.plan ? { plan: m.plan } : {}), ...(kind?.startsWith('room:') || m.plan ? { interior: true } : {}), ...(m.anim === 'ristruttura' && kind?.startsWith('room:') ? { room: kind.slice(5) } : {}), ...(project ? { projectId: project } : {}) }) }).catch(() => null);
       const d = res ? await res.json().catch(() => ({})) : {};
       if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : tr('Video non riuscito, riprova.', 'Video failed, please try again.') }); return; }
       patchV(m.id, { job: d.job });

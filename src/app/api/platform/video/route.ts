@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   // phase 'frames': solo Prima e Dopo (la chat li mostra); 'render': Veo dal token di Prima/Dopo approvati; senza: tutto di seguito
-  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string; interior?: boolean; plan?: string }
+  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string; interior?: boolean; plan?: string; room?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const anim = parseAnim(body.anim), action = anim === 'fpv' ? 'video_fpv' : anim === 'cantiere' || anim === 'ristruttura' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : anim === 'camera' ? 'video_camera' : anim === 'planwalk' ? 'video_planwalk' : 'video'
   if (body.phase === 'render') {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // Dalla pianta alla stanza: anche la planimetria (indirizzo nostro o immagine caricata)
   const plan = typeof body.plan === 'string' && (allowedUrl(body.plan) || (/^data:image\/(jpeg|png|webp);base64,/.test(body.plan) && body.plan.length < 8_000_000)) ? body.plan : undefined
   if (anim === 'planwalk' && !plan) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
-  const r = await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, styled, framesOnly: body.phase === 'frames', interior: body.interior === true, plan })
+  const r = await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, styled, framesOnly: body.phase === 'frames', interior: body.interior === true, plan, room: typeof body.room === 'string' && /^[a-z]{3,12}$/.test(body.room) ? body.room : undefined })
   // Prima e Dopo pronti: 1 credito (una volta per coppia di foto), il resto alla consegna del video
   if (body.phase === 'frames' && r.frames) await spendOnce(userId, 'video_prep', r.frames)
   return reply(r)

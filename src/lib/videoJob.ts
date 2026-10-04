@@ -69,6 +69,7 @@ const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, di
 // Dalla pianta alla stanza (-kp): pianta 3D dall'alto (stessa pianta, tagliata all'altezza dei muri) e discesa dentro la stanza
 const PLAN_TOP_3D = 'Turn this floor plan into a photorealistic 3D cutaway view of the same furnished apartment seen straight from above, like a dollhouse with no roof: walls with real thickness cut at about 2 m height, floors, doors and windows exactly where the plan has them, every room furnished realistically for its use in a simple modern style, soft natural daylight. Keep exactly the same layout, room shapes and proportions as the plan. Fill the whole frame with the apartment on a plain light background. No text, no labels, no measurements, no plan lines.'
 const PLAN_DIVE = 'One continuous cinematic camera move with no cuts: the camera starts high above the 3D cutaway apartment looking straight down, then smoothly descends and tilts forward, flying down between the walls into one room, and slows to a stop at eye height inside that room, ending exactly on the last image. The layout of the apartment never changes; walls, doors and furniture stay solid and consistent. Calm, smooth, elegant movement.'
+const RENO_ROOMS: Record<string, string> = { soggiorno: 'a living room', openspace: 'a living room with an open kitchen', cucina: 'a kitchen', camera: 'a double bedroom', cameretta: 'a children\'s bedroom', bagno: 'a bathroom', sala: 'a dining room', studio: 'a home office', ingresso: 'an entrance hall', corridoio: 'a hallway' }
 const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true, ristruttura: true }
 // Volo nel cantiere (30/09, prove in ~/Desktop/prove-video-template/costruzione-fpv, versione 21): intro FPV fissa nel
 // cantiere fino allo scavo (templates/volo-cantiere su R2, fatta una volta), poi la camera esce dallo scavo e si ribalta
@@ -149,7 +150,7 @@ export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmo
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string }): Promise<VideoResult & FramesResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string; room?: string }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -189,7 +190,9 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         // stanza in cantiere (la foto) -> finita vuota -> arredata: 2 clip montate di seguito, prezzo e montaggio del Cantiere (-kc)
         const finished = await frame(RENO_FINISHED_IMAGE, 'finita')
         // la foto del cantiere in piu': serve solo a capire che stanza e' (cucina, bagno o soggiorno), prova del 05/10
-        const furnished = finished && await frame(RENO_FURNISHED_IMAGE, 'arredata-reno', finished, [fullUrl])
+        // stanza gia' riconosciuta dalla chat (o scelta dall'agente): si arreda per quell'uso, altrimenti la deduce dalla foto
+        const roomEn = o.room ? RENO_ROOMS[o.room] : undefined
+        const furnished = finished && await frame(RENO_FURNISHED_IMAGE + (roomEn ? ` This room is ${roomEn}: furnish it as ${roomEn}.` : ''), 'arredata-reno', finished, [fullUrl])
         if (!finished || !furnished) return { error: 'ai_failed', status: 502 }
         const [a, b] = await Promise.all([kling(fullUrl, finished, RENO_1), kling(finished, furnished, RENO_2)])
         ids = [a.request_id, b.request_id]
