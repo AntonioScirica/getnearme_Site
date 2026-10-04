@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, Inbox, Loader2, Mail, MessageCircle, Phone } from 'lucide-react';
+import { ArrowLeft, Building2, Inbox, Loader2, Mail, MessageCircle, Phone } from 'lucide-react';
 import Dropdown from '@/components/ui/Dropdown';
 import { authFetch, CARD_SHADOW } from './api';
 import { tr, pageLocale } from './i18n';
@@ -85,6 +85,7 @@ export default function LeadsView() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      <a href="#/profilo" className="mb-4 inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Il mio profilo', 'My profile')}</a>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="blur-in font-display text-4xl font-bold leading-[1.2] tracking-tight">

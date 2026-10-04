@@ -1,5 +1,6 @@
 'use client';
 
+import { useNewLeads } from './LeadsView';
 import { adsInfo, track } from '@/lib/analytics';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -42,12 +43,13 @@ export const isLow = (c: Credits) => !c.unlimited && c.plan !== 'none' && (c.bal
 export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
   const own = useCredits();
   const c = given !== undefined ? given : own;
+  const leads = useNewLeads(); // richieste nuove dal sito: pallino sul profilo (le richieste stanno nel profilo)
   // mentre si caricano: un posto della stessa misura, cosi' arrivando non sposta gli altri pulsanti
   // posto vuoto e invisibile (niente bordo da solo): la pillola arriva intera, bordo e crediti insieme
   if (!c) return <span className="flex h-10 w-[136px]" aria-hidden />;
   const low = isLow(c);
   // telefono e tablet (sotto lg): area di tocco 40px, il cerchio resta da 32
-  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="group flex h-10 w-10 items-center justify-center lg:h-8 lg:w-8"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors group-hover:bg-line"><UserRound size={16} /></span></a>;
+  const profile = <a href="#/profilo" data-tour="profilo" aria-label={tr('Il mio profilo', 'My profile')} title={tr('Il mio profilo', 'My profile')} className="group flex h-10 w-10 items-center justify-center lg:h-8 lg:w-8"><span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors group-hover:bg-line"><UserRound size={16} />{leads > 0 && <span className="pop absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[9px] font-bold text-white ring-2 ring-white">{leads > 9 ? '9+' : leads}</span>}</span></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
   if (c.plan === 'none' && !c.unlimited && c.balance <= 0) return (
     <span className="blur-in flex items-center gap-2">

@@ -67,9 +67,6 @@ const NAV = [
   { path: '/immobili', label: tr('Immobili', 'Properties'), icon: Building2 },
   { path: '/portfolio', label: tr('Il mio sito', 'My website'), icon: Globe },
   { path: '/galleria', label: tr('Galleria', 'Gallery'), icon: Images },
-  // Richieste: nel menu in alto da xl (a 1024 il logo andava a capo); sotto, la barra in basso e' piena (5 voci):
-  // icona in alto accanto ai crediti
-  { path: '/richieste', label: tr('Richieste', 'Enquiries'), icon: Inbox, top: true },
 ];
 
 // Storico delle chat (api/platform/chats): elenco con anteprima, titolo e data; un clic riapre la chat e si continua.
@@ -128,8 +125,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
   const news = useGalleryNews(userData.id, route === '/galleria');
-  const leadsNew = useNewLeads(); // richieste dal sito ancora da guardare (pallino su Richieste)
-  useEffect(() => identify(userData.id), [userData.id]); // eventi GA4 legati all'account
+    useEffect(() => identify(userData.id), [userData.id]); // eventi GA4 legati all'account
   // abbonamento finito senza rinnovo (e niente crediti): foto, immobili e sito si vedono sfocati col lucchetto.
   // Chi non ha mai pagato no: puo' entrare e provare come sempre.
   const lapsed = !!credits && !!credits.lapsed && !credits.unlimited && credits.balance <= 0;
@@ -200,13 +196,13 @@ function PlatformInner({ userData }: { userData: UserData }) {
       {tour && !chat && credits && <Tour noPlan={noPlan} noSite={!(credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro')} onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
-        <div className="mx-auto grid h-20 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6 max-lg:flex lg:gap-4">
+        <div className="mx-auto grid h-20 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-6 max-lg:flex">
           {/* in chat: crediti e profilo a sinistra, menu al centro come nelle altre pagine (non si sposta), Nuova chat a destra */}
           {chat ? (<>
             <div className="flex items-center justify-self-start">{credits && <CreditsPill c={credits} />}</div>
             {/* menu anche in chat (da lg; sotto c'e' la barra in basso): si va ovunque senza tornare indietro */}
             <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 lg:flex">
-              {NAV.map(({ path, label, top }) => <a key={path} href={`#${path}`} className={`${top ? 'hidden xl:block' : ''} rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${path === '/staging' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>)}
+              {NAV.map(({ path, label }) => <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${path === '/staging' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>)}
             </nav>
             {/* entrando in chat Nuova chat (con lo storico dentro) arriva in dissolvenza, solo quando si sa il piano */}
             <div className="ml-auto flex items-center justify-self-end lg:ml-0">
@@ -226,21 +222,15 @@ function PlatformInner({ userData }: { userData: UserData }) {
           </a>
           {/* menu al centro esatto: colonne laterali uguali (1fr), qualunque sia la larghezza di logo e pulsanti */}
           <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 lg:flex">{/* sotto lg le voci stanno nella barra in basso */}
-            {NAV.map(({ path, label, top }) => {
+            {NAV.map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
-              return <a key={path} href={`#${path}`} data-tour={path} className={`${top ? 'hidden xl:block' : ''} relative rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}
+              return <a key={path} href={`#${path}`} data-tour={path} className={`relative rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}
                 {/* foto o video pronti dall'ultima visita alla Galleria */}
                 {path === '/galleria' && news > 0 && <span className="pop absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-white ring-2 ring-canvas">{news > 9 ? '9+' : news}</span>}
-                {path === '/richieste' && leadsNew > 0 && <span className="pop absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-white ring-2 ring-canvas">{leadsNew > 9 ? '9+' : leadsNew}</span>}
               </a>;
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 justify-self-end lg:ml-0">
-            {/* sotto xl: Richieste qui (nella barra in basso e nel menu non c'e' posto), col numero delle nuove */}
-            <a href="#/richieste" aria-label={tr('Richieste', 'Enquiries')} title={tr('Richieste', 'Enquiries')} aria-current={route === '/richieste' ? 'page' : undefined} className="relative flex h-10 w-10 shrink-0 items-center justify-center xl:hidden">
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${route === '/richieste' ? 'bg-ink text-white' : 'bg-canvas text-ink'}`}><Inbox size={16} /></span>
-              {leadsNew > 0 && <span className="pop absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-bold text-white ring-2 ring-white">{leadsNew > 9 ? '9+' : leadsNew}</span>}
-            </a>
             <span data-tour="crediti"><CreditsPill /></span>
             {/* senza piano solo Scegli un piano (in nero): Metti in vetrina appare col piano */}
             {/* telefono: solo il + (la scritta da sm in su) */}
@@ -307,7 +297,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           nel percorso Metti in vetrina no, ha il suo fondo */}
       {route !== '/nuovo' && (
         <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-          {NAV.filter(n => !n.top).map(({ path, label, icon: Icon }) => {
+          {NAV.map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
             return <a key={path} href={`#${path}`} data-tour={path} aria-current={active ? 'page' : undefined} className={`relative flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium ease-smooth transition-colors ${active ? 'text-ink' : 'text-muted'}`}>
               <Icon size={20} className={active ? 'text-brand' : ''} /><span className="max-w-full truncate px-1">{label}</span>
@@ -669,6 +659,7 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
       <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio profilo', 'My profile')}</h1>
       <p className="mt-1 text-muted">{email}</p>
       <PlanCard />
+      <LeadsCard />
       <div className={`mt-4 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
         <h2 className="font-semibold">{tr('Il tuo sito personale', 'Your personal website')}</h2>
         <p className="mt-1 text-sm text-muted">{tr('Il nome che vedono i clienti e l\'indirizzo della pagina con le tue case.', 'The name your clients see and the address of the page with your properties.')}</p>
@@ -793,5 +784,18 @@ function DeleteAccount() {
         document.body,
       )}
     </>
+  );
+}
+
+// Richieste dal sito: nel profilo (02/10), col numero di quelle nuove
+function LeadsCard() {
+  const n = useNewLeads();
+  return (
+    <a href="#/richieste" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
+      <Inbox size={18} className="text-muted" />
+      <span className="flex-1"><span className="block font-semibold">{tr('Richieste dal sito', 'Website enquiries')}</span><span className="block text-sm text-muted">{n > 0 ? tr(`${n} ${n === 1 ? 'nuova' : 'nuove'} da guardare`, `${n} new to check`) : tr('Chi ti scrive dal modulo di contatto del tuo sito', 'People who write to you from your website')}</span></span>
+      {n > 0 && <span className="pop flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-2 text-xs font-bold text-white">{n > 9 ? '9+' : n}</span>}
+      <ChevronRight size={18} className="text-muted" />
+    </a>
   );
 }
