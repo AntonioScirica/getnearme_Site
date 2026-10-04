@@ -38,7 +38,7 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
       {/* area foto a misura fissa (tutto lo spazio sopra i controlli): cambiando passaggio la foto non si sposta */}
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
         {video
-          ? <video src={video} autoPlay controls playsInline onClick={e => e.stopPropagation()} className="blur-in max-h-full max-w-[92vw] rounded-2xl bg-black shadow-2xl" />
+          ? <video src={video} autoPlay muted controls playsInline onClick={e => e.stopPropagation()} className="blur-in max-h-full max-w-[92vw] rounded-2xl bg-black shadow-2xl" />
           : cmp && list.length > 1
             ? <div onClick={e => e.stopPropagation()} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); drag(e); }} onPointerMove={e => { if (e.buttons) drag(e); }}
                 className="blur-in relative cursor-ew-resize touch-none select-none overflow-hidden rounded-2xl shadow-2xl">

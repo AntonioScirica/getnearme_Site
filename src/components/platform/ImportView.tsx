@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Check, FileSpreadsheet, Link2, Loader2, Sparkles, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { DETAIL_FIELDS, TARGET_FIELDS, aiMapColumns, autoMapColumns, buildImportRows, readSheet, type ImportResult } from '@/lib/propertyImport';
@@ -11,7 +11,10 @@ import { tr } from './i18n';
 // Import immobili: da link degli annunci (immobiliare, idealista, qualsiasi sito: il server legge la pagina con ZenRows,
 // api/projects/import-link) o da CSV/Excel (logica condivisa con la vecchia dashboard in lib/propertyImport). Nel file,
 // se c'e' la colonna "Link annuncio", ogni riga col link si completa dal portale: dati e tutte le foto.
-type LinkState = { url: string; status: 'coda' | 'leggo' | 'ok' | 'esiste' | 'errore'; nome?: string; msg?: string };
+type LinkState = { url: string; status: 'coda' | 'leggo' | 'ok' | 'esiste' | 'errore'; nome?: string; msg?: string; t0?: number; ms?: number };
+// tempi: "42 s", "1 min 05 s"
+const dur = (ms: number) => { const s = Math.max(1, Math.round(ms / 1000)); return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`; };
+const AVG_MS = 75_000; // stima per annuncio prima che ne finisca uno (da 30 s a 2 min)
 const LINK_RE = /https?:\/\/[^\s,;|"'<>]+/g;
 const ERR: Record<string, string> = { not_a_listing: tr('Non sembra un annuncio (non trovo prezzo e superficie)', 'Does not look like a listing (no price or floor area found)'), blocked: tr('Pagina non leggibile (lenta, rimossa o bloccata)', 'Page not readable (slow, removed or blocked)'), invalid_url: tr('Link non valido', 'Invalid link'), daily_limit: tr('Limite giornaliero di annunci letti raggiunto', 'Daily limit of listings read reached') };
 // un link alla volta: il server ci mette 15-90 s a pagina (ZenRows), poi copia le foto
@@ -107,15 +110,29 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
     setLinks(list);
     const patch = (i: number, p: Partial<LinkState>) => setLinks(l => l.map((x, k) => (k === i ? { ...x, ...p } : x)));
     for (const [i, l] of list.entries()) {
-      patch(i, { status: 'leggo' });
+      const t0 = Date.now();
+      patch(i, { status: 'leggo', t0 });
       const out = await importLink(l.url);
-      patch(i, out.ok ? { status: out.existing ? 'esiste' : 'ok', nome: out.nome } : { status: 'errore', msg: out.msg });
+      const ms = Date.now() - t0;
+      patch(i, out.ok ? { status: out.existing ? 'esiste' : 'ok', nome: out.nome, ms } : { status: 'errore', msg: out.msg, ms });
       if (out.ok) onDone();
     }
     running.current = false;
   };
   const linksDone = links.length > 0 && links.every(l => l.status === 'ok' || l.status === 'esiste' || l.status === 'errore');
   const linksBusy = links.length > 0 && !linksDone;
+  // orologio mentre legge: tempo dell'annuncio in corso e stima di quanto manca (media degli annunci gia' letti)
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    if (!linksBusy) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [linksBusy]);
+  const doneMs = links.filter(l => l.ms).map(l => l.ms!);
+  const avg = doneMs.length ? doneMs.reduce((a, b) => a + b, 0) / doneMs.length : AVG_MS;
+  const cur = links.find(l => l.status === 'leggo');
+  const left = linksBusy ? links.filter(l => l.status === 'coda').length * avg + Math.max(0, avg - (cur?.t0 ? now - cur.t0 : 0)) : 0;
+  const total = doneMs.reduce((a, b) => a + b, 0);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -148,13 +165,16 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
                       {l.status === 'leggo' ? <Loader2 size={14} className="animate-spin text-ai" /> : l.status === 'ok' || l.status === 'esiste' ? <Check size={14} className="text-emerald-600" /> : l.status === 'errore' ? <X size={14} className="text-rose-600" /> : <span className="h-1.5 w-1.5 rounded-full bg-line" />}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{l.nome || l.url}</span>
-                    <span className="shrink-0 text-xs text-muted">{l.status === 'coda' ? tr('In coda', 'Queued') : l.status === 'leggo' ? tr('Leggo l\u2019annuncio…', 'Reading the listing…') : l.status === 'ok' ? tr('In vetrina', 'In showcase') : l.status === 'esiste' ? tr('Già in vetrina', 'Already in showcase') : l.msg}</span>
+                    <span className="shrink-0 text-xs text-muted">{l.status === 'coda' ? tr('In coda', 'Queued') : l.status === 'leggo' ? `${tr('Leggo l\u2019annuncio…', 'Reading the listing…')}${l.t0 && now > l.t0 ? ` ${dur(now - l.t0)}` : ''}` : l.status === 'ok' ? tr('In vetrina', 'In showcase') : l.status === 'esiste' ? tr('Già in vetrina', 'Already in showcase') : l.msg}{l.ms && l.status !== 'leggo' ? <span className="tabular-nums"> · {dur(l.ms)}</span> : null}</span>
                   </li>
                 ))}
               </ul>
+              {linksBusy && (
+                <p className="text-sm text-muted tabular-nums">{links.filter(l => l.ms).length} {tr('di', 'of')} {links.length} {tr('letti', 'read')}{left > 0 ? ` · ${tr('circa', 'about')} ${dur(left)} ${tr('alla fine', 'to go')}` : ''}</p>
+              )}
               {linksDone && (
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-sm">{links.filter(l => l.status === 'ok').length} {tr('importati', 'imported')}{links.some(l => l.status === 'esiste') ? `, ${links.filter(l => l.status === 'esiste').length} ${tr('già presenti', 'already there')}` : ''}{links.some(l => l.status === 'errore') ? `, ${links.filter(l => l.status === 'errore').length} ${tr('non letti', 'not read')}` : ''}.</span>
+                  <span className="text-sm">{links.filter(l => l.status === 'ok').length} {tr('importati', 'imported')}{links.some(l => l.status === 'esiste') ? `, ${links.filter(l => l.status === 'esiste').length} ${tr('già presenti', 'already there')}` : ''}{links.some(l => l.status === 'errore') ? `, ${links.filter(l => l.status === 'errore').length} ${tr('non letti', 'not read')}` : ''}{total ? ` ${tr('in', 'in')} ${dur(total)}` : ''}.</span>
                   <div className="flex gap-3">
                     <button onClick={() => { setLinks([]); setText(''); }} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">{tr('Altri link', 'More links')}</button>
                     <a href="#/immobili" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">{tr('Vedi immobili', 'View properties')}</a>

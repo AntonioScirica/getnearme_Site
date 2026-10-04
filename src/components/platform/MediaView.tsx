@@ -39,12 +39,18 @@ export function useGalleryNews(uid: string, onGallery: boolean): number {
       let seen = Number((() => { try { return localStorage.getItem(key); } catch { return null; } })() ?? 0);
       if (!seen) { seen = Date.now(); try { localStorage.setItem(key, String(seen)); } catch { /* niente */ } } // primo accesso: niente arretrati
       const items = await fetchMedia();
-      for (const m of items.filter(x => x.pending && x.job)) await authFetch(jobUrl(m.job!)).catch(() => null);
+      // prima il numero, poi in sottofondo i lavori in corso (aspettarli ritardava il pallino anche di minuti)
       if (!stop) setN(items.filter(m => !m.pending && m.at > seen).length);
+      for (const m of items.filter(x => x.pending && x.job)) void authFetch(jobUrl(m.job!)).catch(() => null);
     };
     void check();
-    const id = setInterval(() => void check(), 30000);
-    return () => { stop = true; clearInterval(id); };
+    // subito quando la chat finisce una foto o un video (evento 'agenteimmo:media'), al ritorno sulla scheda, e ogni 15 s
+    const now = () => void check();
+    const vis = () => { if (!document.hidden) now(); };
+    window.addEventListener('agenteimmo:media', now);
+    document.addEventListener('visibilitychange', vis);
+    const id = setInterval(now, 15000);
+    return () => { stop = true; clearInterval(id); window.removeEventListener('agenteimmo:media', now); document.removeEventListener('visibilitychange', vis); };
   }, [key, onGallery]);
   return onGallery ? 0 : n;
 }
