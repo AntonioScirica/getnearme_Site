@@ -31,8 +31,12 @@ export function useNewLeads(): number {
     const load = () => authFetch('/api/platform/leads').then(r => (r.ok ? r.json() : null))
       .then((d: { leads?: Lead[] } | null) => { if (d) setN((d.leads ?? []).filter(l => l.status === 'nuova').length); }).catch(() => {});
     void load();
+    // richieste nuove anche mentre si lavora: ogni minuto e al ritorno sulla scheda (pallino sull'icona del profilo)
+    const vis = () => { if (!document.hidden) void load(); };
+    const t = setInterval(vis, 60_000);
     window.addEventListener('agenteimmo:leads', load);
-    return () => window.removeEventListener('agenteimmo:leads', load);
+    document.addEventListener('visibilitychange', vis);
+    return () => { clearInterval(t); window.removeEventListener('agenteimmo:leads', load); document.removeEventListener('visibilitychange', vis); };
   }, []);
   return n;
 }
