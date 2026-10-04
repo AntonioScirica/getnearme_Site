@@ -34,6 +34,7 @@ const privacyIt: LegalPage = {
     { type: "ul", items: [
       "Agli utenti registrati della piattaforma (agenti e agenzie immobiliari) e a chi prova il Servizio dalla pagina iniziale.",
       "Ai visitatori del sito agenteimmo.me.",
+      "A chi usa la valutazione gratuita della casa (pagina \"Quanto vale la mia casa?\"), anche senza account.",
       "Non si applica ai visitatori dei siti personali che gli agenti pubblicano con Agente Immo (per esempio agenteimmo.me/it/a/nome-agente): per quei siti il titolare è l'agente, che fornisce la propria informativa, e Agente Immo agisce come responsabile del trattamento per suo conto (art. 28 GDPR)."
     ]},
     { type: "h2", text: "3. Quali dati trattiamo" },
@@ -65,12 +66,20 @@ const privacyIt: LegalPage = {
     { type: "p", text: "Indirizzo IP, tipo di browser, data e ora delle richieste e registri tecnici, usati per far funzionare il Servizio, prevenire abusi e correggere errori. Registriamo inoltre le operazioni AI eseguite e i crediti consumati, per il calcolo dei crediti e dei costi." },
     { type: "h3", text: "3.8. Cookie e strumenti simili" },
     { type: "p", text: "Usiamo strumenti tecnici necessari (per esempio per mantenerti collegato e ricordare la tua scelta sui cookie). Strumenti statistici (Google Analytics, Microsoft Clarity, calendario Cal.com) e di marketing (Meta Pixel) si attivano solo con il tuo consenso, che puoi revocare in ogni momento. I dettagli sono nella Cookie Policy (agenteimmo.me/it/cookie). Sui siti personali degli agenti non usiamo strumenti statistici né di marketing." },
+    { type: "h3", text: "3.9. Valutazione gratuita della casa" },
+    { type: "p", text: "Se chiedi la valutazione della tua casa trattiamo: l'indirizzo e le caratteristiche dell'immobile che inserisci (tipo, metri quadri, locali, bagni, piano, stato ed extra), il tuo indirizzo email e, se li inserisci, nome e telefono, il risultato della stima e le scelte sui consensi. Usiamo l'indirizzo per trovare la zona e calcolare la stima sulle quotazioni OMI dell'Agenzia delle Entrate; la stima ti arriva per email." },
+    { type: "ul", items: [
+      "Senza altri consensi usiamo i tuoi dati solo per calcolare e inviarti la valutazione.",
+      "Se spunti \"Voglio essere ricontattato da un agente immobiliare della mia zona\", possiamo comunicare i tuoi contatti e i dati della casa a un agente immobiliare che usa Agente Immo e opera nella tua zona, perché ti contatti per una consulenza o una proposta di incarico. L'agente che li riceve li tratta come titolare autonomo, con la propria informativa.",
+      "Se spunti il consenso al marketing, possiamo inviarti comunicazioni su servizi e novità legati alla vendita o all'affitto della casa. Puoi disiscriverti in ogni momento dal link presente in ogni email."
+    ]},
     { type: "h2", text: "4. Finalità e basi giuridiche" },
     { type: "ul", items: [
       "Creare e gestire l'account, fornire le funzioni richieste (home staging, video, import degli annunci, gestione immobili, sito personale, inoltro delle richieste di contatto), gestire piani, crediti e pagamenti, fornire assistenza: esecuzione del contratto (art. 6.1.b GDPR).",
       "Emettere fatture, tenere la contabilità e adempiere agli obblighi fiscali: obbligo legale (art. 6.1.c GDPR).",
       "Proteggere il Servizio, prevenire frodi e abusi, applicare i limiti della prova gratuita (hash di IP e dispositivo), correggere errori: legittimo interesse del titolare (art. 6.1.f GDPR), bilanciato con i tuoi diritti tramite l'uso di soli codici cifrati e di tempi di conservazione limitati.",
-      "Statistiche di utilizzo del sito e misurazione delle campagne pubblicitarie: consenso (art. 6.1.a GDPR), revocabile in ogni momento."
+      "Statistiche di utilizzo del sito e misurazione delle campagne pubblicitarie: consenso (art. 6.1.a GDPR), revocabile in ogni momento.",
+      "Valutazione gratuita della casa: calcolo e invio della stima su tua richiesta (art. 6.1.b GDPR); comunicazione dei tuoi contatti a un agente della zona e comunicazioni di marketing solo con i consensi specifici e facoltativi (art. 6.1.a GDPR), revocabili in ogni momento scrivendo a info@agenteimmo.me."
     ]},
     { type: "p", text: "Non vendiamo i tuoi dati e non li usiamo per addestrare modelli di intelligenza artificiale." },
     { type: "h2", text: "5. Fornitori che trattano i dati per nostro conto" },
@@ -100,6 +109,7 @@ const privacyIt: LegalPage = {
       "Richieste di contatto dei siti personali: finché l'agente non le elimina o non elimina l'account; restano anche nella sua casella email e nei registri tecnici di invio del fornitore email per il periodo previsto dal fornitore.",
       "Conteggio delle visite agli immobili: numeri aggregati per giorno, senza dati personali, per la durata dell'account.",
       "Dati della prova gratuita (hash di IP e dispositivo, legati all'account): per il tempo necessario a garantire che la prova sia usata una sola volta, e comunque non oltre 12 mesi, poi li cancelliamo automaticamente. Foto e video della prova seguono le regole della Galleria.",
+      "Valutazioni della casa e relativi contatti: 24 mesi dalla richiesta, poi li cancelliamo; prima, se revochi i consensi o chiedi la cancellazione. Se hai acconsentito al contatto, l'agente che ha ricevuto i tuoi dati li conserva secondo la propria informativa.",
       "Dati di pagamento e fatture: 10 anni, come previsto dalla legge (art. 2220 del Codice civile), anche dopo l'eliminazione dell'account.",
       "Registri tecnici e di sicurezza con indirizzo IP: al massimo 90 giorni.",
       "Registri delle operazioni AI e dei crediti: per la durata dell'account.",
@@ -144,6 +154,7 @@ const privacyEn: LegalPage = {
     { type: "ul", items: [
       "Registered users of the platform (real estate agents and agencies) and people who try the Service from the home page.",
       "Visitors of the agenteimmo.me website.",
+      "People who use the free home valuation (\"Quanto vale la mia casa?\" page), even without an account.",
       "It does not apply to visitors of the personal websites that agents publish with Agente Immo (for example agenteimmo.me/it/a/agent-name): for those websites the agent is the controller and provides their own privacy notice, and Agente Immo acts as a processor on the agent's behalf (Art. 28 GDPR)."
     ]},
     { type: "h2", text: "3. Data We Process" },
@@ -175,12 +186,20 @@ const privacyEn: LegalPage = {
     { type: "p", text: "IP address, browser type, date and time of requests and technical logs, used to run the Service, prevent abuse and fix errors. We also record the AI operations performed and the credits used, to calculate credits and costs." },
     { type: "h3", text: "3.8. Cookies and Similar Technologies" },
     { type: "p", text: "We use strictly necessary technologies (for example to keep you signed in and to remember your cookie choice). Analytics tools (Google Analytics, Microsoft Clarity, Cal.com calendar) and marketing tools (Meta Pixel) are enabled only with your consent, which you can withdraw at any time. Details are in the Cookie Policy (agenteimmo.me/en/cookie). We do not use analytics or marketing tools on agents' personal websites." },
+    { type: "h3", text: "3.9. Free Home Valuation" },
+    { type: "p", text: "If you request a valuation of your home we process: the address and features of the property you enter (type, square metres, rooms, bathrooms, floor, condition and extras), your email address and, if you enter them, your name and phone number, the result of the estimate and your consent choices. We use the address to find the area and calculate the estimate on the OMI quotations of the Italian Revenue Agency; the estimate is sent to you by email." },
+    { type: "ul", items: [
+      "Without further consent we use your data only to calculate and send you the valuation.",
+      "If you tick \"I want to be contacted by a real estate agent in my area\", we may share your contact details and the property data with a real estate agent who uses Agente Immo and works in your area, so that they can contact you for advice or a listing proposal. The agent receiving them processes them as an independent controller, under their own privacy notice.",
+      "If you tick the marketing consent, we may send you communications about services and news related to selling or renting your home. You can unsubscribe at any time using the link in every email."
+    ]},
     { type: "h2", text: "4. Purposes and Legal Bases" },
     { type: "ul", items: [
       "Creating and managing your account, providing the features you request (home staging, videos, listing import, property management, personal website, forwarding of contact requests), managing plans, credits and payments, providing support: performance of a contract (Art. 6(1)(b) GDPR).",
       "Issuing invoices, bookkeeping and tax compliance: legal obligation (Art. 6(1)(c) GDPR).",
       "Protecting the Service, preventing fraud and abuse, enforcing free trial limits (IP and device hashes), fixing errors: legitimate interest of the controller (Art. 6(1)(f) GDPR), balanced against your rights by using only hashed codes and limited retention periods.",
-      "Website usage statistics and measurement of advertising campaigns: consent (Art. 6(1)(a) GDPR), which can be withdrawn at any time."
+      "Website usage statistics and measurement of advertising campaigns: consent (Art. 6(1)(a) GDPR), which can be withdrawn at any time.",
+      "Free home valuation: calculating and sending the estimate at your request (Art. 6(1)(b) GDPR); sharing your contact details with a local agent and marketing communications only with the specific, optional consents (Art. 6(1)(a) GDPR), which can be withdrawn at any time by writing to info@agenteimmo.me."
     ]},
     { type: "p", text: "We do not sell your data and we do not use it to train artificial intelligence models." },
     { type: "h2", text: "5. Providers Processing Data on Our Behalf" },
@@ -210,6 +229,7 @@ const privacyEn: LegalPage = {
       "Contact requests from personal websites: until the agent deletes them or deletes the account; they also remain in the agent's mailbox and in the email provider's delivery logs for the period set by that provider.",
       "Property view counts: aggregated numbers per day, with no personal data, for the lifetime of the account.",
       "Free trial data (IP and device hashes, linked to the account): for as long as needed to ensure the trial is used only once, and in any case no longer than 12 months, after which we delete them automatically. Trial photos and videos follow the Gallery rules.",
+      "Home valuations and related contacts: 24 months from the request, then deleted; earlier if you withdraw consent or ask for deletion. If you agreed to be contacted, the agent who received your data keeps it under their own privacy notice.",
       "Payment data and invoices: 10 years, as required by Italian law (Art. 2220 of the Civil Code), also after account deletion.",
       "Technical and security logs containing IP addresses: up to 90 days.",
       "Logs of AI operations and credits: for the lifetime of the account.",
