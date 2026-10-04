@@ -2,9 +2,9 @@
 
 import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
-import { ABOUT_DEFAULT, isSampleReview, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
+import { ABOUT_DEFAULT, isClosed, isSampleReview, pageHidden, statusOf, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
+import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, SiteLink, StatusTag, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -556,14 +556,17 @@ export const SampleTag = ({ className = '' }: { className?: string }) => <span c
 function PropertyCardBody({ p }: { p: SiteProperty }) {
   const { cfg, t, name } = useSite();
   const riv = cfg.template === 'riviera';
-  const badge = <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
-  const pr = cfg.showPrices && <span className="shrink-0 whitespace-nowrap text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
+  // stato: venduti e affittati senza le etichette "in vendita / in evidenza", il bollino dello stato in basso a sinistra sulla foto
+  const st = statusOf(p), closed = isClosed(st), avail = st === 'disponibile';
+  const tag = <StatusTag p={p} className="absolute bottom-3 left-3 z-10" />;
+  const badge = closed ? null : <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
+  const pr = priceShown(cfg, p) && <span className="shrink-0 whitespace-nowrap text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
   const place = <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-[var(--muted)]"><MapPin size={13} className="shrink-0" />{zoneOf(p.addr)}</div>;
   const shell = 'group flex flex-col overflow-hidden rounded-[var(--rc)] bg-[var(--surface)] transition-all duration-500 hover:-translate-y-1';
 
   if (t.card === 'minimal') return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group block min-w-0">
-      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" /></div>
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" />{tag}</div>
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0"><div className="line-clamp-2 text-[17px] font-semibold leading-snug">{p.titolo}</div>{place}</div>{pr}
       </div>
@@ -576,13 +579,13 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-900">{typeOf(p)}</span>
         <FavButton id={p.id} className="absolute right-3 top-3 !h-8 !w-8 !bg-black/35 !text-white backdrop-blur" />
-        <span className="absolute bottom-3 left-3 rounded-[calc(var(--r)*0.4)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
+        {avail ? <span className="absolute bottom-3 left-3 rounded-[calc(var(--r)*0.4)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span> : tag}
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="line-clamp-2 min-h-[2.75em] text-[16px] font-bold leading-snug">{p.titolo}</div>{place}
         <Facts p={p} className="mt-3 text-[var(--muted)]" />
         <div className="mt-4 flex items-end justify-between border-t border-[var(--line)] pt-4">
-          {cfg.showPrices ? <div><div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Prezzo</div><div className="text-xl font-bold text-[var(--c)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]">/mese</span> : null}</div></div> : <span />}
+          {priceShown(cfg, p) ? <div><div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Prezzo</div><div className="text-xl font-bold text-[var(--c)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]">/mese</span> : null}</div></div> : <span />}
           <span className="flex h-9 w-9 items-center justify-center rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] text-[var(--c)] transition-transform duration-500 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
         </div>
       </div>
@@ -592,8 +595,8 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group block min-w-0">
       <div className="relative">
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" />
-        <div className="absolute right-3 top-3 flex gap-1.5">{['In evidenza', isRent(p) ? 'Affitto' : 'Vendita'].map(x => <span key={x} className="rounded-[calc(var(--r)*0.4)] bg-white/25 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{x}</span>)}</div>
-        <FavButton id={p.id} className="absolute left-3 top-3 !h-8 !w-8" />
+        <div className="absolute right-3 top-3 flex gap-1.5">{(closed ? [] : [...(avail ? ['In evidenza'] : []), isRent(p) ? 'Affitto' : 'Vendita']).map(x => <span key={x} className="rounded-[calc(var(--r)*0.4)] bg-white/25 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{x}</span>)}</div>
+        <FavButton id={p.id} className="absolute left-3 top-3 !h-8 !w-8" />{tag}
       </div>
       <div className="mt-4 line-clamp-2 text-xl font-semibold leading-snug tracking-tight">{p.titolo}</div>
       <div className="mt-1.5 flex items-center gap-1 text-sm text-[var(--muted)]"><MapPin size={14} />{zoneOf(p.addr)}</div>
@@ -602,7 +605,7 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
   );
   if (t.card === 'price') return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className={`${shell} ring-1 ring-[var(--line)]`}>
-      <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />{tag}</div>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between">{pr}<FavButton id={p.id} className="!bg-transparent ring-1 ring-[var(--line)] !shadow-none" /></div>
         <div className="mt-2 line-clamp-2 min-h-[2.75em] text-[16px] font-semibold leading-snug">{p.titolo}</div>{place}
@@ -614,9 +617,9 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
     <SiteLink to={{ page: 'immobile', id: p.id }} className={`${shell} shadow-[0_1px_2px_rgba(0,0,0,.04),0_12px_32px_-12px_rgba(0,0,0,.12)] ring-1 ring-[var(--line)] hover:shadow-[0_24px_48px_-16px_rgba(0,0,0,.2)]`}>
       <div className="relative">
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
-        <div className="absolute left-3 top-3 flex gap-1.5">{riv ? <span className="rounded-[calc(var(--r)*0.5)] bg-[#e5533d] px-2.5 py-1 text-[11px] font-bold uppercase text-white">In evidenza</span> : badge}{t.card === 'badge' && <span className="rounded-[calc(var(--r)*0.5)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-800">{typeOf(p)}</span>}</div>
-        <FavButton id={p.id} className="absolute bottom-3 right-3" />
-        {riv && <span className="absolute right-3 top-3 rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-bold uppercase text-[var(--on-c,#fff)]">{isRent(p) ? 'Affitto' : 'Disponibile'}</span>}
+        <div className="absolute left-3 top-3 flex gap-1.5">{riv ? avail && <span className="rounded-[calc(var(--r)*0.5)] bg-[#e5533d] px-2.5 py-1 text-[11px] font-bold uppercase text-white">In evidenza</span> : badge}{t.card === 'badge' && <span className="rounded-[calc(var(--r)*0.5)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-800">{typeOf(p)}</span>}</div>
+        <FavButton id={p.id} className="absolute bottom-3 right-3" />{tag}
+        {riv && avail && <span className="absolute right-3 top-3 rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-bold uppercase text-[var(--on-c,#fff)]">{isRent(p) ? 'Affitto' : 'Disponibile'}</span>}
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="line-clamp-2 min-h-[2.75em] text-[16px] font-semibold leading-snug">{p.titolo}</div>{place}
@@ -641,7 +644,7 @@ export function PropertyRow({ p }: { p: SiteProperty }) {
   const { cfg } = useSite();
   return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group grid gap-6 border-b border-[var(--line)] py-8 md:grid-cols-[340px_1fr_auto] md:items-center">
-      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><FavButton id={p.id} className="absolute right-3 top-3" /></div>
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><FavButton id={p.id} className="absolute right-3 top-3" /><StatusTag p={p} className="absolute bottom-3 left-3 z-10" /></div>
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">{typeOf(p)} · {isRent(p) ? 'Affitto' : 'Vendita'}</div>
         <H as="h3" className="mt-2 text-3xl">{p.titolo}</H>
@@ -649,7 +652,7 @@ export function PropertyRow({ p }: { p: SiteProperty }) {
         <Facts p={p} className="mt-4 text-[var(--muted)]" />
       </div>
       <div className="flex items-center gap-5 md:flex-col md:items-end">
-        {cfg.showPrices && <div className="text-2xl font-bold">{price(p.prezzo)}</div>}
+        {priceShown(cfg, p) && <div className="text-2xl font-bold">{price(p.prezzo)}</div>}
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ink)] text-white transition-transform duration-500 group-hover:rotate-45"><ArrowUpRight size={18} /></span>
       </div>
     </SiteLink>
@@ -714,6 +717,22 @@ function FeaturedChips() {
       </div>
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{list.map(p => <PropertyCard key={p.id} p={p} />)}</div>
       <div className="mt-10 text-center"><SiteLink to={{ page: 'immobili', f: tipo ? { tipo } : undefined }} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold ring-1 ring-[var(--line)] hover:ring-[var(--fg)]">{tx('featured.link')} <ArrowRight size={15} /></SiteLink></div>
+    </Container>
+  );
+}
+
+// ---------- Venduti di recente: il lavoro fatto (solo se ci sono venduti o affittati), al massimo 6, i piu' recenti prima ----------
+export function SoldRecent() {
+  const { sold, t } = useSite();
+  const tx = useT();
+  if (!sold.length) return null;
+  const list = sold.slice(0, t.results === 'rows' ? 4 : 6);
+  return (
+    <Container className="py-24">
+      <SectionHead eyebrow={tx('sold.eyebrow')} title={tx('sold.title')} sub={tx('sold.sub')} link={sold.length > list.length ? { label: tx('sold.link'), to: { page: 'immobili', f: { venduti: true } } } : undefined} />
+      {t.results === 'rows'
+        ? <div className="mt-6 border-t border-[var(--line)]">{list.map(p => <PropertyRow key={p.id} p={p} />)}</div>
+        : <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{list.map((p, k) => <div key={p.id} className={k >= 4 ? 'max-sm:hidden' : ''}><PropertyCard p={p} /></div>)}</div>}
     </Container>
   );
 }

@@ -4,10 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
-import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
+import { isClosed, statusOf, STATUS_KEYS, STATUS_LABELS, STATUSES, TEMPLATES, type PropertyStatus, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
+import Dropdown from '@/components/ui/Dropdown';
 import { SitePage } from '@/components/site/pages';
 import type { PropEdit } from '@/components/site/ui';
-import { updateProject, type ProjectData } from '@/lib/projects';
+import { patchProjectDetails, updateProject, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
 import { PublicSwitch, toSite } from './PortfolioView';
 import { useCredits } from './PlanView';
@@ -113,6 +114,11 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       if (await updateProject(project.id, { [k]: val })) onChange();
     },
   };
+  // stato salvato dalla barra in alto: la bozza della barra a sinistra (se c'e') prende lo stato nuovo, poi si ricarica
+  const statusSaved = async (patch: Details) => {
+    setDraft(d => { const id = d?.import_data as { details?: Details } | undefined; return d && id ? { ...d, import_data: { ...id, details: { ...id.details, ...patch } } } : d; });
+    await onChange();
+  };
   return (
     <>
       <div className="mb-5 flex items-center justify-between">
@@ -127,11 +133,12 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
           ? <>
-            {/* telefono: tre righe (stato, interruttore, pulsanti) separate da un divisore */}<span className="pr-2 max-sm:basis-full max-sm:border-t max-sm:border-line max-sm:pt-3"><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
+            {/* telefono: tre righe (stato, interruttore, pulsanti) separate da un divisore */}<span className="flex flex-wrap items-center gap-x-4 gap-y-2 pr-2 max-sm:basis-full max-sm:border-t max-sm:border-line max-sm:pt-3"><StatusPicker project={project} onSaved={statusSaved} /><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
             {/* casa non online (sito spento o casa non pubblica): al cliente la scheda in PDF */}
             {site && !(site.published && project.is_public) && <button type="button" onClick={() => void sendSheet()} disabled={sending} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>}
           </>
           : <>
+            <StatusPicker project={project} onSaved={statusSaved} />
             {/* senza sito: al cliente la scheda in PDF (si salva dalla stampa e si allega su WhatsApp) */}
             <button type="button" onClick={() => void sendSheet()} disabled={sending} title={tr('Manda al cliente la scheda della casa su WhatsApp', 'Send the client the property sheet on WhatsApp')} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>
             <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>
@@ -174,6 +181,36 @@ const FIELDS: { k: keyof ProjectData; label: string; num?: boolean; wide?: boole
   { k: 'bagni', label: tr('Bagni', 'Bathrooms'), num: true }, { k: 'tipologia', label: tr('Tipologia', 'Property type'), ph: tr('Appartamento', 'Apartment') },
   { k: 'riferimento', label: tr('Riferimento', 'Reference'), ph: tr('Codice interno', 'Internal code') },
 ]
+// Stato dell'immobile (disponibile, in trattativa, riservato, venduto, affittato): si salva subito nei dettagli,
+// come Pubblico. Venduti e affittati restano sul sito ma fuori dagli elenchi; il prezzo si mostra solo se acceso.
+const STATUS_DOT: Record<PropertyStatus, string> = { disponibile: 'bg-emerald-500', trattativa: 'bg-amber-500', riservato: 'bg-brand', venduto: 'bg-ink', affittato: 'bg-ink' };
+const statusLabel = (s: PropertyStatus) => tr(...STATUS_LABELS[s]);
+function StatusPicker({ project, onSaved }: { project: ProjectData; onSaved: (patch: Details) => void | Promise<unknown> }) {
+  const det = ((project.import_data ?? {}) as { details?: Details }).details ?? {};
+  const [pending, setPending] = useState<PropertyStatus | null>(null);
+  const cur = pending ?? statusOf({ details: det });
+  const save = async (patch: Details) => {
+    if (!(await patchProjectDetails(project, patch))) { alert(tr('Non sono riuscito a salvare lo stato, riprova.', 'Could not save the status, please try again.')); return; }
+    await onSaved(patch);
+  };
+  const pick = async (s: PropertyStatus) => {
+    if (s === cur || pending) return;
+    setPending(s);
+    await save({ stato_annuncio: s, stato_annuncio_data: new Date().toISOString() });
+    setPending(null);
+  };
+  return (
+    <span className="flex items-center gap-3">
+      <Dropdown value={cur} options={STATUSES.map(s => ({ value: s, label: statusLabel(s) }))} onChange={s => void pick(s)} className="h-9 gap-1.5 bg-canvas pl-3.5 pr-3 font-medium hover:bg-line/60 hover:!text-ink">
+        {pending ? <Loader2 size={12} className="animate-spin text-muted" /> : <span className={`h-2 w-2 rounded-full ${STATUS_DOT[cur]}`} aria-hidden />}
+        <span className="whitespace-nowrap">{statusLabel(cur)}</span>
+      </Dropdown>
+      {/* venduti e affittati: il prezzo e' nascosto sul sito, a meno che l'agente non voglia mostrarlo */}
+      {isClosed(cur) && <PublicSwitch on={!!det.mostra_prezzo_venduto} labels={[tr('Prezzo visibile', 'Price shown'), tr('Prezzo nascosto', 'Price hidden')]} onClick={() => save({ mostra_prezzo_venduto: !det.mostra_prezzo_venduto })} />}
+    </span>
+  );
+}
+
 // Pagina del sito in scala, larga 1280 px come su un computer; non cliccabile (si guarda e si scorre con la pagina).
 // Su telefono invece a grandezza vera, larga quanto il riquadro: si vede la versione mobile del sito, leggibile
 function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id: string }) {
@@ -368,7 +405,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const panel = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   // dettagli del form di creazione: bozza a parte (chiave :det), salvati in import_data.details
-  const savedDet = () => ({ ...(((project.import_data ?? {}) as { details?: Details }).details ?? {}) });
+  // lo stato (venduto, trattativa...) si cambia dalla barra in alto: fuori dalla bozza, al salvataggio si prende quello attuale
+  const savedDet = () => Object.fromEntries(Object.entries(((project.import_data ?? {}) as { details?: Details }).details ?? {}).filter(([k]) => !STATUS_KEYS.includes(k))) as Details;
   const [det, setDetState] = useState<Details>(savedDet);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -381,7 +419,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const toUp = (o: Record<string, string>, dd: Details = det) => {
     const up = Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]) as Record<string, string | number>;
     // i campi base copiati anche nei dettagli (report, portali e sito leggono anche da li')
-    const details: Details = { ...dd, prezzo: up.prezzo || undefined, superficie: up.mq || undefined, locali: up.locali || undefined, camere: up.camere || undefined, bagni: up.bagni || undefined, indirizzo: String(up.addr) || undefined, tipologia: String(up.tipologia) || undefined, riferimento: String(up.riferimento) || undefined };
+    const cur = ((project.import_data ?? {}) as { details?: Details }).details ?? {};
+    const details: Details = { ...dd, ...Object.fromEntries(STATUS_KEYS.filter(k => cur[k] !== undefined).map(k => [k, cur[k]])), prezzo: up.prezzo || undefined, superficie: up.mq || undefined, locali: up.locali || undefined, camere: up.camere || undefined, bagni: up.bagni || undefined, indirizzo: String(up.addr) || undefined, tipologia: String(up.tipologia) || undefined, riferimento: String(up.riferimento) || undefined };
     return { ...up, import_data: { ...(project.import_data ?? {}), details } };
   };
   // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)

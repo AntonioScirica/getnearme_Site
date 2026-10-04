@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { cityOf, cleanSite, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
+import { cityOf, cleanSite, pageHidden, statusOf, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
 import { hasSitePlan, sitePlanHolders } from './sitePlan'
 import { listKeys, publicUrl } from './r2'
 
@@ -87,10 +87,11 @@ export function toSiteProperty(p: PublicProperty): SiteProperty {
   const d = (p.import_data ?? {}) as { photos?: unknown; zona?: unknown; contratto?: unknown; details?: unknown; prima?: unknown }
   const prima = d.prima && typeof d.prima === 'object' ? Object.fromEntries(Object.entries(d.prima as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string')) : undefined
   const photos = Array.isArray(d.photos) ? d.photos.filter((x): x is string => typeof x === 'string').slice(0, 40) : []
+  const details = d.details && typeof d.details === 'object' ? d.details as Record<string, unknown> : undefined
   return {
     id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali,
     tipologia: p.tipologia, cover: p.cover, descrizione: p.descrizione, photos: photos.length ? photos : p.cover ? [p.cover] : [],
-    prima, riferimento: p.riferimento ?? '', createdAt: p.created_at, details: d.details && typeof d.details === 'object' ? d.details as Record<string, unknown> : undefined,
+    prima, riferimento: p.riferimento ?? '', createdAt: p.created_at, details, status: statusOf({ details }),
     contratto: typeof d.contratto === 'string' ? d.contratto : typeof (d.details as { contratto?: unknown } | undefined)?.contratto === 'string' ? String((d.details as { contratto: string }).contratto) : '', zona: Array.isArray(d.zona) ? d.zona.filter((x): x is string => typeof x === 'string').slice(0, 12) : [],
   }
 }

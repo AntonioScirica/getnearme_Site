@@ -101,6 +101,12 @@ export async function updateProject(id: string, updates: Partial<Omit<ProjectDat
   }
 }
 
+// Alcuni dettagli dell'immobile (import_data.details) cambiati e salvati subito, gli altri restano (es. lo stato: venduto, in trattativa...)
+export async function patchProjectDetails(p: ProjectData, patch: Record<string, unknown>): Promise<boolean> {
+  const details = { ...(((p.import_data ?? {}) as { details?: Record<string, unknown> }).details ?? {}), ...patch }
+  return !!(await updateProject(p.id, { import_data: { ...(p.import_data ?? {}), details } }))
+}
+
 export async function deleteProject(id: string): Promise<boolean> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return false

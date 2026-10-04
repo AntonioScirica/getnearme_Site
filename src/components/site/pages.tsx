@@ -4,18 +4,18 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, ImagePlus, Loader2, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
-import { ABOUT_DEFAULT, pageHidden, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { ABOUT_DEFAULT, isClosed, pageHidden, statusOf, STATUS_LABELS, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
-import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
+import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, SoldRecent, statsOf, tipiOf, Zones, type Filters } from './sections';
+import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, Sec, StatusTag, SiteLink, SiteRoot, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
 
 function HomePage() {
-  return <><Sec id="header"><Header over /></Sec><Sec id="home.hero"><Hero /></Sec><Sec id="home.intro"><Intro /></Sec><Sec id="home.featured"><Featured /></Sec><Sec id="home.about"><AboutBlock /></Sec><Sec id="home.reviews"><Reviews /></Sec><Sec id="home.zones"><Zones /></Sec><Sec id="cta"><CtaBand /></Sec><Sec id="footer"><Footer /></Sec></>;
+  return <><Sec id="header"><Header over /></Sec><Sec id="home.hero"><Hero /></Sec><Sec id="home.intro"><Intro /></Sec><Sec id="home.featured"><Featured /></Sec><Sec id="home.sold"><SoldRecent /></Sec><Sec id="home.about"><AboutBlock /></Sec><Sec id="home.reviews"><Reviews /></Sec><Sec id="home.zones"><Zones /></Sec><Sec id="cta"><CtaBand /></Sec><Sec id="footer"><Footer /></Sec></>;
 }
 
 // Testata delle pagine interne, diversa per template
@@ -41,13 +41,14 @@ function PageHead({ eyebrow, title, sub, children }: { eyebrow: string; title: s
 type F = Filters & { min?: number; sort?: string };
 const PER_PAGE = 9;
 function useFilter(initial?: Filters) {
-  const { properties } = useSite();
+  const { properties, sold } = useSite();
   const favs = useFavs();
   const favIds = favs.ids;
   const [f, setF] = useState<F>({ ...initial });
   const list = useMemo(() => {
     const q = f.q?.toLowerCase().trim();
-    const r = properties.filter(p =>
+    // Venduti: solo venduti e affittati (dal piu' recente), altrimenti quelli sul mercato
+    const r = (f.venduti ? sold : properties).filter(p =>
       (!q || `${p.titolo} ${p.addr}`.toLowerCase().includes(q)) && (!f.tipo || p.tipologia?.startsWith(f.tipo)) && (!f.rif || (p.riferimento ?? '').toLowerCase().includes(f.rif.toLowerCase())) &&
       (!f.contratto || (f.contratto === 'affitto') === isRent(p)) && (!f.max || (p.prezzo && p.prezzo <= f.max)) && (!f.min || p.prezzo >= f.min) &&
       (!f.camere || (p.camere ?? 0) >= f.camere) && (!f.bagni || (p.bagni ?? 0) >= f.bagni) && (!f.fav || favIds.includes(p.id)));
@@ -55,15 +56,15 @@ function useFilter(initial?: Filters) {
     if (f.sort === 'desc') r.sort((a, b) => b.prezzo - a.prezzo);
     if (f.sort === 'mq') r.sort((a, b) => b.mq - a.mq);
     return r;
-  }, [properties, f, favIds]);
-  return { f, setF, set: (p: Partial<F>) => setF(x => ({ ...x, ...p })), list, tipi: tipiOf(properties), favCount: favIds.length };
+  }, [properties, sold, f, favIds]);
+  return { f, setF, set: (p: Partial<F>) => setF(x => ({ ...x, ...p })), list, tipi: tipiOf(properties), favCount: favIds.length, soldCount: sold.length, soldRent: sold.some(p => statusOf(p) === 'affittato') };
 }
 
 function ListingsPage({ initial }: { initial?: Filters }) {
   const { t, properties } = useSite();
   const tx = useT();
   const s = useFilter(initial);
-  const { f, set, setF, list, tipi, favCount } = s;
+  const { f, set, setF, list, tipi, favCount, soldCount, soldRent } = s;
   const [pageN, setPageN] = useState(0);
   const [open, setOpen] = useState(false);
   useLockScroll(open);
@@ -75,10 +76,12 @@ function ListingsPage({ initial }: { initial?: Filters }) {
   const seg = 'grid gap-1 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] p-1';
   const segBtn = (on: boolean) => `h-9 min-w-0 truncate rounded-[calc(var(--r)*0.45)] px-1 text-[13px] font-medium transition-colors ${on ? 'bg-[var(--c)] text-white shadow-sm' : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--fg)]'}`;
   const contratto = (
-    <div className="flex gap-2">
-      <div className={`${seg} flex-1 grid-cols-3`}>
-        {[['', 'Tutti'], ['vendita', 'Vendita'], ['affitto', 'Affitto']].map(([v, l]) => <button key={v} onClick={() => set({ contratto: v || undefined })} className={segBtn((f.contratto ?? '') === v)}>{l}</button>)}
+    <div className="flex flex-wrap gap-2">
+      <div className={`${seg} min-w-60 flex-1 grid-cols-3`}>
+        {[['', 'Tutti'], ['vendita', 'Vendita'], ['affitto', 'Affitto']].map(([v, l]) => <button key={v} onClick={() => set({ contratto: v || undefined, venduti: undefined })} className={segBtn(!f.venduti && (f.contratto ?? '') === v)}>{l}</button>)}
       </div>
+      {/* Venduti: solo se l'agente ha venduti o affittati (il lavoro fatto, fuori dai risultati normali) */}
+      {soldCount > 0 && <button onClick={() => set({ venduti: !f.venduti || undefined, contratto: undefined })} aria-pressed={!!f.venduti} className={`flex h-11 shrink-0 items-center gap-1.5 rounded-[calc(var(--r)*0.6)] border px-3 text-sm font-medium transition-colors ${f.venduti ? 'border-[var(--c)] bg-[var(--c)] text-white' : 'border-[var(--line)] bg-[var(--surface)]'}`}>Venduti <span className="opacity-60">{soldCount}</span></button>}
       {favCount > 0 && <button onClick={() => set({ fav: !f.fav })} className={`flex h-11 shrink-0 items-center gap-1.5 rounded-[calc(var(--r)*0.6)] border px-3 text-sm font-medium transition-colors ${f.fav ? 'border-[var(--c)] bg-[var(--c)] text-white' : 'border-[var(--line)] bg-[var(--surface)]'}`}>♥ {favCount}</button>}
     </div>
   );
@@ -126,7 +129,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
       )}
     </>
   );
-  const title = f.q ? `Immobili a ${f.q}` : tx('listings.title');
+  const title = f.venduti ? (soldRent ? 'Venduti e affittati' : 'Immobili venduti') : f.q ? `Immobili a ${f.q}` : tx('listings.title');
   const sub = properties.length ? `${list.length} ${list.length === 1 ? 'risultato' : 'risultati'}` : undefined; // nessun immobile: niente "0 risultati"
 
   return (
@@ -143,7 +146,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
               <div className="flex-1"><Select value={f.camere ?? ''} onChange={e => set({ camere: Number(e.target.value) || undefined })} className={field}><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select></div>
               <button className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] px-5 text-sm font-semibold text-white"><Search size={15} /> Cerca</button>
             </div>
-            <div className="mt-6 flex items-center justify-between gap-3"><div className="w-72">{contratto}</div>{sort}</div>
+            <div className="mt-6 flex items-center justify-between gap-3"><div className={soldCount ? 'max-w-[28rem]' : 'w-72'}>{contratto}</div>{sort}</div>
           </Container>
           <Container className="py-10">{results}</Container>
         </>
@@ -283,7 +286,8 @@ function Gallery({ p }: { p: SiteProperty }) {
       {all}
     </div>
   );
-  return <>{body}<Lightbox photos={[...photos, ...vids]} prima={p.prima} i={i} setI={setI} /></>;
+  // stato (venduto, in trattativa...) sulla foto, in alto a destra (a sinistra c'e' l'etichetta Prima / Dopo)
+  return <><div className="relative">{body}{photos.length > 0 && <StatusTag p={p} className="absolute right-4 top-4 z-10 !px-3.5 !py-1.5 !text-xs" />}</div><Lightbox photos={[...photos, ...vids]} prima={p.prima} i={i} setI={setI} /></>;
 }
 
 function AgentCard({ subject, property }: { subject?: string; property?: SiteProperty }) {
@@ -309,9 +313,10 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
 }
 
 function PropertyPage({ id }: { id: string }) {
-  const { properties, cfg, t, propEdit, embed } = useSite();
+  const { properties, all, cfg, t, propEdit, embed } = useSite();
   const tx = useT();
-  const p = properties.find(x => x.id === id) ?? properties[0];
+  const p = all.find(x => x.id === id) ?? properties[0]; // anche venduti e affittati: la scheda resta online
+  const st = p ? statusOf(p) : 'disponibile';
   const [more, setMore] = useState(false);
   if (!p) return <><Sec id="header"><Header /></Sec><Container className="py-24 text-center text-[var(--muted)]">Immobile non trovato.</Container><Footer /></>;
   const similar = properties.filter(x => x.id !== p.id).slice(0, 3);
@@ -327,7 +332,10 @@ function PropertyPage({ id }: { id: string }) {
     <>
       {t.gallery === 'full' && !embed && crumbs}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
+        {isClosed(st)
+          ? <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--ink)] px-2.5 py-1 text-[11px] font-semibold text-white">{STATUS_LABELS[st][0]}</span>
+          : <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>}
+        {(st === 'trattativa' || st === 'riservato') && <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)] ring-1 ring-inset ring-[var(--c)]">{STATUS_LABELS[st][0]}</span>}
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
       </div>
       <H as="h1" className="mt-4 text-4xl md:text-5xl"><Editable k="titolo" value={p.titolo}>{p.titolo || 'Titolo dell’immobile'}</Editable></H>
@@ -349,7 +357,7 @@ function PropertyPage({ id }: { id: string }) {
         {/* min-w-0: la fila dei video (scorrevole) non deve allargare la colonna */}
         <div className="min-w-0">
           {t.gallery !== 'full' && heading}
-          {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}><Editable k="prezzo" value={p.prezzo ? String(p.prezzo) : ''}>{price(p.prezzo)}</Editable>{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
+          {priceShown(cfg, p) && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}><Editable k="prezzo" value={p.prezzo ? String(p.prezzo) : ''}>{price(p.prezzo)}</Editable>{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
           <div className="mt-6 flex flex-wrap items-center gap-2">{!propEdit && <ShareBar title={p.titolo} />}<ReportButton id={p.id} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
           {(desc || propEdit) && (

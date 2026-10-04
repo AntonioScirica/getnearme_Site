@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { zoneOnly } from '@/lib/siteTemplates';
+import { closedPriceHidden, isClosed, statusOf, zoneOnly } from '@/lib/siteTemplates';
 import { notFound } from 'next/navigation';
 import { getOfflineBrand, loadSite, siteUrl } from '@/lib/portfolio';
 import { SitePage } from '@/components/site/pages';
@@ -29,7 +29,10 @@ export default async function PublicPropertyPage({ params }: Props) {
   const ld = {
     '@context': 'https://schema.org', '@type': 'RealEstateListing', name: p.titolo, url: siteUrl(slug, `/${id}`),
     description: p.descrizione?.slice(0, 500), image: p.photos?.slice(0, 10), datePosted: p.createdAt,
-    ...(p.prezzo && s.cfg.showPrices && !(p.details as { trattativa_riservata?: boolean } | undefined)?.trattativa_riservata ? { offers: { '@type': 'Offer', price: p.prezzo, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', seller: { '@type': 'RealEstateAgent', name: s.name } } } : {}),
+    // venduto o affittato: offerta esaurita (SoldOut), il prezzo solo se l'agente lo mostra
+    ...(isClosed(statusOf(p))
+      ? { offers: { '@type': 'Offer', availability: 'https://schema.org/SoldOut', ...(p.prezzo && s.cfg.showPrices && !closedPriceHidden(p) ? { price: p.prezzo, priceCurrency: 'EUR' } : {}), seller: { '@type': 'RealEstateAgent', name: s.name } } }
+      : p.prezzo && s.cfg.showPrices && !(p.details as { trattativa_riservata?: boolean } | undefined)?.trattativa_riservata ? { offers: { '@type': 'Offer', price: p.prezzo, priceCurrency: 'EUR', availability: 'https://schema.org/InStock', seller: { '@type': 'RealEstateAgent', name: s.name } } } : {}),
     ...(addr ? { contentLocation: { '@type': 'Place', address: addr } } : {}),
   };
   return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, '\\u003c') }} /><SitePage ctx={s} page={{ page: 'immobile', id }} /></>;

@@ -1,9 +1,10 @@
 'use client';
 
-import { deleteProject } from '@/lib/projects';
+import { deleteProject, patchProjectDetails } from '@/lib/projects';
+import { isClosed, statusOf, STATUS_LABELS, STATUSES, type PropertyStatus } from '@/lib/siteTemplates';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker } from 'leaflet';
-import { ArrowUpRight, ChevronLeft, ChevronRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X, Plus, MoreHorizontal, Pencil, Trash2, Check } from 'lucide-react';
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
@@ -181,6 +182,7 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: 
   const step = (d: number) => (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setIdx(i => (i + d + media.length) % media.length); };
   const cur = media[idx] ?? p.cover;
   const score = (p.import_data as { score?: number } | undefined)?.score;
+  const st = statusOf({ details: (p.import_data as { details?: Record<string, unknown> } | undefined)?.details });
   const [menu, setMenu] = useState(false);
   const [up, setUp] = useState(false); // menu verso l'alto se sotto non c'e' posto (fondo della pagina o barra in basso)
   const [busy, setBusy] = useState(false);
@@ -197,6 +199,15 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: 
     setBusy(true);
     if (await deleteProject(p.id)) onChange?.(); else { setBusy(false); alert(tr('Non sono riuscito a eliminare l’immobile, riprova.', 'Couldn’t delete the property, please try again.')); }
   };
+  // stato dal menu: si salva subito nei dettagli (come dalla scheda), poi si ricarica la lista
+  const setStatus = async (s: PropertyStatus) => {
+    setMenu(false);
+    if (s === st) return;
+    setBusy(true);
+    const ok = await patchProjectDetails(p, { stato_annuncio: s, stato_annuncio_data: new Date().toISOString() });
+    setBusy(false);
+    if (ok) onChange?.(); else alert(tr('Non sono riuscito a salvare lo stato, riprova.', 'Could not save the status, please try again.'));
+  };
   return (
     // i tre puntini stanno fuori dal link (un bottone dentro un link non va bene): menu con Modifica ed Elimina
     <div ref={box} className={`group/card relative ${busy ? 'pointer-events-none' : ''}`}>
@@ -204,10 +215,17 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: 
     {busy && <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[24px] bg-white/60 backdrop-blur-[2px]"><Loader2 size={22} className="animate-spin text-muted" /></div>}
     {!demo && (
       <div className="absolute right-3 top-3 z-20 ease-smooth transition-transform group-hover/card:-translate-y-1">{/* sale con la card */}
-        <button type="button" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = e.currentTarget.closest('main')?.getBoundingClientRect().bottom ?? innerHeight; setUp(b - r.bottom < 112); setMenu(m => !m); }} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={menu} className="flex h-10 w-10 items-center md:h-8 md:w-8 justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
+        <button type="button" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = e.currentTarget.closest('main')?.getBoundingClientRect().bottom ?? innerHeight; setUp(b - r.bottom < 330); setMenu(m => !m); }} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={menu} className="flex h-10 w-10 items-center md:h-8 md:w-8 justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>
         {menu && (
-          <div className={`blur-in absolute right-0 ${up ? 'bottom-12 md:bottom-10' : 'top-12 md:top-10'} w-44 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5`}>
+          <div className={`blur-in absolute right-0 ${up ? 'bottom-12 md:bottom-10' : 'top-12 md:top-10'} w-52 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5`}>
             <a href={`#/immobile/${p.id}`} className="flex h-11 items-center md:h-9 gap-2 rounded-xl px-3 font-medium hover:bg-canvas"><Pencil size={14} /> {tr('Modifica', 'Edit')}</a>
+            <span className="my-1 block h-px bg-line" aria-hidden />
+            <span className="block px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">{tr('Stato', 'Status')}</span>
+            {STATUSES.map(s => (
+              <button key={s} type="button" role="menuitemradio" aria-checked={s === st} onClick={() => void setStatus(s)} className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl px-3 text-left md:h-9 hover:bg-canvas ${s === st ? 'font-semibold' : 'font-medium'}`}>
+                {tr(...STATUS_LABELS[s])}{s === st && <Check size={14} className="text-brand" />}
+              </button>
+            ))}
             <span className="my-1 block h-px bg-line" aria-hidden />{/* Elimina staccato da Modifica: meno tocchi per sbaglio */}
             <button type="button" onClick={remove} className="flex h-11 w-full items-center md:h-9 gap-2 rounded-xl px-3 font-medium text-rose-600 hover:bg-rose-50"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>
@@ -229,6 +247,8 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [] }: { p: 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
         <div className="absolute left-3 right-16 top-3 flex min-w-0 gap-1.5">
           {demo && <span className="shrink-0 whitespace-nowrap rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md">{tr('Esempio', 'Sample')}</span>}
+          {/* stato: solo se non e' disponibile (venduto e affittato pieni, trattativa e riservato chiari) */}
+          {st !== 'disponibile' && <span className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm backdrop-blur-md ${isClosed(st) ? 'bg-ink/85 text-white' : 'bg-white/90 text-ink ring-1 ring-black/5'}`}>{!isClosed(st) && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />}{tr(...STATUS_LABELS[st])}</span>}
           {p.is_public && siteOk && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{tr('In vetrina', 'Live')}</span>}
           {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>

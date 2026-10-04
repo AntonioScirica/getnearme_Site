@@ -1,15 +1,15 @@
 'use client';
 
-import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
 import { Bath, BedDouble, Check, Star, Wand2, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
-import { FONTS, fontCss, zoneOnly, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { closedAt, closedPriceHidden, FONTS, fontCss, isClosed, statusOf, STATUS_LABELS, zoneOnly, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
 
-export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string; camere?: number; bagni?: number; rif?: string; fav?: boolean };
+export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string; camere?: number; bagni?: number; rif?: string; fav?: boolean; venduti?: boolean };
 export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page: 'immobile'; id: string } | { page: 'agente' } | { page: 'servizi' } | { page: 'contatti' } | { page: 'zona'; slug: string } | { page: 'legal'; doc: 'privacy' | 'cookie' };
 
 // Ogni template sceglie una variante per ogni parte: stessi dati, siti molto diversi.
@@ -75,6 +75,8 @@ export type SiteCtx = {
   propEdit?: PropEdit;
   // scheda immobile incorporata in un altro sito (iframe): niente intestazione, piede e simili, i link si aprono a parte
   embed?: boolean;
+  // tutti gli immobili, anche venduti e affittati (li mette SiteRoot: properties resta solo con quelli sul mercato)
+  allProperties?: SiteProperty[];
 };
 // texts: testi modificabili al clic sulla pagina (spento: si modifica dalla barra a sinistra)
 export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; editing?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void; onAdd?: (files: FileList) => void; adding?: boolean };
@@ -94,7 +96,8 @@ export function Editable({ k, value, children, multiline = false, className = ''
 const Ctx = createContext<SiteCtx | null>(null);
 export const useSite = () => {
   const c = useContext(Ctx)!;
-  return { ...c, t: THEMES[c.cfg.template] };
+  const all = c.allProperties ?? c.properties;
+  return { ...c, all, sold: all.filter(p => isClosed(statusOf(p))).sort((a, b) => closedAt(b).localeCompare(closedAt(a))), t: THEMES[c.cfg.template] };
 };
 
 export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode }) {
@@ -105,7 +108,9 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
   } as CSSProperties;
   // carattere dei titoli scelto dall'agente: il foglio di Google Fonts va nella pagina (React lo sposta nel <head>)
   const fontHref = fontCss([ctx.cfg.headingFont]);
-  return <Ctx.Provider value={ctx}>{/* niente precedence: nell'editor sospenderebbe e rimonterebbe la pagina (modifiche perse) */}{fontHref && <link rel="stylesheet" href={fontHref} />}<div data-site-root style={style} className={`relative ${ctx.embed ? '' : 'min-h-screen'} font-body antialiased selection:bg-[var(--c)] selection:text-white`}>{children}</div></Ctx.Provider>;
+  // venduti e affittati: fuori dagli elenchi, in evidenza e dai numeri; restano raggiungibili da all/sold (scheda, Venduti di recente)
+  const value = useMemo(() => ({ ...ctx, allProperties: ctx.properties, properties: ctx.properties.filter(p => !isClosed(statusOf(p))) }), [ctx]);
+  return <Ctx.Provider value={value}>{/* niente precedence: nell'editor sospenderebbe e rimonterebbe la pagina (modifiche perse) */}{fontHref && <link rel="stylesheet" href={fontHref} />}<div data-site-root style={style} className={`relative ${ctx.embed ? '' : 'min-h-screen'} font-body antialiased selection:bg-[var(--c)] selection:text-white`}>{children}</div></Ctx.Provider>;
 }
 
 export const pathOf = (base: string, p: Page): string =>
@@ -197,6 +202,20 @@ export function NoListings({ className = '' }: { className?: string }) {
 }
 
 export const price = (n: number) => (n ? `€ ${Number(n).toLocaleString('it-IT')}` : 'Trattativa riservata');
+// prezzo visibile: i prezzi del sito accesi e, per venduti e affittati, solo se l'agente ha scelto di mostrarlo
+export const priceShown = (cfg: SiteConfig, p: SiteProperty) => cfg.showPrices && !closedPriceHidden(p);
+
+// Bollino dello stato sulla foto (niente per i disponibili): venduti e affittati pieni, trattativa e riservato chiari con il punto colore
+export function StatusTag({ p, className = '' }: { p: SiteProperty; className?: string }) {
+  const s = statusOf(p);
+  if (s === 'disponibile') return null;
+  const closed = isClosed(s);
+  return (
+    <span className={`pointer-events-none inline-flex items-center gap-1.5 whitespace-nowrap rounded-[calc(var(--r)*0.5)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-sm ${closed ? 'bg-[var(--ink)] text-white ring-1 ring-white/25' : 'bg-white/95 text-neutral-900'} ${className}`}>
+      {!closed && <span className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />}{STATUS_LABELS[s][0]}
+    </span>
+  );
+}
 export const zoneOf = (addr: string) => zoneOnly(addr);
 export const typeOf = (p: SiteProperty) => p.tipologia?.split('|')[0].trim() || 'Immobile';
 

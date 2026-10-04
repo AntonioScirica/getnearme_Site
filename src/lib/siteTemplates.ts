@@ -70,7 +70,25 @@ export type SiteProperty = {
   createdAt?: string
   details?: Record<string, unknown>
   prima?: Record<string, string> // foto AI -> foto originale (per il prima/dopo nella galleria)
+  status?: PropertyStatus // stato dell'annuncio (da details.stato_annuncio), disponibile se manca
 }
+
+// ---------- Stato dell'immobile ----------
+// Sta in import_data.details (niente colonne nuove): stato_annuncio, stato_annuncio_data (quando e' cambiato,
+// per "Venduti di recente") e mostra_prezzo_venduto (venduti e affittati: prezzo nascosto se non acceso).
+export type PropertyStatus = 'disponibile' | 'trattativa' | 'riservato' | 'venduto' | 'affittato'
+export const STATUSES: PropertyStatus[] = ['disponibile', 'trattativa', 'riservato', 'venduto', 'affittato']
+export const STATUS_LABELS: Record<PropertyStatus, [string, string]> = {
+  disponibile: ['Disponibile', 'Available'], trattativa: ['In trattativa', 'Under offer'], riservato: ['Riservato', 'Reserved'], venduto: ['Venduto', 'Sold'], affittato: ['Affittato', 'Rented'],
+}
+export const STATUS_KEYS = ['stato_annuncio', 'stato_annuncio_data', 'mostra_prezzo_venduto']
+const asStatus = (v: unknown): PropertyStatus | null => (typeof v === 'string' && (STATUSES as string[]).includes(v) ? v as PropertyStatus : null)
+export const statusOf = (p: { status?: string; details?: Record<string, unknown> }): PropertyStatus => asStatus(p.status) ?? asStatus(p.details?.stato_annuncio) ?? 'disponibile'
+// venduto o affittato: resta online (lavoro fatto) ma fuori dagli elenchi normali
+export const isClosed = (s: PropertyStatus) => s === 'venduto' || s === 'affittato'
+export const closedPriceHidden = (p: { status?: string; details?: Record<string, unknown> }) => isClosed(statusOf(p)) && !p.details?.mostra_prezzo_venduto
+// data per ordinare i venduti: quando e' cambiato lo stato, altrimenti quando e' stato creato
+export const closedAt = (p: { details?: Record<string, unknown>; createdAt?: string }) => String(p.details?.stato_annuncio_data ?? p.createdAt ?? '')
 
 // desc_en: descrizione in inglese per la galleria dei modelli della piattaforma (i nomi restano quelli)
 export const TEMPLATES: { id: TemplateId; name: string; desc: string; desc_en: string; primary: string; font: SiteConfig['font'] }[] = [
@@ -265,6 +283,7 @@ export const TEXTS: Record<string, string> = {
   'feature.3.title': 'Scelta selezionata', 'feature.3.text': 'Poche case, quelle giuste, con foto e dati veri.',
   'feature.4.title': 'Fino al rogito', 'feature.4.text': 'Trattativa, mutuo e notaio: ti accompagno in ogni passo.',
   'featured.eyebrow': 'I nostri immobili', 'featured.title': 'In evidenza', 'featured.sub': 'Le case disponibili adesso.', 'featured.link': 'Vedi tutti',
+  'sold.eyebrow': 'Risultati', 'sold.title': 'Venduti di recente', 'sold.sub': 'Alcune case che ho venduto o affittato.', 'sold.link': 'Vedi tutti',
   'about.check.1': 'Valutazione gratuita del tuo immobile', 'about.check.2': 'Foto e annunci curati', 'about.check.3': 'Assistenza fino al rogito', 'about.cta': 'Conoscimi meglio',
   'reviews.eyebrow': 'Recensioni', 'reviews.title': 'Cosa dicono i clienti',
   'zones.eyebrow': 'Dove lavoro', 'zones.title': 'Scopri le zone',
@@ -290,6 +309,7 @@ export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
     { id: 'home.hero', label: 'Apertura', texts: ['hero.eyebrow', 'hero.cta', 'hero.cta2', 'search.button', 'search.more'], cfg: ['heroTitle', 'heroSubtitle', 'city', 'heroImage'], order: ['hero.eyebrow', 'heroTitle', 'heroSubtitle', 'hero.cta', 'hero.cta2', 'city', 'search.button', 'search.more', 'heroImage'] },
     { id: 'home.intro', label: 'Dopo l’apertura', hideable: true, texts: ['intro.title', 'intro.button', 'feature.1.title', 'feature.1.text', 'feature.2.title', 'feature.2.text', 'feature.3.title', 'feature.3.text', 'feature.4.title', 'feature.4.text'] },
     { id: 'home.featured', label: 'Immobili in evidenza', hideable: true, texts: ['featured.eyebrow', 'featured.title', 'featured.sub', 'featured.link'], cfg: ['showPrices'], order: ['featured.eyebrow', 'featured.title', 'featured.sub', 'showPrices', 'featured.link'] },
+    { id: 'home.sold', label: 'Venduti di recente', hideable: true, texts: ['sold.eyebrow', 'sold.title', 'sold.sub', 'sold.link'], note: 'Si vede solo se hai immobili venduti o affittati.', note_en: 'Only shows if you have sold or rented properties.' },
     { id: 'home.about', label: 'Chi sono', hideable: true, texts: ['about.check.1', 'about.check.2', 'about.check.3', 'about.cta'], cfg: ['aboutTitle', 'aboutText', 'aboutImage', 'years', 'sold', 'clients', 'showStats'], order: ['aboutImage', 'aboutTitle', 'aboutText', 'about.check.1', 'about.check.2', 'about.check.3', 'showStats', 'years', 'sold', 'clients', 'about.cta'] },
     { id: 'home.reviews', label: 'Recensioni', hideable: true, texts: ['reviews.eyebrow', 'reviews.title'], cfg: ['reviews'] },
     { id: 'home.zones', label: 'Zone', hideable: true, texts: ['zones.eyebrow', 'zones.title'], cfg: ['zones'] },
@@ -345,6 +365,7 @@ export const FIELD_LABELS: Record<string, string> = {
   'feature.1.title': 'Punto 1', 'feature.1.text': 'Punto 1, testo', 'feature.2.title': 'Punto 2', 'feature.2.text': 'Punto 2, testo',
   'feature.3.title': 'Punto 3', 'feature.3.text': 'Punto 3, testo', 'feature.4.title': 'Punto 4', 'feature.4.text': 'Punto 4, testo',
   'featured.eyebrow': 'Scritta sopra il titolo', 'featured.title': 'Titolo', 'featured.sub': 'Sottotitolo', 'featured.link': 'Link “vedi tutti”',
+  'sold.eyebrow': 'Scritta sopra il titolo', 'sold.title': 'Titolo', 'sold.sub': 'Sottotitolo', 'sold.link': 'Link “vedi tutti”',
   'about.check.1': 'Punto elenco 1', 'about.check.2': 'Punto elenco 2', 'about.check.3': 'Punto elenco 3', 'about.cta': 'Pulsante',
   'reviews.eyebrow': 'Scritta sopra il titolo', 'reviews.title': 'Titolo', 'zones.eyebrow': 'Scritta sopra il titolo', 'zones.title': 'Titolo',
   'cta.title': 'Titolo', 'cta.text': 'Testo',
@@ -365,7 +386,7 @@ export const FIELD_LABELS: Record<string, string> = {
 
 // Nomi delle sezioni e dei campi in inglese, per l'editor della piattaforma in inglese (il sito dei visitatori resta in italiano)
 export const SECTION_LABELS_EN: Record<string, string> = {
-  header: 'Top bar', 'home.hero': 'Hero', 'home.intro': 'After the hero', 'home.featured': 'Featured listings', 'home.about': 'About me',
+  header: 'Top bar', 'home.hero': 'Hero', 'home.intro': 'After the hero', 'home.featured': 'Featured listings', 'home.sold': 'Recently sold', 'home.about': 'About me',
   'home.reviews': 'Reviews', 'home.zones': 'Areas', cta: 'Contact band', footer: 'Footer',
   'listings.head': 'Page title',
   'property.desc': 'Description', 'property.details': 'Details', 'property.features': 'Features', 'property.zone': 'Nearby', 'property.map': 'Map',
@@ -381,6 +402,7 @@ export const FIELD_LABELS_EN: Record<string, string> = {
   'feature.1.title': 'Point 1', 'feature.1.text': 'Point 1, text', 'feature.2.title': 'Point 2', 'feature.2.text': 'Point 2, text',
   'feature.3.title': 'Point 3', 'feature.3.text': 'Point 3, text', 'feature.4.title': 'Point 4', 'feature.4.text': 'Point 4, text',
   'featured.eyebrow': 'Text above the title', 'featured.title': 'Title', 'featured.sub': 'Subtitle', 'featured.link': '“See all” link',
+  'sold.eyebrow': 'Text above the title', 'sold.title': 'Title', 'sold.sub': 'Subtitle', 'sold.link': '“See all” link',
   'about.check.1': 'Bullet point 1', 'about.check.2': 'Bullet point 2', 'about.check.3': 'Bullet point 3', 'about.cta': 'Button',
   'reviews.eyebrow': 'Text above the title', 'reviews.title': 'Title', 'zones.eyebrow': 'Text above the title', 'zones.title': 'Title',
   'cta.title': 'Title', 'cta.text': 'Text',
