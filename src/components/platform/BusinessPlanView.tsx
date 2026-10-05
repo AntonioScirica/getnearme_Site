@@ -23,7 +23,7 @@ type Actuals = {
 
 const COLORS: Record<ScenarioKey, string> = { prudente: '#9fb3e6', base: '#537eec', ambizioso: '#1f3f99' };
 const BRAND = '#537eec';
-const INK = '#1d1d1f';
+const INK = 'var(--color-ink)'; // colori dei grafici dal tema: nel dashboard scuro /metrics si adattano
 const KEYS: ScenarioKey[] = ['prudente', 'base', 'ambizioso'];
 
 // ------------------------------------------------------------------ formattazione
@@ -551,11 +551,11 @@ function LineChart({ series, labels, fmt, fillBetween }: { series: Series[]; lab
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="block h-auto max-w-full touch-pan-y select-none" onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img" aria-label={series.map(s => s.label).join(', ')}>
         {ticks.map(v => (
           <g key={v}>
-            <line x1={pl} x2={W - pr} y1={Y(v)} y2={Y(v)} stroke={Math.abs(v) < 1e-9 ? '#b9bdc8' : '#eceef3'} />
-            <text x={pl - 8} y={Y(v) + 4} textAnchor="end" fontSize="11" fill="#6a6a6a" className="tabular-nums">{fmt(v)}</text>
+            <line x1={pl} x2={W - pr} y1={Y(v)} y2={Y(v)} stroke={Math.abs(v) < 1e-9 ? '#b9bdc8' : 'var(--color-line)'} />
+            <text x={pl - 8} y={Y(v) + 4} textAnchor="end" fontSize="11" fill="var(--color-muted)" className="tabular-nums">{fmt(v)}</text>
           </g>
         ))}
-        {labels.map((l, t) => t % xEvery === 0 || t === labels.length - 1 ? <text key={t} x={X(t)} y={H - 8} textAnchor={t === labels.length - 1 ? 'end' : t === 0 ? 'start' : 'middle'} fontSize="11" fill="#6a6a6a">{l}</text> : null)}
+        {labels.map((l, t) => t % xEvery === 0 || t === labels.length - 1 ? <text key={t} x={X(t)} y={H - 8} textAnchor={t === labels.length - 1 ? 'end' : t === 0 ? 'start' : 'middle'} fontSize="11" fill="var(--color-muted)">{l}</text> : null)}
         {fillBetween && series.length >= 2 && (
           <polygon points={`${pts(series[0].values)} ${series[1].values.map((v, t) => `${X(t).toFixed(1)},${Y(v).toFixed(1)}`).reverse().join(' ')}`} fill="#537eec" opacity="0.08" />
         )}

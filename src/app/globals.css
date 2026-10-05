@@ -46,13 +46,16 @@
 }
 
 /* Nuova piattaforma (src/components/platform). Font caricati in dashboard/layout.tsx. */
-@theme inline {
+/* colori come variabili vere (non inline): un contenitore puo' ridefinirli, es. il business plan scuro in /metrics */
+@theme {
   --color-ink: #222222;
   --color-muted: #6a6a6a;
   --color-canvas: #f7f7f7;
   --color-line: #ebebeb;
   --color-brand: #537eec;
   --color-ai: #6e56f8;
+}
+@theme inline {
   --font-display: var(--font-bricolage), system-ui, sans-serif;
   --font-body: var(--font-instrument), system-ui, sans-serif;
 }
