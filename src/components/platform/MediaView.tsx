@@ -12,22 +12,39 @@ import { authFetch, CARD_SHADOW } from './api';
 import { FAKE_MEDIA, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 import { pageLocale, tr } from './i18n';
+import { byRecent, pageMedia, type MediaFilters, type MediaItem, type MediaPage } from '@/lib/mediaPage';
 
 // Una voce = una foto di partenza: ultima versione (dopo), originale (prima) e i passaggi in mezzo.
 // video in lavorazione: della piattaforma, o della prova gratis della landing (landing:<lavoro>, lo finisce la sua rotta)
 const jobUrl = (job: string) => (job.startsWith('landing:') ? `/api/landing/demo-video?job=${encodeURIComponent(job.slice(8))}` : `/api/platform/video?job=${encodeURIComponent(job)}`);
-export type MediaItem = { id: string; video?: string; pending?: boolean; job?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
+export type { MediaItem };
 
+// elenco intero (immobili, chat, reel); la Galleria invece va a pagine con fetchMediaPage
 export async function fetchMedia(): Promise<MediaItem[]> {
   const r = await authFetch('/api/platform/media').catch(() => null);
   const d = r?.ok ? await r.json() : null;
   return d?.items ?? [];
 }
 
+// una pagina della Galleria (dal piu' recente), con i filtri; null se la richiesta non va
+export async function fetchMediaPage(f: MediaFilters, before: string | null, limit: number): Promise<MediaPage | null> {
+  const p = new URLSearchParams({ limit: String(limit) });
+  if (before) p.set('before', before);
+  if (f.q?.trim()) p.set('q', f.q.trim());
+  if (f.casa && f.casa !== 'tutte') p.set('casa', f.casa);
+  if (f.since) p.set('since', String(f.since));
+  if (f.tipo && f.tipo !== 'tutto') p.set('tipo', f.tipo);
+  const r = await authFetch(`/api/platform/media?${p}`).catch(() => null);
+  return r?.ok ? await r.json().catch(() => null) : null;
+}
+
+// anteprima leggera (api/thumb: WebP ridotto, in cache sul CDN) per le foto https; locali, data: e blob: restano come sono
+export const thumb = (u: string, w: 160 | 320 | 480 | 640 | 960) => (/^https:\/\//.test(u) ? `/api/thumb?w=${w}&u=${encodeURIComponent(u)}` : u);
+
 // Novita' in Galleria (notifica sulla voce del menu): foto e video finiti dopo l'ultima visita alla Galleria, anche
 // se l'agente ha chiuso la chat mentre il video si faceva. Si controlla ogni 30 s con la pagina in vista; i video ancora
 // in lavorazione si sollecitano come fa la Galleria (la richiesta sul lavoro lo chiude e lo salva).
-// ponytail: si rilegge l'elenco intero (poche centinaia di file su R2); se diventa pesante, un endpoint "ultimo at".
+// Si leggono solo le 100 voci piu' recenti (il server elenca comunque R2: se pesa, un endpoint "ultimo at").
 export function useGalleryNews(uid: string, onGallery: boolean): number {
   const key = `agenteimmo:gallery-seen:${uid}`;
   const [n, setN] = useState(0);
@@ -38,7 +55,8 @@ export function useGalleryNews(uid: string, onGallery: boolean): number {
       if (document.hidden) return;
       let seen = Number((() => { try { return localStorage.getItem(key); } catch { return null; } })() ?? 0);
       if (!seen) { seen = Date.now(); try { localStorage.setItem(key, String(seen)); } catch { /* niente */ } } // primo accesso: niente arretrati
-      const items = await fetchMedia();
+      // bastano i piu' recenti (i video in lavorazione sono degli ultimi 30 minuti, quindi in testa)
+      const items = (await fetchMediaPage({}, null, 100))?.items ?? [];
       // prima il numero, poi in sottofondo i lavori in corso (aspettarli ritardava il pallino anche di minuti)
       if (!stop) setN(items.filter(m => !m.pending && m.at > seen).length);
       for (const m of items.filter(x => x.pending && x.job)) void authFetch(jobUrl(m.job!)).catch(() => null);
@@ -63,25 +81,32 @@ const PERIODS = [
   { value: '30', label: tr('Ultimi 30 giorni', 'Last 30 days'), days: 30 },
 ] as const;
 type Period = (typeof PERIODS)[number]['value'];
-const PAGE = 24;
-const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const PAGE = 40;
 // richiesta salvata come id dello stile ("modern", "empty day"...): si mostra il nome in italiano
 const presetName = (w: string) => ({ empty: tr('Svuota', 'Empty'), day: tr('Luminoso', 'Brighter') } as Record<string, string>)[w] ?? STAGING_STYLES.find(x => x.id === w)?.label ?? STAGING_ANGLES.find(x => x.id === w)?.label ?? (w === 'planimetria' ? tr('Planimetria', 'Floor plan') : null)
 // solo se sono tutti id di stile; una richiesta scritta a mano resta com'e' (prima diventava "mettere, un, letto")
 const nice = (t: string) => { const w = t.split(' '); return w.every(presetName) ? w.map(presetName).join(', ') : t; }
 const stepsOf = (m: MediaItem) => [...(m.prima ? [{ src: m.prima, label: tr('Prima', 'Before') }] : []), ...m.steps.map(s => ({ src: s.url, label: s.text ? nice(s.text) : tr('Modifica', 'Edit') }))];
 
-// Galleria: divisa per immobile, con ricerca (stanza, casa, richiesta), filtri e caricamento a scorrimento
-// (24 alla volta). Passando sopra una foto si vede com'era all'inizio.
+// Galleria: divisa per immobile, con ricerca (stanza, casa, richiesta), filtri e caricamento a scorrimento:
+// il server manda 40 voci per volta (dal piu' recente), le altre arrivano avvicinandosi al fondo. Nella griglia
+// solo anteprime leggere; i video si scaricano al passaggio del mouse o aprendoli. Passando sopra una foto si
+// vede com'era all'inizio.
 export default function MediaView() {
-  const [items, setItems] = useState<MediaItem[] | null>(null);
+  const [items, setItems] = useState<MediaItem[] | null>(null); // voci caricate finora (pagine gia' arrivate)
+  const [next, setNext] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [casas, setCasas] = useState<string[]>([]);
+  const [more, setMore] = useState(false);
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [viewer, setViewer] = useState<MediaItem | null>(null);
   const [q, setQ] = useState('');
+  const [qq, setQq] = useState(''); // ricerca mandata al server, dopo una breve pausa nella scrittura
   const [casa, setCasa] = useState('tutte');
   const [period, setPeriod] = useState<Period>('tutto');
   const [tipo, setTipo] = useState<'tutto' | 'foto' | 'video'>('tutto');
-  const [shown, setShown] = useState(PAGE);
+  const [reload, setReload] = useState(0);
   // selezione multipla per cancellare
   const [selecting, setSelecting] = useState(false);
   const [sel, setSel] = useState<Set<string>>(new Set());
@@ -103,31 +128,79 @@ export default function MediaView() {
   const [note, setNote] = useState('');
   const toggle = (id: string) => setSel(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const stopSelecting = () => { setSelecting(false); setSel(new Set()); };
-  const remove = async () => {
-    setDeleting(true);
-    const chosen = (items ?? []).filter(m => sel.has(m.id));
-    const keys = chosen.flatMap(m => m.keys); // le foto finte di sviluppo non hanno chiavi: si tolgono solo dalla lista
-    const r = keys.length ? await authFetch('/api/platform/media', { method: 'DELETE', body: JSON.stringify({ keys }) }).catch(() => null) : null;
-    const d = keys.length ? (r?.ok ? await r.json() : null) : { kept: 0 };
-    setDeleting(false); setConfirm(false);
-    if (!d) { setNote(tr('Non sono riuscito a eliminarle, riprova.', "Couldn't delete them, please try again.")); return; }
-    const fresh = keys.length ? await fetchMedia() : (items ?? []).filter(m => m.keys.length);
-    setItems(dev ? [...fresh, ...(items ?? []).filter(m => !m.keys.length && !sel.has(m.id))].sort((a, b) => b.at - a.at) : fresh);
-    setNote(d.kept ? tr(`Alcune foto sono usate in un immobile e sono rimaste: toglile prima dall'immobile.`, 'Some photos are used in a property and were kept: remove them from the property first.') : '');
-    stopSelecting();
-  };
   const [now] = useState(() => Date.now()); // riferimento per i periodi (Oggi, 7 giorni...)
   const sentinel = useRef<HTMLDivElement>(null);
-  // in sviluppo si aggiungono 4 immobili finti con le loro foto e video, per provare gruppi, filtri e passaggi.
-  // Galleria vuota o tour (evento 'agenteimmo:tour-demo'): solo quelli d'esempio
-  const dev = process.env.NODE_ENV === 'development';
+  // Galleria vuota o tour (evento 'agenteimmo:tour-demo'): solo foto e video d'esempio, filtrati qui come fa il server
   const [tour, setTour] = useState(false);
-  const [demo, setDemo] = useState(false);
+  const [demo, setDemo] = useState<MediaItem[] | null>(null);
   useEffect(() => {
     const on = () => setTour(true);
     window.addEventListener('agenteimmo:tour-demo', on);
     return () => window.removeEventListener('agenteimmo:tour-demo', on);
   }, []);
+  useEffect(() => {
+    if (!tour) return;
+    const id = setTimeout(() => { setDemo([...FAKE_MEDIA].sort(byRecent)); setProjects(FAKE_PROPERTIES.slice(0, 4)); }, 0);
+    return () => clearTimeout(id);
+  }, [tour]);
+  useEffect(() => { if (!tour) void fetchProjects().then(setProjects); }, [tour]);
+  useEffect(() => { const id = setTimeout(() => setQq(q), 300); return () => clearTimeout(id); }, [q]);
+
+  const filters = useMemo<MediaFilters>(() => {
+    const days = PERIODS.find(p => p.value === period)!.days;
+    return { q: qq, casa, tipo, since: days ? now - days * 86_400_000 : 0 };
+  }, [qq, casa, tipo, period, now]);
+  const getPage = (before: string | null, limit: number) => (demo ? Promise.resolve(pageMedia(demo, filters, projects, before, limit)) : fetchMediaPage(filters, before, limit));
+  // richiesta in corso: una risposta vecchia (filtri gia' cambiati) non deve coprire quella nuova
+  const req = useRef(0);
+  const apply = (d: MediaPage, append: boolean) => {
+    setItems(cur => (append && cur ? [...cur, ...d.items.filter(m => !cur.some(x => x.id === m.id))] : d.items));
+    setNext(d.next); setTotal(d.total); setCounts(d.counts); setCasas(d.casas);
+  };
+  // prima pagina: all'apertura, a filtri cambiati, dopo una cancellazione o a video finito
+  useEffect(() => {
+    if (tour && !demo) return;
+    const id = ++req.current;
+    void getPage(null, PAGE).then(d => { if (id === req.current) { if (d) apply(d, false); else setItems(cur => cur ?? []); } });
+  }, [filters, demo, tour, reload]); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadMore = async () => {
+    if (!next || more) return;
+    const id = req.current;
+    setMore(true);
+    const d = await getPage(next, PAGE);
+    if (id === req.current && d) apply(d, true);
+    setMore(false);
+  };
+  // "Seleziona tutte": prima arrivano le pagine che mancano, poi si seleziona tutto quello che i filtri mostrano
+  const selectAll = async () => {
+    const id = req.current;
+    let cur = next, ids = (items ?? []).map(m => m.id);
+    while (cur && id === req.current) {
+      const d = await getPage(cur, 200);
+      if (!d) break;
+      ids = [...ids, ...d.items.map(m => m.id)];
+      cur = d.next;
+      apply(d, true);
+    }
+    setSel(new Set(ids));
+  };
+
+  const remove = async () => {
+    setDeleting(true);
+    const chosen = (items ?? []).filter(m => sel.has(m.id));
+    const keys = chosen.flatMap(m => m.keys); // le foto d'esempio non hanno chiavi: si tolgono solo dalla lista
+    const r = keys.length ? await authFetch('/api/platform/media', { method: 'DELETE', body: JSON.stringify({ keys }) }).catch(() => null) : null;
+    const d = keys.length ? (r?.ok ? await r.json() : null) : { kept: 0 };
+    setDeleting(false); setConfirm(false);
+    if (!d) { setNote(tr('Non sono riuscito a eliminarle, riprova.', "Couldn't delete them, please try again.")); return; }
+    if (demo) setDemo(list => (list ?? []).filter(m => m.keys.length || !sel.has(m.id)));
+    // si ricarica dall'inizio quanto c'era gia' in pagina (le cancellate spariscono, quelle tenute restano)
+    const id = ++req.current;
+    const fresh = demo ? null : await fetchMediaPage(filters, null, Math.min(200, Math.max(PAGE, items?.length ?? 0)));
+    if (fresh && id === req.current) apply(fresh, false);
+    setNote(d.kept ? tr(`Alcune foto sono usate in un immobile e sono rimaste: toglile prima dall'immobile.`, 'Some photos are used in a property and were kept: remove them from the property first.') : '');
+    stopSelecting();
+  };
   // video in lavorazione (chat persa o chiusa): si segue il lavoro da qui, a video pronto si ricarica la lista
   useEffect(() => {
     const jobs = (items ?? []).filter(m => m.pending && m.job).map(m => m.job!);
@@ -138,68 +211,36 @@ export default function MediaView() {
       for (const job of jobs) {
         const r = await authFetch(jobUrl(job)).catch(() => null);
         const v = r ? await r.json().catch(() => ({})) : {};
-        if (v.url || v.error) { if (!stop) fetchMedia().then(m => { if (!stop) setItems(m); }); return; }
+        if (v.url || v.error) { if (!stop) setReload(n => n + 1); return; }
       }
       if (!stop) t = setTimeout(tick, 8000);
     };
     t = setTimeout(tick, 8000);
     return () => { stop = true; clearTimeout(t); };
   }, [items]);
-  useEffect(() => {
-    const fake = [...FAKE_MEDIA].sort((a, b) => b.at - a.at), fakeP = FAKE_PROPERTIES.slice(0, 4);
-    if (tour) { const id = setTimeout(() => { setItems(fake); setProjects(fakeP); setDemo(true); }, 0); return () => clearTimeout(id); }
-    let stale = false; // il tour parte mentre si carica: la risposta vecchia non deve coprire gli esempi
-    Promise.all([fetchMedia(), fetchProjects()]).then(([m, p]) => {
-      if (stale) return;
-      // solo foto e video dell'account (esempi solo nel tour guidato)
-      setDemo(false);
-      setItems(m);
-      setProjects(p);
-    });
-    return () => { stale = true; };
-  }, [dev, tour]);
 
   const nameOf = (id: string | null) => {
     const p = id ? projects.find(x => x.id === id) : null;
     return p ? p.titolo || p.nome || p.addr : tr('Senza immobile', 'No property');
   };
-  const filtered = useMemo(() => {
-    if (!items) return [];
-    const words = norm(q).split(/\s+/).filter(Boolean);
-    const days = PERIODS.find(p => p.value === period)!.days;
-    const since = days ? now - days * 86_400_000 : 0;
-    return items.filter(m => {
-      if (casa !== 'tutte' && (m.casa ?? 'nessuna') !== casa) return false;
-      if (tipo !== 'tutto' && !!m.video !== (tipo === 'video')) return false;
-      if (m.at < since) return false;
-      if (!words.length) return true;
-      const p = m.casa ? projects.find(x => x.id === m.casa) : null;
-      const hay = norm([m.room, m.all, p?.titolo, p?.nome, p?.addr].filter(Boolean).join(' '));
-      return words.every(w => hay.includes(w));
-    });
-  }, [items, projects, q, casa, period, tipo, now]);
-  // filtri cambiati: si riparte dalla prima pagina
-  const key = `${q}|${casa}|${period}|${tipo}`;
-  const [prevKey, setPrevKey] = useState(key);
-  if (key !== prevKey) { setPrevKey(key); setShown(PAGE); }
-
-  // scorrimento infinito: quando il fondo si avvicina si mostrano altre 24 foto
+  // scorrimento infinito: quando il fondo si avvicina arriva la pagina dopo
   useEffect(() => {
     const el = sentinel.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setShown(n => n + PAGE); }, { rootMargin: '600px' });
+    if (!el || !next) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) void loadMore(); }, { rootMargin: '600px' });
     io.observe(el);
     return () => io.disconnect();
-  }, [filtered.length, shown]);
+  }, [next, more, items]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // gruppi per immobile, nell'ordine della foto piu' recente
   const groups = useMemo(() => {
     const g = new Map<string, MediaItem[]>();
-    for (const m of filtered.slice(0, shown)) g.set(m.casa ?? 'nessuna', [...(g.get(m.casa ?? 'nessuna') ?? []), m]);
+    for (const m of items ?? []) g.set(m.casa ?? 'nessuna', [...(g.get(m.casa ?? 'nessuna') ?? []), m]);
     return [...g.entries()];
-  }, [filtered, shown]);
-  const count = (k: string) => filtered.filter(m => (m.casa ?? 'nessuna') === k).length;
-  const casaOptions = [{ value: 'tutte', label: tr('Tutti gli immobili', 'All properties') }, ...[...new Set((items ?? []).map(m => m.casa ?? 'nessuna'))].map(id => ({ value: id, label: id === 'nessuna' ? tr('Senza immobile', 'No property') : nameOf(id) }))];
+  }, [items]);
+  const count = (k: string) => counts[k] ?? 0;
+  const empty = items !== null && !casas.length; // nessuna foto nell'account (filtri a parte)
+  const casaOptions = [{ value: 'tutte', label: tr('Tutti gli immobili', 'All properties') }, ...casas.map(id => ({ value: id, label: id === 'nessuna' ? tr('Senza immobile', 'No property') : nameOf(id) }))];
   const pill = 'h-10 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-line';
 
   return (
@@ -229,8 +270,8 @@ export default function MediaView() {
         <Dropdown value={tipo} options={[{ value: 'tutto', label: tr('Foto e video', 'Photos and videos') }, { value: 'foto', label: tr('Solo foto', 'Photos only') }, { value: 'video', label: tr('Solo video', 'Videos only') }]} onChange={setTipo} className={pill} />
         <Dropdown value={casa} options={casaOptions} onChange={setCasa} className={pill} />
         <Dropdown value={period} options={PERIODS.map(p => ({ value: p.value, label: p.label }))} onChange={setPeriod} className={pill} />
-        {items && <span className="ml-auto text-sm text-muted">{filtered.length} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span>}
-        {!!items?.length && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
+        {items && <span className="ml-auto text-sm text-muted">{total} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span>}
+        {!!items && !empty && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
       </div>
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
@@ -244,9 +285,9 @@ export default function MediaView() {
             </div>
           ))}
         </div>
-      ) : !items.length ? (
+      ) : empty ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Qui finiranno le foto che crei nella chat di home staging.', 'Photos you create in the home staging chat will show up here.')}</p>
-      ) : !filtered.length ? (
+      ) : !items.length ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Niente con questi filtri.', 'Nothing matches these filters.')}</p>
       ) : (
         <div className={`space-y-10 pt-8 ${selecting ? 'pb-28' : ''}`}>
@@ -256,29 +297,29 @@ export default function MediaView() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
                   <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}
-                    onMouseEnter={m.video ? e => { const v = e.currentTarget.querySelector<HTMLVideoElement>('video[data-play]'); if (v) { v.currentTime = 0; v.play().catch(() => {}); } } : undefined}
-                    onMouseLeave={m.video ? e => { const v = e.currentTarget.querySelector<HTMLVideoElement>('video[data-play]'); setTimeout(() => { if (v && !v.closest('.group')?.matches(':hover')) v.pause(); }, 600); /* si ferma a fine dissolvenza, se nel frattempo non si e' tornati sopra */ } : undefined}>
+                    // il video si scarica solo qui, al primo passaggio del mouse (all'apertura della pagina niente mp4)
+                    onMouseEnter={m.video ? e => { const v = e.currentTarget.querySelector<HTMLVideoElement>('video[data-play]'); if (v) { if (!v.getAttribute('src')) v.src = m.video!; v.currentTime = 0; v.play().catch(() => {}); } } : undefined}
+                    onMouseLeave={m.video ? e => { const v = e.currentTarget.querySelector<HTMLVideoElement>('video[data-play]'); const c = e.currentTarget.querySelector<HTMLElement>('[data-cover]'); if (c) c.style.opacity = ''; setTimeout(() => { if (v && !v.closest('.group')?.matches(':hover')) v.pause(); }, 600); /* si ferma a fine dissolvenza, se nel frattempo non si e' tornati sopra */ } : undefined}>
                     <button type="button" onClick={() => (selecting ? toggle(m.id) : setViewer(m))} className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas ${selecting ? 'cursor-pointer' : 'cursor-zoom-in'}`}>
                       {selecting && (
                         <span className={`absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full ring-2 ease-smooth transition-colors ${sel.has(m.id) ? 'bg-brand text-white ring-brand' : 'bg-white/80 text-transparent ring-white'}`}><Check size={15} strokeWidth={3} /></span>
                       )}
                       {/* video: copertina ferma, parte al passaggio del mouse */}
                       {m.video
-                        // due strati: sopra l'ultimo fotogramma fermo (la stanza arredata), sotto il video che in hover
-                        // riparte dall'inizio; lo strato fermo sfuma (600 ms) invece di saltare al primo fotogramma
+                        // due strati: sopra la copertina ferma (anteprima leggera della foto da cui e' nato), sotto il video
+                        // senza sorgente finche' non ci si passa sopra; la copertina sfuma (600 ms) quando il video parte davvero
                         ? <>
-                          <video data-play src={m.video} muted loop playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover" />
-                          <video src={m.video} muted playsInline preload="auto" onLoadedMetadata={e => { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - 0.05); }}
-                            className="absolute inset-0 h-full w-full object-cover ease-smooth transition-opacity duration-[600ms] group-hover:opacity-0" />
+                          <video data-play muted loop playsInline preload="none" onPlaying={e => { const c = e.currentTarget.parentElement?.querySelector<HTMLElement>('[data-cover]'); if (c && e.currentTarget.closest('.group')?.matches(':hover')) c.style.opacity = '0'; }} className="absolute inset-0 h-full w-full object-cover" />
+                          {m.dopo && <img data-cover src={thumb(m.dopo, 480)} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover ease-smooth transition-opacity duration-[600ms]" />}
                         </>
                         : m.pending
                         ? <>
-                          {m.dopo && <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full scale-105 object-cover blur-md" />}
+                          {m.dopo && <img src={thumb(m.dopo, 320)} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full scale-105 object-cover blur-md" />}
                           <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white"><Loader2 size={22} className="animate-spin" /><span className="text-xs font-medium">{tr('Video in lavorazione', 'Video in progress')}</span></span>
                         </>
-                        : <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
+                        : <img src={thumb(m.dopo, 480)} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />}
                       {m.video && <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Clapperboard size={12} /> Video</span>}
-                      {m.prima && <img src={m.prima} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-0 ease-smooth transition-opacity group-hover:opacity-100" />}
+                      {m.prima && <img src={thumb(m.prima, 480)} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-0 ease-smooth transition-opacity group-hover:opacity-100" />}
                       <span className="absolute bottom-3 left-3 flex items-center gap-2">
                         {m.prima && <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur"><span className="group-hover:hidden">{tr('Dopo', 'After')}</span><span className="hidden group-hover:inline">{tr('Prima', 'Before')}</span></span>}
                         {m.steps.length > 1 && <span className="flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Layers size={12} /> {m.steps.length}</span>}
@@ -293,7 +334,7 @@ export default function MediaView() {
               </div>
             </section>
           ))}
-          {shown < filtered.length && <div ref={sentinel} className="flex h-16 items-center justify-center text-muted"><Loader2 size={18} className="animate-spin" /></div>}
+          {next && <div ref={sentinel} className="flex h-16 items-center justify-center text-muted"><Loader2 size={18} className="animate-spin" /></div>}
         </div>
       )}
       {/* barra della selezione: in basso, fissa. In un portal: dentro la pagina un antenato con transform
@@ -304,7 +345,7 @@ export default function MediaView() {
           <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
           <div className={`pointer-events-auto relative flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
             <span className="font-medium">{sel.size} {sel.size === 1 ? tr('selezionata', 'selected') : tr('selezionate', 'selected')}</span>
-            <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Seleziona tutte', 'Select all')}</button>
+            <button type="button" onClick={() => void selectAll()} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">{tr('Seleziona tutte', 'Select all')}</button>
             <button type="button" disabled={!sel.size || dlAll} onClick={() => void downloadSel()} className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-black disabled:opacity-40">{dlAll ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} {tr('Scarica', 'Download')}</button>
             <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> {tr('Elimina', 'Delete')}</button>
           </div>

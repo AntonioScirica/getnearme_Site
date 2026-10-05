@@ -7,6 +7,8 @@ import { downloadImage } from '@/lib/staging';
 import { tr } from '@/components/platform/i18n';
 
 type Step = { src: string; label: string };
+// miniature della fascia dei passaggi: anteprima leggera (api/thumb) per le foto https, le altre come sono
+const mini = (u: string) => (/^https:\/\//.test(u) ? `/api/thumb?w=160&u=${encodeURIComponent(u)}` : u);
 
 // Foto a tutto schermo. Con `before` (risultati AI) si apre sul confronto con il cursore, e si passa a Prima o Dopo; con `steps` (Galleria)
 // si possono aprire tutti i passaggi dall'originale all'ultima versione. Con `video` (Galleria) mostra il video con
@@ -67,7 +69,7 @@ export default function PhotoViewer({ src, before, steps, video, onClose }: { sr
             <div className="flex max-w-[92vw] gap-2 overflow-x-auto rounded-2xl bg-white/10 p-2 [scrollbar-width:none]">
               {list.map((s, j) => (
                 <button key={s.src} onClick={() => { setCmp(false); setI(j); }} title={s.label} className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ease-smooth transition-[box-shadow,opacity] ${j === i ? 'ring-white' : 'opacity-60 ring-transparent hover:opacity-100'}`}>
-                  <img src={s.src} alt="" className="h-full w-full object-cover" />
+                  <img src={mini(s.src)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   <span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">{j === 0 ? tr('Prima', 'Before') : `${j}. ${s.label}`}</span>
                 </button>
               ))}
