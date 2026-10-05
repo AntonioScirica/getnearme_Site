@@ -50,7 +50,7 @@ async function zenrows(url: string, budgetMs = 170_000): Promise<string | null> 
   return last
 }
 
-const decode = (s: string) => s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+const decode = (s: string) => s.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16))).replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
   .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
 
 export function parseHtml(html: string): { raw: Raw; photos: string[]; title: string } {
@@ -75,7 +75,10 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
   const planUrls = new Set([...html.matchAll(/data-fancybox=["'][^"']*(?:floor|plan|pianta)[^"']*["'][^>]*?(?:href|data-src)=["']([^"']+)["']|(?:href|data-src)=["']([^"']+)["'][^>]*?data-fancybox=["'][^"']*(?:floor|plan|pianta)[^"']*["']/gi)].map(m => decode(m[1] || m[2])))
   const isPlan = (u: string) => planUrls.has(u) || isPlanUrl(u)
   const photos = [...all.filter(u => !isPlan(u)), ...all.filter(isPlan).map(u => u + PLAN_MARK)]
-  return { raw: { text, json, meta, images: photos }, photos, title: meta['og:title'] || title }
+  // il titolo della pagina spesso finisce col nome del sito ("Il Mulino, San Gimignano – nicotedeschi.it"): via
+  const site = (meta['og:site_name'] ?? '').trim()
+  const clean = (t: string) => t.replace(/\s+[–—|-]\s+[^–—|]*\.(?:it|com|net|eu|org|immo)\s*$/i, '').replace(site ? new RegExp(`\\s+[–—|-]\\s+${site.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i') : /$^/, '').trim()
+  return { raw: { text, json, meta, images: photos }, photos, title: clean(meta['og:title'] || title) }
 }
 
 function collectPhotos(html: string, meta: Record<string, string>): string[] {
