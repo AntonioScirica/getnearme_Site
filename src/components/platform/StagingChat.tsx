@@ -125,7 +125,7 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto, anims: [
     { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto },
   ] },
-  // solo foto di esterni (facciata, giardino; Stagioni anche terrazzi e balconi): con un interno non si mostrano, vedi templateHidden
+  // solo foto di esterni (facciata, giardino; Stagioni anche terrazzi e balconi): con un interno si vedono spenti, vedi templateOff
   // Giro col drone: la foto e' gia' aerea (fatta col drone dall'agente); nessuna classificazione affidabile per le foto aeree, quindi vale per gli esterni
   { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone, anims: [
     { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone },
@@ -1110,15 +1110,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // (su una stanza lo scavo non torna); Prima e dopo e' per le stanze; Giorno e notte e Camminata vanno dentro e fuori.
   // Tipo di foto non ancora noto: tutto aperto.
   const templateOff = (id: string) => {
-    if (id === 'drone' || id === 'stagioni') return false // solo esterni: con le altre foto non si mostrano (templateHidden)
+    // Giro col drone e Stagioni: solo esterni (Stagioni anche balconi); con una stanza si vedono spenti con "Solo foto esterne"
+    if (id === 'drone') return !!kind && kind !== 'scene:esterno' && kind !== 'scene:giardino'
+    if (id === 'stagioni') return !!kind && kind !== 'scene:esterno' && kind !== 'scene:giardino' && kind !== 'room:balcone'
     const outside = id === 'cantiere' || id === 'volo-cantiere' || id === 'fpv'
     const both = id === 'giorno-notte' || id === 'camera' || id === 'daynight' || id === 'annuncio' || id === 'venduto' || id === 'reel'
     return outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
   };
-  // Giro col drone e Stagioni: nascosti se la foto non e' un esterno (anche finche' il tipo di foto non e' noto);
-  // Stagioni anche per terrazzi e balconi (room:balcone)
-  const templateHidden = (id: string) => id === 'drone' ? kind !== 'scene:esterno' && kind !== 'scene:giardino'
-    : id === 'stagioni' ? kind !== 'scene:esterno' && kind !== 'scene:giardino' && kind !== 'room:balcone' : false;
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
   const videoChip = base && scene !== 'planimetria' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
@@ -1236,7 +1234,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">{/* telefono: 2 colonne, si vedono piu' stili senza scorrere */}
-                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente' && t.id !== 'cammina-stile' && (t.id !== 'pianta' || !!m.plan) && !templateHidden(t.id)) /* Con te in video e Cambia stile: solo dopo aver mandato un video; Dalla pianta: solo da una foto della planimetria */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
+                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente' && t.id !== 'cammina-stile' && (t.id !== 'pianta' || !!m.plan)) /* Con te in video e Cambia stile: solo dopo aver mandato un video; Dalla pianta: solo da una foto della planimetria */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
                           const off = templateOff(t.id) // i disponibili prima, i non disponibili in fondo
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
@@ -1247,7 +1245,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               {!off && <span className="absolute right-3 top-3 z-30 rounded-full bg-white/95 px-2 py-0.5 text-[11px] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{/* prezzo intero del video: Prima e dopo 100 (1 alle foto + 99 al video) */}{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => fullCr(a.id))) : fullCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label={tr('crediti', 'credits')} /></span>}
                               <span className="block px-2 pt-2 text-sm font-semibold sm:px-3 sm:pt-3 sm:text-base">{t.label}</span>
                               <span className="mx-2 mb-2 line-clamp-2 text-[11px] leading-snug text-muted sm:mx-3 sm:mb-3 sm:text-xs">{t.desc}</span>
-                              {off && <span className="absolute left-3 top-3 z-30 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold sm:left-4 sm:top-4 sm:px-3 sm:py-1 sm:text-xs text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' ? tr('Solo foto esterne', 'Exterior photos only') : tr('Solo stanze', 'Rooms only')}</span>}
+                              {off && <span className="absolute left-3 top-3 z-30 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold sm:left-4 sm:top-4 sm:px-3 sm:py-1 sm:text-xs text-ink shadow-sm">{t.id === 'cantiere' || t.id === 'volo-cantiere' || t.id === 'fpv' || t.id === 'drone' || t.id === 'stagioni' ? tr('Solo foto esterne', 'Exterior photos only') : tr('Solo stanze', 'Rooms only')}</span>}
                             </button>
                           </div>
                           );
