@@ -7,8 +7,6 @@ import { notFound } from "next/navigation";
 import {
   locales,
   type Locale,
-  defaultLocale,
-  hreflangMap,
   ogLocaleMap,
   seoTitles,
   seoDescriptions
@@ -34,13 +32,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   const baseUrl = "https://agenteimmo.me";
   
-  // Genera alternate languages con x-default
-  const languages: Record<string, string> = {};
-  // solo le lingue che esistono davvero (le altre rimandano a /en)
-  (['it', 'en'] as const).forEach((loc) => {
-    languages[hreflangMap[loc]] = `${baseUrl}/${loc}`;
-  });
-  languages["x-default"] = `${baseUrl}/${defaultLocale}`;
   
   return {
     title: {
@@ -61,10 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     authors: [{ name: "Agente Immo" }],
     creator: "Agente Immo",
     publisher: "Agente Immo",
-    alternates: {
-      canonical: `${baseUrl}/${locale}`,
-      languages,
-    },
+    // niente canonical e hreflang qui: ogni pagina dichiara i suoi (ereditati dal layout puntavano tutti alla home)
     openGraph: {
       type: "website",
       locale: ogLocaleMap[locale as Locale],
