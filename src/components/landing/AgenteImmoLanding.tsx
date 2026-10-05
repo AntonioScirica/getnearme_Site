@@ -32,7 +32,9 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 
 // guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
 // ponytail: le guide per chi inizia (come diventare, provvigione) restano online ma non si linkano da qui: la landing parla ad agenti gia' in attivita'
-const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/vendere-casa', 'Per chi vende casa'], ['/it/prezzi-case', 'Prezzi delle case per città']];
+// footer in italiano: le pagine pilastro dei due pubblici (agenti e proprietari), raggiungibili da ogni pagina del sito
+const AGENT_LINKS = [['/it/agente-immobiliare', 'Agente immobiliare: cosa fa'], ['/it/guide', 'Guide per agenti immobiliari'], ['/it/acquisire-incarichi-immobiliari', 'Come acquisire incarichi'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/blog', 'Blog']];
+const OWNER_LINKS = [['/it/vendere-casa', 'Vendere casa: le guide'], ['/it/quanto-vale-la-mia-casa', 'Quanto vale la mia casa'], ['/it/prezzi-case', 'Prezzi delle case per città'], ['/it/come-valutare-una-casa', 'Come valutare una casa']];
 
 const TRIAL_KEY = 'agenteimmo:prova'; // foto e richiesta messe da parte prima del login
 const EXAMPLE = '/immo/home/demo-after.webp'; // si modifica la stanza finita dell'esempio, non il cantiere
@@ -816,7 +818,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
   );
 }
 
-// footer del sito: marchio a sinistra, tre colonne di link (prodotto, guide SEO e blog, legale), riga finale.
+// footer del sito: marchio a sinistra, colonne di link (prodotto, guide per agenti, per chi vende casa, chi siamo e legale), riga finale.
 // Lo usano la landing e le pagine fuori dalla home (blog): li' i link alle sezioni portano alla home.
 export function SiteFooter({ lang = 'it' }: { lang?: LandingLang }) {
   return <Lang.Provider value={lang}><Footer /></Lang.Provider>;
@@ -828,7 +830,7 @@ function Footer({ home = false }: { home?: boolean }) {
   const base = home ? '' : `/${l}`; // sulla home le sezioni sono nella stessa pagina
   return (
     <footer className="border-t border-line bg-canvas">
-      <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 text-center md:text-left ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-[1.4fr_1fr_1.2fr_1fr]'}`}>
+      <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 text-center md:text-left ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1.2fr_1.1fr_1fr]'}`}>
         <div>
           <a href={home ? '#top' : `/${l}`} className="flex items-center justify-center gap-2 md:justify-start"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
           <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0 leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
@@ -836,9 +838,9 @@ function Footer({ home = false }: { home?: boolean }) {
         </div>
         {([
           [L('Prodotto', "Product"), [[`${base}#staging`, 'Home staging'], [`${base}#video`, L('Video per i social', "Social videos")], [`${base}#sito`, L('Il tuo sito', "Your website")], [`${base}#prezzi`, L('Prezzi', "Pricing")], [`${base}#domande`, L('Domande frequenti', "FAQ")]]],
-          // le guide sono articoli in italiano: nella versione inglese la colonna non c'e'
-          ...(en ? [] : [['Guide', [['/it/blog', 'Blog'], ...GUIDE_LINKS]]]),
-          ['Agente Immo', [[`/${l}/privacy`, 'Privacy'], [`/${l}/cookie`, 'Cookie'], [`/${l}/termini`, L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
+          // le guide sono articoli in italiano: nella versione inglese le colonne non ci sono
+          ...(en ? [] : [['Per agenti immobiliari', AGENT_LINKS], ['Per chi vende casa', OWNER_LINKS]]),
+          ['Agente Immo', [...(en ? [] : [['/it/chi-siamo', 'Chi siamo']]), [`/${l}/privacy`, 'Privacy'], [`/${l}/cookie`, 'Cookie'], [`/${l}/termini`, L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
         ] as [string, string[][]][]).map(([h, links]) => (
           <nav key={h} aria-label={h}>
             <div className="text-sm font-semibold">{h}</div>
