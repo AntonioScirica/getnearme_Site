@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown, ChevronUp, Coins, ImagePlus, Images, Loader2, Monitor, Plus, SunMedium, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Coins, ImagePlus, Images, Loader2, Monitor, Plus, SunMedium, X } from 'lucide-react';
 import { fetchMedia, type MediaItem } from './MediaView';
 import { tr } from './i18n';
 import { authFetch } from './api';
@@ -79,9 +79,24 @@ export function ReelPhotos({ r, suggestions, onChange, onAdd, onPick, onNext }: 
   const setDrag = (d: Drag | null) => { cur.current = d; setDragState(d); };
   const press = useRef<{ k: number; x: number; y: number; id: number } | null>(null);
   const [still, setStill] = useState(false); // subito dopo il rilascio: niente transizioni (le miniature sono gia' al loro posto)
+  const start = (k: number, dx: number, dy: number) => ({ from: k, to: k, dx, dy, rects: tiles.current.slice(0, r.photos.length).map(t => t!.getBoundingClientRect()) });
+  // col dito la striscia scorre: il trascinamento parte solo tenendo premuto (300 ms) senza muoversi
+  const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    const tm = (e: TouchEvent) => { if (cur.current) e.preventDefault(); }; // durante il trascinamento la striscia non scorre
+    el.addEventListener('touchmove', tm, { passive: false });
+    return () => el.removeEventListener('touchmove', tm);
+  }, []);
   const down = (k: number) => (e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button') || r.photos.length < 2 || cur.current) return;
     press.current = { k, x: e.clientX, y: e.clientY, id: e.pointerId };
+    if (e.pointerType === 'touch') {
+      const el = e.currentTarget, id = e.pointerId;
+      hold.current = setTimeout(() => { hold.current = null; if (press.current?.id !== id) return; try { el.setPointerCapture(id); } catch { /* gia' rilasciato */ } navigator.vibrate?.(15); setDrag(start(k, 0, 0)); }, 300);
+    }
   };
   const target = (d: Drag, dx: number, dy: number) => {
     const c = d.rects[d.from], cx = c.left + c.width / 2 + dx, cy = c.top + c.height / 2 + dy;
@@ -96,14 +111,16 @@ export function ReelPhotos({ r, suggestions, onChange, onAdd, onPick, onNext }: 
     let d = cur.current;
     if (!d) {
       if (Math.hypot(dx, dy) < 6) return;
+      if (e.pointerType === 'touch') { if (hold.current) { clearTimeout(hold.current); hold.current = null; } press.current = null; return; } // si muove subito: sta scorrendo
       e.currentTarget.setPointerCapture(e.pointerId);
-      d = { from: p.k, to: p.k, dx, dy, rects: tiles.current.slice(0, r.photos.length).map(t => t!.getBoundingClientRect()) };
+      d = start(p.k, dx, dy);
     }
     if (d.drop) return;
     setDrag({ ...d, dx, dy, to: target(d, dx, dy) });
   };
   const up = (e: React.PointerEvent<HTMLDivElement>) => {
     const p = press.current, d = cur.current;
+    if (hold.current) { clearTimeout(hold.current); hold.current = null; }
     if (!p || p.id !== e.pointerId) return;
     press.current = null;
     if (!d || d.drop) return;
@@ -122,11 +139,12 @@ export function ReelPhotos({ r, suggestions, onChange, onAdd, onPick, onNext }: 
   };
   return (
     <div className="px-1">
-      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+      {/* striscia orizzontale che scorre: le foto non vanno mai a capo */}
+      <div ref={row} className="-mx-1 flex gap-2.5 overflow-x-auto px-1 py-2 [scrollbar-width:thin]">
         {r.photos.map((p, k) => (
           <div key={p.key ?? p.src} ref={el => { tiles.current[k] = el; }} onPointerDown={down(k)} onPointerMove={moveP} onPointerUp={up} onPointerCancel={up}
             style={{ ...shift(k), ...(drag?.from === k ? { touchAction: 'none' } : {}), ...(still ? { transition: 'none' } : {}) }}
-            className={`relative aspect-[3/4] select-none overflow-hidden rounded-[20px] bg-canvas shadow-sm ring-1 ring-black/5 ${r.photos.length > 1 ? (drag?.from === k ? 'cursor-grabbing' : 'cursor-grab') : ''} ${drag ? '' : 'rise'}`}>
+            className={`relative aspect-[3/4] w-[132px] shrink-0 select-none sm:w-[168px] overflow-hidden rounded-[20px] bg-canvas shadow-sm ring-1 ring-black/5 ${r.photos.length > 1 ? (drag?.from === k ? 'cursor-grabbing' : 'cursor-grab') : ''} ${drag ? '' : 'rise'}`}>
             <img src={p.src} alt="" draggable={false} className="pointer-events-none h-full w-full object-cover" />
             {/* la prima apre il video: striscia "Apertura" in alto, le altre il loro numero */}
             {k === 0 ? <span className="absolute inset-x-0 top-0 flex h-6 items-center justify-center bg-brand text-[11px] font-semibold text-white">{tr('Apertura', 'Opening')}</span>
@@ -136,18 +154,18 @@ export function ReelPhotos({ r, suggestions, onChange, onAdd, onPick, onNext }: 
               className={`absolute right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white ${k === 0 ? 'top-7' : 'top-1.5'}`}><X size={14} /></button>}
             {/* frecce una accanto all'altra (sul telefono le miniature sono strette), sopra la striscia "Arredata" */}
             <div className={`absolute right-1.5 flex gap-1 ${p.staged ? 'bottom-6' : 'bottom-1.5'}`}>
-              {k > 0 && <button type="button" aria-label={tr('Sposta prima', 'Move up')} onClick={() => reorder(k, k - 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white"><ChevronUp size={15} /></button>}
-              {k < r.photos.length - 1 && <button type="button" aria-label={tr('Sposta dopo', 'Move down')} onClick={() => reorder(k, k + 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white"><ChevronDown size={15} /></button>}
+              {k > 0 && <button type="button" aria-label={tr('Sposta prima', 'Move earlier')} onClick={() => reorder(k, k - 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white"><ChevronLeft size={15} /></button>}
+              {k < r.photos.length - 1 && <button type="button" aria-label={tr('Sposta dopo', 'Move later')} onClick={() => reorder(k, k + 1)} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white"><ChevronRight size={15} /></button>}
             </div>
           </div>
         ))}
-        {Array.from({ length: r.uploading ?? 0 }, (_, k) => <div key={`u${k}`} className="flex aspect-[3/4] items-center justify-center rounded-[20px] bg-canvas"><Loader2 size={18} className="animate-spin text-muted" /></div>)}
+        {Array.from({ length: r.uploading ?? 0 }, (_, k) => <div key={`u${k}`} className="flex aspect-[3/4] w-[132px] shrink-0 items-center sm:w-[168px] justify-center rounded-[20px] bg-canvas"><Loader2 size={18} className="animate-spin text-muted" /></div>)}
         {!full && (choose
-          ? <div className="blur-in flex aspect-[3/4] flex-col gap-2 rounded-[20px] border-2 border-dashed border-brand/50 p-2">
+          ? <div className="blur-in flex aspect-[3/4] w-[132px] shrink-0 flex-col sm:w-[168px] gap-2 rounded-[20px] border-2 border-dashed border-brand/50 p-2">
               <button type="button" onClick={() => { setChoose(false); input.current?.click(); }} className="flex flex-1 flex-col items-center justify-center gap-1 rounded-[14px] bg-canvas px-1 text-center text-[12px] font-semibold leading-tight text-ink ease-smooth transition-colors hover:bg-brand hover:text-white"><Monitor size={16} />{tr('Dal dispositivo', 'From device')}</button>
               <button type="button" onClick={() => { setChoose(false); setGallery(true); }} className="flex flex-1 flex-col items-center justify-center gap-1 rounded-[14px] bg-canvas px-1 text-center text-[12px] font-semibold leading-tight text-ink ease-smooth transition-colors hover:bg-brand hover:text-white"><Images size={16} />{tr('Dalla galleria', 'From gallery')}</button>
             </div>
-          : <button type="button" onClick={() => setChoose(true)} className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-[20px] border-2 border-dashed border-line px-2 text-center text-[13px] font-semibold text-ink/80 ease-smooth transition-colors hover:border-brand/60 hover:text-brand">
+          : <button type="button" onClick={() => setChoose(true)} className="flex aspect-[3/4] w-[132px] shrink-0 flex-col items-center justify-center gap-2 rounded-[20px] border-2 sm:w-[168px] border-dashed border-line px-2 text-center text-[13px] font-semibold text-ink/80 ease-smooth transition-colors hover:border-brand/60 hover:text-brand">
               <ImagePlus size={22} />{tr('Aggiungi altre foto della casa', 'Add more photos of the home')}
             </button>
         )}
@@ -224,7 +242,7 @@ export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: Reel
         <button type="button" disabled={!!r.uploading} onClick={onCreate} className="flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-[14px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">
           {r.editing ? tr('Rifai il video, gratis', 'Redo the video, free') : <>{tr(`Crea il video, ${cost} crediti`, `Create the video, ${cost} credits`)}<Coins size={14} className="opacity-80" /></>}
         </button>
-        <span className="px-1 text-xs text-muted">{r.editing ? tr(`Correzioni gratis rimaste: ${r.redosLeft ?? 0}`, `Free fixes left: ${r.redosLeft ?? 0}`) : tr('Paghi solo se il video è pronto', 'You only pay when the video is ready')}</span>
+        {r.editing && <span className="px-1 text-xs text-muted">{tr(`Correzioni gratis rimaste: ${r.redosLeft ?? 0}`, `Free fixes left: ${r.redosLeft ?? 0}`)}</span>}
       </div>
     </div>
   );
