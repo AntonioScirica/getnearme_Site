@@ -25,7 +25,7 @@ interface LegalPage {
 const privacyIt: LegalPage = {
   title: "Informativa sulla Privacy",
   lastUpdated: "Ultimo aggiornamento: 5 ottobre 2026",
-  description: "Come Agente Immo tratta i dati personali di chi usa la piattaforma per agenti immobiliari su agenteimmo.me.",
+  description: "Come Agente Immo tratta i dati personali di chi usa la piattaforma per agenti immobiliari su agenteimmo.me e di chi chiede la valutazione gratuita della casa.",
   blocks: [
     { type: "h2", text: "1. Titolare del trattamento" },
     { type: "p", text: "Questa informativa spiega come vengono trattati i dati personali di chi visita il sito agenteimmo.me e di chi usa la piattaforma Agente Immo (il \"Servizio\"), ai sensi del Regolamento (UE) 2016/679 (GDPR), del D.Lgs. 196/2003 (Codice Privacy) come modificato dal D.Lgs. 101/2018 e della Direttiva 2002/58/CE (ePrivacy)." },
@@ -278,7 +278,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
 const termsIt: LegalPage = {
   title: "Termini di Servizio",
   lastUpdated: "Ultimo aggiornamento: 30 settembre 2026",
-  description: "Termini di Servizio della piattaforma Agente Immo per agenti immobiliari.",
+  description: "Termini di Servizio di Agente Immo, la piattaforma per agenti immobiliari: account, piani e crediti, prova gratuita, contenuti AI, sito e responsabilità.",
   blocks: [
     { type: "h2", text: "1. Chi siamo e accettazione dei Termini" },
     { type: "p", text: "Agente Immo è un servizio di Antonio Scirica, operante commercialmente con il nome \"Agente Immo\" (sede: Viale Pretoriano 3, Roma (RM); partita IVA: 16096461005; email: info@agenteimmo.me), disponibile su agenteimmo.me (il \"Servizio\")." },

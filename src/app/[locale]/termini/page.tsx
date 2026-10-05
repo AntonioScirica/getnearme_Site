@@ -19,10 +19,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const content = termsContent[locale as Locale];
 
   return {
-    title: `${content.title} — Agente Immo`,
+    title: { absolute: `${content.title} | Agente Immo` },
     description: content.description,
     alternates: {
-      canonical: `https://agenteimmo.me/${locale}/termini`,
+      // es, fr, ru, uk mostrano il testo inglese: la pagina di riferimento e' quella inglese
+      canonical: `https://agenteimmo.me/${locale === 'it' ? 'it' : 'en'}/termini`,
     },
   };
 }

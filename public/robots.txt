@@ -1,35 +1,35 @@
 # Robots.txt per Agente Immo
 # https://agenteimmo.me
+#
+# Contenuti pubblici aperti a tutti: motori di ricerca e crawler dei motori AI (citazioni e risposte).
+# Un solo gruppo con tutti i nomi: ogni crawler legge le stesse regole (un gruppo dedicato farebbe ignorare quello generale).
+# /_next/ resta aperto: CSS e JavaScript servono a Google per vedere le pagine come un visitatore.
 
 User-agent: *
+User-agent: Googlebot
+User-agent: Google-Extended
+User-agent: Bingbot
+User-agent: DuckDuckBot
+User-agent: Applebot
+User-agent: Applebot-Extended
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: CCBot
+User-agent: Yandex
 Allow: /
-
-# Sitemap
-Sitemap: https://agenteimmo.me/sitemap.xml
-
-# Blocca file di sistema
-Disallow: /_next/
 Disallow: /api/
 Allow: /api/site/fonts
 Allow: /api/site/tiles/
 Allow: /api/site/sitemap
-
-# Blocca pagine di draft (se presenti in futuro)
 Disallow: /*?draft=
 
-# Consenti crawler principali
-User-agent: Googlebot
-Allow: /
+# Guide per i modelli linguistici: https://agenteimmo.me/llms.txt
 
-User-agent: Bingbot
-Allow: /
-
-User-agent: Yandex
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
-
-User-agent: Slurp
-Allow: /
+Sitemap: https://agenteimmo.me/sitemap.xml
 Sitemap: https://agenteimmo.me/api/site/sitemap

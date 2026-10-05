@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   return {
     title: titles[locale as Locale],
-    description: t.cookie.intro.slice(0, 160),
+    description: locale === 'it' ? 'Quali cookie usa agenteimmo.me, il sito di Agente Immo: cookie tecnici, cookie di analisi e marketing solo con il tuo consenso, e come cambiare le preferenze.' : t.cookie.intro.slice(0, 160),
     alternates: {
       canonical: `https://agenteimmo.me/${locale}/cookie`,
     },
