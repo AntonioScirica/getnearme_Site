@@ -65,11 +65,15 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
   const text = decode(html.replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?>|<\/(p|div|li|h\d|tr)>/gi, '\n').replace(/<[^>]+>/g, ' '))
     .replace(/[ \t]+/g, ' ').replace(/\n\s*\n\s*\n+/g, '\n\n').trim().slice(0, 60_000)
   // immagini come l'estensione: og:image e URL jpg/webp nell'HTML (gallerie caricate dopo), senza loghi e icone
-  // sezione "immobili simili / correlati" (temi WordPress delle agenzie): le sue foto sono di altre case. Si guarda solo
-  // quello che viene prima, se li' ci sono gia' abbastanza foto (altrimenti la galleria potrebbe stare dopo, in uno script)
+  // sezione "immobili simili / correlati" (temi WordPress delle agenzie): le sue foto sono di altre case. Si usano solo le
+  // foto trovate prima, se sono almeno 3; altrimenti la galleria sta dopo (es. lightbox in fondo) e si guarda tutta la pagina
   const cutAt = html.search(/<(?:section|div|aside|ul)\b[^>]*(?:class|id)=["'][^"']*(?:similar|related|simili|correlat|consigliat|potrebbe)[^"']*["']/i)
-  const head = cutAt > 0 ? html.slice(0, cutAt) : html
-  if (cutAt > 0 && (head.match(/https:\/\/[^"'\s]+?\.(?:jpe?g|webp)/gi) ?? []).length >= 3) html = head
+  const before = cutAt > 0 ? collectPhotos(html.slice(0, cutAt), meta) : []
+  const photos = before.length >= 3 ? before : collectPhotos(html, meta)
+  return { raw: { text, json, meta, images: photos }, photos, title: meta['og:title'] || title }
+}
+
+function collectPhotos(html: string, meta: Record<string, string>): string[] {
   const flat = html.replace(/\\u002F/gi, '/').replace(/\\\//g, '/')
   const seen = new Set<string>(), photos: string[] = []
   // anche le immagini senza estensione (CDN con parametri, es. subito): src, data-src e la taglia piu' grande di srcset
@@ -86,12 +90,13 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
     if (thumb && Number(thumb[2]) <= 700 && !html.includes(thumb[1] + thumb[4])) continue
     // stessa foto in piu' taglie: su immobiliare cambia l'ultimo pezzo (/image/ID/xxl.jpg), altrove l'ID e' l'ultimo pezzo
     const path = u.split('?')[0], last = path.split('/').pop() ?? ''
-    const key = /[0-9a-f]{8,}|\d{6,}/i.test(last) ? path.replace(/\.(jpe?g|webp|png)$/i, '') : path.replace(/\/[^/]*$/, '')
+    // nome generico della taglia (xxl.jpg, large.webp): conta la cartella; altrimenti il nome del file senza taglia WordPress (-1240x720)
+    const key = /^[a-z-]{1,8}\.(?:jpe?g|webp|png)$/i.test(last) ? path.replace(/\/[^/]*$/, '') : path.replace(/-\d{2,4}x\d{2,4}(?=\.\w+$)/, '').replace(/\.(jpe?g|webp|png)$/i, '')
     if (seen.has(key)) continue
     seen.add(key); photos.push(u)
     if (photos.length >= 40) break
   }
-  return { raw: { text, json, meta, images: photos }, photos, title: meta['og:title'] || title }
+  return photos
 }
 
 const isListing = (text: string) => /[€$£]|\b(eur|euro)\b/i.test(text) && /\b(m²|m2|mq|metri quadr|sqm)/i.test(text)
