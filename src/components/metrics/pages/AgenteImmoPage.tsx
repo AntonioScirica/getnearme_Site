@@ -5,6 +5,7 @@ import {
   Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronRight, Download, RefreshCw, Loader2, ExternalLink,
 } from "lucide-react";
 import { MONO, fmt } from "../types";
+import UserActivity from "./UserActivity";
 import type { AgenteImmoResponse, AgenteImmoUser } from "@/app/api/metrics/agenteimmo/route";
 
 const DEFAULT_SINCE = "2026-09-23"; // primi commit del rebrand GetNearMe → Agente Immo
@@ -326,6 +327,10 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
                                     </table>
                                   )}
                                 </div>
+                              </div>
+                              {/* cronologia completa: caricata solo ora che la riga e' aperta */}
+                              <div className="sticky left-3 mt-6 pt-4 border-t border-white/[0.06] max-w-[calc(100vw-80px)] md:max-w-[min(1040px,calc(100vw-330px))]">
+                                <UserActivity userId={u.id} authKey={authKey} />
                               </div>
                             </td>
                           </tr>
