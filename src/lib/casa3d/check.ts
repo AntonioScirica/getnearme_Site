@@ -12,13 +12,16 @@ const USD = { input: 2, output: 10 } // per milione di token (listino del 27/09/
 
 const SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['room_types', 'remove_openings', 'change_openings', 'add_doors', 'add_windows', 'notes'],
+  required: ['room_types', 'remove_openings', 'change_openings', 'add_doors', 'add_windows', 'labels', 'notes'],
   properties: {
     room_types: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['id', 'type'], properties: { id: { type: 'integer' }, type: { type: 'string', enum: ['soggiorno', 'cucina', 'camera', 'cameretta', 'studio', 'bagno', 'ingresso', 'corridoio', 'ripostiglio', 'lavanderia', 'balcone', 'terrazzo', 'scala', 'esterno'] } } } },
     remove_openings: { type: 'array', items: { type: 'string' } },
     change_openings: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['label', 'type'], properties: { label: { type: 'string' }, type: { type: 'string', enum: ['door', 'entrance', 'window', 'varco'] } } } },
     add_doors: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['between', 'entrance'], properties: { between: { type: 'array', items: { type: 'integer' } }, entrance: { type: 'boolean' } } } },
     add_windows: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['wall', 'room'], properties: { wall: { type: 'string' }, room: { type: 'integer' } } } },
+    labels: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['text', 'type', 'x', 'y', 'mq', 'h'], properties: {
+      text: { type: 'string' }, type: { type: 'string', enum: ['soggiorno', 'cucina', 'camera', 'cameretta', 'studio', 'bagno', 'ingresso', 'corridoio', 'ripostiglio', 'lavanderia', 'balcone', 'terrazzo', 'scala', 'esterno', 'altro'] },
+      x: { type: 'number' }, y: { type: 'number' }, mq: { type: 'number' }, h: { type: 'number' } } } },
     notes: { type: 'string' },
   },
 }
@@ -37,6 +40,7 @@ Compare with image 1 and list only the corrections needed. Rules:
 - Do NOT remove windows on the outer perimeter walls: a gap in an outer wall is almost always a window even if image 1 draws it only as a thin line or a gap. Remove a window only if image 1 clearly shows solid wall there, or if it is between two rooms of the dwelling.
 - Remove an opening only if image 1 clearly shows solid wall there. Change P#/V# to the right type when needed (varco = wide opening without door).
 - Add a door or window only if you clearly see it in image 1 and it is missing in image 2. add_windows uses the W# label of the outer wall and the room id.
+- labels: read EVERY text written inside the dwelling in image 1 (room names in any language or abbreviation, e.g. Soggiorno/Sogg., Cucina/Cuc./Angolo cottura, Camera/Cam./Letto, Cameretta, Bagno/WC/Servizio, Disimpegno/Dis./Corridoio, Ripostiglio/Rip., Ingresso, Terrazzo/Terr./Terrazza, Balcone/Bal., Loggia, Lavanderia, Studio, Cantina, Box, Kuche/Wohnen/Schlafen/Bad/Flur, Kitchen/Living/Bedroom; areas like "12,5 mq" or "m2 12.5"; heights like "H=2,90" or "h 2.70"). One item per room label: text as written, x and y = centre of the text as fractions (0-1) of image 1 width and height, type = the room type it means (Disimpegno = corridoio, WC = bagno, Letto = camera, Loggia = balcone, Angolo cottura = cucina, Cantina/Box/Garage/street names/owner names/titles = altro), mq = area written for that room in square metres (0 if none), h = ceiling height written next to it in metres (0 if none). A height or area written alone inside a room is an item with type altro at its position. Empty list if image 1 has no text.
 Reply only with the JSON object.`
   const t0 = Date.now()
   const client = new Anthropic()

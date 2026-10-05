@@ -280,7 +280,7 @@ export function planFurniture(plan, house) {
       return { items, lights }
     },
     lightsOnly() { // casa vuota: solo le luci principali
-      for (const r of plan.rooms) { const [cx, cz] = center(r); mainLight(r, cx, cz, 'ceilingLight') }
+      for (const r of plan.rooms) { if (['balcone', 'terrazzo'].includes(r.type)) continue; const [cx, cz] = center(r); mainLight(r, cx, cz, 'ceilingLight') } // all'aperto niente plafoniera
       return { items, lights }
     },
   }

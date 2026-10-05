@@ -2,7 +2,7 @@
 // gira sul server e nel browser (schermata di correzione). Le correzioni (Claude o agente) si applicano alla
 // pianta riconosciuta; il visore riceve muri come poligoni, porte e finestre come rettangoli con asse, stanze
 // con tipo e rettangolo utile per i mobili.
-import type { Fix, OpType, Pt, RawOpening, RawPlan, ViewerPlan } from './types'
+import { OUTDOOR, type Fix, type OpType, type Pt, type RawOpening, type RawPlan, type ViewerPlan } from './types'
 
 const OUT_TYPES = new Set(['esterno'])
 const r3 = (v: number) => Math.round(v * 1000) / 1000
@@ -77,7 +77,7 @@ export function applyFix(raw: RawPlan, fix: Fix): RawPlan {
 }
 
 // --- modifiche dell'agente (schermata di correzione) ---
-export function setRoomType(raw: RawPlan, id: number, type: string): RawPlan { const p = clone(raw); const r = p.rooms.find(x => x.id === id); if (r) r.type = type; return p }
+export function setRoomType(raw: RawPlan, id: number, type: string): RawPlan { const p = clone(raw); const r = p.rooms.find(x => x.id === id); if (r) { r.type = type; delete r.label } return p } // scelta dell'agente: non e' piu' quella letta
 export function removeOpening(raw: RawPlan, idx: number): RawPlan {
   const p = clone(raw), o = p.openings[idx]
   if (!o) return p
@@ -152,6 +152,8 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     }
     return { s1: out[0], s2: out[1], n }
   }
+  const outdoor = new Set(plan.rooms.filter(r => OUTDOOR.has(r.type)).map(r => r.id))
+  const indoor = (id: number) => id > 0 && !outdoor.has(id)
   const windows: ViewerPlan['windows'] = [], doors: ViewerPlan['doors'] = []
   for (const o of plan.openings) {
     // le aperture solo diagonali non si possono fare nel visore (rettangoli con asse): restano muro
@@ -160,14 +162,18 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     const { rect, ax } = rectAxis(o), { s1, s2, n } = sidesOf(o)
     if (s1 === -1 && s2 === -1) continue
     if (o.type === 'window') {
-      const room = s1 > 0 ? s1 : s2
-      const inn = s1 > 0 ? n : [-n[0], -n[1]]
+      // la finestra appartiene alla stanza interna (verso un terrazzo il terrazzo e' "fuori")
+      if (!indoor(s1) && !indoor(s2)) continue
+      const first = indoor(s1)
+      const room = first ? s1 : s2
+      const inn = first ? n : [-n[0], -n[1]]
       windows.push({ rect, axis: ax, room, in: ax === 'x' ? [0, inn[1] > 0 ? 1 : -1] : [inn[0] > 0 ? 1 : -1, 0] })
     } else {
       const ent = o.type === 'entrance' || s1 === -1 || s2 === -1
       const rs = [s1, s2].filter(x => x > 0)
       const a_ = rs[0], b_ = rs[1] ?? 0
-      const swing = ent ? a_ : (['ingresso', 'corridoio'].includes(typeOf.get(a_) ?? '') && b_ ? b_ : a_)
+      let swing = ent ? a_ : (['ingresso', 'corridoio'].includes(typeOf.get(a_) ?? '') && b_ ? b_ : a_)
+      if (outdoor.has(swing) && b_ && indoor(a_ === swing ? b_ : a_)) swing = a_ === swing ? b_ : a_ // porta del terrazzo: si apre verso casa
       doors.push({ axis: ax, rooms: [a_, b_], rect, swing, ...(ent ? { entrance: true } : {}), ...(o.type === 'varco' ? { varco: true } : {}) })
     }
   }
@@ -191,10 +197,25 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     const rect: [number, number, number, number] = lr ? [r3(x0 + lr[0] * C), r3(z0 + lr[1] * C), r3(x0 + lr[2] * C), r3(z0 + lr[3] * C)] : [Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)]
     rooms.push({ id: r.id, type: r.type, area: r.area, center: r.center, poly: r.poly, rect })
   }
-  const walls = plan.walls.map(w => ({ outer: quad(w.a, w.b, w.t).map(p => [r3(p[0]), r3(p[1])] as Pt), holes: [] as Pt[][] }))
-  const all = [...walls.flatMap(w => w.outer), ...rooms.flatMap(r => r.poly)]
+  // muri del terrazzo e del balcone verso fuori: parapetto basso (nessun lato su una stanza interna, almeno uno sul terrazzo)
+  const roomAtAll = (x: number, z: number) => { for (const r of plan.rooms) if (inPoly(x, z, r.poly)) return r.type === 'esterno' ? -1 : r.id; return -1 }
+  const isParapet = (w: (typeof plan.walls)[number]) => {
+    if (!outdoor.size) return false
+    const { L, d, n } = frame(w.a, w.b)
+    let terr = false
+    for (const k of [0.2, 0.5, 0.8]) for (const sg of [1, -1]) {
+      const off = w.t / 2 + 0.25, q: Pt = [w.a[0] + d[0] * L * k + sg * n[0] * off, w.a[1] + d[1] * L * k + sg * n[1] * off], id = roomAtAll(q[0], q[1])
+      if (indoor(id)) return false
+      if (outdoor.has(id)) terr = true
+    }
+    return terr
+  }
+  const poly = (w: (typeof plan.walls)[number]) => ({ outer: quad(w.a, w.b, w.t).map(p => [r3(p[0]), r3(p[1])] as Pt), holes: [] as Pt[][] })
+  const walls = plan.walls.filter(w => !isParapet(w)).map(poly)
+  const parapets = plan.walls.filter(isParapet).map(poly)
+  const all = [...walls.flatMap(w => w.outer), ...parapets.flatMap(w => w.outer), ...rooms.flatMap(r => r.poly)]
   const X0 = Math.min(...all.map(p => p[0])), Z0 = Math.min(...all.map(p => p[1])), X1 = Math.max(...all.map(p => p[0])), Z1 = Math.max(...all.map(p => p[1]))
-  return { version: 3, units: 'm', height: plan.height || 2.7, outline: [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]], walls, windows, doors, rooms, ...(name ? { name } : {}) }
+  return { version: 3, units: 'm', height: plan.height || 2.7, outline: [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]], walls, ...(parapets.length ? { parapets } : {}), windows, doors, rooms, ...(name ? { name } : {}) }
 }
 
 export function planCounts(p: ViewerPlan) {
@@ -227,5 +248,54 @@ export function guessRoomTypes(raw: RawPlan): RawPlan {
   const nBagni = p.rooms.length >= 7 ? 2 : 1
   for (const r of todo.filter(r => r.area >= 2.5 && r.area <= 7.5).sort((a, b) => a.area - b.area).slice(0, Math.max(0, nBagni - p.rooms.filter(x => x.type === 'bagno').length))) set(r, 'bagno')
   for (const r of [...todo]) set(r, r.area >= 9 ? 'camera' : r.area >= 6 ? 'cameretta' : r.area >= 4 && has(r.id, 'window') ? 'studio' : 'ripostiglio')
+  return p
+}
+
+// Scritte della planimetria originale (lette da Claude con la posizione 0-1 sull'originale): ogni scritta va nella
+// stanza riconosciuta che la contiene (inversa di toImage: originale -> metri della pianta ridisegnata, stessa
+// trasformazione della sovrapposizione), o nella piu' vicina entro 1,2 m. Il tipo scritto vince su Claude e
+// sull'euristica; i mq scritti (almeno 2 coerenti, o 1 con le misure dubbie) correggono la scala; l'altezza scritta
+// (H=2,90) diventa l'altezza dei piani.
+export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): RawPlan {
+  let p = clone(raw)
+  if (!labels?.length) return p
+  const [a, b, c, d, e, f] = p.source.toImage, det = a * d - b * c
+  const toM = (px: number, py: number): Pt => [(d * (px - e) - c * (py - f)) / det, (-b * (px - e) + a * (py - f)) / det]
+  const hs: number[] = []
+  const best = new Map<number, (typeof labels)[number]>()
+  for (const l of labels) {
+    if (!(l.x >= 0 && l.x <= 1 && l.y >= 0 && l.y <= 1)) continue
+    const [x, y] = toM(l.x * p.source.imgW, l.y * p.source.imgH)
+    let room = p.rooms.find(r => inPoly(x, y, r.poly))
+    if (!room) {
+      const near = p.rooms.map(r => ({ r, d: Math.hypot(r.center[0] - x, r.center[1] - y) })).sort((u, v) => u.d - v.d)[0]
+      if (near && near.d < 1.2) room = near.r
+    }
+    if (l.h >= 2.2 && l.h <= 4.5) hs.push(l.h)
+    if (!room) continue
+    const cur = best.get(room.id)
+    // nella stessa stanza: prima il nome della stanza, poi i mq
+    if (!cur || (cur.type === 'altro' && l.type !== 'altro') || (!cur.mq && l.mq && (l.type !== 'altro' || cur.type === 'altro'))) best.set(room.id, { ...l, mq: l.mq || cur?.mq || 0, type: l.type !== 'altro' ? l.type : cur?.type ?? 'altro' })
+  }
+  for (const r of p.rooms) {
+    const l = best.get(r.id)
+    if (!l) continue
+    if (l.type !== 'altro' && l.type !== 'esterno') { r.type = l.type; r.label = l.text.slice(0, 40) }
+    if (l.mq > 0.5 && l.mq < 300) r.written_mq = l.mq
+  }
+  // scala dai mq scritti
+  const ratios = p.rooms.filter(r => r.written_mq && r.area > 0.5).map(r => r.written_mq! / r.area).sort((u, v) => u - v)
+  if (ratios.length) {
+    // gruppo piu' numeroso di rapporti coerenti (entro il 25%): una cifra letta male (15,19 letto 5,19) non rovina la scala
+    const groups = ratios.map(q => ratios.filter(x => Math.abs(x / q - 1) < 0.25))
+    const grp = groups.reduce((m, g) => (g.length > m.length ? g : m), [] as number[])
+    const med = grp[Math.floor(grp.length / 2)]
+    const coherent = grp.length >= Math.max(1, Math.ceil(ratios.length / 2))
+    if (coherent && (grp.length >= 2 || p.source.scale_warn) && Math.abs(med - 1) > 0.12 && med > 0.25 && med < 4) {
+      p = rescaleTo(p, totalArea(p) * med)
+      p.source = { ...p.source, scale_from: 'scritte', scale_note: `scala dai mq scritti sulla planimetria (${grp.length} stanze su ${ratios.length}, fattore area ${med.toFixed(2)})` }
+    }
+  }
+  if (hs.length) { hs.sort((u, v) => u - v); p.height = Math.round(hs[Math.floor(hs.length / 2)] * 100) / 100 }
   return p
 }

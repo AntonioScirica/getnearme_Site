@@ -5,6 +5,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { worldUV } from './materials.js'
 import pc from '../vendor/polygon-clipping.js'
 
+export const OUTDOOR = new Set(['balcone', 'terrazzo']) // all'aperto: niente soffitto, parapetti bassi
 export const FLOOR_OF = { cucina: 'tiles', bagno: 'marble', balcone: 'tiles', terrazzo: 'tiles', lavanderia: 'tiles', scala: 'marble' }
 const SILL = 0.9, HEAD = 2.25, DOOR_H = 2.1
 
@@ -116,9 +117,12 @@ export function buildHouse(plan, M) {
   // sottofondo appena sotto i pavimenti: copre eventuali fessure tra pavimento e muro
   const sub = new THREE.ShapeGeometry(shapesOf(D(foot, band0))); sub.rotateX(-Math.PI / 2); sub.translate(0, -0.004, 0)
   group.add(mesh(sub, M.parquet, { cast: false }))
-  const ceilGeo = new THREE.ShapeGeometry(shapesOf(foot)); ceilGeo.rotateX(-Math.PI / 2); ceilGeo.translate(0, H, 0)
+  // soffitto e solaio solo sopra le stanze interne (terrazzi e balconi all'aperto)
+  const outR = plan.rooms.filter(r => OUTDOOR.has(r.type)).map(r => [closeRing(r.poly)])
+  const roofFoot = outR.length ? D(foot, U(outR)) : foot
+  const ceilGeo = new THREE.ShapeGeometry(shapesOf(roofFoot)); ceilGeo.rotateX(-Math.PI / 2); ceilGeo.translate(0, H, 0)
   const ceiling = mesh(ceilGeo, M.ceiling, { cast: false }); ceiling.name = 'soffitto'
-  const roofGeo = new THREE.ExtrudeGeometry(shapesOf(foot), { depth: 0.3, bevelEnabled: false })
+  const roofGeo = new THREE.ExtrudeGeometry(shapesOf(roofFoot), { depth: 0.3, bevelEnabled: false })
   roofGeo.rotateX(-Math.PI / 2); roofGeo.translate(0, H + 0.01, 0)
   const roof = mesh(roofGeo, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }), { cast: true, receive: false })
   roof.name = 'solaio'
@@ -138,7 +142,17 @@ export function buildHouse(plan, M) {
     const m = mesh(g, M[FLOOR_OF[r.type] || 'parquet'], { cast: false }); m.userData.roomId = r.id; m.name = `pavimento-${r.id}`
     group.add(m); floors.push(m)
   }
-  const grid = new Grid(plan, band0)
+  // parapetti dei terrazzi e balconi: muretto alto 1,05 m (si vede fuori, non si attraversa)
+  const parP = U((plan.parapets || []).map(w => [closeRing(w.outer)]))
+  const cutsP = [cutDoors, cutWins].filter(x => x.length)
+  const parFree = cutsP.length ? D(parP, U(cutsP)) : parP
+  if (parFree.length) {
+    const g = new THREE.ExtrudeGeometry(shapesOf(parFree), { depth: 1.05, bevelEnabled: false })
+    g.rotateX(-Math.PI / 2); group.add(mesh(g, M.wall))
+    const capP = new THREE.ShapeGeometry(shapesOf(parFree)); capP.rotateX(-Math.PI / 2); capP.translate(0, 1.053, 0)
+    group.add(mesh(capP, M.sill, { cast: false }))
+  }
+  const grid = new Grid(plan, parFree.length ? U([band0, parFree]) : band0)
 
   const wallBits = [], frames = [], glass = [], sills = [], doorWood = [], entranceLeaf = [], handles = [], radiators = []
   const bx = (xa, ya, za, xb, yb, zb) => boxGeo(Math.min(xa, xb), Math.min(ya, yb), Math.min(za, zb), Math.max(xa, xb), Math.max(ya, yb), Math.max(za, zb))

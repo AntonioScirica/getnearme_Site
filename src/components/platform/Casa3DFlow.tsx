@@ -6,7 +6,7 @@
 // una finestra; tocca una porta o una finestra = togli o cambia; superficie totale in mq. Una scheda per piano.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Box, Check, DoorOpen, Loader2, Minus, Pencil, RotateCcw, Square, Trash2, X } from 'lucide-react';
+import { Box, Check, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
 import { addOpening, removeOpening, rescaleTo, setRoomType, totalArea } from '@/lib/casa3d/build';
 import { ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
@@ -256,6 +256,7 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
               <text key={r.id} x={r.center[0]} y={r.center[1]} textAnchor="middle" fontSize={fs} fontWeight={700} fill="#1d1d1b" pointerEvents="none" style={{ fontFamily: 'inherit' }}>
                 <tspan x={r.center[0]} dy={0}>{roomName(r.type)}</tspan>
                 <tspan x={r.center[0]} dy={fs * 1.2} fontWeight={500} fill="#6b6b66">{String(r.area).replace('.', ',')} m²</tspan>
+                {r.label && <tspan x={r.center[0]} dy={fs * 1.15} fontSize={fs * 0.8} fontWeight={600} fill={BRAND}>{tr('letto dalla planimetria', 'read from the plan')}</tspan>}
               </text>
             ))}
           </g>
@@ -279,6 +280,7 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
           {selRoom && (
             <>
               <p className="text-sm font-semibold">{tr('Che stanza è?', 'Which room is it?')} <span className="font-normal text-muted">{String(selRoom.area).replace('.', ',')} m²</span></p>
+              {selRoom.label && <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-brand"><ScanText size={13} /> {tr('Letto dalla planimetria', 'Read from the plan')}: «{selRoom.label}»{selRoom.written_mq ? `, ${String(selRoom.written_mq).replace('.', ',')} m²` : ''}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 {ROOM_TYPES.map(t => <button key={t} type="button" onClick={() => onEdit(r => setRoomType(r, selRoom.id, t))} className={pill(selRoom.type === t)}>{roomName(t)}</button>)}
                 <button type="button" onClick={() => onEdit(r => setRoomType(r, selRoom.id, 'esterno'))} className={pill(selRoom.type === 'esterno')}>{tr('Non è della casa', 'Not part of the home')}</button>

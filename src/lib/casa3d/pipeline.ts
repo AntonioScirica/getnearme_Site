@@ -5,7 +5,7 @@ import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
-import { applyFix, guessRoomTypes } from './build'
+import { applyFix, applyLabels, guessRoomTypes } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
@@ -66,7 +66,7 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
       ms.controllo = c.ms; usd += c.usage.usd
       await logUsage({ userId: o.userId, kind: 'casa3d_controllo' }, false, c.ms, { input: c.usage.input, output: c.usage.output }, true, 'claude-sonnet-5').catch(() => {})
       fix = c.fix
-      raw = applyFix(v.plan, c.fix)
+      raw = applyLabels(applyFix(v.plan, c.fix), c.fix.labels ?? []) // le scritte dell'originale vincono sui tipi ipotizzati
     } catch (e) {
       console.error('casa3d controllo', e) // senza controllo si va avanti: l'agente corregge a mano
     }

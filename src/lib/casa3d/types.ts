@@ -6,10 +6,11 @@ export type OpType = 'door' | 'entrance' | 'varco' | 'window'
 // centro della casa, x a destra e y in basso come nell'immagine raddrizzata.
 export type RawWall = { a: Pt; b: Pt; t: number; label?: string }
 export type RawOpening = { type: OpType; a: Pt; b: Pt; t: number; width: number; rooms: number[]; suspect: boolean; label?: string; added?: boolean }
-export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: string }
+// label: scritta letta dalla planimetria originale (il tipo viene da li'); written_mq: mq scritti per la stanza
+export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: string; label?: string; written_mq?: number }
 export type RawSource = {
   angle: number; m_per_px: number; scala_porte: number; scala_tramezzi: number; tramezzo_px: number; classi_spessore_m: number[]
-  scale_from: 'porte' | 'tramezzi' | 'mq' | 'manuale'; scale_note?: string; scale_warn?: boolean
+  scale_from: 'porte' | 'tramezzi' | 'mq' | 'manuale' | 'scritte'; scale_note?: string; scale_warn?: boolean
   // metri -> pixel dell'immagine di partenza (stessa misura della planimetria originale ritagliata): [a, b, c, d, e, f]
   // con x_img = a*x + c*y + e, y_img = b*x + d*y + f (come la matrice SVG)
   toImage: [number, number, number, number, number, number]
@@ -25,6 +26,8 @@ export type Fix = {
   add_doors?: { between: [number, number]; entrance?: boolean }[]
   add_windows?: { wall: string; room: number }[]
   notes?: string
+  // scritte della planimetria originale: posizione 0-1 sull'immagine originale, tipo, mq e altezza scritti (0 = no)
+  labels?: { text: string; type: string; x: number; y: number; mq: number; h: number }[]
 }
 
 // Pianta per il visore (schema letto da public/casa3d/viewer/house.js)
@@ -32,6 +35,8 @@ export type ViewerPlan = {
   version: 3; units: 'm'; height: number
   outline: Pt[]
   walls: { outer: Pt[]; holes: Pt[][] }[]
+  // muretti alti ~1 m dei terrazzi e balconi (muri che non chiudono nessuna stanza interna)
+  parapets?: { outer: Pt[]; holes: Pt[][] }[]
   windows: { rect: [number, number, number, number]; axis: 'x' | 'z'; room: number; in: [number, number] }[]
   doors: { axis: 'x' | 'z'; rooms: [number, number]; rect: [number, number, number, number]; swing: number; entrance?: boolean; varco?: boolean }[]
   rooms: { id: number; type: string; area: number; center: Pt; poly: Pt[]; rect: [number, number, number, number] }[]
@@ -45,6 +50,8 @@ export type Casa3d = { status: 'ready' | 'working'; floors: Casa3dFloor[]; manif
 // indirizzo del visore (pagina statica in public/casa3d, versione nel nome per la cache)
 export const VIEWER_PATH = '/casa3d/v1/index.html'
 
+// stanze all'aperto: niente soffitto, pavimento da esterno, parapetti al posto dei muri esterni
+export const OUTDOOR = new Set(['balcone', 'terrazzo'])
 export const ROOM_TYPES = ['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'ingresso', 'corridoio', 'studio', 'ripostiglio', 'balcone', 'terrazzo', 'scala'] as const
 export const ROOM_LABEL_IT: Record<string, string> = {
   soggiorno: 'Soggiorno', cucina: 'Cucina', camera: 'Camera', cameretta: 'Cameretta', bagno: 'Bagno', ingresso: 'Ingresso', corridoio: 'Corridoio',
