@@ -56,12 +56,15 @@ export async function startLambda(j: LambdaJob, dir: string, musicUrl: string | 
 
 type Progress = { done: boolean; renderMetadata?: unknown; fatalErrorEncountered: boolean; overallProgress: number; outKey: string | null; errors: { message?: string }[]; costs: { accruedSoFar: number; displayCost: string }; timeToFinish: number | null }
 
+// AWS pieno (troppi video insieme): il video si rimette in coda invece di fallire
+export const isThrottle = (e: unknown) => /TooManyRequests|Rate Exceeded|ConcurrentInvocationLimitExceeded|concurrency/i.test(`${(e as Error)?.name} ${(e as Error)?.message ?? e}`)
+
 // null = AWS ha detto "troppe richieste insieme" (anche il controllo usa un Lambda): si riprova al giro dopo
 export async function lambdaProgress(renderId: string, bucket: string): Promise<Progress | null> {
   try {
     return (await getRenderProgress({ renderId, bucketName: bucket, functionName: fn(), region })) as unknown as Progress
   } catch (e) {
-    if (/TooManyRequests|Rate Exceeded|ConcurrentInvocationLimitExceeded/i.test(`${(e as Error)?.name} ${(e as Error)?.message}`)) return null
+    if (isThrottle(e)) return null
     throw e
   }
 }

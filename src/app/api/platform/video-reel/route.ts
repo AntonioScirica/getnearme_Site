@@ -7,7 +7,7 @@ import { allowedUrl } from '@/lib/safeUrl'
 import { publicUrl, uploadFile, uploadJpeg } from '@/lib/r2'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 import { DEFAULT_COLOR, MUSIC_MOOD, renderVideo, type AgentInfo, type Job, type Photo } from '@/lib/reel/render'
-import { cleanLambda, fetchLambdaVideo, lambdaProgress, lambdaReady, startLambda, type LambdaJob } from '@/lib/reel/lambda'
+import { cleanLambda, fetchLambdaVideo, isThrottle, lambdaProgress, lambdaReady, startLambda, type LambdaJob } from '@/lib/reel/lambda'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
       console.log('video-reel lambda start', template, style, photos.length, 'foto', renderId, Date.now() - t0, 'ms')
       return NextResponse.json({ status: 'working', job: packWork(u.id, { r: renderId, b: bucket, name, t: template, n: redo?.n ?? 0, p: print, redo: !!redo, dir, c: photos.length, logo: !!agent.logo, at: t0 }) })
     } catch (e) {
+      if (isThrottle(e)) { console.log('video-reel lambda in coda', template, style); return NextResponse.json({ status: 'queued' }) }
       console.error('video-reel lambda start', e)
       return NextResponse.json({ error: 'render_failed' }, { status: 502 })
     }
@@ -167,8 +168,11 @@ export async function GET(req: NextRequest) {
     const pr = await lambdaProgress(w.r, w.b)
     if (!pr) return NextResponse.json({ status: 'working' })
     if (pr.fatalErrorEncountered) {
-      console.error('video-reel lambda', w.r, pr.errors.map(e => e.message).join(' | ').slice(0, 1000))
+      const msg = pr.errors.map(e => e.message).join(' | ')
       void cleanLambda(w.r, w.b, srcFiles(w))
+      // AWS pieno a meta' lavoro: la chat rimanda la richiesta da capo (crediti mai scalati prima della fine)
+      if (isThrottle(msg)) { console.log('video-reel lambda in coda (a meta)', w.r); return NextResponse.json({ status: 'queued' }) }
+      console.error('video-reel lambda', w.r, msg.slice(0, 1000))
       return NextResponse.json({ error: 'render_failed' }, { status: 502 })
     }
     if (!pr.done || !pr.outKey) return NextResponse.json({ status: 'working', progress: Math.round(pr.overallProgress * 100) })

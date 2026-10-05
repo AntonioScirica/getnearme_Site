@@ -99,7 +99,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest; at?: number; recover?: boolean }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; renderAt?: number; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'season' | 'mode' | 'previews' | 'frames' | 'render' | 'rphotos' | 'rdata'; photo: string; season?: Season; reel?: ReelState & { prevUrl?: string }; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
+  | { id: string; role: 'video'; renderAt?: number; queued?: boolean; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'season' | 'mode' | 'previews' | 'frames' | 'render' | 'rphotos' | 'rdata'; photo: string; season?: Season; reel?: ReelState & { prevUrl?: string }; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura' | 'reel' | 'venduto' | 'drone' | 'stagioni';
@@ -124,14 +124,6 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   ] },
   { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto, anims: [
     { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto },
-  ] },
-  // solo foto di esterni (facciata, giardino; Stagioni anche terrazzi e balconi): con un interno si vedono spenti, vedi templateOff
-  // Giro col drone: la foto e' gia' aerea (fatta col drone dall'agente); nessuna classificazione affidabile per le foto aeree, quindi vale per gli esterni
-  { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone, anims: [
-    { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone },
-  ] },
-  { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni, anims: [
-    { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni },
   ] },
   { id: 'prima-dopo', label: tr('Prima e dopo', 'Before and after'), desc: tr('Dalla stanza vuota a quella arredata', 'From an empty room to a furnished one'), sample: VIDEO_SAMPLES.popup, anims: [
     { id: 'popup', label: 'Popup', desc: tr('I mobili spuntano uno alla volta', 'Furniture pops up one piece at a time'), sample: VIDEO_SAMPLES.popup },
@@ -160,6 +152,14 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   ] },
   { id: 'camera', label: tr('Camminata', 'Walkthrough'), desc: tr('Entri nella stanza con una ripresa lenta', 'Walk into the room with a slow camera move'), sample: VIDEO_SAMPLES.camera, anims: [
     { id: 'camera', label: tr('Camminata', 'Walkthrough'), desc: tr('Entri nella stanza con una ripresa lenta', 'Walk into the room with a slow camera move'), sample: VIDEO_SAMPLES.camera },
+  ] },
+  // solo foto di esterni (facciata, giardino; Stagioni anche terrazzi e balconi): con un interno si vedono spenti, vedi templateOff
+  // Giro col drone: la foto e' gia' aerea (fatta col drone dall'agente); nessuna classificazione affidabile per le foto aeree, quindi vale per gli esterni
+  { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone, anims: [
+    { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone },
+  ] },
+  { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni, anims: [
+    { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni },
   ] },
 ];
 // anteprime degli stili per stanza (30/09, da foto Unsplash in public/staging/stili/<stanza>/); le altre stanze: il soggiorno
@@ -965,11 +965,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (!r.editing && short(m, videoCr(m.anim))) return;
     touch();
     patchV(m.id, { step: 'render', url: undefined, err: undefined, job: undefined, picks: [m.picks[0], { label: reelStyleLabel(r.style), icon: 'style' }] });
-    const res = await authFetch('/api/platform/video-reel', { method: 'POST', headers: QUIET, body: reelBody(r) }).catch(() => null);
-    const d = res ? await res.json().catch(() => ({})) as ReelReply : {};
-    // Vivace ed Elegante si fanno su un altro server: si chiede a che punto e' finche' il video e' pronto
-    if (d.status === 'working' && d.job) { patchV(m.id, { job: d.job }); await pollReel(m.id, d.job); return; }
-    reelDone(m.id, d);
+    // coda: se il server dei video e' pieno si riprova ogni 15 s, fino a 10 minuti
+    for (let k = 0; k < 40; k++) {
+      const res = await authFetch('/api/platform/video-reel', { method: 'POST', headers: QUIET, body: reelBody(r) }).catch(() => null);
+      const d = res ? await res.json().catch(() => ({})) as ReelReply : {};
+      if (d.status === 'queued') { patchV(m.id, { queued: true }); await wait(15_000); continue; }
+      patchV(m.id, { queued: undefined });
+      // Vivace ed Elegante si fanno su un altro server: si chiede a che punto e' finche' il video e' pronto
+      if (d.status === 'working' && d.job) { patchV(m.id, { job: d.job }); if (await pollReel(m.id, d.job) === 'queued') continue; return; }
+      reelDone(m.id, d); return;
+    }
+    reelDone(m.id, {});
   };
   type ReelReply = { url?: string; redo?: string | null; redosLeft?: number; error?: string; status?: string; job?: string };
   const reelDone = (id: string, d: ReelReply) => {
@@ -986,6 +992,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       if (!res) continue; // rete assente un momento: si riprova
       const d = await res.json().catch(() => ({})) as ReelReply;
       if (d.status === 'working') continue;
+      if (d.status === 'queued') { patchV(id, { job: undefined, queued: true }); await wait(15_000); return 'queued' as const; } // si rimanda da capo (reelRender)
       reelDone(id, d); return;
     }
     reelDone(id, {});
@@ -1462,7 +1469,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" since={m.renderAt} /> · {tr('di solito', 'usually')} {waitFor(m.anim, m.reel)}</span>
+                                  <span className="text-xs font-medium text-white/85">{m.queued ? tr('In coda, parte appena si libera un posto', 'Queued, starts as soon as a slot is free') : <><Elapsed className="text-white" since={m.renderAt} /> · {tr('di solito', 'usually')} {waitFor(m.anim, m.reel)}</>}</span>
                                 </div>
                               )}
                             </>}
