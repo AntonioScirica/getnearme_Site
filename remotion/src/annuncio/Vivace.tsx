@@ -71,7 +71,7 @@ export function AnnuncioVivace(p: AnnuncioProps) {
 }
 
 // Ogni foto entra da destra dietro una maschera, preceduta da una lama del colore dell'agente; la vecchia arretra
-function PushLayer({ first, last, len, T, pal, children }: { first: boolean; last: boolean; len: number; T: number; pal: Palette; children: React.ReactNode }) {
+export function PushLayer({ first, last, len, T, pal, children }: { first: boolean; last: boolean; len: number; T: number; pal: Palette; children: React.ReactNode }) {
   const f = useCurrentFrame()
   const pin = first ? 1 : prog(f, 0, T, PUSH)
   const q = last ? 0 : prog(f, len, T, PUSH)
@@ -128,7 +128,7 @@ function TopBar({ t, n, pal, label }: { t: AnnuncioTiming; n: number; pal: Palet
   )
 }
 
-function Intro({ contract, title, place, pal, out }: { contract: AnnuncioProps['contract']; title: ReturnType<typeof titleFit>; place: string; pal: Palette; out?: number }) {
+export function Intro({ contract, title, place, pal, out }: { contract: AnnuncioProps['contract']; title: ReturnType<typeof titleFit>; place: string; pal: Palette; out?: number }) {
   const f = useCurrentFrame()
   const wipe = prog(f, 4, 16)
   const wipeOut = out === undefined ? 0 : prog(f, out + 6, 12)
@@ -154,7 +154,7 @@ function Intro({ contract, title, place, pal, out }: { contract: AnnuncioProps['
   )
 }
 
-function PriceBlock({ price, facts, contract, pal }: { price: Price | null; facts: Fact[]; contract: AnnuncioProps['contract']; pal: Palette }) {
+export function PriceBlock({ price, facts, contract, pal }: { price: Price | null; facts: Fact[]; contract: AnnuncioProps['contract']; pal: Palette }) {
   const f = useCurrentFrame()
   const wipe = prog(f, 8, 18, OUT)
   return (
