@@ -41,6 +41,8 @@ export type AgenteImmoUser = {
   siteViews: number
   lastActivity: string | null
   lastSignIn: string | null
+  lastUse: string | null // ultimo battito sulla piattaforma (platform_sessions, dal 05/10/2026)
+  minutes7: number // minuti attivi negli ultimi 7 giorni
   discounts: string[]
   marketingConsent: boolean | null
   welcomeCredits: boolean
@@ -110,8 +112,9 @@ async function build(since: string): Promise<AgenteImmoResponse> {
   type Brand = { user_id: string; portfolio_slug: string | null; site_published: boolean | null; display_name: string | null; company_name: string | null }
   type Lead = { user_id: string }
   type View = { project_id: string; views: number }
+  type Sess = { user_id: string; last_seen: string; active_seconds: number }
 
-  const [credits, usageAll, events, projects, brands, leads, bp] = await Promise.all([
+  const [credits, usageAll, events, projects, brands, leads, bp, platformSessions] = await Promise.all([
     selectIn<Credit>(ids, (c, f, t) => admin.from('platform_credits').select('user_id, plan, balance, subscription_until, stripe_subscription_id, stripe_customer_id').in('user_id', c).range(f, t)),
     selectAll<Usage>((f, t) => admin.from('ai_usage').select('user_id, kind, provider, cost_usd, created_at').gte('created_at', sinceIso).order('id').range(f, t)),
     selectIn<Event>(ids, (c, f, t) => admin.from('platform_credit_events').select('user_id, reason, delta, created_at').in('user_id', c).order('id').range(f, t)),
@@ -119,6 +122,7 @@ async function build(since: string): Promise<AgenteImmoResponse> {
     selectIn<Brand>(ids, (c, f, t) => admin.from('user_brand').select('user_id, portfolio_slug, site_published, display_name, company_name').in('user_id', c).range(f, t)),
     selectIn<Lead>(ids, (c, f, t) => admin.from('site_leads').select('user_id').in('user_id', c).order('id').range(f, t)),
     computeBpActuals(),
+    selectIn<Sess>(ids, (c, f, t) => admin.from('platform_sessions').select('user_id, last_seen, active_seconds').in('user_id', c).order('started_at').range(f, t)).catch(() => [] as Sess[]),
   ])
   const projectOwner = new Map(projects.map(p => [p.id, p.user_id]))
   const views = await selectIn<View>([...projectOwner.keys()], (c, f, t) => admin.from('property_views').select('project_id, views').in('project_id', c).order('day').range(f, t))
@@ -220,6 +224,13 @@ async function build(since: string): Promise<AgenteImmoResponse> {
   const leadCount = count(leads, l => l.user_id)
   const viewCount = count(views, v => projectOwner.get(v.project_id), v => Number(v.views) || 0)
   const brandOf = new Map(brands.map(b => [b.user_id, b]))
+  const lastUse = new Map<string, string>(), secs7 = new Map<string, number>()
+  const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
+  for (const x of platformSessions) {
+    if (!(x.active_seconds > 0)) continue
+    lastUse.set(x.user_id, max(lastUse.get(x.user_id) ?? null, x.last_seen)!)
+    if (x.last_seen >= weekAgo) secs7.set(x.user_id, (secs7.get(x.user_id) ?? 0) + x.active_seconds)
+  }
 
   const users: AgenteImmoUser[] = signups.map(u => {
     const md = (u.user_metadata ?? {}) as Record<string, unknown>
@@ -261,8 +272,10 @@ async function build(since: string): Promise<AgenteImmoResponse> {
       sitePublished: !!b?.site_published,
       leads: leadCount.get(u.id) ?? 0,
       siteViews: viewCount.get(u.id) ?? 0,
-      lastActivity: max(last.get(u.id) ?? null, u.last_sign_in_at),
+      lastActivity: max(max(last.get(u.id) ?? null, u.last_sign_in_at), lastUse.get(u.id)),
       lastSignIn: u.last_sign_in_at ?? null,
+      lastUse: lastUse.get(u.id) ?? null,
+      minutes7: Math.round((secs7.get(u.id) ?? 0) / 60),
       discounts: [...(discounts.get(u.id) ?? [])],
       marketingConsent: typeof md.marketing_consent === 'boolean' ? md.marketing_consent : null,
       welcomeCredits: welcome.has(u.id),

@@ -52,6 +52,7 @@ const privacyIt: LegalPage = {
       "Le foto e i video generati, salvati nella tua Galleria.",
       "I dati degli immobili che inserisci o importi (indirizzo, prezzo, caratteristiche, descrizione, posizione sulla mappa)."
     ]},
+    { type: "p", text: "Il personale autorizzato di Agente Immo può vedere le foto, i video e le richieste creati nel Servizio solo per fornirti assistenza, per il controllo della qualità dei risultati e per prevenire gli abusi." },
     { type: "p", text: "Ti chiediamo di non caricare foto in cui si riconoscono persone, documenti o altri dati personali di terzi, se non hai titolo per farlo." },
     { type: "h3", text: "3.3. Annunci importati da un link" },
     { type: "p", text: "Quando incolli il link di un annuncio, il nostro server legge la pagina pubblica dell'annuncio e ne estrae dati sull'immobile (testo, caratteristiche, foto). Nella pagina possono comparire nomi e contatti dell'agenzia che l'ha pubblicato: li usiamo solo per compilare la scheda dell'immobile su tua richiesta." },
@@ -64,6 +65,7 @@ const privacyIt: LegalPage = {
     { type: "p", text: "La prova gratuita dalla pagina iniziale (1 foto e 1 video) richiede un account e vale una sola volta per account, per indirizzo IP e per dispositivo. Per applicare il limite conserviamo, insieme all'account, un codice cifrato (hash) dell'indirizzo IP e un hash dell'impronta del dispositivo. L'impronta è calcolata nel tuo browser a partire da caratteristiche tecniche (per esempio schermo, scheda grafica, fuso orario, lingua): al nostro server arriva solo l'hash, da cui non si possono ricostruire queste informazioni. L'impronta si calcola solo quando avvii la prova. Trattiamo anche la foto che carichi per la prova e il risultato generato." },
     { type: "h3", text: "3.7. Dati tecnici e di sicurezza" },
     { type: "p", text: "Indirizzo IP, tipo di browser, data e ora delle richieste e registri tecnici, usati per far funzionare il Servizio, prevenire abusi e correggere errori. Registriamo inoltre le operazioni AI eseguite e i crediti consumati, per il calcolo dei crediti e dei costi." },
+    { type: "p", text: "Per migliorare il Servizio e offrirti assistenza registriamo quando usi la piattaforma, per quanto tempo e quali sezioni apri (per esempio chat, immobili, Galleria, sito), insieme al tipo di dispositivo e di browser. Non registriamo cosa scrivi né cosa clicchi nelle pagine. Base giuridica: legittimo interesse del titolare (art. 6.1.f GDPR). Conserviamo questi dati per 24 mesi, poi li cancelliamo." },
     { type: "h3", text: "3.8. Cookie e strumenti simili" },
     { type: "p", text: "Usiamo strumenti tecnici necessari (per esempio per mantenerti collegato e ricordare la tua scelta sui cookie). Strumenti statistici (Google Analytics, Microsoft Clarity, calendario Cal.com) e di marketing (Meta Pixel) si attivano solo con il tuo consenso, che puoi revocare in ogni momento. I dettagli sono nella Cookie Policy (agenteimmo.me/it/cookie). Sui siti personali degli agenti non usiamo strumenti statistici né di marketing." },
     { type: "h3", text: "3.9. Valutazione gratuita della casa" },
@@ -78,6 +80,7 @@ const privacyIt: LegalPage = {
       "Creare e gestire l'account, fornire le funzioni richieste (home staging, video, import degli annunci, gestione immobili, sito personale, inoltro delle richieste di contatto), gestire piani, crediti e pagamenti, fornire assistenza: esecuzione del contratto (art. 6.1.b GDPR).",
       "Emettere fatture, tenere la contabilità e adempiere agli obblighi fiscali: obbligo legale (art. 6.1.c GDPR).",
       "Proteggere il Servizio, prevenire frodi e abusi, applicare i limiti della prova gratuita (hash di IP e dispositivo), correggere errori: legittimo interesse del titolare (art. 6.1.f GDPR), bilanciato con i tuoi diritti tramite l'uso di soli codici cifrati e di tempi di conservazione limitati.",
+      "Misurare l'uso della piattaforma (tempo e sezioni aperte) per migliorarla e offrirti assistenza: legittimo interesse del titolare (art. 6.1.f GDPR).",
       "Statistiche di utilizzo del sito e misurazione delle campagne pubblicitarie: consenso (art. 6.1.a GDPR), revocabile in ogni momento.",
       "Valutazione gratuita della casa: calcolo e invio della stima su tua richiesta (art. 6.1.b GDPR); comunicazione dei tuoi contatti a un agente della zona e comunicazioni di marketing solo con i consensi specifici e facoltativi (art. 6.1.a GDPR), revocabili in ogni momento scrivendo a info@agenteimmo.me."
     ]},
@@ -113,6 +116,7 @@ const privacyIt: LegalPage = {
       "Dati di pagamento e fatture: 10 anni, come previsto dalla legge (art. 2220 del Codice civile), anche dopo l'eliminazione dell'account.",
       "Registri tecnici e di sicurezza con indirizzo IP: al massimo 90 giorni.",
       "Registri delle operazioni AI e dei crediti: per la durata dell'account.",
+      "Dati sull'uso della piattaforma (quando, per quanto tempo, quali sezioni, tipo di dispositivo): 24 mesi.",
       "Consenso ai cookie: la scelta resta memorizzata nel tuo browser per 6 mesi, poi te la chiediamo di nuovo."
     ]},
     { type: "p", text: "Le copie di backup vengono sovrascritte secondo i cicli tecnici dei fornitori; fino ad allora sono protette e non vengono usate." },
@@ -172,6 +176,7 @@ const privacyEn: LegalPage = {
       "The photos and videos generated, saved in your Gallery.",
       "Property data you enter or import (address, price, features, description, location on the map)."
     ]},
+    { type: "p", text: "Authorized Agente Immo staff may view the photos, videos and requests created in the Service only to provide support, for quality control of the results and to prevent abuse." },
     { type: "p", text: "Please do not upload photos in which people, documents or other personal data of third parties can be recognized unless you are entitled to do so." },
     { type: "h3", text: "3.3. Listings Imported from a Link" },
     { type: "p", text: "When you paste the link to a listing, our server reads the public listing page and extracts property data (text, features, photos). The page may show the name and contact details of the agency that published it: we use them only to fill in the property record at your request." },
@@ -184,6 +189,7 @@ const privacyEn: LegalPage = {
     { type: "p", text: "The free trial on the home page (1 photo and 1 video) requires an account and can be used only once per account, per IP address and per device. To enforce this limit we store, together with the account, an encrypted code (hash) of the IP address and a hash of the device fingerprint. The fingerprint is computed in your browser from technical characteristics (for example screen, graphics card, time zone, language): only the hash reaches our server, and these characteristics cannot be reconstructed from it. The fingerprint is only computed when you start the trial. We also process the photo you upload for the trial and the generated result." },
     { type: "h3", text: "3.7. Technical and Security Data" },
     { type: "p", text: "IP address, browser type, date and time of requests and technical logs, used to run the Service, prevent abuse and fix errors. We also record the AI operations performed and the credits used, to calculate credits and costs." },
+    { type: "p", text: "To improve the Service and provide support, we record when you use the platform, for how long and which sections you open (for example chat, properties, Gallery, website), together with the type of device and browser. We do not record what you type or what you click on the pages. Legal basis: legitimate interest of the controller (Art. 6(1)(f) GDPR). We keep this data for 24 months, then delete it." },
     { type: "h3", text: "3.8. Cookies and Similar Technologies" },
     { type: "p", text: "We use strictly necessary technologies (for example to keep you signed in and to remember your cookie choice). Analytics tools (Google Analytics, Microsoft Clarity, Cal.com calendar) and marketing tools (Meta Pixel) are enabled only with your consent, which you can withdraw at any time. Details are in the Cookie Policy (agenteimmo.me/en/cookie). We do not use analytics or marketing tools on agents' personal websites." },
     { type: "h3", text: "3.9. Free Home Valuation" },
@@ -198,6 +204,7 @@ const privacyEn: LegalPage = {
       "Creating and managing your account, providing the features you request (home staging, videos, listing import, property management, personal website, forwarding of contact requests), managing plans, credits and payments, providing support: performance of a contract (Art. 6(1)(b) GDPR).",
       "Issuing invoices, bookkeeping and tax compliance: legal obligation (Art. 6(1)(c) GDPR).",
       "Protecting the Service, preventing fraud and abuse, enforcing free trial limits (IP and device hashes), fixing errors: legitimate interest of the controller (Art. 6(1)(f) GDPR), balanced against your rights by using only hashed codes and limited retention periods.",
+      "Measuring platform usage (time and sections opened) to improve it and provide support: legitimate interest of the controller (Art. 6(1)(f) GDPR).",
       "Website usage statistics and measurement of advertising campaigns: consent (Art. 6(1)(a) GDPR), which can be withdrawn at any time.",
       "Free home valuation: calculating and sending the estimate at your request (Art. 6(1)(b) GDPR); sharing your contact details with a local agent and marketing communications only with the specific, optional consents (Art. 6(1)(a) GDPR), which can be withdrawn at any time by writing to info@agenteimmo.me."
     ]},
@@ -233,6 +240,7 @@ const privacyEn: LegalPage = {
       "Payment data and invoices: 10 years, as required by Italian law (Art. 2220 of the Civil Code), also after account deletion.",
       "Technical and security logs containing IP addresses: up to 90 days.",
       "Logs of AI operations and credits: for the lifetime of the account.",
+      "Platform usage data (when, for how long, which sections, type of device): 24 months.",
       "Cookie consent: your choice is stored in your browser for 6 months, then we ask again."
     ]},
     { type: "p", text: "Backup copies are overwritten according to the providers' technical cycles; until then they are protected and not used." },

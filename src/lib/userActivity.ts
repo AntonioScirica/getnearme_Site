@@ -2,13 +2,14 @@ import { createHash } from 'crypto'
 import type Stripe from 'stripe'
 import { admin, stripe, eur, selectAll } from '@/lib/bpActuals'
 import { listKeys, publicUrl } from '@/lib/r2'
+import { SECTION_LABEL, isSection, duration } from '@/lib/platformSessions'
 
 // Cronologia completa di un iscritto per il dashboard /metrics (pagina Agente Immo, riga espansa).
-// SOLO LETTURA: auth, ai_usage, platform_credit_events, projects, site_leads, user_brand (service role), Stripe e le cartelle
+// SOLO LETTURA: auth, platform_sessions, ai_usage, platform_credit_events, projects, site_leads, user_brand (service role), Stripe e le cartelle
 // dell'utente su R2 (edits, previews, videos, casa3d, uploads, chats). Gli eventi si collegano tra loro per tempo
 // (±2-3 minuti) e per nome del file: ogni foto o video porta con se' template, stile, costo AI e crediti scalati.
 
-export type ActCat = 'account' | 'foto' | 'video' | 'casa3d' | 'crediti' | 'pagamento' | 'immobile' | 'richiesta' | 'sito' | 'ai'
+export type ActCat = 'sessione' | 'account' | 'foto' | 'video' | 'casa3d' | 'crediti' | 'pagamento' | 'immobile' | 'richiesta' | 'sito' | 'ai'
 export type ActAi = { kind: string; model: string; eur: number; at: string }
 export type ActEvent = {
   id: string
@@ -35,6 +36,7 @@ export type ActivityResponse = {
   id: string
   email: string
   events: ActEvent[]
+  usage: { d7: number; d30: number; total: number; sessions: number; avg: number } // secondi attivi sulla piattaforma
   totals: { photos: number; previews: number; videos: number; videosByTemplate: Record<string, number>; casa3d: number; aiEur: number; creditsUsed: number; creditsAdded: number; chats: number }
   missing: string[]
   stripeOk: boolean
@@ -141,7 +143,8 @@ export async function buildActivity(uid: string): Promise<ActivityResponse | nul
   type Ev = { id: number; reason: string; delta: number; balance_after: number | null; meta: Record<string, unknown> | null; created_at: string }
   type Project = { id: string; nome: string | null; titolo: string | null; addr: string | null; prezzo: number | null; created_at: string; cover: string | null; thumb: string | null; is_public: boolean | null; import_data: Record<string, unknown> | null }
   type Lead = { id: string; created_at: string; name: string | null; email: string | null; phone: string | null; message: string | null; project_id: string | null }
-  const [usage, credits, projects, leads, brand, credRow, keys, chats] = await Promise.all([
+  type Sess = { id: string; started_at: string; last_seen: string; active_seconds: number; device: string | null; sections: Record<string, number> | null }
+  const [usage, credits, projects, leads, brand, credRow, keys, chats, sessions] = await Promise.all([
     selectAll<Usage>((f, t) => admin.from('ai_usage').select('id, kind, provider, model, cost_usd, created_at, ok').eq('user_id', uid).order('id').range(f, t)),
     selectAll<Ev>((f, t) => admin.from('platform_credit_events').select('id, reason, delta, balance_after, meta, created_at').eq('user_id', uid).order('id').range(f, t)),
     selectAll<Project>((f, t) => admin.from('projects').select('id, nome, titolo, addr, prezzo, created_at, cover, thumb, is_public, import_data').eq('user_id', uid).order('created_at').range(f, t)),
@@ -150,6 +153,7 @@ export async function buildActivity(uid: string): Promise<ActivityResponse | nul
     admin.from('platform_credits').select('plan, balance, stripe_customer_id, stripe_subscription_id, subscription_until').eq('user_id', uid).maybeSingle().then(r => r.data as { plan: string; balance: number; stripe_customer_id: string | null; stripe_subscription_id: string | null; subscription_until: string | null } | null),
     Promise.all(['edits', 'previews', 'videos', 'casa3d', 'uploads'].map(p => listKeys(`${p}/${uid}/`, 5000).then(l => [p, l] as const))),
     readChats(uid).catch(() => ({ byKey: new Map<string, ChatInfo>(), count: 0 })),
+    selectAll<Sess>((f, t) => admin.from('platform_sessions').select('id, started_at, last_seen, active_seconds, device, sections').eq('user_id', uid).order('started_at').range(f, t)).catch(() => [] as Sess[]),
   ])
   const R2 = Object.fromEntries(keys) as Record<string, { key: string; at: number }[]>
   const events: ActEvent[] = []
@@ -167,8 +171,31 @@ export async function buildActivity(uid: string): Promise<ActivityResponse | nul
   })
   if (user.email_confirmed_at && ms(user.email_confirmed_at) - ms(user.created_at) > 5000) events.push({ id: 'confirm', at: user.email_confirmed_at, cat: 'account', title: 'Email confermata' })
   for (const i of user.identities ?? []) if (i.created_at && ms(i.created_at) - ms(user.created_at) > MIN) events.push({ id: `ident-${i.provider}`, at: i.created_at, cat: 'account', title: `Collegato l’accesso con ${i.provider}` })
-  if (user.last_sign_in_at) events.push({ id: 'lastsign', at: user.last_sign_in_at, cat: 'account', title: 'Ultimo accesso', lines: ['Gli accessi precedenti non sono salvati in tabelle leggibili (solo l’ultimo)'] })
-  missing.push('Accessi: solo iscrizione e ultimo accesso (lo storico login di Supabase non è leggibile dal server)')
+  if (user.last_sign_in_at) events.push({ id: 'lastsign', at: user.last_sign_in_at, cat: 'account', title: 'Ultimo accesso' })
+  missing.push('Sessioni sulla piattaforma: salvate dal 05/10/2026, prima solo iscrizione e ultimo accesso')
+
+  // --- sessioni: tempo attivo (scheda visibile e uso negli ultimi 2 minuti) per sezione ---
+  const now = Date.now()
+  const use = { d7: 0, d30: 0, total: 0, sessions: 0, avg: 0 }
+  for (const x of sessions) {
+    const secs = x.active_seconds ?? 0
+    if (secs <= 0) continue
+    use.total += secs
+    use.sessions++
+    const age = now - ms(x.last_seen)
+    if (age <= 7 * 86_400_000) use.d7 += secs
+    if (age <= 30 * 86_400_000) use.d30 += secs
+    const parts = Object.entries(x.sections ?? {}).filter(([, v]) => Number(v) > 0).sort((a, b) => Number(b[1]) - Number(a[1]))
+    events.push({
+      id: `s-${x.id}`, at: x.started_at, cat: 'sessione', title: `Sessione di ${duration(secs)}`,
+      tags: [x.device ?? 'dispositivo sconosciuto'],
+      lines: [
+        parts.map(([k, v]) => `${isSection(k) ? SECTION_LABEL[k] : k} ${duration(Number(v))}`).join(' · '),
+        `Dalle ${new Date(x.started_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })} alle ${new Date(x.last_seen).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })} (tempo attivo, senza le pause)`,
+      ].filter(Boolean),
+    })
+  }
+  use.avg = use.sessions ? Math.round(use.total / use.sessions) : 0
 
   // --- foto (edits + anteprime) ---
   type Visual = { ev: ActEvent; from: number; to: number; kind: 'foto' | 'anteprima' | 'video' | 'casa3d'; suffix?: string; name?: string }
@@ -395,7 +422,7 @@ export async function buildActivity(uid: string): Promise<ActivityResponse | nul
     'Accessi al sito, visite per giorno e click non sono per evento',
   )
   return {
-    id: uid, email: user.email ?? '', events,
+    id: uid, email: user.email ?? '', events, usage: use,
     totals: {
       photos: events.filter(e => e.cat === 'foto' && !e.id.startsWith('previews/')).length,
       previews: events.filter(e => e.id.startsWith('previews/')).length,

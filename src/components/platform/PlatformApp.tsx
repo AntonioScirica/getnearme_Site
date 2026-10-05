@@ -35,6 +35,7 @@ import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { tr, lp, pageLocale } from './i18n';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 import BrandCard from './BrandCard';
+import { useHeartbeat } from './useHeartbeat';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
@@ -125,6 +126,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   }, []);
   const blockNoPlan = (e: React.SyntheticEvent) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new Event('agenteimmo:no-credits')); };
   useDemoTrack();
+  useHeartbeat(); // tempo sulla piattaforma per /metrics
   const [route, query = ''] = useHashRoute().split('?');
   const news = useGalleryNews(userData.id, route === '/galleria');
     useEffect(() => identify(userData.id), [userData.id]); // eventi GA4 legati all'account

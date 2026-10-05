@@ -14,9 +14,15 @@ const SITE_HOST = "agenteimmo.me";
 const euro = (n: number, digits = 2) => n.toLocaleString("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: digits, maximumFractionDigits: digits });
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" }) : "-");
 const dayTime = (iso: string | null) => (iso ? new Date(iso).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-");
+// pagante che non usa la piattaforma da piu' di 7 giorni (senza sessioni salvate vale l'ultima attivita')
+const WEEK = 7 * 86_400_000;
+const idlePaying = (u: AgenteImmoUser) => {
+  const at = u.lastUse ?? u.lastActivity;
+  return u.paying && (!at || Date.now() - Date.parse(at) > WEEK);
+};
 const pct = (n: number) => `${n.toLocaleString("it-IT", { maximumFractionDigits: 1 })}%`;
 
-type SortKey = "email" | "createdAt" | "plan" | "paying" | "paidEur" | "credits" | "aiEur" | "photos" | "videos" | "properties" | "sitePublished" | "leads" | "siteViews" | "lastActivity";
+type SortKey = "email" | "createdAt" | "plan" | "paying" | "paidEur" | "credits" | "aiEur" | "photos" | "videos" | "properties" | "sitePublished" | "leads" | "siteViews" | "lastActivity" | "lastUse" | "minutes7";
 type SortDir = "asc" | "desc";
 
 const PLAN_LABEL: Record<string, string> = { none: "Gratis", starter: "Starter", plus: "Plus", pro: "Pro" };
@@ -65,13 +71,13 @@ function buckets(users: AgenteImmoUser[], since: string) {
 }
 
 function csv(users: AgenteImmoUser[]) {
-  const head = ["Email", "Nome", "Agenzia", "Iscritto", "Metodo", "Piano", "Piano fino al", "Pagante", "MRR EUR", "Incassato EUR", "Crediti", "Costo AI EUR", "Foto", "Video", "Immobili", "Sito pubblicato", "Link sito", "Richieste", "Visite", "Ultima attivita", "Sconti", "Consenso marketing", "Test"];
+  const head = ["Email", "Nome", "Agenzia", "Iscritto", "Metodo", "Piano", "Piano fino al", "Pagante", "MRR EUR", "Incassato EUR", "Crediti", "Costo AI EUR", "Foto", "Video", "Immobili", "Sito pubblicato", "Link sito", "Richieste", "Visite", "Ultima attivita", "Ultimo uso", "Minuti 7 gg", "Sconti", "Consenso marketing", "Test"];
   const esc = (v: unknown) => { const s = v == null ? "" : String(v); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const num = (n: number) => n.toFixed(2).replace(".", ",");
   const rows = users.map(u => [
     u.email, u.name, u.agency, day(u.createdAt), u.method, planLabel(u), day(u.planUntil), u.paying ? "si" : "no", num(u.mrrEur), num(u.paidEur),
     u.credits ?? "", num(u.aiEur), u.photos, u.videos, u.properties, u.sitePublished ? "si" : "no",
-    u.siteSlug ? `https://${SITE_HOST}/${u.siteSlug}` : "", u.leads, u.siteViews, dayTime(u.lastActivity), u.discounts.join(" "),
+    u.siteSlug ? `https://${SITE_HOST}/${u.siteSlug}` : "", u.leads, u.siteViews, dayTime(u.lastActivity), dayTime(u.lastUse), u.minutes7, u.discounts.join(" "),
     u.marketingConsent == null ? "" : u.marketingConsent ? "si" : "no", u.isTest || u.isAdmin ? "si" : "no",
   ].map(esc).join(";"));
   return "\uFEFF" + [head.join(";"), ...rows].join("\n");
@@ -130,6 +136,7 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
         case "sitePublished": return u.sitePublished ? 1 : 0;
         case "credits": return u.credits ?? -1;
         case "lastActivity": return u.lastActivity ?? "";
+        case "lastUse": return u.lastUse ?? "";
         case "createdAt": return u.createdAt;
         default: return u[sortKey];
       }
@@ -251,17 +258,21 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
                     {th("leads", "Richieste", true)}
                     {th("siteViews", "Visite", true)}
                     {th("lastActivity", "Ultima attività")}
+                    {th("lastUse", "Ultimo uso")}
+                    {th("minutes7", "Minuti 7 gg", true)}
                   </tr>
                 </thead>
                 <tbody className={MONO}>
                   {rows.map(u => {
                     const open = expanded === u.id;
+                    const idle = idlePaying(u);
                     return (
                       <Fragment key={u.id}>
-                        <tr onClick={() => setExpanded(open ? null : u.id)} className="border-b border-white/[0.04] hover:bg-white/[0.02] cursor-pointer text-gray-300">
+                        <tr onClick={() => setExpanded(open ? null : u.id)} className={`border-b border-white/[0.04] cursor-pointer ${idle ? "bg-amber-500/[0.06] hover:bg-amber-500/10 text-amber-200" : "hover:bg-white/[0.02] text-gray-300"}`}
+                          title={idle ? "Pagante senza uso della piattaforma da più di 7 giorni" : undefined}>
                           <td className="pl-3"><ChevronRight className={`w-4 h-4 text-gray-600 transition-transform ${open ? "rotate-90" : ""}`} /></td>
                           <td className="px-3 py-2.5 max-w-[260px]">
-                            <p className="text-gray-100 truncate">{u.email}</p>
+                            <p className={`truncate ${idle ? "text-amber-300" : "text-gray-100"}`}>{u.email}</p>
                             <p className="text-[11px] text-gray-500 truncate">
                               {[u.name, u.agency].filter(Boolean).join(", ") || "-"} · {u.method}
                               {(u.isTest || u.isAdmin) && <span className="ml-1 text-amber-400">{u.isAdmin ? "admin" : "test"}</span>}
@@ -286,11 +297,13 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
                           <td className="px-3 py-2.5 text-right">{fmt(u.leads)}</td>
                           <td className="px-3 py-2.5 text-right">{fmt(u.siteViews)}</td>
                           <td className="px-3 py-2.5 whitespace-nowrap">{dayTime(u.lastActivity)}</td>
+                          <td className={`px-3 py-2.5 whitespace-nowrap ${idle ? "text-amber-400 font-semibold" : ""}`}>{dayTime(u.lastUse)}</td>
+                          <td className="px-3 py-2.5 text-right">{u.minutes7 ? fmt(u.minutes7) : <span className="text-gray-600">0</span>}</td>
                         </tr>
                         {open && (
                           <tr className="bg-white/[0.015] border-b border-white/[0.04]">
                             <td />
-                            <td colSpan={14} className="px-3 py-4">
+                            <td colSpan={16} className="px-3 py-4">
                               {/* resta nella parte visibile anche se la tabella scorre in orizzontale */}
                               <div className="sticky left-3 grid max-w-[calc(100vw-80px)] md:max-w-[min(1040px,calc(100vw-330px))] gap-6 md:grid-cols-3 text-xs">
                                 <dl className="space-y-1.5 text-gray-400">
@@ -339,14 +352,14 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
                     );
                   })}
                   {rows.length === 0 && (
-                    <tr><td colSpan={15} className="px-3 py-10 text-center text-gray-600">Nessun iscritto</td></tr>
+                    <tr><td colSpan={17} className="px-3 py-10 text-center text-gray-600">Nessun iscritto</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
           <p className={`${MONO} text-[11px] text-gray-600`}>
-            Costi AI da ai_usage (USD × {data.usdEur}). Foto e video dai movimenti crediti. Pagante = abbonamento Stripe attivo. Aggiornato {dayTime(data.fetchedAt)}.
+            Costi AI da ai_usage (USD × {data.usdEur}). Foto e video dai movimenti crediti. Pagante = abbonamento Stripe attivo. Ultimo uso e minuti dalle sessioni sulla piattaforma (dal 05/10/2026); in ambra i paganti senza uso da più di 7 giorni. Aggiornato {dayTime(data.fetchedAt)}.
           </p>
         </>
       )}

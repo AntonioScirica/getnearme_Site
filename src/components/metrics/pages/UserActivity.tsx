@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Play, X, ExternalLink, AlertTriangle, RefreshCw } from "lucide-react";
 import { MONO, fmt } from "../types";
 import type { ActEvent, ActivityResponse, ActCat } from "@/lib/userActivity";
+import { duration } from "@/lib/platformSessions";
 
 // Cronologia di un iscritto (riga espansa della pagina Agente Immo): si carica solo quando la riga si apre.
-type Filter = "tutto" | "foto" | "video" | "crediti" | "pagamenti" | "immobili";
+type Filter = "tutto" | "sessioni" | "foto" | "video" | "crediti" | "pagamenti" | "immobili";
 const FILTERS: { id: Filter; label: string; test: (e: ActEvent) => boolean }[] = [
   { id: "tutto", label: "Tutto", test: () => true },
+  { id: "sessioni", label: "Sessioni", test: e => e.cat === "sessione" },
   { id: "foto", label: "Foto", test: e => e.cat === "foto" },
   { id: "video", label: "Video", test: e => e.cat === "video" || e.cat === "casa3d" },
   { id: "crediti", label: "Crediti", test: e => e.credits !== undefined },
@@ -16,6 +18,7 @@ const FILTERS: { id: Filter; label: string; test: (e: ActEvent) => boolean }[] =
   { id: "immobili", label: "Immobili", test: e => e.cat === "immobile" || e.cat === "richiesta" || e.cat === "sito" },
 ];
 const CAT: Record<ActCat, { label: string; cls: string }> = {
+  sessione: { label: "sessione", cls: "text-cyan-300 bg-cyan-500/10" },
   account: { label: "account", cls: "text-gray-400 bg-white/[0.05]" },
   foto: { label: "foto", cls: "text-sky-300 bg-sky-500/10" },
   video: { label: "video", cls: "text-fuchsia-300 bg-fuchsia-500/10" },
@@ -84,11 +87,12 @@ export default function UserActivity({ userId, authKey }: { userId: string; auth
   if (!data) {
     return (
       <div className={`${MONO} text-xs text-gray-500 flex items-center gap-2 py-3`}>
-        {loading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Carico ogni movimento (foto, video, crediti, Stripe)...</> : <span className="text-red-400">{error ?? "Nessun dato"}</span>}
+        {loading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Carico ogni movimento (sessioni, foto, video, crediti, Stripe)...</> : <span className="text-red-400">{error ?? "Nessun dato"}</span>}
       </div>
     );
   }
   const t = data.totals;
+  const u = data.usage ?? { d7: 0, d30: 0, total: 0, sessions: 0, avg: 0 };
 
   return (
     <div className="space-y-4">
@@ -98,6 +102,15 @@ export default function UserActivity({ userId, authKey }: { userId: string; auth
         <button onClick={() => load(true)} disabled={loading} className={`${MONO} flex items-center gap-1.5 text-[11px] text-gray-500 hover:text-gray-200 disabled:opacity-40`}>
           <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> aggiorna
         </button>
+      </div>
+      {/* tempo sulla piattaforma (platform_sessions, dal 05/10/2026) */}
+      <p className={`${MONO} text-gray-500 uppercase tracking-wider text-[10px] -mb-2`}>Tempo sulla piattaforma</p>
+      <div className={`${MONO} grid grid-cols-2 md:grid-cols-5 gap-2 text-xs`}>
+        <Stat k="Tempo ultimi 7 giorni" v={u.d7 ? duration(u.d7) : "-"} accent="text-cyan-300" />
+        <Stat k="Tempo ultimi 30 giorni" v={u.d30 ? duration(u.d30) : "-"} />
+        <Stat k="Tempo totale" v={u.total ? duration(u.total) : "-"} sub="dal 05/10/2026" />
+        <Stat k="Sessioni" v={fmt(u.sessions)} />
+        <Stat k="Media per sessione" v={u.avg ? duration(u.avg) : "-"} sub="tempo attivo, senza pause" />
       </div>
       <div className={`${MONO} grid grid-cols-2 md:grid-cols-5 gap-2 text-xs`}>
         <Stat k="Foto" v={fmt(t.photos)} sub={t.previews ? `+ ${t.previews} anteprime per video` : undefined} />
