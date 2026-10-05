@@ -125,13 +125,14 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
   const [now, setNow] = useState(0);
   useEffect(() => {
     if (!linksBusy) return;
+    setNow(Date.now()); // subito, non dopo un secondo: con 0 la stima veniva di miliardi di secondi
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [linksBusy]);
   const doneMs = links.filter(l => l.ms).map(l => l.ms!);
   const avg = doneMs.length ? doneMs.reduce((a, b) => a + b, 0) / doneMs.length : AVG_MS;
   const cur = links.find(l => l.status === 'leggo');
-  const left = linksBusy ? links.filter(l => l.status === 'coda').length * avg + Math.max(0, avg - (cur?.t0 ? now - cur.t0 : 0)) : 0;
+  const left = linksBusy ? links.filter(l => l.status === 'coda').length * avg + Math.max(0, avg - (cur?.t0 ? Math.max(0, now - cur.t0) : 0)) : 0;
   const total = doneMs.reduce((a, b) => a + b, 0);
 
   return (
