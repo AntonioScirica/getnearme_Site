@@ -176,8 +176,44 @@ export async function createViewer(container, opts = {}) {
     el.style.cssText = 'position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer'
     el.onclick = () => api.enterRoom(r.id)
     labelLayer.appendChild(el)
-    return { el, p: new THREE.Vector3(r.center[0], 0.2, r.center[1]) }
+    // ripostigli, corridoi e stanze sotto 4 m2: etichetta solo al passaggio o al tocco sulla stanza
+    const small = ['ripostiglio', 'corridoio'].includes(r.type) || r.area < 4
+    const [x0, z0, x1, z1] = r.rect || [r.center[0] - 1, r.center[1] - 1, r.center[0] + 1, r.center[1] + 1]
+    return { el, id: r.id, small, area: r.area, p: new THREE.Vector3(r.center[0], 0.2, r.center[1]), c0: new THREE.Vector3(x0, 0.2, z0), c1: new THREE.Vector3(x1, 0.2, z1) }
   })
+  let hoverRoom = 0
+  renderer.domElement.addEventListener('pointermove', e => {
+    if (state.view !== 'top') return
+    const r = renderer.domElement.getBoundingClientRect()
+    ndcH.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
+    rayH.setFromCamera(ndcH, camera)
+    hoverRoom = rayH.intersectObjects(house.floors, false)[0]?.object.userData.roomId ?? 0
+  })
+  const rayH = new THREE.Raycaster(), ndcH = new THREE.Vector2(), tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3()
+  // etichette senza sovrapposizioni: le stanze piu' grandi prima; se una tocca una gia' messa si prova sopra o sotto, se no
+  // si nasconde. Stanza piccola sullo schermo (< 110 px): solo il nome, senza mq.
+  const byImportance = [...labels].sort((a, b) => b.area - a.area)
+  function layoutLabels() {
+    const W = container.clientWidth, H = container.clientHeight, placed = []
+    for (const l of byImportance) {
+      tmpV.copy(l.p).project(camera)
+      let x = (tmpV.x * 0.5 + 0.5) * W, y = (-tmpV.y * 0.5 + 0.5) * H
+      tmpA.copy(l.c0).project(camera); tmpB.copy(l.c1).project(camera)
+      const size = Math.min(Math.abs(tmpA.x - tmpB.x) * W / 2, Math.abs(tmpA.y - tmpB.y) * H / 2)
+      const compact = size < 110
+      if (l.compact !== compact) { l.compact = compact; l.el.querySelector('span').style.display = compact ? 'none' : '' }
+      const show = !state.anim && (!l.small || hoverRoom === l.id)
+      let ok = show
+      if (show) {
+        const w = l.el.offsetWidth || 80, h = l.el.offsetHeight || 34
+        const hits = (yy) => placed.some(q => Math.abs(q.x - x) < (q.w + w) / 2 + 4 && Math.abs(q.y - yy) < (q.h + h) / 2 + 2)
+        if (hits(y)) { const up = y - h - 4, dn = y + h + 4; if (!hits(up)) y = up; else if (!hits(dn)) y = dn; else ok = hoverRoom === l.id }
+        if (ok) placed.push({ x, y, w, h })
+      }
+      l.el.style.left = `${x}px`; l.el.style.top = `${y}px`
+      l.el.style.opacity = ok ? 1 : 0; l.el.style.pointerEvents = ok ? 'auto' : 'none'
+    }
+  }
 
   // stato e transizioni
   const state = { view: null, night: o.time === 'night' ? 1 : 0, nightTarget: o.time === 'night' ? 1 : 0, furnished: o.furnished, anim: null, studio: 1 }
@@ -316,11 +352,7 @@ export async function createViewer(container, opts = {}) {
     sky.position.copy(camera.position)
     if (state.view === 'top' && !state.anim) house.hideInTop.forEach(m => { m.visible = false })
     composer.render()
-    if (labelLayer.style.display !== 'none') for (const l of labels) {
-      tmpV.copy(l.p).project(camera)
-      l.el.style.left = `${(tmpV.x * 0.5 + 0.5) * container.clientWidth}px`; l.el.style.top = `${(-tmpV.y * 0.5 + 0.5) * container.clientHeight}px`
-      l.el.style.opacity = state.anim ? 0 : 1
-    }
+    if (labelLayer.style.display !== 'none') layoutLabels()
     fps.frames++
     if (now - fps.t0 > 1000) {
       fps.value = fps.frames * 1000 / (now - fps.t0); fps.frames = 0; fps.t0 = now; o.onFps?.(fps.value)
