@@ -34,6 +34,7 @@ import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal, us
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { tr, lp, pageLocale } from './i18n';
 import ImmoLoader from '@/components/ui/ImmoLoader';
+import BrandCard from './BrandCard';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
@@ -669,6 +670,7 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel={tr('Salva', 'Save')} onSaved={onSaved} /></div>
         {profile?.slug && <a href="#/portfolio" className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-brand hover:underline md:mt-4 md:min-h-0">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
       </div>
+      <BrandCard />
       {/* Costi AI: solo per gli amministratori, qui invece che nel menu */}
       {admin && (<>
         <a href="#/costi" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>

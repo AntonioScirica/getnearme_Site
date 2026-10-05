@@ -15,4 +15,6 @@ export const VIDEO_SAMPLES = {
   walk: '/staging/videos/cambia-stile.mp4', // prova del 04/10, tutta AI: l'agente gira il soggiorno e la tendina mostra l'arredo in stile nordico
   agent: '/staging/videos/agente-v3.mp4', // prova del 29/09: l'agente parla, esce e la stanza si arreda
   ristruttura: '/staging/videos/ristrutturazione.mp4', // prova del 05/10, tutta AI: soggiorno in cantiere, finito vuoto, poi arredato (Kling o3, 2 clip)
+  reel: '/staging/videos/annuncio.mp4', // 05/10, fatto con il renderer vero (src/lib/reel): 5 foto, stile Vivace
+  venduto: '/staging/videos/venduto.mp4', // 05/10, stesso renderer: timbro VENDUTO, stile Vivace
 } as const;

@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
     "/api/social/cron/**": ["./node_modules/@sparticuz/chromium/**"],
     // video della chat: il binario di ffmpeg-static (montaggio del video Veo)
     "/api/platform/video": ["./node_modules/ffmpeg-static/ffmpeg"],
+    // Video dell'annuncio e Venduto: solo montaggio (le lettere sono in src/lib/reel/glyphs.json, importato)
+    "/api/platform/video-reel": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
   // login con un indirizzo da login (la pagina e' quella del checkout, che senza piano scelto fa solo l'accesso)
   async rewrites() {

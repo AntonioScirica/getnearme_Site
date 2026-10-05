@@ -5,7 +5,7 @@ import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
-import { Anvil, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, Tag, Pencil, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -28,6 +28,7 @@ import { videoDuration, videoFrame, videoGrid, videoThumbs } from '@/lib/videoFr
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing';
 import { isFurnishing, isRestyle } from '@/lib/stagingPrompts';
 import { pageLang, pageLocale, tr } from './i18n';
+import { MAX_REEL_PHOTOS, ReelData, ReelPhotos, type ReelPhoto, type ReelState, type ReelTpl } from './ReelSteps';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -98,19 +99,28 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest; at?: number; recover?: boolean }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; renderAt?: number; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
+  | { id: string; role: 'video'; renderAt?: number; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'mode' | 'previews' | 'frames' | 'render' | 'rphotos' | 'rdata'; photo: string; reel?: ReelState & { prevUrl?: string }; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
-type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura';
+type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura' | 'reel' | 'venduto';
+// Video dell'annuncio e Venduto o Affittato: passi loro dentro il messaggio (foto, dati, anteprima), vedi ReelSteps
+const REEL_STEPS = new Set(['rphotos', 'rdata']);
 // scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
-type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'cam' | 'agent' | 'style' | 'keep' | 'photo'; src?: string };
-const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, cam: VideoIcon, agent: UserRound, style: Palette, keep: Sofa, photo: ImageIcon };
-const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam', planwalk: 'cam', ristruttura: 'build' };
+type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'cam' | 'agent' | 'style' | 'keep' | 'photo' | 'tag'; src?: string };
+const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, cam: VideoIcon, agent: UserRound, style: Palette, keep: Sofa, photo: ImageIcon, tag: Tag };
+const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam', planwalk: 'cam', ristruttura: 'build', reel: 'steps', venduto: 'tag' };
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
   // solo per le foto nate da "Foto da un punto" della planimetria (il messaggio video ha la pianta): primo della lista
   { id: 'pianta', label: tr('Dalla pianta', 'From the plan'), desc: tr('Dalla pianta in 3D si scende nella stanza e si cammina', 'From the 3D plan down into the room, then a walk'), sample: VIDEO_SAMPLES.camera, anims: [
     { id: 'planwalk', label: tr('Dalla pianta', 'From the plan'), desc: tr('Dalla pianta in 3D si scende nella stanza e si cammina', 'From the 3D plan down into the room, then a walk'), sample: VIDEO_SAMPLES.camera },
+  ] },
+  // niente AI (05/10): montaggio delle foto con i dati dell'annuncio e i contatti dell'agente, per ogni foto (non la planimetria)
+  { id: 'annuncio', label: tr('Video dell’annuncio', 'Listing video'), desc: tr('Per Facebook, Instagram e stato WhatsApp', 'For Facebook, Instagram and WhatsApp status'), sample: VIDEO_SAMPLES.reel, anims: [
+    { id: 'reel', label: tr('Video dell’annuncio', 'Listing video'), desc: tr('Per Facebook, Instagram e stato WhatsApp', 'For Facebook, Instagram and WhatsApp status'), sample: VIDEO_SAMPLES.reel },
+  ] },
+  { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto, anims: [
+    { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto },
   ] },
   { id: 'prima-dopo', label: tr('Prima e dopo', 'Before and after'), desc: tr('Dalla stanza vuota a quella arredata', 'From an empty room to a furnished one'), sample: VIDEO_SAMPLES.popup, anims: [
     { id: 'popup', label: 'Popup', desc: tr('I mobili spuntano uno alla volta', 'Furniture pops up one piece at a time'), sample: VIDEO_SAMPLES.popup },
@@ -153,12 +163,12 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
   && (isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef);
 // crediti di un video per animazione; Cantiere e Giorno/notte partono subito dopo la scelta (niente passo Prima/Dopo)
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
-const videoCr = (anim?: VideoAnim) => anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' || anim === 'ristruttura' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : CREDIT_COST.video_render;
+const videoCr = (anim?: VideoAnim) => anim === 'reel' ? CREDIT_COST.video_reel : anim === 'venduto' ? CREDIT_COST.video_venduto : anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' || anim === 'ristruttura' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : CREDIT_COST.video_render;
 // attesa tipica del video, misurata sulle prove del 29-30/09 (generazione su fal + foto GPT + montaggio, coda compresa)
-const waitFor = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'ristruttura' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
+const waitFor = (anim?: VideoAnim) => anim === 'reel' || anim === 'venduto' ? tr('meno di un minuto', 'under a minute') : anim === 'cantiere' || anim === 'ristruttura' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
 const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera' || anim === 'fpv' || anim === 'planwalk' || anim === 'ristruttura';
 // crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
-const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' ? 0 : CREDIT_COST.video_prep);
+const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' || anim === 'reel' || anim === 'venduto' ? 0 : CREDIT_COST.video_prep);
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
   : req.planimetria ? CREDIT_COST.arreda
   : req.style === 'empty' ? CREDIT_COST.svuota
@@ -207,6 +217,8 @@ const NEXT_VIDEO: [string, string][] = [
   ['Video pronto. Scaricalo e pubblicalo, oppure carica un’altra foto per il prossimo.', 'Video ready. Download and post it, or upload another photo for the next one.'],
   ['Fatto. Per un altro modello di video premi Crea video sulla foto.', 'Done. For another video template press Create video on the photo.'],
 ];
+// Video dell'annuncio e Venduto: una sola frase, affermativa
+const REEL_DONE: [string, string][] = [['Il video è pronto. Scaricalo o mandalo su WhatsApp.', 'The video is ready. Download it or send it on WhatsApp.']];
 // testi fissi confrontati nel codice: stesso valore dove si scrivono e dove si leggono (la lingua non cambia senza ricaricare)
 const CREATE_VIDEO = tr('Crea un video', 'Create a video');
 const KEEP_ROOM = tr('Stanza com’è', 'Room as is');
@@ -877,6 +889,77 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     }
     patchV(id, { err: fail });
   };
+  // ---- Video dell'annuncio e Video Venduto o Affittato (niente AI, montaggio sul server: api/platform/video-reel) ----
+  type RS = NonNullable<VideoMsg['reel']>;
+  const patchR = (id: string, p: Partial<RS> | ((r: RS) => Partial<RS>)) => patchV(id, m => (m.reel ? { reel: { ...m.reel, ...(typeof p === 'function' ? p(m.reel) : p) } } : {}));
+  // foto della chat arredate con l'AI: badge "Arredata" e, nel video, la scritta "Immagine arredata virtualmente"
+  const isStaged = (src: string) => msgs.some(x => x.role === 'ai' && x.out === src);
+  // foto proposte con un tocco: quelle della chat (caricate e risultati) e, se la chat e' di un immobile, le sue
+  const [projPhotos, setProjPhotos] = useState<ReelPhoto[]>([]);
+  const chatPhotos: ReelPhoto[] = [...msgs].reverse().flatMap(x => (x.role === 'ai' && x.out ? [{ src: x.out, staged: true }] : x.role === 'user' && x.image ? [{ src: x.image, staged: false }] : []))
+    .concat(projPhotos).filter((p, k, all) => all.findIndex(q => q.src === p.src) === k);
+  // foto caricata dal computer (data:...): si mette online, al server vanno solo indirizzi (limite di 4,5 MB delle richieste)
+  const hostPhoto = async (d: string) => (d.startsWith('data:') ? (await uploadDataUrl(d, 'properties').catch(() => '')) || d : d);
+  const startReel = (m: VideoMsg, tpl: ReelTpl, label: string) => {
+    const first: ReelPhoto = { src: m.photo, key: m.photo, staged: isStaged(m.photo) };
+    patchV(m.id, { step: tpl === 'reel' ? 'rphotos' : 'rdata', anim: tpl, err: undefined, picks: [{ label, icon: ANIM_ICON[tpl] }],
+      reel: { tpl, photos: [first], title: '', place: '', price: '', mq: '', rooms: '', days: '', contract: 'vendita', style: 'vivace', enhance: true } });
+    if (m.photo.startsWith('data:')) void hostPhoto(m.photo).then(url => patchR(m.id, r => ({ photos: r.photos.map(p => (p.src === m.photo ? { ...p, src: url } : p)) })));
+    // chat di un immobile: dati dell'annuncio gia' compilati (modificabili) e le sue foto da aggiungere con un tocco
+    if (project) void fetchProjects().then(ps => {
+      const p = ps.find(x => x.id === project);
+      if (!p) return;
+      const d = (p.import_data ?? {}) as { photos?: unknown };
+      setProjPhotos((Array.isArray(d.photos) ? d.photos.filter((x): x is string => typeof x === 'string') : p.cover ? [p.cover] : []).slice(0, 24).map(src => ({ src, staged: false })));
+      const city = (p.addr ?? '').split(',').slice(-1)[0].replace(/\d{5}/g, '').trim();
+      const rent = /affitt/i.test(`${p.titolo ?? ''} ${p.tipologia ?? ''}`);
+      patchR(m.id, r => ({ title: r.title || (p.titolo ?? '').slice(0, 80), place: r.place || city, price: r.price || (p.prezzo ? String(p.prezzo) : ''), mq: r.mq || (p.mq ? String(p.mq) : ''), rooms: r.rooms || (p.locali ? String(p.locali) : ''), contract: rent ? 'affitto' : r.contract }));
+    }).catch(() => {});
+  };
+  const addReelFiles = async (m: VideoMsg, files: File[]) => {
+    const r = m.reel!;
+    const take = files.filter(f => f.type.startsWith('image/')).slice(0, Math.max(0, MAX_REEL_PHOTOS - r.photos.length - (r.uploading ?? 0)));
+    if (!take.length) return;
+    patchR(m.id, x => ({ uploading: (x.uploading ?? 0) + take.length }));
+    await Promise.all(take.map(async f => {
+      const src = await fileToResizedDataUrl(f, 1600).then(hostPhoto).catch(() => '');
+      patchR(m.id, x => ({ uploading: Math.max(0, (x.uploading ?? 1) - 1), photos: src ? [...x.photos, { src, staged: false }].slice(0, MAX_REEL_PHOTOS) : x.photos }));
+    }));
+  };
+  // suggerimento toccato: entra subito; se e' una foto caricata dal computer si mette online e resta riconoscibile (key)
+  const pickReelPhoto = (m: VideoMsg, s: ReelPhoto) => {
+    patchR(m.id, r => ({ photos: [...r.photos, { ...s, key: s.key ?? s.src }].slice(0, MAX_REEL_PHOTOS) }));
+    if (s.src.startsWith('data:')) void hostPhoto(s.src).then(url => patchR(m.id, r => ({ photos: r.photos.map(p => (p.src === s.src ? { ...p, src: url } : p)) })));
+  };
+  const swapReelPhoto = async (m: VideoMsg, f: File) => {
+    patchR(m.id, { uploading: 1 });
+    const src = await fileToResizedDataUrl(f, 1600).then(hostPhoto).catch(() => '');
+    patchR(m.id, x => ({ uploading: 0, photos: src ? [{ src, staged: false }] : x.photos }));
+  };
+  const reelBody = (r: RS) => JSON.stringify({
+    template: r.tpl, contract: r.contract, style: r.style, enhance: r.enhance, title: r.title, place: r.place, price: r.price, mq: r.more || r.mq ? r.mq : '', rooms: r.rooms, days: r.days,
+    photos: r.photos.map(p => ({ src: p.src, staged: p.staged })),
+    ...(project ? { projectId: project } : {}), ...(r.editing && r.redo ? { redo: r.redo } : {}),
+  });
+  const reelRender = async (m: VideoMsg) => {
+    const r = m.reel!;
+    if (!r.editing && short(m, videoCr(m.anim))) return;
+    touch();
+    patchV(m.id, { step: 'render', url: undefined, err: undefined, picks: [m.picks[0], { label: r.style === 'elegante' ? tr('Elegante', 'Elegant') : tr('Vivace', 'Lively'), icon: 'style' }] });
+    const res = await authFetch('/api/platform/video-reel', { method: 'POST', headers: QUIET, body: reelBody(r) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) as { url?: string; redo?: string | null; redosLeft?: number; error?: string } : {};
+    if (!d.url) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'photo_unreadable' ? tr('Una delle foto non si apre, toglila e riprova.', 'One of the photos won\'t open, remove it and try again.') : tr('Video non riuscito, riprova.', 'Video failed, please try again.') }); return; }
+    patchV(m.id, { url: d.url, reel: { ...r, editing: false, prevUrl: undefined, redo: d.redo ?? null, redosLeft: d.redosLeft ?? 0 } });
+    window.dispatchEvent(new Event('agenteimmo:media')); window.dispatchEvent(new Event('agenteimmo:credits'));
+    toMsg(m.id);
+  };
+  // indietro di un passo; correggendo i testi di un video fatto si torna al video
+  const reelBack = (m: VideoMsg) => {
+    const r = m.reel!;
+    if (r.editing && m.step === 'rdata') { patchV(m.id, { step: 'render', url: r.prevUrl, reel: { ...r, editing: false, prevUrl: undefined } }); return; }
+    if (m.step === 'rdata' && r.tpl === 'reel') { patchV(m.id, { step: 'rphotos' }); return; }
+    patchV(m.id, { step: 'template', anim: undefined, picks: [], reel: undefined, err: undefined });
+  };
   // dopo una ricarica della scheda: i video che stavano lavorando riprendono il controllo
   const resumed = useRef(false);
   useEffect(() => {
@@ -991,7 +1074,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // Tipo di foto non ancora noto: tutto aperto.
   const templateOff = (id: string) => {
     const outside = id === 'cantiere' || id === 'volo-cantiere' || id === 'fpv'
-    const both = id === 'giorno-notte' || id === 'camera' || id === 'daynight'
+    const both = id === 'giorno-notte' || id === 'camera' || id === 'daynight' || id === 'annuncio' || id === 'venduto' || id === 'reel'
     return outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
   };
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
@@ -1099,13 +1182,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && m.step !== 'vchoice' && (
-                      <button aria-label={tr('Indietro', 'Back')} onClick={() => patchV(m.id, m.step === 'warn' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [] } : { step: 'template', anim: undefined, picks: [], err: undefined }) : m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'walk' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, picks: m.picks.slice(0, 1) }) : m.step === 'mode' && (m.anim === 'agent' || m.anim === 'ristruttura') ? { step: 'room', ...(m.anim === 'ristruttura' ? { picks: m.picks.slice(0, 1) } : {}) } : m.step === 'room' && m.anim === 'ristruttura' ? { step: 'template', anim: undefined, picks: [] } : m.step === 'room' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
+                      <button aria-label={tr('Indietro', 'Back')} onClick={() => m.reel && REEL_STEPS.has(m.step) ? reelBack(m) : patchV(m.id, m.step === 'warn' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [] } : { step: 'template', anim: undefined, picks: [], err: undefined }) : m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'walk' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, picks: m.picks.slice(0, 1) }) : m.step === 'mode' && (m.anim === 'agent' || m.anim === 'ristruttura') ? { step: 'room', ...(m.anim === 'ristruttura' ? { picks: m.picks.slice(0, 1) } : {}) } : m.step === 'room' && m.anim === 'ristruttura' ? { step: 'template', anim: undefined, picks: [] } : m.step === 'room' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? tr('Che video vuoi creare?', 'What video do you want to create?') : m.step === 'warn' ? tr('Prima di iniziare', 'Before you start') : m.step === 'upload' ? tr('Aspetto il tuo video', 'Waiting for your video') : m.step === 'vchoice' ? tr('Che video facciamo?', 'Which video shall we make?') : m.step === 'exit' ? (m.agent?.busy ?? tr('Da qui la stanza si trasforma', 'From here the room transforms')) : m.step === 'room' ? tr('Che stanza è?', 'Which room is it?') : m.step === 'anim' ? tr('Con quale animazione?', 'Which animation?') : m.step === 'mode' ? ((emptyFrom && emptyFrom === m.photo) || m.anim === 'agent' || m.anim === 'walk' || m.anim === 'ristruttura' ? tr('In che stile la arredo?', 'Which style should I furnish it in?') : tr('Com’è ora o in un nuovo stile?', 'As it is now or in a new style?')) : m.step === 'previews' ? (m.previews?.some(p => !p) ? tr('Preparo due proposte…', 'Preparing two options…') : tr('Scegli quella per il video', 'Pick the one for the video')) : m.step === 'frames' ? (m.err ? '' : m.frames ? tr('Ecco prima e dopo, creo il video.', 'Here are before and after, creating the video.') : tr('Preparo prima e dopo…', 'Preparing before and after…')) : m.url ? tr('Ecco il video', 'Here is the video') : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? tr('Creo il video, circa 2 minuti', 'Creating the video, about 2 minutes') : tr('Creo il video, qualche minuto', 'Creating the video, a few minutes')}</span>
+                    <span className="font-medium">{m.step === 'rphotos' ? tr('Scegli le foto, la prima apre il video', 'Pick the photos, the first one opens the video') : m.step === 'rdata' ? (m.reel?.tpl === 'venduto' ? tr('Cosa scrivo sulla foto?', 'What should I write on the photo?') : tr('I dati dell’annuncio', 'The listing details')) : m.step === 'template' ? tr('Che video vuoi creare?', 'What video do you want to create?') : m.step === 'warn' ? tr('Prima di iniziare', 'Before you start') : m.step === 'upload' ? tr('Aspetto il tuo video', 'Waiting for your video') : m.step === 'vchoice' ? tr('Che video facciamo?', 'Which video shall we make?') : m.step === 'exit' ? (m.agent?.busy ?? tr('Da qui la stanza si trasforma', 'From here the room transforms')) : m.step === 'room' ? tr('Che stanza è?', 'Which room is it?') : m.step === 'anim' ? tr('Con quale animazione?', 'Which animation?') : m.step === 'mode' ? ((emptyFrom && emptyFrom === m.photo) || m.anim === 'agent' || m.anim === 'walk' || m.anim === 'ristruttura' ? tr('In che stile la arredo?', 'Which style should I furnish it in?') : tr('Com’è ora o in un nuovo stile?', 'As it is now or in a new style?')) : m.step === 'previews' ? (m.previews?.some(p => !p) ? tr('Preparo due proposte…', 'Preparing two options…') : tr('Scegli quella per il video', 'Pick the one for the video')) : m.step === 'frames' ? (m.err ? '' : m.frames ? tr('Ecco prima e dopo, creo il video.', 'Here are before and after, creating the video.') : tr('Preparo prima e dopo…', 'Preparing before and after…')) : m.url ? tr('Ecco il video', 'Here is the video') : m.err ? '' : m.anim === 'reel' || m.anim === 'venduto' ? tr('Creo il video, meno di un minuto', 'Creating the video, under a minute') : (m.anim === 'popup' || m.anim === 'gravity') ? tr('Creo il video, circa 2 minuti', 'Creating the video, about 2 minutes') : tr('Creo il video, qualche minuto', 'Creating the video, a few minutes')}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
-                      <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === CREATE_VIDEO)); })}
+                      <button onClick={() => m.reel?.editing ? patchV(m.id, { step: 'render', url: m.reel.prevUrl, reel: { ...m.reel, editing: false, prevUrl: undefined } }) : setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === CREATE_VIDEO)); })}
                         className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-brand ease-smooth transition-colors hover:bg-brand/10">{tr('Annulla', 'Cancel')}</button>
                     )}
                   </div>
@@ -1115,7 +1198,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           const off = templateOff(t.id) // i disponibili prima, i non disponibili in fondo
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const solo = one?.length === 1 ? one[0].id : m.step === 'anim' ? t.id as VideoAnim : undefined; if (solo === 'ristruttura') { if (short(m, fullCr(solo))) return; patchV(m.id, { step: 'room', anim: solo, err: undefined, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }); return; } /* Ristrutturazione: prima che stanza e' */ if (solo && directVideo(solo)) { if (short(m, fullCr(solo))) return; patchV(m.id, { anim: solo }); void makeVideo({ ...m, anim: solo, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }, m.photo, '', m.photo); return; } /* lo stile lo chiede solo Prima e dopo: gli altri video partono subito con la foto com'e' */ const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: one[0].id === 'walk' ? 'warn' : 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
+                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const solo = one?.length === 1 ? one[0].id : m.step === 'anim' ? t.id as VideoAnim : undefined; if (solo === 'reel' || solo === 'venduto') { startReel(m, solo, t.label); return; } /* Annuncio e Venduto: passi loro (foto, dati, anteprima gratis) */ if (solo === 'ristruttura') { if (short(m, fullCr(solo))) return; patchV(m.id, { step: 'room', anim: solo, err: undefined, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }); return; } /* Ristrutturazione: prima che stanza e' */ if (solo && directVideo(solo)) { if (short(m, fullCr(solo))) return; patchV(m.id, { anim: solo }); void makeVideo({ ...m, anim: solo, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }, m.photo, '', m.photo); return; } /* lo stile lo chiede solo Prima e dopo: gli altri video partono subito con la foto com'e' */ const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: one[0].id === 'walk' ? 'warn' : 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-white p-1.5 text-left sm:rounded-[28px] sm:p-2 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className={`aspect-[4/3] w-full rounded-[18px] object-cover sm:aspect-video sm:rounded-[20px] ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
@@ -1129,6 +1212,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         })}
                       </div>
                     )}
+                    {m.step === 'rphotos' && m.reel && <ReelPhotos r={m.reel} suggestions={chatPhotos} onChange={p => patchR(m.id, p)} onAdd={f => void addReelFiles(m, f)} onPick={s => pickReelPhoto(m, s)} onNext={() => patchV(m.id, { step: 'rdata' })} />}
+                    {m.step === 'rdata' && m.reel && <ReelData r={m.reel} cost={videoCr(m.anim)} onChange={p => patchR(m.id, p)} onCreate={() => void reelRender(m)} onSwapPhoto={f => void swapReelPhoto(m, f)} />}
                     {m.step === 'upload' && (
                       // messaggio: come girare il video, poi lo si manda in chat come una foto (trascinato o con il pulsante)
                       <div className="px-1">
@@ -1333,12 +1418,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               )}
                             </>}
                         </div>
-                        {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} />{/* foto nello stile gia' fatta (e pagata): Riprova rilancia solo il video */}<button onClick={() => { const st = m.anim === 'walk' || m.anim === 'agent' ? m.agent?.styled : undefined; if (st) { if (!short(m, videoCr(m.anim))) void makeVideo(m, m.photo, '', st); } else patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') }); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">{tr('Riprova', 'Try again')}</button></div>}
+                        {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} />{/* foto nello stile gia' fatta (e pagata): Riprova rilancia solo il video */}<button onClick={() => { if (m.reel) { patchV(m.id, { step: 'rdata', err: undefined }); return; } const st = m.anim === 'walk' || m.anim === 'agent' ? m.agent?.styled : undefined; if (st) { if (!short(m, videoCr(m.anim))) void makeVideo(m, m.photo, '', st); } else patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') }); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">{tr('Riprova', 'Try again')}</button></div>}
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         {/* telefono: scelte su una riga, sotto Condividi e Scarica meta' e meta' */}
                         <div className="flex items-center gap-2 pt-3 max-sm:flex-wrap">
                           {/* una sola scelta: resta sulla riga con Condividi e Scarica (solo icone su telefono); piu' scelte: riga sua */}
                           <div className={`flex min-w-0 flex-1 ${m.picks.length > 1 ? 'max-sm:basis-full' : ''}`}><Picks picks={m.picks} /></div>
+                          {/* Video dell'annuncio e Venduto: correggere i testi e' gratis (3 volte), si riapre il passo dei dati */}
+                          {m.reel && m.url && !!m.reel.redo && (m.reel.redosLeft ?? 0) > 0 && <button type="button" onClick={() => patchV(m.id, { step: 'rdata', url: undefined, reel: { ...m.reel!, editing: true, prevUrl: m.url } })}
+                            className="flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-canvas max-sm:flex-1 max-sm:justify-center"><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Pencil size={14} /></span>{tr('Modifica testi', 'Edit texts')}</button>}
                           <ShareVideo url={m.url} labelClass={m.picks.length > 1 ? '' : 'max-sm:hidden'} className={`flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 max-sm:justify-center ${m.picks.length > 1 ? 'max-sm:flex-1' : 'max-sm:pr-1.5'} text-xs font-medium text-white shadow-sm ring-1 ring-black/5`} />{/* stessa forma e altezza di Scarica */}
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url} aria-label={tr('Scarica', 'Download')}
                             className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas max-sm:justify-center ${m.picks.length > 1 ? 'max-sm:flex-1' : 'max-sm:pr-1.5'} ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span><span className={m.picks.length > 1 ? '' : 'max-sm:hidden'}>{tr('Scarica', 'Download')}</span></a>
@@ -1446,7 +1534,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             if (!done || zoneOwner >= 0) return null;
             // stanza appena svuotata: frasi sue (prima poteva proporre "meno arredi" o di svuotarla di nuovo)
             const emptied = last.role === 'ai' && last.req?.style === 'empty';
-            const list = last.role === 'video' ? NEXT_VIDEO : emptied ? NEXT_EMPTY : NEXT_PHOTO;
+            const list = last.role === 'video' ? (last.reel ? REEL_DONE : NEXT_VIDEO) : emptied ? NEXT_EMPTY : NEXT_PHOTO;
             const [it, en] = list[[...last.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % list.length];
             // fumetto grigio come quello del riconoscimento della stanza; dopo un video il pulsante per ripartire da un'altra foto
             return (
