@@ -102,7 +102,7 @@ export function addOpening(raw: RawPlan, wi: number, at: Pt, type: OpType): RawP
 }
 // superficie totale corretta: tutto scalato attorno al centro (le aree vanno col quadrato)
 export function rescaleTo(raw: RawPlan, totalM2: number): RawPlan {
-  const p = clone(raw), cur = p.rooms.filter(r => !OUT_TYPES.has(r.type)).reduce((a, r) => a + r.area, 0)
+  const p = clone(raw), cur = totalArea(p)
   if (!(cur > 0 && totalM2 > 5)) return p
   const k = Math.sqrt(totalM2 / cur), S = (q: Pt): Pt => [r3(q[0] * k), r3(q[1] * k)]
   for (const w of p.walls) { w.a = S(w.a); w.b = S(w.b) } // gli spessori restano veri
@@ -112,7 +112,8 @@ export function rescaleTo(raw: RawPlan, totalM2: number): RawPlan {
   p.source = { ...p.source, m_per_px: p.source.m_per_px * k, scale_from: 'manuale', scale_warn: false, toImage: [t[0] * inv, t[1] * inv, t[2] * inv, t[3] * inv, t[4], t[5]] }
   return p
 }
-export const totalArea = (raw: RawPlan) => Math.round(raw.rooms.filter(r => !OUT_TYPES.has(r.type)).reduce((a, r) => a + r.area, 0) * 10) / 10
+// superficie della casa: senza terrazzi e balconi (non sono mq interni)
+export const totalArea = (raw: RawPlan) => Math.round(raw.rooms.filter(r => !OUT_TYPES.has(r.type) && !OUTDOOR.has(r.type)).reduce((a, r) => a + r.area, 0) * 10) / 10
 
 // rettangolo utile piu' grande dentro una maschera (istogramma per righe)
 function largestRect(mask: Uint8Array, w: number, h: number): [number, number, number, number] | null {
@@ -282,7 +283,7 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
       if (near && near.d < 1.2) room = near.r
     }
     if (l.h >= 2.2 && l.h <= 4.5) hs.push(l.h)
-    if (!room && (l.type === 'terrazzo' || l.type === 'balcone')) { (p.outside_labels ??= []).push({ text: l.text.slice(0, 40), type: l.type, x: l.x, y: l.y }); continue }
+    if (!room && (l.type === 'terrazzo' || l.type === 'balcone')) { (p.outside_labels ??= []).push({ text: l.text.slice(0, 40), type: l.type, x: l.x, y: l.y, ...(l.mq > 0 ? { mq: l.mq } : {}) }); continue }
     if (!room) continue
     const cur = best.get(room.id)
     // nella stessa stanza: prima il nome della stanza, poi i mq
@@ -479,5 +480,26 @@ export function addFurniture(raw: RawPlan, roomId: number, what: keyof typeof AD
   // al centro della stanza (o accanto, per i pezzi del bagno), dritti; l'agente li ruota col tocco
   const c = r.center
   list.forEach((it, k) => (p.furniture ??= []).push({ kind: it.kind, at: [r3(c[0] + (k - (list.length - 1) / 2) * 0.8), r3(c[1])], rot: 0, len: it.len, depth: it.depth, conf: 1, added: true }))
+  return p
+}
+
+// terrazzo disegnato dall'agente (tocchi sugli angoli): stanza esterna; i lati lontani dalla casa (oltre 40 cm dai muri)
+// diventano parapetti. replace: il terrazzo trovato da sostituire (e i suoi parapetti)
+export function drawOutdoor(raw: RawPlan, pts: Pt[], replace?: number): RawPlan {
+  let p = clone(raw)
+  if (pts.length < 3) return p
+  const old = replace ? p.rooms.find(r => r.id === replace) : undefined
+  if (old) { p.rooms = p.rooms.filter(r => r !== old); p.walls = p.walls.filter(w => w.label !== `parapetto-${old.id}`) }
+  const poly = pts.map(q => [r3(q[0]), r3(q[1])] as Pt)
+  const area = Math.round(Math.abs(shoelace(poly)) * 10) / 10
+  const id = old?.id ?? Math.max(0, ...p.rooms.map(r => r.id)) + 1
+  p.rooms.push({ id, area, center: centerOf(poly), poly, type: old?.type ?? 'terrazzo', ...(old?.label ? { label: old.label } : {}), ...(old?.written_mq ? { written_mq: old.written_mq } : {}) })
+  const distToWalls = (m: Pt) => Math.min(...p.walls.map(w => { const { L, d } = frame(w.a, w.b), dx = m[0] - w.a[0], dy = m[1] - w.a[1], t = Math.max(0, Math.min(L, dx * d[0] + dy * d[1])); return Math.hypot(dx - d[0] * t, dy - d[1] * t) - w.t / 2 }))
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length], m: Pt = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 0.3 || distToWalls(m) < 0.4) continue
+    p.walls.push({ a, b, t: 0.12, label: `parapetto-${id}` })
+  }
+  if (p.source.outdoor_short) p = { ...p, source: { ...p.source, outdoor_short: p.source.outdoor_short.filter(x => x.room !== replace) } }
   return p
 }

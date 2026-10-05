@@ -105,8 +105,31 @@ export async function findOutdoor(raw0: RawPlan, original: Buffer): Promise<{ ra
       if (q.x < 0 || q.y < 0 || q.x >= W || q.y >= H) continue
       const qm = toM(q.x, q.y)
       if (raw.rooms.some(r => inPoly(qm[0], qm[1], r.poly))) continue
-      const b = at(bc.lab, q)
-      if (b && addRegion(bc.lab, b, 'tratteggio rado + scritta', q.l)) continue
+      // mq scritti con la scritta (o nel testo, "Terrasse 32.36 m2"): se la zona trovata e' molto piu' piccola si allarga
+      // chiudendo l'inchiostro esterno con raggi sempre piu' ampi, in una finestra attorno alla scritta, fino ai mq scritti (15%)
+      const target = q.l.mq || Number((q.l.text.match(/(\d+(?:[.,]\d+)?)\s*(?:m2|m²|mq)/i)?.[1] ?? '0').replace(',', '.'))
+      const areaOf = (lab: Int32Array, id: number) => { let n = 0; for (let i = 0; i < N; i++) if (lab[i] === id) n++; return n / (ppm * ppm) }
+      let b = at(bc.lab, q), lab = bc.lab
+      if (b && target > 3 && areaOf(lab, b) < 0.85 * target) {
+        const half = Math.round((1.3 * Math.sqrt(target) + 1) * ppm), wx0 = Math.max(0, q.x - half), wx1 = Math.min(W, q.x + half), wy0 = Math.max(0, q.y - half), wy1 = Math.min(H, q.y + half)
+        for (const rad of [1.8, 2.6, 3.6]) {
+          const win = new Uint8Array(N)
+          for (let y = wy0; y < wy1; y++) for (let x = wx0; x < wx1; x++) { const i = y * W + x; win[i] = outInk[i] }
+          const bl = closeDisk(win, W, H, Math.round(rad * ppm))
+          for (let i = 0; i < N; i++) if (footPad[i]) bl[i] = 0
+          const c2 = components(bl, W, H, 4), b2 = at(c2.lab, q)
+          if (!b2) continue
+          const a2 = areaOf(c2.lab, b2)
+          if (a2 > 1.15 * target) break // oltre i mq scritti: si tiene il passo prima
+          lab = c2.lab; b = b2
+          if (a2 >= 0.85 * target) break
+        }
+      }
+      if (b && addRegion(lab, b, 'tratteggio rado + scritta', q.l)) {
+        const r = raw.rooms[raw.rooms.length - 1]
+        if (target > 3) { r.written_mq = target; if (r.area < 0.85 * target) raw.source = { ...raw.source, outdoor_short: [...(raw.source.outdoor_short ?? []), { room: r.id, found: r.area, written: target }] } }
+        continue
+      }
       const f = at(fc.lab, q)
       if (f) addRegion(fc.lab, f, 'contorno + scritta', q.l)
     }

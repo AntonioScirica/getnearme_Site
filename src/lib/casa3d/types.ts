@@ -23,6 +23,8 @@ export type RawSource = {
   scale_from: 'porte' | 'tramezzi' | 'mq' | 'manuale' | 'scritte'; scale_note?: string; scale_warn?: boolean
   // combacio con l'originale dopo l'allineamento: errore medio (cm) delle facce dei muri, muri senza riscontro
   fit?: { error_cm: number; before_cm: number; unsupported: number; walls: number; diverge: boolean }
+  // terrazzi trovati piu' piccoli dei mq scritti: avviso e 'Disegna terrazzo' nella correzione
+  outdoor_short?: { room: number; found: number; written: number }[]
   // metri -> pixel dell'immagine di partenza (stessa misura della planimetria originale ritagliata): [a, b, c, d, e, f]
   // con x_img = a*x + c*y + e, y_img = b*x + d*y + f (come la matrice SVG)
   toImage: [number, number, number, number, number, number]
@@ -30,7 +32,7 @@ export type RawSource = {
 }
 export type RawPlan = { version: 3; units: 'm'; height: number; source: RawSource; walls: RawWall[]; openings: RawOpening[]; rooms: RawRoom[]; furniture?: DrawnItem[]; materials?: Materials
   // scritte terrazzo/balcone lette fuori dalle stanze riconosciute (posizione 0-1 sull'originale): per ritrovare le zone esterne
-  outside_labels?: { text: string; type: string; x: number; y: number }[] }
+  outside_labels?: { text: string; type: string; x: number; y: number; mq?: number }[] }
 
 // Correzioni (dal controllo di Claude): stesso schema del prototipo in Python
 export type Fix = {

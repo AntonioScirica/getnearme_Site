@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Check, Combine, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Scissors, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
-import { addFurniture, addOpening, inPoly, mergeRooms, removeFurniture, rotateFurniture, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
+import { addFurniture, addOpening, drawOutdoor, inPoly, mergeRooms, removeFurniture, rotateFurniture, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
 import { FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, WALL_COLORS, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
 import { authFetch } from './api';
 import { pageLang, tr } from './i18n';
@@ -203,7 +203,7 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
   const svg = useRef<SVGSVGElement>(null)
   const [sel, setSel] = useState<Sel>(null)
   // strumenti sulle stanze: dividi (due tocchi per la linea) e unisci (tocca la stanza vicina)
-  const [tool, setTool] = useState<{ kind: 'split'; id: number; pts: Pt[] } | { kind: 'merge'; id: number } | null>(null)
+  const [tool, setTool] = useState<{ kind: 'split'; id: number; pts: Pt[] } | { kind: 'merge'; id: number } | { kind: 'draw'; replace?: number; pts: Pt[] } | null>(null)
   // opacita' dell'originale sotto la pianta (cursore): se il ridisegno non combacia si parte a meta' per confrontare
   const diverge = !!raw.source.fit?.diverge
   const [origOp, setOrigOp] = useState(diverge ? 50 : 15)
@@ -271,12 +271,14 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
           </g>
           {tool && (
             <>
-              {tool.kind === 'split' && tool.pts.map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={0.12} fill={BRAND} />)}
+              {tool.kind !== 'merge' && tool.pts.map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={0.12} fill={BRAND} />)}
+              {tool.kind === 'draw' && tool.pts.length > 1 && <polygon points={tool.pts.map(q => q.join(',')).join(' ')} fill="rgba(83,126,236,.18)" stroke={BRAND} strokeWidth={0.06} />}
               {tool.kind === 'split' && tool.pts.length === 2 && <line x1={tool.pts[0][0]} y1={tool.pts[0][1]} x2={tool.pts[1][0]} y2={tool.pts[1][1]} stroke={BRAND} strokeWidth={0.08} strokeDasharray="0.2 0.12" />}
               <rect x={vb[0]} y={vb[1]} width={vb[2]} height={vb[3]} fill="transparent" className="cursor-crosshair" onClick={e => {
                 e.stopPropagation()
                 const q = toM(e)
                 if (tool.kind === 'split') { if (tool.pts.length < 2) setTool({ ...tool, pts: [...tool.pts, q] }) }
+                else if (tool.kind === 'draw') setTool({ ...tool, pts: [...tool.pts, q] })
                 else { const other = raw.rooms.find(r => r.id !== tool.id && inPoly(q[0], q[1], r.poly)); if (other) { onEdit(r => mergeRooms(r, tool.id, other.id)); setTool(null); setSel(null) } }
               }} />
             </>
@@ -292,6 +294,12 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
       </div>
 
       <div className="flex min-h-0 flex-col gap-4 overflow-y-auto lg:h-[calc(52vh+16px)]">
+        {(raw.source.outdoor_short ?? []).map(o => (
+          <div key={o.room} className="rounded-[24px] bg-brand/10 p-4 text-sm font-medium text-brand">
+            {tr(`Terrazzo: trovati ${String(o.found).replace('.', ',')} m² sui ${String(o.written).replace('.', ',')} scritti. Disegnalo toccando gli angoli.`, `Terrace: found ${o.found} m² of the ${o.written} written. Draw it by tapping its corners.`)}
+            <button type="button" onClick={() => { setSel(null); setTool({ kind: 'draw', replace: o.room, pts: [] }) }} className="mt-3 block rounded-full bg-brand px-4 py-2 text-[13px] font-semibold text-white">{tr('Disegna terrazzo', 'Draw terrace')}</button>
+          </div>
+        ))}
         {diverge && <p className="rounded-[24px] bg-brand/10 p-4 text-sm font-medium text-brand">{tr('In alcuni punti il disegno si discosta dall’originale: muovi il cursore Originale per confrontare e correggi le stanze che non tornano.', 'In some spots the drawing differs from the original: move the Original slider to compare and fix rooms that do not match.')}</p>}{/* alta come la pianta: la finestra non cambia misura a ogni tocco */}
         {multi && (
           <label className="block text-sm">
@@ -303,11 +311,12 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
         <div className="rounded-[24px] bg-canvas p-4">
           {tool && (
             <div>
-              <p className="text-sm font-semibold">{tool.kind === 'split' ? (tool.pts.length < 2 ? tr(`Tocca due punti sui muri per tracciare la divisione (${tool.pts.length} di 2)`, `Tap two points on the walls to draw the split (${tool.pts.length} of 2)`) : tr('Cosa c’è sulla linea?', 'What is on the line?')) : tr('Tocca la stanza vicina da unire', 'Tap the neighbouring room to merge')}</p>
+              <p className="text-sm font-semibold">{tool.kind === 'draw' ? tr(`Tocca gli angoli del terrazzo uno dopo l’altro (${tool.pts.length})`, `Tap the terrace corners one after another (${tool.pts.length})`) : tool.kind === 'split' ? (tool.pts.length < 2 ? tr(`Tocca due punti sui muri per tracciare la divisione (${tool.pts.length} di 2)`, `Tap two points on the walls to draw the split (${tool.pts.length} of 2)`) : tr('Cosa c’è sulla linea?', 'What is on the line?')) : tr('Tocca la stanza vicina da unire', 'Tap the neighbouring room to merge')}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {tool.kind === 'split' && tool.pts.length === 2 && ([['muro', tr('Muro', 'Wall')], ['porta', tr('Muro con porta', 'Wall with door')], ['passaggio', tr('Passaggio aperto', 'Open passage')]] as const).map(([m, l]) => (
                   <button key={m} type="button" onClick={() => { onEdit(r => splitRoom(r, tool.id, tool.pts[0], tool.pts[1], m)); setTool(null); setSel(null) }} className={pill(false)}>{l}</button>
                 ))}
+                {tool.kind === 'draw' && tool.pts.length >= 3 && <button type="button" onClick={() => { onEdit(r => drawOutdoor(r, tool.pts, tool.replace)); setTool(null); setSel(null) }} className={pill(true)}>{tr('Fine', 'Done')}</button>}
                 <button type="button" onClick={() => setTool(null)} className={pill(false)}>{tr('Annulla', 'Cancel')}</button>
               </div>
             </div>
@@ -317,6 +326,7 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
             <div className="mt-3">
               <p className="text-sm font-semibold">{tr('Facciata', 'Facade')}{raw.materials?.from ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
               <Swatches colors={[...new Set([raw.materials?.facade?.color, ...FACADE_COLORS].filter((x): x is string => !!x))]} value={raw.materials?.facade?.color} onPick={c => onEdit(r => setFacade(r, c))} />
+              <button type="button" onClick={() => setTool({ kind: 'draw', pts: [] })} className={`${pill(false)} mt-4`}>{tr('Disegna terrazzo o balcone', 'Draw terrace or balcony')}</button>
             </div>
           )}
           {selRoom && !tool && (
