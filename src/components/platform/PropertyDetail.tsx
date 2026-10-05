@@ -498,7 +498,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
               </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
+              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica AI', 'AI edit')}</button>
               {/* Aggiungi: dal computer o dalla Galleria, in un solo pulsante */}
               <span className="relative">
                 <button type="button" onClick={() => setAddMenu(o => !o)} disabled={adding} className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</button>
