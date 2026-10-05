@@ -16,7 +16,12 @@
 // Starter 1000 crediti = 333 foto o 10 video; Plus 1500 = 500 foto o 15 video; Pro 2500 = 833 foto o 25 video.
 // Video Prima e dopo (29/09): 1 credito quando si preparano Prima e Dopo (le foto GPT, pagate anche se poi si annulla),
 // il resto (video_render = 99) quando si consegna il video: chi arriva in fondo paga sempre 100 (video).
-export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, video_fpv: 200, video_planwalk: 150, video_reel: 10, video_venduto: 5, video_drone: 40, video_stagioni: 40, riscrivi: 1 };
+export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, video_fpv: 200, video_planwalk: 150, video_reel: 10, video_venduto: 5, video_drone: 40, video_stagioni: 40, riscrivi: 1, casa3d: 40 };
+// Casa 3D (05/10): ritaglio Sonnet (~0,005 $) + ridisegno GPT Image a qualita' media (~0,02 $) + controllo Sonnet sulla
+// sovrapposizione (~0,015 $, misurato sulle 5 piante di prova: 0,014-0,028 $) = ~0,04-0,05 $ a pianta, riconoscimento e
+// costruzione senza AI. A parita' di margine delle altre righe (~107 crediti per $, come Giorno e notte 0,37 $ -> 40)
+// sarebbero ~5 crediti: si chiede 40 per casa (fino a 4 piani, una pianta ciascuno) perche' e' un prodotto a se' che
+// resta sul sito; correggere e ricostruire la stessa casa e' gratis (api/platform/casa3d, spendOnce sulla chiave della casa).
 // Giro col drone (05/10): Kling 2.5 Turbo Pro da una foto, 5 s a 1080p (0,35 $, nessuna foto GPT); la Camminata usa Kling 1.6
 // standard a 720p (0,28 $ -> 30): a parita' di margine (~107 crediti per $) 0,35 $ fa ~38 -> 40, come Giorno e notte.
 // Stagioni (05/10): 1 GPT Image a qualita' bassa (la stagione scelta, ~0,014 $) + Kling 2.5 Turbo Pro primo/ultimo
