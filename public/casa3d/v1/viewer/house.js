@@ -185,6 +185,8 @@ export function buildHouse(plan, M) {
   const wallColor = new Map(plan.rooms.map(r => [r.id, new THREE.Color(r.wall || WALL_BASE)]))
   const facade = new THREE.Color(plan.materials?.facade?.color || FACADE_BASE), base = new THREE.Color(WALL_BASE)
   for (const r of plan.rooms) if (OUTDOOR.has(r.type)) wallColor.set(r.id, facade) // dal terrazzo si vede la facciata
+  const facadeMat = M.facade?.(plan.materials?.facade?.kind, plan.materials?.facade?.color) // pietra o mattone
+  const facadeParts = []
   group.traverse(o => {
     if (!o.isMesh || o.material !== M.wall) return
     // per triangolo (geometria non indicizzata): dal baricentro, lungo la normale da entrambe le parti (il verso dipende dal
@@ -202,9 +204,27 @@ export function buildHouse(plan, M) {
         c = id ? (wallColor.get(id) || base) : facade
       }
       for (let q = t; q < t + 3; q++) { col[q * 3] = c.r; col[q * 3 + 1] = c.g; col[q * 3 + 2] = c.b }
+      if (c === facade) { col[t * 3 + 2] = -1 } // segno: triangolo di facciata (tolto sotto se c'e' una texture)
     }
+    if (facadeMat) {
+      // i triangoli della facciata passano su una mesh a parte con la texture di pietra o mattone (UV in metri)
+      const inP = [], inN = [], inC = [], exP = [], exN = []
+      for (let t = 0; t + 2 < pos.count; t += 3) {
+        const ext = col[t * 3 + 2] === -1
+        for (let q = t; q < t + 3; q++) {
+          const P = [pos.getX(q), pos.getY(q), pos.getZ(q)], Nn = [nor.getX(q), nor.getY(q), nor.getZ(q)]
+          if (ext) { exP.push(...P); exN.push(...Nn) } else { inP.push(...P); inN.push(...Nn); inC.push(col[q * 3], col[q * 3 + 1], col[q * 3 + 2]) }
+        }
+      }
+      const gi = new THREE.BufferGeometry(); gi.setAttribute('position', new THREE.Float32BufferAttribute(inP, 3)); gi.setAttribute('normal', new THREE.Float32BufferAttribute(inN, 3)); gi.setAttribute('color', new THREE.Float32BufferAttribute(inC, 3))
+      worldUV(gi); o.geometry = gi
+      if (exP.length) { const ge = new THREE.BufferGeometry(); ge.setAttribute('position', new THREE.Float32BufferAttribute(exP, 3)); ge.setAttribute('normal', new THREE.Float32BufferAttribute(exN, 3)); worldUV(ge); facadeParts.push(ge) }
+      return
+    }
+    for (let t = 0; t + 2 < pos.count; t += 3) if (col[t * 3 + 2] === -1) col[t * 3 + 2] = facade.b
         o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3))
   })
+  if (facadeParts.length) { const fm = mesh(mergeGeometries(facadeParts), facadeMat); fm.name = 'facciata'; group.add(fm) }
   if (plan.materials?.frames) M.windowFrame.color.set(plan.materials.frames)
   const doorMat = plan.materials?.doors ? M.lacquer.clone() : M.lacquer
   if (plan.materials?.doors) doorMat.color.set(plan.materials.doors)

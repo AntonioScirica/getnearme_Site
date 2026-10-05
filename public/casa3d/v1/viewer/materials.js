@@ -6,6 +6,7 @@ const TEX_SIZE = { // lato reale in metri (dall'API Poly Haven)
   laminate_floor_02: 1.7, interior_tiles: 1.9, marble_01: 1.5, long_white_tiles: 1.27, plastered_wall_04: 3.2,
   cotton_jersey: 0.264, poly_wool_herringbone: 0.27, oak_veneer_01: 1.83, hessian_230: 0.27, stretch_poplin: 0.29,
   rough_linen: 0.27, leather_white: 0.3,
+  stone_wall: 2.0, red_brick_03: 1.0, // facciate (caricate solo se la casa e' in pietra o mattone)
 }
 
 export function createMaterials(assetsBase, renderer, { lowEnd = false } = {}) {
@@ -89,6 +90,13 @@ export function createMaterials(assetsBase, renderer, { lowEnd = false } = {}) {
     pillow: pbr('stretch_poplin', { scale: 1.3, map: false, color: 0xeeeae2, roughness: 1 }),
     pillowAccent: pbr('poly_wool_herringbone', { scale: 1.3, roughness: 1, color: 0x9a8f7f }),
     leather: pbr('leather_white', { roughness: 0.6, color: 0x7a5a42 }),
+  }
+  // facciata vera dalle foto: pietra o mattone CC0 tinti col colore letto (texture caricate solo quando servono)
+  M.facade = (kind, color) => {
+    const name = kind === 'pietra' ? 'stone_wall' : kind === 'mattone' ? 'red_brick_03' : null
+    if (!name) return null
+    const tint = new THREE.Color(color || 0xffffff).lerp(new THREE.Color(0xffffff), 0.45) // tinta leggera: la texture ha gia' il suo colore
+    return pbr(name, { roughness: 0.95, normalScale: 1, color: tint })
   }
   M.ready = () => Promise.all(pending)
   return M
