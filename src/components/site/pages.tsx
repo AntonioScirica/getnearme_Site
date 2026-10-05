@@ -7,7 +7,7 @@ import InlineSlider from '@/components/InlineSlider';
 import { ABOUT_DEFAULT, isClosed, pageHidden, statusOf, STATUS_LABELS, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { LegalPage } from './legal';
-import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
+import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat, Casa3DBlock } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, SoldRecent, statsOf, tipiOf, Zones, type Filters } from './sections';
 import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, Sec, StatusTag, SiteLink, SiteRoot, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
@@ -370,6 +370,7 @@ function PropertyPage({ id }: { id: string }) {
           {t.video !== 'cinema' && <PropertyVideos p={p} />}
           <Sec id="property.details"><div className="mt-12"><DetailsTable p={p} /></div></Sec>
           <Sec id="property.features"><div className="mt-12 empty:hidden"><FeatureList p={p} /></div></Sec>
+          <div className="mt-12 empty:hidden"><Casa3DBlock p={p} /></div>
           <div className="mt-12 empty:hidden"><TourBlock p={p} /></div>
           {(!!p.zona?.length || !!p.addr) && (
             <Sec id="property.zone"><div className="mt-12">

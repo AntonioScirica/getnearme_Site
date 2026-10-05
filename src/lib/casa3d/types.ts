@@ -54,3 +54,10 @@ export const ROOM_LABEL_EN: Record<string, string> = {
   soggiorno: 'Living room', cucina: 'Kitchen', camera: 'Bedroom', cameretta: 'Kids room', bagno: 'Bathroom', ingresso: 'Entrance', corridoio: 'Hallway',
   studio: 'Study', ripostiglio: 'Storage', balcone: 'Balcony', terrazzo: 'Terrace', scala: 'Stairs', lavanderia: 'Laundry', stanza: 'Room', esterno: 'Not part of the home',
 }
+
+// casa 3D di un immobile pubblico (details.casa3d), solo indirizzi https: per il sito e la pagina /3d
+export function casa3dOf(p: { details?: Record<string, unknown> }): { manifest: string; poster?: string; floors: number } | null {
+  const c = p.details?.casa3d as { manifest?: unknown; poster?: unknown; floors?: unknown[] } | undefined
+  if (!c || typeof c.manifest !== 'string' || !/^https:\/\//.test(c.manifest)) return null
+  return { manifest: c.manifest, poster: typeof c.poster === 'string' && /^https:\/\//.test(c.poster) ? c.poster : undefined, floors: Array.isArray(c.floors) ? c.floors.length : 1 }
+}

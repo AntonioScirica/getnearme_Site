@@ -1,9 +1,10 @@
 'use client';
 
 import LeafletMap from '@/components/ui/LeafletMap';
+import { casa3dOf } from '@/lib/casa3d/types';
 import { iconFor } from '@/lib/fieldIcons';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Check, Compass, FileDown, Play, ExternalLink, Facebook, Fence, Flame, Layers, LandPlot, Package, Shirt, ShieldCheck, Siren, Sun, Video, WashingMachine, Waves, Wifi, Wine, HouseWifi, Warehouse, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
+import { Box, Check, Compass, FileDown, Play, ExternalLink, Facebook, Fence, Flame, Layers, LandPlot, Package, Shirt, ShieldCheck, Siren, Sun, Video, WashingMachine, Waves, Wifi, Wine, HouseWifi, Warehouse, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
 import { authFetch } from '@/components/platform/api';
 import { printHtml } from '@/lib/printHtml';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
@@ -206,6 +207,33 @@ export function TourBlock({ p }: { p: SiteProperty }) {
           sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" className="h-full w-full border-0" />}
       </div>
       <a href={t.href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--c)] hover:underline">Apri a schermo intero <ExternalLink size={13} /></a>
+    </div>
+  );
+}
+
+// Casa 3D (dalla planimetria, piattaforma): poster della vista dall'alto e pulsante; il visore (three.js, texture e
+// mobili, qualche MB) si carica solo al clic, la pagina non pesa nulla in piu'. Il visore sta in public/casa3d.
+export function Casa3DBlock({ p }: { p: SiteProperty }) {
+  const c = casa3dOf(p);
+  const [on, setOn] = useState(false);
+  if (!c) return null;
+  const src = `/casa3d/v1/index.html?src=${encodeURIComponent(c.manifest)}`;
+  return (
+    <div>
+      <H className="text-3xl">Vedi in 3D</H>
+      <p className="mt-2 text-[15px] text-[var(--muted)]">La casa arredata, dall&apos;alto e camminando nelle stanze, di giorno e di notte{c.floors > 1 ? `, ${c.floors} piani` : ''}.</p>
+      <div className="relative mt-5 aspect-video overflow-hidden rounded-[var(--r)] bg-[var(--soft)] ring-1 ring-[var(--line)]">
+        {!on ? (
+          <button type="button" onClick={() => setOn(true)} className="group absolute inset-0 block h-full w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {c.poster && <img src={c.poster} alt={`Casa 3D di ${p.titolo}, vista dall'alto con l'arredamento`} loading="lazy" className="h-full w-full object-cover transition-transform duration-[600ms] group-hover:scale-[1.02]" />}
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="flex items-center gap-2 rounded-full bg-[var(--c)] px-6 py-3.5 font-semibold text-[var(--on-c,#fff)] shadow-lg transition-transform group-hover:scale-105"><Box size={18} /> Vedi in 3D</span>
+            </span>
+          </button>
+        ) : <iframe src={src} title={`Casa 3D di ${p.titolo}`} allow="fullscreen" allowFullScreen className="h-full w-full border-0" />}
+      </div>
+      <a href={src} target="_blank" rel="noopener" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--c)] hover:underline">Apri a schermo intero <ExternalLink size={13} /></a>
     </div>
   );
 }

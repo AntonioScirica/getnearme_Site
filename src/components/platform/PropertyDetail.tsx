@@ -169,7 +169,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
           </div>
         );
       })()}
-      {embedOpen && site?.slug && <EmbedCode url={`${portfolioUrl(site.slug)}/${project.id}`} id={project.id} title={project.titolo || project.nome || ''} onClose={() => setEmbedOpen(false)} />}
+      {embedOpen && site?.slug && <EmbedCode url={`${portfolioUrl(site.slug)}/${project.id}`} id={project.id} title={project.titolo || project.nome || ''} casa={!!((project.import_data as { details?: { casa3d?: unknown } } | undefined)?.details?.casa3d)} onClose={() => setEmbedOpen(false)} />}
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-6 lg:sticky lg:top-6 lg:h-[calc(100svh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
@@ -557,11 +557,16 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
 
 // Incorpora: codice da incollare nel sito dell'agenzia (o in un altro sito) per mostrare la scheda completa dell'immobile:
 // un riquadro che si allunga da solo (la scheda manda la sua altezza, vedi components/site/EmbedHeight).
-function EmbedCode({ url, id, title, onClose }: { url: string; id: string; title: string; onClose: () => void }) {
+// casa: c'e' la casa 3D, si puo' incorporare solo quella (riquadro 16:10, il visore si carica nel riquadro)
+function EmbedCode({ url, id, title, casa, onClose }: { url: string; id: string; title: string; casa?: boolean; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
+  const [only3d, setOnly3d] = useState(false);
   const origin = new URL(url).origin;
   const fid = `agenteimmo-${id.slice(0, 8)}`;
-  const code = `<iframe id="${fid}" src="${url}/embed" title="${title.replace(/"/g, '&quot;')}" loading="lazy" style="width:100%;border:0;min-height:900px"></iframe>
+  const safeTitle = title.replace(/"/g, '&quot;');
+  const code = only3d
+    ? `<iframe src="${url}/3d?embed=1" title="Casa 3D, ${safeTitle}" loading="lazy" allow="fullscreen" allowfullscreen style="width:100%;aspect-ratio:16/10;border:0;border-radius:16px"></iframe>`
+    : `<iframe id="${fid}" src="${url}/embed" title="${safeTitle}" loading="lazy" style="width:100%;border:0;min-height:900px"></iframe>
 <script>window.addEventListener('message',function(e){if(e.origin==='${origin}'&&e.data&&e.data.agenteimmoEmbed==='${id}'){document.getElementById('${fid}').style.height=e.data.h+'px'}});</script>`;
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
@@ -573,9 +578,16 @@ function EmbedCode({ url, id, title, onClose }: { url: string; id: string; title
           </div>
           <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
         </div>
+        {casa && (
+          <div className="mt-4 flex gap-2" role="radiogroup">
+            {([[false, tr('Scheda completa', 'Full listing')], [true, tr('Solo la casa 3D', '3D home only')]] as const).map(([v, l]) => (
+              <button key={String(v)} type="button" role="radio" aria-checked={only3d === v} onClick={() => setOnly3d(v)} className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-[600ms] ${only3d === v ? 'bg-ink text-white' : 'bg-canvas text-ink/80 hover:bg-line/60'}`}>{l}</button>
+            ))}
+          </div>
+        )}
         <textarea readOnly value={code} onFocus={e => e.currentTarget.select()} rows={6} className="mt-4 w-full resize-none rounded-2xl bg-canvas p-4 font-mono text-xs leading-relaxed text-ink/80 outline-none ring-1 ring-line" />
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <a href={`${url}/embed`} target="_blank" rel="noopener" className="text-sm font-medium text-brand hover:underline">{tr('Vedi l’anteprima', 'See the preview')}</a>
+          <a href={only3d ? `${url}/3d?embed=1` : `${url}/embed`} target="_blank" rel="noopener" className="text-sm font-medium text-brand hover:underline">{tr('Vedi l’anteprima', 'See the preview')}</a>
           <button type="button" onClick={() => { void navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
             className="flex h-11 items-center justify-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand max-sm:w-full">{copied ? <Check size={16} /> : <Copy size={16} />} {copied ? tr('Copiato', 'Copied') : tr('Copia il codice', 'Copy code')}</button>
         </div>
