@@ -1,0 +1,35 @@
+{
+  "contract": "affitto",
+  "photos": [
+    {
+      "src": "demo/slider_v3_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/slider_v6_after.jpg",
+      "staged": false
+    },
+    {
+      "src": "demo/room1_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/sm_room_furnished.jpg",
+      "staged": true
+    }
+  ],
+  "title": "Bilocale arredato vicino alla metro",
+  "place": "Vomero, Napoli",
+  "price": "950",
+  "mq": "62",
+  "rooms": "2",
+  "agent": {
+    "name": "Giulia Rossi",
+    "agency": "Rossi Immobiliare",
+    "phone": "+39 333 123 4567",
+    "site": "rossimmobiliare.it",
+    "color": "#537eec",
+    "logoUrl": "demo/logo-rossi.svg"
+  },
+  "style": "vivace"
+}

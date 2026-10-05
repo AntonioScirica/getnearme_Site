@@ -43,3 +43,7 @@ next-env.d.ts
 # dati OMI importati (scripts/omi-import.mjs) e forniture con il codice fiscale nel nome
 /data/omi/
 QI*.zip
+
+# progetto Remotion (video Annuncio e Venduto)
+/remotion/node_modules
+/remotion/out

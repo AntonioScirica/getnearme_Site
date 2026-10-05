@@ -1,0 +1,39 @@
+{
+  "contract": "vendita",
+  "photos": [
+    {
+      "src": "demo/daynight1_day.jpg",
+      "staged": false
+    },
+    {
+      "src": "demo/slider_v3_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/room1_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/slider_v4_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/villa1_finished.jpg",
+      "staged": false
+    }
+  ],
+  "title": "Villa con parco e piscina sulle colline",
+  "place": "Fiesole, Firenze",
+  "price": "1.250.000 €",
+  "mq": "320",
+  "rooms": "8",
+  "agent": {
+    "name": "Giulia Rossi",
+    "agency": "Rossi Immobiliare",
+    "phone": "+39 333 123 4567",
+    "site": "rossimmobiliare.it",
+    "color": "#537eec",
+    "logoUrl": "demo/logo-rossi.svg"
+  },
+  "style": "elegante"
+}

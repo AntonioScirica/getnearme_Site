@@ -1,0 +1,18 @@
+{
+  "place": "Fiesole, Firenze",
+  "days": "41",
+  "agent": {
+    "name": "Giulia Rossi",
+    "agency": "Rossi Immobiliare",
+    "phone": "+39 333 123 4567",
+    "site": "rossimmobiliare.it",
+    "color": "#537eec",
+    "logoUrl": "demo/logo-rossi.svg"
+  },
+  "style": "elegante",
+  "contract": "vendita",
+  "photo": {
+    "src": "demo/daynight1_day.jpg",
+    "staged": false
+  }
+}

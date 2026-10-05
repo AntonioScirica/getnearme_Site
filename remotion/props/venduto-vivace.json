@@ -1,0 +1,18 @@
+{
+  "place": "Vomero, Napoli",
+  "days": "23",
+  "agent": {
+    "name": "Giulia Rossi",
+    "agency": "Rossi Immobiliare",
+    "phone": "+39 333 123 4567",
+    "site": "rossimmobiliare.it",
+    "color": "#537eec",
+    "logoUrl": "demo/logo-rossi.svg"
+  },
+  "style": "vivace",
+  "contract": "vendita",
+  "photo": {
+    "src": "demo/villa1_finished.jpg",
+    "staged": false
+  }
+}

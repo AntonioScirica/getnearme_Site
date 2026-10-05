@@ -1,0 +1,18 @@
+{
+  "place": "Chiaia, Napoli",
+  "days": "9",
+  "agent": {
+    "name": "Giulia Rossi",
+    "agency": "Rossi Immobiliare",
+    "phone": "+39 333 123 4567",
+    "site": "rossimmobiliare.it",
+    "color": "#537eec",
+    "logoUrl": "demo/logo-rossi.svg"
+  },
+  "style": "vivace",
+  "contract": "affitto",
+  "photo": {
+    "src": "demo/slider_v3_after.jpg",
+    "staged": true
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "contract": "vendita",
+  "photos": [
+    {
+      "src": "demo/daynight2_day.jpg",
+      "staged": false
+    },
+    {
+      "src": "demo/slider_v1_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/slider_v4_after.jpg",
+      "staged": true
+    },
+    {
+      "src": "demo/slider_v6_after.jpg",
+      "staged": false
+    },
+    {
+      "src": "demo/sm_room_furnished.jpg",
+      "staged": true
+    }
+  ],
+  "title": "Casale in pietra con giardino e vista colline",
+  "place": "Greve in Chianti, Firenze",
+  "price": "340000",
+  "mq": "160",
+  "rooms": "5",
+  "agent": {
+    "name": "Giulia Rossi",
+    "agency": "Rossi Immobiliare",
+    "phone": "+39 333 123 4567",
+    "site": "rossimmobiliare.it",
+    "color": "#f5c518",
+    "logoUrl": "demo/logo-rossi.svg"
+  },
+  "style": "vivace"
+}

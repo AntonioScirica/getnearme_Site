@@ -1,0 +1,26 @@
+{
+  "name": "agenteimmo-remotion",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Video dell'annuncio e Video Venduto o Affittato, composizioni Remotion",
+  "scripts": {
+    "studio": "remotion studio",
+    "typecheck": "tsc --noEmit",
+    "render": "remotion render"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.421",
+    "@remotion/transitions": "4.0.421",
+    "@remotion/zod-types": "4.0.421",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.421",
+    "zod": "3.22.3"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "4.0.421",
+    "@remotion/renderer": "4.0.421",
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}
