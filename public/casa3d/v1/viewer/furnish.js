@@ -36,9 +36,13 @@ export function planFurniture(plan, house) {
     }
     return true
   }
+  // skip: per stanza, tipi di mobile gia' disegnati sulla planimetria (l'arredo automatico completa senza doppioni)
+  const skip = new Map()
   function add(room, kind, x, z, rot, { w = 0, d = 0, y = 0, opts = {}, block = true } = {}) {
+    if (skip.get(room.id)?.has(kind)) return false
     items.push({ kind, x, z, y, rot, room: room.id, opts })
     if (block && w && d) grid.markFurniture(x, z, w, d, rot)
+    return true
   }
   // distanza dal lato del rettangolo utile al muro vero (il rettangolo e' eroso di qualche cm)
   function wallGap(side, x, z) {
@@ -116,7 +120,7 @@ export function planFurniture(plan, house) {
     return null
   }
   const mainLight = (room, x, z, kind = 'pendant') => {
-    add(room, kind, x, z, 0, { y: kind === 'pendant' ? H - 0.95 : H, block: false })
+    if (add(room, kind, x, z, 0, { y: kind === 'pendant' ? H - 0.95 : H, block: false }) === false) return
     lights.push({ room: room.id, x, y: kind === 'pendant' ? H - 0.75 : H - 0.2, z, role: 'main' })
   }
   const center = r => [(r.rect[0] + r.rect[2]) / 2, (r.rect[1] + r.rect[3]) / 2]
@@ -276,13 +280,20 @@ export function planFurniture(plan, house) {
   return {
     // drawn: mobili disegnati sulla planimetria (plan.furniture): in quelle stanze si mettono loro, al loro posto
     furnish({ drawn } = {}) {
+      // mobili disegnati al loro posto; poi l'arredo automatico della stanza completa nei punti liberi (fits() vede i mobili
+      // letti e le zone porta), senza rifare i tipi gia' disegnati (e senza i pezzi che dipendono da loro)
+      const SKIP = { bed: ['bed', 'nightstand', 'tableLamp', 'picture1', 'rug'], sofa: ['sofa', 'coffee', 'coffeeRound', 'rug', 'picture2', 'pillows'], table: ['table', 'chair'], desk: ['desk', 'deskLamp'], wardrobe: ['wardrobe', 'chest'],
+        kitchen: ['kitchen'], wc: ['wc'], sink: ['sink'], shower: ['shower', 'bathtub'], bathtub: ['shower', 'bathtub'], tvcab: ['tvcab', 'tv'], armchair: [] }
       const drawnRooms = new Set((drawn || []).map(i => i.room))
       for (const it of drawn || []) {
         const room = plan.rooms.find(r => r.id === it.room)
-        if (room) add(room, it.kind, it.x, it.z, it.rot, { w: it.w, d: it.d, opts: it.opts })
+        if (!room) continue
+        add(room, it.kind, it.x, it.z, it.rot, { w: it.w, d: it.d, opts: it.opts })
+        if (it.kind === 'tvcab') add(room, 'tv', it.x, it.z, it.rot, { y: 0.5, block: false })
+        const sk = skip.get(room.id) ?? new Set(); for (const k of SKIP[it.kind] ?? [it.kind]) sk.add(k); skip.set(room.id, sk)
       }
-      for (const id of drawnRooms) { const r = plan.rooms.find(x => x.id === id); if (r && !['balcone', 'terrazzo'].includes(r.type)) { const [cx, cz] = center(r); mainLight(r, cx, cz, 'ceilingLight') } }
-      for (const r of plan.rooms) if (!drawnRooms.has(r.id)) recipes[r.type]?.(r)
+      for (const r of plan.rooms) recipes[r.type]?.(r)
+      skip.clear()
       curtains()
       return { items, lights }
     },
