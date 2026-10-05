@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
     if (!key || !Number.isInteger(floor) || floor < 0 || floor >= MAX_FLOORS) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     const already = await paid(userId, key)
     if (!already && !(await canAfford(userId, 'casa3d'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.casa3d }, { status: 402 })
+    // rifare gratis si', ma non all'infinito sulla stessa casa (ogni giro costa GPT + Claude): al massimo 2 a piano
+    if (already && (await listKeys(`${base}/`)).filter(k => k.key.includes('-orig-')).length >= 2 * MAX_FLOORS) return NextResponse.json({ error: 'limit' }, { status: 429 })
     const image = await imageBuffer(b.image)
     if (!image) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     // pianta gia' ridisegnata (prove in locale: niente GPT da ripagare)

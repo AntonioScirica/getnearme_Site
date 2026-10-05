@@ -1,6 +1,6 @@
 // Casa 3D, pipeline sul server (Vercel, Node): ritaglio della pianta, ridisegno "da CAD" con GPT Image,
 // riconoscimento in TypeScript, controllo di Claude sulla sovrapposizione, correzioni. Una pianta per chiamata.
-// Tempi misurati (05/10, Mac M-series): ridisegno ~60-90 s, riconoscimento 1,5-8 s, controllo 5-15 s.
+// Tempi misurati (05/10, in locale): ritaglio ~2 s, ridisegno 19 s (60-90 s nel prototipo), riconoscimento 1,5-8 s, controllo 5-15 s.
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'

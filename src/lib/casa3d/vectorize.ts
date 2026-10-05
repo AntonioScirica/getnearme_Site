@@ -457,7 +457,9 @@ export function vectorize(g0: Uint8Array, W0: number, H0: number, up: number, sr
   if (opts.areaM2 && pxTot && !opts.mPerPx) {
     const net = pxTot * mpx * mpx, comm = net * 1.2
     const diff = Math.abs(comm - opts.areaM2) / opts.areaM2
-    if (diff > 0.15) {
+    // oltre il 50% i mq dell'annuncio sono di solito di tutta la casa (piu' piani, giardino): si tiene la scala delle porte
+    if (diff >= 0.5) scaleNote = `mq dell'annuncio molto diversi (${Math.round(comm)} contro ${Math.round(opts.areaM2)} m2 commerciali): tengo la scala ${scaleFrom === 'porte' ? 'delle porte' : 'dei tramezzi'}`
+    else if (diff > 0.15) {
       const before = mpx
       mpx = Math.sqrt(opts.areaM2 / 1.2 / pxTot)
       scaleNote = `scala ${scaleFrom === 'porte' ? 'dalle porte' : 'dai tramezzi'} lontana dai mq dell'annuncio (${Math.round(comm)} contro ${Math.round(opts.areaM2)} m2 commerciali, ${Math.round(diff * 100)}%): uso i mq (${(before * up).toFixed(5)} -> ${(mpx * up).toFixed(5)} m/px)`

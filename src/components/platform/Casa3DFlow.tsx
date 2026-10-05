@@ -32,11 +32,11 @@ export const viewerUrl = (manifest: string, extra = '') => `${VIEWER_PATH}?src=$
 // fasi del riconoscimento di una pianta, con i tempi misurati (per l'attesa: niente rotellina muta)
 const PHASES: [number, string, string][] = [
   [0, 'Ritaglio la pianta', 'Cropping the plan'],
-  [8, 'Ridisegno la pianta pulita', 'Redrawing a clean plan'],
-  [85, 'Riconosco muri, porte e finestre', 'Finding walls, doors and windows'],
-  [95, 'Controllo stanze e aperture', 'Checking rooms and openings'],
+  [3, 'Ridisegno la pianta pulita', 'Redrawing a clean plan'],
+  [25, 'Riconosco muri, porte e finestre', 'Finding walls, doors and windows'],
+  [33, 'Controllo stanze e aperture', 'Checking rooms and openings'],
 ];
-const EXPECTED = 110;
+const EXPECTED = 50; // misurato il 05/10 su una catastale nuova: ritaglio 1,7 s, ridisegno 19 s, riconoscimento ~5 s, controllo 6 s
 
 export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKey, onClose, onDone }: {
   plans: PlanSource[]; projectId?: string; areaM2?: number; existing?: Casa3d | null; reuseKey?: string; onClose: () => void; onDone?: (c: Casa3d) => void;
@@ -46,7 +46,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
   const [step, setStep] = useState<'work' | 'edit' | 'build' | 'done' | 'error'>(existing ? 'edit' : 'work');
   const [floors, setFloors] = useState<Floor[]>([]);
   const [cur, setCur] = useState(0);
-  const [err, setErr] = useState<'no_credits' | 'failed' | 'no_rooms' | null>(null);
+  const [err, setErr] = useState<'no_credits' | 'failed' | 'no_rooms' | 'limit' | null>(null);
   const [work, setWork] = useState({ i: 0, t0: 0 });
   const [now, setNow] = useState(0);
   const [casa, setCasa] = useState<Casa3d | null>(existing ?? null);
@@ -63,7 +63,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
         body: JSON.stringify({ action: 'recognize', key, floor: i, image: plans[i].src, projectId, ...(plans.length === 1 && areaM2 ? { areaM2 } : {}), ...(localStorage.getItem('casa3d-nocheck') ? { check: false } : {}) }), // casa3d-nocheck: prove senza il controllo di Claude
       }).catch(() => null)
       const d = await r?.json().catch(() => null) as { raw?: RawPlan; image?: string; error?: string } | null
-      if (!r?.ok || !d?.raw) { setErr(d?.error === 'no_credits' ? 'no_credits' : d?.error === 'no_rooms' ? 'no_rooms' : 'failed'); setFloors(out); setStep('error'); return }
+      if (!r?.ok || !d?.raw) { setErr(d?.error === 'no_credits' ? 'no_credits' : d?.error === 'no_rooms' ? 'no_rooms' : d?.error === 'limit' ? 'limit' : 'failed'); setFloors(out); setStep('error'); return }
       window.dispatchEvent(new Event('agenteimmo:credits'))
       out.push({ name: plans[i].name || floorName(i), raw: d.raw, image: d.image ?? plans[i].src, history: [] })
       setFloors([...out])
@@ -123,7 +123,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
             <p className="mt-1 text-sm text-muted">
               {step === 'edit' ? tr('Tocca una stanza per cambiarne il tipo, un muro per mettere una porta o una finestra, una porta o finestra per toglierla.', 'Tap a room to change its type, a wall to add a door or window, a door or window to remove it.')
                 : step === 'done' ? tr('Girala dall’alto, entra nelle stanze, accendi la notte.', 'Orbit it, walk into the rooms, switch to night.')
-                : step === 'work' ? (plans.length > 1 ? `${tr('Piano', 'Floor')} ${work.i + 1} ${tr('di', 'of')} ${plans.length}, ${tr('circa 2 minuti a piano', 'about 2 minutes per floor')}` : tr('Circa 2 minuti, puoi restare qui', 'About 2 minutes, you can stay here'))
+                : step === 'work' ? (plans.length > 1 ? `${tr('Piano', 'Floor')} ${work.i + 1} ${tr('di', 'of')} ${plans.length}, ${tr('circa un minuto a piano', 'about a minute per floor')}` : tr('Circa un minuto, puoi restare qui', 'About a minute, you can stay here'))
                 : ''}
             </p>
           </div>
@@ -148,11 +148,11 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
 
         {step === 'error' && (
           <div className="mt-6 rounded-[24px] bg-canvas p-6 text-center">
-            <p className="text-[15px]">{err === 'no_credits' ? tr(`Servono ${CREDIT_COST.casa3d} crediti per la casa 3D.`, `The 3D home needs ${CREDIT_COST.casa3d} credits.`) : err === 'no_rooms' ? tr('Non trovo stanze chiuse in questa immagine: serve una planimetria con i muri ben visibili.', 'I cannot find closed rooms in this image: a floor plan with clear walls is needed.') : tr('Non sono riuscito a leggere la planimetria, riprova.', 'I could not read the floor plan, please try again.')}</p>
+            <p className="text-[15px]">{err === 'no_credits' ? tr(`Servono ${CREDIT_COST.casa3d} crediti per la casa 3D.`, `The 3D home needs ${CREDIT_COST.casa3d} credits.`) : err === 'limit' ? tr('Questa casa è già stata rifatta più volte: correggi la pianta a mano oppure crea una casa nuova.', 'This home has been redone several times already: fix the plan by hand or create a new home.') : err === 'no_rooms' ? tr('Non trovo stanze chiuse in questa immagine: serve una planimetria con i muri ben visibili.', 'I cannot find closed rooms in this image: a floor plan with clear walls is needed.') : tr('Non sono riuscito a leggere la planimetria, riprova.', 'I could not read the floor plan, please try again.')}</p>
             <div className="mt-4 flex justify-center gap-2">
               {err === 'no_credits'
                 ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:no-credits'))} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-brand">{tr('Vedi i piani', 'See plans')}</button>
-                : err !== 'no_rooms' && <button type="button" onClick={() => (existing && !floors.length ? onClose() : void run(floors.length))} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-brand">{tr('Riprova', 'Try again')}</button>}
+                : err !== 'no_rooms' && err !== 'limit' && <button type="button" onClick={() => (existing && !floors.length ? onClose() : void run(floors.length))} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-brand">{tr('Riprova', 'Try again')}</button>}
             </div>
           </div>
         )}
@@ -313,7 +313,7 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
             <input inputMode="decimal" placeholder={String(total).replace('.', ',')} value={area} onChange={e => setArea(e.target.value.replace(/[^\d.,]/g, ''))} className="h-11 min-w-0 flex-1 rounded-2xl bg-white px-4 text-[15px] outline-none ring-1 ring-inset ring-black/10 focus:ring-2 focus:ring-brand/40" />
             <button type="button" disabled={!(Number(area.replace(',', '.')) > 5)} onClick={() => { const v = Number(area.replace(',', '.')); onEdit(r => rescaleTo(r, v)); setArea('') }} className="h-11 rounded-full bg-ink px-4 text-sm font-semibold text-white hover:bg-brand disabled:opacity-40">{tr('Cambia', 'Apply')}</button>
           </div>
-          {raw.source.scale_note && <p className="mt-2 text-xs text-muted">{tr('Misure prese dai mq dell’annuncio.', 'Sizes taken from the listing m².')}</p>}
+          {raw.source.scale_from === 'mq' && <p className="mt-2 text-xs text-muted">{tr('Misure prese dai mq dell’annuncio.', 'Sizes taken from the listing m².')}</p>}
         </div>
         <div className="flex flex-wrap gap-3 px-1 text-xs text-muted">
           {(['door', 'entrance', 'window', 'varco'] as OpType[]).map(t => <span key={t} className="flex items-center gap-1.5"><Minus size={14} strokeWidth={5} style={{ color: OP_COLOR[t] }} /> {OP_LABEL(t)}</span>)}

@@ -415,7 +415,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   // dettagli del form di creazione: bozza a parte (chiave :det), salvati in import_data.details
   // lo stato (venduto, trattativa...) si cambia dalla barra in alto: fuori dalla bozza, al salvataggio si prende quello attuale
-  const savedDet = () => Object.fromEntries(Object.entries(((project.import_data ?? {}) as { details?: Details }).details ?? {}).filter(([k]) => !STATUS_KEYS.includes(k))) as Details;
+  const savedDet = () => Object.fromEntries(Object.entries(((project.import_data ?? {}) as { details?: Details }).details ?? {}).filter(([k]) => !STATUS_KEYS.includes(k) && k !== 'casa3d')) as Details; // la casa 3D la scrive il server (api/platform/casa3d), non il form
   const [det, setDetState] = useState<Details>(savedDet);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -429,7 +429,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
     const up = Object.fromEntries([...FIELDS.map(f => [f.k, f.num ? n(o[f.k]) : o[f.k].trim()]), ['descrizione', o.descrizione.trim()]]) as Record<string, string | number>;
     // i campi base copiati anche nei dettagli (report, portali e sito leggono anche da li')
     const cur = ((project.import_data ?? {}) as { details?: Details }).details ?? {};
-    const details: Details = { ...dd, ...Object.fromEntries(STATUS_KEYS.filter(k => cur[k] !== undefined).map(k => [k, cur[k]])), prezzo: up.prezzo || undefined, superficie: up.mq || undefined, locali: up.locali || undefined, camere: up.camere || undefined, bagni: up.bagni || undefined, indirizzo: String(up.addr) || undefined, tipologia: String(up.tipologia) || undefined, riferimento: String(up.riferimento) || undefined };
+    const details: Details = { ...dd, ...Object.fromEntries([...STATUS_KEYS, 'casa3d'].filter(k => cur[k] !== undefined).map(k => [k, cur[k]])), prezzo: up.prezzo || undefined, superficie: up.mq || undefined, locali: up.locali || undefined, camere: up.camere || undefined, bagni: up.bagni || undefined, indirizzo: String(up.addr) || undefined, tipologia: String(up.tipologia) || undefined, riferimento: String(up.riferimento) || undefined };
     return { ...up, import_data: { ...(project.import_data ?? {}), details } };
   };
   // la bozza al genitore fuori dall'updater (dentro avvisava React: aggiornamento di un altro componente durante il render)

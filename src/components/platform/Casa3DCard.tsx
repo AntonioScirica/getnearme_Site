@@ -87,7 +87,7 @@ function PlanPicker({ photos, plans, onClose, onPick }: { photos: string[]; plan
           </div>
           <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
         </div>
-        <div className="mt-4 grid min-h-0 grid-cols-2 gap-3 overflow-y-auto p-1 sm:grid-cols-3">
+        <div className="mt-4 grid min-h-0 auto-rows-max grid-cols-2 content-start gap-3 overflow-y-auto p-1 sm:grid-cols-3">
           <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-1 rounded-[20px] border border-dashed border-black/15 bg-canvas text-center hover:border-black/30">
             <input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addFiles(e.target.files); e.target.value = '' }} />
             <ImagePlus size={20} className="text-muted" /><span className="text-sm font-semibold">{tr('Carica una planimetria', 'Upload a floor plan')}</span>
@@ -95,8 +95,8 @@ function PlanPicker({ photos, plans, onClose, onPick }: { photos: string[]; plan
           {list.map(p => {
             const k = sel.indexOf(p)
             return (
-              <button key={p.slice(0, 200)} type="button" onClick={() => toggle(p)} className={`relative overflow-hidden rounded-[20px] bg-canvas ring-2 transition-shadow duration-[600ms] ${k >= 0 ? 'ring-brand' : 'ring-transparent hover:ring-black/10'}`}>
-                <img src={p} alt="" className="aspect-[4/3] w-full object-contain" />
+              <button key={p.slice(0, 200)} type="button" onClick={() => toggle(p)} className={`relative aspect-[4/3] overflow-hidden rounded-[20px] bg-canvas ring-2 transition-shadow duration-[600ms] ${k >= 0 ? 'ring-brand' : 'ring-transparent hover:ring-black/10'}`}>
+                <img src={p} alt="" loading="lazy" className="h-full w-full object-contain" />
                 {plans.includes(p) && <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold shadow-sm">{tr('Planimetria', 'Floor plan')}</span>}
                 {k >= 0 && <span className="absolute right-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-brand px-2 text-xs font-bold text-white">{sel.length > 1 ? k + 1 : <Check size={14} />}</span>}
               </button>
