@@ -128,12 +128,12 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
     ...ALL.filter(f => !SKIP.has(f.key) && f.type !== 'multi' && d[f.key] !== undefined && d[f.key] !== '' && d[f.key] !== false).map(f => [f.key, f.label, fmt(f, d[f.key])] as Row),
   ];
   return (
-    <div>
+    <div className="@container">{/* due colonne solo se c'e' spazio vero (accanto al box contatti la colonna e' stretta) */}
       <H className="text-3xl">{tx('property.details')}</H>
-      <dl className="mt-5 grid overflow-hidden rounded-[var(--r)] ring-1 ring-[var(--line)] sm:grid-cols-2">
+      <dl className="mt-5 grid overflow-hidden rounded-[var(--r)] ring-1 ring-[var(--line)] @2xl:grid-cols-2">
         {rows.map(([key, k, v]) => { const I = iconFor(key); return (
-          <div key={k} className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-4 py-3 text-sm sm:odd:border-r">
-            <dt className="flex min-w-0 items-center gap-2.5 text-[var(--muted)]"><I size={16} className="shrink-0 text-[var(--c)]" />{k}</dt><dd className="text-right font-medium">{v}</dd>
+          <div key={k} className="flex items-start justify-between gap-4 border-b border-[var(--line)] px-4 py-3 text-sm @2xl:odd:border-r">
+            <dt className="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-[var(--muted)]"><I size={16} className="shrink-0 text-[var(--c)]" />{k}</dt><dd className="min-w-0 text-right font-medium leading-snug [overflow-wrap:anywhere]">{v}</dd>{/* valori lunghi (es. riscaldamento) vanno a capo a destra, l'etichetta resta su una riga */}
           </div>
         ); })}
       </dl>

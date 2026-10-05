@@ -127,50 +127,54 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       <div className="mb-5 flex items-center justify-between">
         <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Immobili', 'Listings')}</a>
       </div>
-      {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
-      <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm max-sm:p-3 max-sm:pl-4 ${CARD_SHADOW}`}>
-        <Info size={16} className="shrink-0 text-brand" />
-        {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
-        {/* senza un piano col sito (Plus o Pro) non si pubblica: niente interruttore, l'invito a passare al piano */}
-        {/* stato e modello in una riga corta: il nome del modello porta a Il mio sito per cambiarlo */}
-        <span className="min-w-0 flex-1 basis-[calc(100%-28px)] text-muted sm:basis-auto sm:truncate">{!planKnown ? '' : !sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Sul tuo sito', 'On your website') : tr('Non è sul tuo sito', 'Not on your website')}{sitePlan && site?.template && <> · {tr('modello', 'template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-semibold text-brand hover:underline">{TEMPLATES.find(t => t.id === site.template)?.name}</a></>}</span>
-        {sitePlan && views && (project.is_public || views.total > 0) && <span className="blur-in flex items-center gap-1.5 whitespace-nowrap text-muted max-sm:basis-full"><Eye size={15} className="shrink-0" /><span><b className="font-semibold text-ink">{views.d30}</b> {views.d30 === 1 ? tr('visita negli ultimi 30 giorni', 'view in the last 30 days') : tr('visite negli ultimi 30 giorni', 'views in the last 30 days')} · {views.total} {tr('in totale', 'in total')}</span></span>}
-        {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
-          ? <>
-            {/* telefono: tre righe (stato, interruttore, pulsanti) separate da un divisore */}<span className="flex flex-wrap items-center gap-x-4 gap-y-2 pr-2 max-sm:basis-full max-sm:border-t max-sm:border-line max-sm:pt-3"><StatusPicker project={project} onSaved={statusSaved} /><PublicSwitch on={!!project.is_public} labels={[tr('Pubblico', 'Public'), tr('Non pubblico', 'Not public')]} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
-            {/* casa non online (sito spento o casa non pubblica): al cliente la scheda in PDF */}
-            {site && !(site.published && project.is_public) && <button type="button" onClick={() => void sendSheet()} disabled={sending} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>}
-          </>
-          : <>
-            <StatusPicker project={project} onSaved={statusSaved} />
-            {/* senza sito: al cliente la scheda in PDF (si salva dalla stampa e si allega su WhatsApp) */}
-            <button type="button" onClick={() => void sendSheet()} disabled={sending} title={tr('Manda al cliente la scheda della casa su WhatsApp', 'Send the client the property sheet on WhatsApp')} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 max-sm:h-11 max-sm:flex-1 font-semibold text-white hover:brightness-95 disabled:opacity-60">{sending ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />} {tr('Manda al cliente', 'Send to client')}</button>
-            <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">{tr('Passa a Plus o Pro per pubblicare', 'Upgrade to Plus or Pro to publish')}</a>
-          </>}
-        {/* Vedi sul sito: si apre in larghezza e dissolvenza quando l'immobile diventa pubblico (prima compariva di scatto) */}
-        {/* sito spento: niente link (il cliente vedrebbe "sito non disponibile") */}
-        {sitePlan && site?.slug && site.published && (
-          <span inert={!project.is_public} className={`grid ease-smooth transition-[grid-template-columns,opacity] duration-[600ms] max-sm:basis-full max-sm:border-line ${project.is_public ? 'max-sm:border-t max-sm:pt-3' : 'max-sm:hidden'} ${project.is_public ? 'grid-cols-[1fr] opacity-100' : '-ml-3 grid-cols-[0fr] opacity-0'}`}>
-            <span className="min-w-0 overflow-hidden">
-              {/* telefono: Manda al cliente e Vedi sul sito su una riga, meta' e meta' */}
-              <span className="flex items-center gap-2 max-sm:grid max-sm:grid-cols-2">
-                <span className="mr-1 hidden h-5 w-px bg-line sm:block" aria-hidden />{/* divisore dopo Pubblico, entra con i pulsanti */}
-                {/* al cliente il link pubblico della casa, su WhatsApp (non quello della piattaforma, che chiede l'accesso) */}
-                <a href={`https://wa.me/?text=${encodeURIComponent(`${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${(project.titolo || project.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}`)}`} target="_blank" rel="noopener" className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#25d366] px-4 font-semibold text-white hover:brightness-95 max-sm:h-11 max-sm:px-2"><MessageCircle size={14} /> {tr('Manda al cliente', 'Send to client')}</a>
-                <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60 max-sm:h-11 max-sm:px-2">{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
-                <button type="button" onClick={() => setEmbedOpen(true)} className="flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-canvas px-4 font-medium hover:bg-line/60 max-sm:hidden"><Code2 size={14} /> {tr('Incorpora', 'Embed')}</button>
-              </span>
-            </span>
-          </span>
-        )}
-      </div>
+      {/* barra dell'immobile: a sinistra se e' online (interruttore, modello, visite), a destra stato e azioni */}
+      {(() => {
+        const online = !!(sitePlan && site?.slug && site.published && project.is_public);
+        const tpl = sitePlan && site?.template ? TEMPLATES.find(t => t.id === site.template)?.name : null;
+        const waText = site?.slug ? `${tr('Buongiorno, ecco la casa di cui parlavamo', 'Hello, here is the home we talked about')}: ${(project.titolo || project.nome || '').replace(/\s+/g, ' ').replace(/[\s.]+$/, '')}${project.prezzo ? `, ${formatPrice(project.prezzo)}` : ''}\n${portfolioUrl(site.slug)}/${project.id}` : '';
+        const btn = 'flex h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-sm max-sm:h-11 max-sm:flex-1';
+        return (
+          <div className={`mb-6 flex flex-col gap-4 rounded-[28px] bg-white p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between ${CARD_SHADOW}`}>
+            <div className="flex min-w-0 items-center gap-4">
+              {!planKnown ? <span className="h-10 w-64 rounded-full bg-canvas" aria-hidden /> : <>
+                {sitePlan
+                  ? <PublicSwitch on={!!project.is_public} labels={['', '']} onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} />
+                  : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-muted"><Info size={18} /></span>}
+                <div className="min-w-0 text-sm">
+                  <p className="font-semibold text-ink">{!sitePlan ? tr('Non è online', 'Not online') : project.is_public ? tr('Online sul tuo sito', 'Live on your website') : tr('Non visibile sul tuo sito', 'Hidden from your website')}</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-muted">
+                    {!sitePlan
+                      ? <a href="#/piano?cambia=1" className="font-medium text-brand hover:underline">{tr('Passa a Plus o Pro per pubblicarlo', 'Upgrade to Plus or Pro to publish it')}</a>
+                      : <>
+                        {tpl && <span>{tr('Modello', 'Template')} <a href="#/portfolio" title={tr('Cambia modello', 'Change template')} className="font-medium text-brand hover:underline">{tpl}</a></span>}
+                        {views && (project.is_public || views.total > 0) && <span className="blur-in inline-flex items-center gap-1 whitespace-nowrap">{tpl && <span aria-hidden>·</span>}<Eye size={14} className="shrink-0" /><b className="font-semibold text-ink">{views.d30}</b> {views.d30 === 1 ? tr('visita in 30 giorni', 'view in 30 days') : tr('visite in 30 giorni', 'views in 30 days')}, {views.total} {tr('in totale', 'in total')}</span>}
+                      </>}
+                  </p>
+                </div>
+              </>}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 max-sm:border-t max-sm:border-line max-sm:pt-4">
+              <StatusPicker project={project} onSaved={statusSaved} />
+              <span className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden />
+              {/* online: al cliente il link pubblico della casa; altrimenti la scheda in PDF */}
+              {online && site?.slug
+                ? <a href={`https://wa.me/?text=${encodeURIComponent(waText)}`} target="_blank" rel="noopener" className={`${btn} bg-[#25d366] font-semibold text-white hover:brightness-95`}><MessageCircle size={15} /> {tr('Manda al cliente', 'Send to client')}</a>
+                : <button type="button" onClick={() => void sendSheet()} disabled={sending || !planKnown} title={tr('Manda al cliente la scheda della casa su WhatsApp', 'Send the client the property sheet on WhatsApp')} className={`${btn} bg-[#25d366] font-semibold text-white hover:brightness-95 disabled:opacity-60`}>{sending ? <Loader2 size={15} className="animate-spin" /> : <MessageCircle size={15} />} {tr('Manda al cliente', 'Send to client')}</button>}
+              {online && site?.slug && <>
+                <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className={`blur-in ${btn} bg-canvas font-medium hover:bg-line/60`}>{tr('Vedi sul sito', 'View on website')} <ExternalLink size={14} /></a>
+                <button type="button" onClick={() => setEmbedOpen(true)} title={tr('Incorpora in un altro sito', 'Embed in another website')} className={`blur-in ${btn} bg-canvas font-medium hover:bg-line/60 max-sm:hidden`}><Code2 size={15} /> {tr('Incorpora', 'Embed')}</button>
+              </>}
+            </div>
+          </div>
+        );
+      })()}
       {embedOpen && site?.slug && <EmbedCode url={`${portfolioUrl(site.slug)}/${project.id}`} id={project.id} title={project.titolo || project.nome || ''} onClose={() => setEmbedOpen(false)} />}
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-6 lg:sticky lg:top-6 lg:h-[calc(100svh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
         {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onAdded={onChange} onSaved={() => { setDraft(null); onChange(); }}
           report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? tr('Report non disponibile, riprova', 'Report not available, please try again') : tr('PDF con foto, dati, zona e costi da mandare ai clienti', 'PDF with photos, details, area and costs to send to clients')} className="mr-auto flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
-        {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [{ ...toSite({ ...project, ...draft }), videos }], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
+        {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] border border-black/10 overscroll-contain [&>div]:shadow-none [&>div]:ring-0' : 'min-w-0'}>{/* in modifica il bordo grigio sta sul riquadro che scorre (l'anello del sito verrebbe tagliato) */}<SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [{ ...toSite({ ...project, ...draft }), videos }], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
     </>
   );
@@ -494,7 +498,7 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
               </span>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica', 'Edit')}</button>
+              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> {tr('Modifica AI', 'AI edit')}</button>
               {/* Aggiungi: dal computer o dalla Galleria, in un solo pulsante */}
               <span className="relative">
                 <button type="button" onClick={() => setAddMenu(o => !o)} disabled={adding} className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">{adding ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {tr('Aggiungi', 'Add')}</button>

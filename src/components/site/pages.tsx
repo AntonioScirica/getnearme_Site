@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Expand, ImagePlus, Loader2, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Expand, ImagePlus, Loader2, Mail, MapPin, MessageCircle, Phone, Handshake, Play, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
 import { ABOUT_DEFAULT, isClosed, pageHidden, statusOf, STATUS_LABELS, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
@@ -422,17 +422,54 @@ function PropertyVideos({ p }: { p: SiteProperty }) {
         <Eyebrow className="!text-white/60">Video</Eyebrow>
         <H className="mt-3 text-4xl !text-white md:text-5xl">La casa, in movimento</H>
         <video src={v[0]} controls playsInline preload="metadata" className="mx-auto mt-10 max-h-[78vh] w-auto max-w-full rounded-[var(--r)] bg-black" />
-        {v.length > 1 && <div className="mt-6 grid gap-4 sm:grid-cols-3">{v.slice(1).map(u => <video key={u} src={u} controls playsInline preload="metadata" className="max-h-80 w-full rounded-[var(--r)] bg-black object-contain" />)}</div>}
+        {v.length > 1 && <VideoTiles urls={v.slice(1)} dark />}
       </Container>
     </section></Sec>
   );
   return (
     <Sec id="property.video"><div className="mt-12">
       <H className="text-3xl">Video</H>
-      <div className="mt-5 grid items-start gap-4 sm:grid-cols-2">
-        {v.map(u => <video key={u} src={u} controls playsInline preload="metadata" className="mx-auto max-h-[560px] w-auto max-w-full rounded-[var(--r)] bg-black" />)}
-      </div>
+      <VideoTiles urls={v} />
     </div></Sec>
+  );
+}
+
+// Video come copertine pulite (primo fotogramma, niente barra del browser) con il pulsante play al centro:
+// al clic il video si apre grande sopra la pagina, con l'audio. Verticali e orizzontali con la stessa altezza.
+function VideoTiles({ urls, dark = false }: { urls: string[]; dark?: boolean }) {
+  const [open, setOpen] = useState<string | null>(null);
+  return (
+    <>
+      <div className="-mx-2 mt-5 flex snap-x gap-4 overflow-x-auto px-2 pb-2 [scrollbar-width:thin]">
+        {urls.map(u => (
+          <button key={u} type="button" onClick={() => setOpen(u)} aria-label="Guarda il video"
+            className={`group relative h-[420px] shrink-0 snap-start overflow-hidden rounded-[calc(var(--r)*1.2)] bg-black shadow-lg sm:h-[480px] ${dark ? 'ring-1 ring-white/10' : ''}`}>
+            <video src={u} muted playsInline preload="metadata" className="h-full w-auto max-w-none object-cover transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.03]" />
+            <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" aria-hidden />
+            <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[var(--ink)] shadow-xl backdrop-blur transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-110">
+              <Play size={24} className="ml-1 fill-current" />
+            </span>
+          </button>
+        ))}
+      </div>
+      {open && <VideoModal src={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
+function VideoModal({ src, onClose }: { src: string; onClose: () => void }) {
+  useLockScroll(true);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [onClose]);
+  return createPortal(
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm" onClick={onClose}>
+      <button type="button" onClick={onClose} aria-label="Chiudi" className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"><X size={20} /></button>
+      <video src={src.replace(/#t=[\d.]+$/, '')} controls autoPlay playsInline className="max-h-[88vh] max-w-full rounded-[var(--r)] bg-black shadow-2xl" onClick={e => e.stopPropagation()} />
+    </div>,
+    document.body,
   );
 }
 
