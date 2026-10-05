@@ -49,7 +49,8 @@ function readList<T>(k: string): T[] {
 // input salvati da versioni precedenti: si completano coi valori del preset base
 const complete = (i: Partial<BPInputs>): BPInputs => ({ ...clonePreset('base'), ...i });
 
-export default function BusinessPlanView({ userKey }: { userKey: string }) {
+// noActuals: pagina con password del sito (/it/business-plan), niente dati reali dal database
+export default function BusinessPlanView({ userKey, noActuals = false }: { userKey: string; noActuals?: boolean }) {
   const [state, setState] = useState(() => {
     const s = readJSON<{ scenario: Scen; inputs: BPInputs; compare: boolean }>(storeKey(userKey), { scenario: 'base', inputs: clonePreset('base'), compare: false });
     return { ...s, inputs: complete(s.inputs) };
@@ -72,13 +73,14 @@ export default function BusinessPlanView({ userKey }: { userKey: string }) {
   const [actuals, setActuals] = useState<Actuals | null>(null);
   const [actErr, setActErr] = useState<string | null>(null);
   useEffect(() => {
+    if (noActuals) return;
     let alive = true;
     authFetch('/api/platform/bp-actuals', { cache: 'no-store' })
       .then(async r => { if (!r.ok) throw new Error(r.status === 403 ? tr('Solo per admin.', 'Admins only.') : `${tr('Errore', 'Error')} ${r.status}`); return r.json(); })
       .then(d => { if (alive) setActuals(d); })
       .catch(e => { if (alive) setActErr((e as Error).message); });
     return () => { alive = false; };
-  }, []);
+  }, [noActuals]);
   const useActuals = () => {
     if (!actuals) return;
     setState(s => ({ ...s, scenario: 'custom', inputs: { ...s.inputs, startCustomers: actuals.customers, aiPerCustomerOverride: actuals.ai30.perCustomerEur != null && actuals.customers > 0 ? Math.round(actuals.ai30.perCustomerEur * 100) / 100 : s.inputs.aiPerCustomerOverride } }));
@@ -128,7 +130,7 @@ export default function BusinessPlanView({ userKey }: { userKey: string }) {
       <div className="bp-grid mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         {/* ipotesi: a sinistra e ferme su desktop, a fisarmonica sopra i risultati su mobile */}
         <aside className="bp-noprint space-y-3 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:pb-4 lg:pr-1 lg:[scrollbar-width:thin]">
-          <ActualsBox actuals={actuals} error={actErr} onUse={useActuals} inputs={inputs} />
+          {!noActuals && <ActualsBox actuals={actuals} error={actErr} onUse={useActuals} inputs={inputs} />}
           <Inputs inputs={inputs} set={set} />
         </aside>
 
