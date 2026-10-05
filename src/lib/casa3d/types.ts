@@ -45,9 +45,10 @@ export type Fix = {
   // mobili disegnati sull'originale: centro 0-1, lato lungo e profondita' in frazioni della larghezza dell'immagine,
   // back = direzione (gradi, 0 = destra, 90 = giu') dal centro verso la schiena (testiera, schienale, lato contro il muro)
   furniture?: { kind: string; x: number; y: number; len: number; depth: number; back: number; confidence?: number }[]
+  furniture_drawn?: boolean // la planimetria ha mobili disegnati? se no i mobili letti si ignorano
 }
 // mobile disegnato, in metri sulla pianta (rot come nel visore: la schiena del modello e' -z)
-export type DrawnItem = { kind: string; at: Pt; rot: number; len: number; depth: number }
+export type DrawnItem = { kind: string; at: Pt; rot: number; len: number; depth: number; conf?: number; added?: boolean } // added: messo dall'agente
 
 // Pianta per il visore (schema letto da public/casa3d/viewer/house.js)
 export type ViewerPlan = {

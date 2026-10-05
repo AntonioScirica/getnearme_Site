@@ -320,14 +320,14 @@ export function applyFurniture(raw: RawPlan, items: NonNullable<Fix['furniture']
   p.furniture = []
   for (const it of items ?? []) {
     // solo i mobili disegnati con sicurezza (confidenza dal controllo; senza, li verifica l'inchiostro in pipeline)
-    if (!DRAWN_KINDS.has(it.kind) || !(it.x >= 0 && it.x <= 1 && it.y >= 0 && it.y <= 1) || (typeof it.confidence === 'number' && it.confidence < 0.6)) continue
+    if (!DRAWN_KINDS.has(it.kind) || !(it.x >= 0 && it.x <= 1 && it.y >= 0 && it.y <= 1) || (typeof it.confidence === 'number' && it.confidence < 0.5)) continue // la soglia vera (0,6 / 0,75 per letti e divani) e' in verifyFurniture
     const at = toM(it.x * p.source.imgW, it.y * p.source.imgH)
     if (!p.rooms.some(r => inPoly(at[0], at[1], r.poly))) continue
     const vx = Math.cos(it.back * Math.PI / 180), vy = Math.sin(it.back * Math.PI / 180)
     const bx = (d * vx - c * vy) / det, bz = (-b * vx + a * vy) / det
     // i muri della pianta sono dritti: il verso letto (spesso approssimato sull'originale ruotato) si aggancia al quarto di giro
     const rot = Math.round(Math.atan2(-bx, -bz) / (Math.PI / 2)) * (Math.PI / 2)
-    p.furniture.push({ kind: it.kind, at: [r3(at[0]), r3(at[1])], rot: Math.round(rot * 1000) / 1000, len: r3(it.len * p.source.imgW / ppm), depth: r3(it.depth * p.source.imgW / ppm) })
+    p.furniture.push({ kind: it.kind, at: [r3(at[0]), r3(at[1])], rot: Math.round(rot * 1000) / 1000, len: r3(it.len * p.source.imgW / ppm), depth: r3(it.depth * p.source.imgW / ppm), ...(typeof it.confidence === 'number' ? { conf: it.confidence } : {}) })
   }
   return p
 }
@@ -464,4 +464,20 @@ function closeGrid(m: Uint8Array, w: number, h: number) {
   const e = new Uint8Array(m.length)
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = 1; for (let dy = -1; dy <= 1 && v; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h || !d[yy * w + xx]) { v = 0; break } } e[y * w + x] = v }
   return e
+}
+
+// --- mobili nella correzione: togli, ruota, aggiungi (pill semplici) ---
+export const removeFurniture = (raw: RawPlan, i: number): RawPlan => { const p = clone(raw); p.furniture = (p.furniture ?? []).filter((_, k) => k !== i); return p }
+export const rotateFurniture = (raw: RawPlan, i: number): RawPlan => { const p = clone(raw); const f = p.furniture?.[i]; if (f) f.rot = r3(((f.rot + Math.PI / 2) % (2 * Math.PI))); return p }
+const ADD: Record<string, { kind: string; len: number; depth: number }[]> = {
+  letto: [{ kind: 'bed_double', len: 2.0, depth: 1.6 }], divano: [{ kind: 'sofa', len: 2.1, depth: 0.95 }], tavolo: [{ kind: 'dining_table', len: 1.4, depth: 0.85 }],
+  armadio: [{ kind: 'wardrobe', len: 1.8, depth: 0.6 }], cucina: [{ kind: 'kitchen', len: 2.4, depth: 0.64 }], bagno: [{ kind: 'wc', len: 0.4, depth: 0.6 }, { kind: 'sink', len: 0.6, depth: 0.5 }],
+}
+export function addFurniture(raw: RawPlan, roomId: number, what: keyof typeof ADD | string): RawPlan {
+  const p = clone(raw), r = p.rooms.find(x => x.id === roomId), list = ADD[what]
+  if (!r || !list) return p
+  // al centro della stanza (o accanto, per i pezzi del bagno), dritti; l'agente li ruota col tocco
+  const c = r.center
+  list.forEach((it, k) => (p.furniture ??= []).push({ kind: it.kind, at: [r3(c[0] + (k - (list.length - 1) / 2) * 0.8), r3(c[1])], rot: 0, len: it.len, depth: it.depth, conf: 1, added: true }))
+  return p
 }

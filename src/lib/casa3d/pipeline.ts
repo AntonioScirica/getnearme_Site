@@ -82,7 +82,7 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
     ms.allineamento = Date.now() - ta
   } catch (e) { console.error('casa3d allineamento', e) }
   if (fix?.labels?.length) raw = applyLabels(raw, fix.labels)
-  if (fix?.furniture?.length) {
+  if (fix?.furniture?.length && fix.furniture_drawn !== false) { // pianta senza mobili disegnati: niente mobili letti, arredo automatico
     raw = applyFurniture(raw, fix.furniture) // mobili disegnati: nel 3D al loro posto
     try { raw = (await verifyFurniture(raw, crop)).raw } catch (e) { console.error('casa3d mobili', e) } // solo quelli con inchiostro sull'originale
   }

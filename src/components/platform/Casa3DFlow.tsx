@@ -8,16 +8,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Check, Combine, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Scissors, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
-import { addOpening, inPoly, mergeRooms, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
+import { addFurniture, addOpening, inPoly, mergeRooms, removeFurniture, rotateFurniture, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
 import { FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, WALL_COLORS, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
 import { authFetch } from './api';
 import { pageLang, tr } from './i18n';
 
 export type PlanSource = { src: string; name?: string };
 type Floor = { name: string; raw: RawPlan; image: string; history: RawPlan[] };
-type Sel = { kind: 'room'; id: number } | { kind: 'wall'; idx: number; at: Pt } | { kind: 'op'; idx: number } | null;
+type Sel = { kind: 'room'; id: number } | { kind: 'wall'; idx: number; at: Pt } | { kind: 'op'; idx: number } | { kind: 'furn'; idx: number } | null;
 
 const BRAND = '#537eec';
+const FURN_LABEL: Record<string, string> = { bed_double: tr('Letto matrimoniale', 'Double bed'), bed_single: tr('Letto singolo', 'Single bed'), sofa: tr('Divano', 'Sofa'), armchair: tr('Poltrona', 'Armchair'), dining_table: tr('Tavolo', 'Table'), desk: tr('Scrivania', 'Desk'), wardrobe: tr('Armadio', 'Wardrobe'), kitchen: tr('Cucina', 'Kitchen'), wc: 'WC', sink: tr('Lavabo', 'Sink'), shower: tr('Doccia', 'Shower'), bathtub: tr('Vasca', 'Bathtub'), tv_unit: tr('Mobile TV', 'TV unit') };
 const ROOM_FILL: Record<string, string> = {
   soggiorno: '#dfe8fd', cucina: '#fde9d6', camera: '#e7e1fb', cameretta: '#efe6fb', bagno: '#d9f1f2', ingresso: '#eef0f3', corridoio: '#eef0f3',
   studio: '#e3f1df', ripostiglio: '#f1ece4', balcone: '#e6f3e1', terrazzo: '#e6f3e1', scala: '#ececec', lavanderia: '#d9f1f2', esterno: '#ffffff', stanza: '#f4f4f2',
@@ -257,8 +258,8 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
               </g>
             ))}
             {(raw.furniture ?? []).map((f, i) => (
-              <rect key={`f${i}`} x={f.at[0] - f.len / 2} y={f.at[1] - f.depth / 2} width={f.len} height={f.depth} rx={0.05} fill="rgba(0,0,0,.06)" stroke="#8a8a85" strokeWidth={0.03}
-                transform={`rotate(${-f.rot * 180 / Math.PI} ${f.at[0]} ${f.at[1]})`} pointerEvents="none" />
+              <rect key={`f${i}`} x={f.at[0] - f.len / 2} y={f.at[1] - f.depth / 2} width={f.len} height={f.depth} rx={0.05} fill={sel?.kind === 'furn' && sel.idx === i ? 'rgba(83,126,236,.25)' : 'rgba(0,0,0,.08)'} stroke={sel?.kind === 'furn' && sel.idx === i ? BRAND : '#8a8a85'} strokeWidth={0.03}
+                transform={`rotate(${-f.rot * 180 / Math.PI} ${f.at[0]} ${f.at[1]})`} className="cursor-pointer" onClick={e => { e.stopPropagation(); setSel({ kind: 'furn', idx: i }) }} />
             ))}
             {raw.rooms.filter(r => r.type !== 'esterno').map(r => (
               <text key={r.id} x={r.center[0]} y={r.center[1]} textAnchor="middle" fontSize={fs} fontWeight={700} fill="#1d1d1b" pointerEvents="none" style={{ fontFamily: 'inherit' }}>
@@ -324,6 +325,12 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
                 <button type="button" onClick={() => setTool({ kind: 'split', id: selRoom.id, pts: [] })} className={`${pill(false)} flex items-center gap-1.5`}><Scissors size={14} /> {tr('Dividi', 'Split')}</button>
                 <button type="button" onClick={() => setTool({ kind: 'merge', id: selRoom.id })} className={`${pill(false)} flex items-center gap-1.5`}><Combine size={14} /> {tr('Unisci', 'Merge')}</button>
               </div>
+              <p className="mb-2 text-sm font-semibold">{tr('Aggiungi mobile', 'Add furniture')}</p>
+              <div className="mb-4 flex flex-wrap gap-1.5">
+                {([['letto', tr('Letto', 'Bed')], ['divano', tr('Divano', 'Sofa')], ['tavolo', tr('Tavolo', 'Table')], ['armadio', tr('Armadio', 'Wardrobe')], ['cucina', tr('Cucina', 'Kitchen')], ['bagno', tr('Bagno', 'Bathroom')]] as const).map(([k, l]) => (
+                  <button key={k} type="button" onClick={() => onEdit(r => addFurniture(r, selRoom.id, k))} className={`${pill(false)} !px-3 !py-1.5 !text-xs`}>+ {l}</button>
+                ))}
+              </div>
               <p className="text-sm font-semibold">{tr('Che stanza è?', 'Which room is it?')} <span className="font-normal text-muted">{String(selRoom.area).replace('.', ',')} m²</span></p>
               {selRoom.label && <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-brand"><ScanText size={13} /> {tr('Letto dalla planimetria', 'Read from the plan')}: «{selRoom.label}»{selRoom.written_mq ? `, ${String(selRoom.written_mq).replace('.', ',')} m²` : ''}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
@@ -349,6 +356,15 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" onClick={() => { onEdit(r => addOpening(r, sel.idx, sel.at, 'door')); setSel(null) }} className={`${pill(false)} flex items-center gap-1.5`}><DoorOpen size={14} /> {tr('Metti una porta', 'Add a door')}</button>
                 <button type="button" onClick={() => { onEdit(r => addOpening(r, sel.idx, sel.at, 'window')); setSel(null) }} className={`${pill(false)} flex items-center gap-1.5`}><Square size={14} /> {tr('Metti una finestra', 'Add a window')}</button>
+              </div>
+            </>
+          )}
+          {sel?.kind === 'furn' && raw.furniture?.[sel.idx] && (
+            <>
+              <p className="text-sm font-semibold">{FURN_LABEL[raw.furniture[sel.idx].kind] ?? tr('Mobile', 'Furniture')} <span className="font-normal text-muted">{raw.furniture[sel.idx].added ? tr('aggiunto da te', 'added by you') : tr('letto dalla planimetria', 'read from the plan')}</span></p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={() => { onEdit(r => removeFurniture(r, sel.idx)); setSel(null) }} className={`${pill(false)} flex items-center gap-1.5`}><Trash2 size={14} /> {tr('Togli', 'Remove')}</button>
+                <button type="button" onClick={() => onEdit(r => rotateFurniture(r, sel.idx))} className={`${pill(false)} flex items-center gap-1.5`}><RotateCcw size={14} /> {tr('Ruota', 'Rotate')}</button>
               </div>
             </>
           )}

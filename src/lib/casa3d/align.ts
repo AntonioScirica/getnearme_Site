@@ -217,41 +217,51 @@ export async function verifyFurniture(raw: RawPlan, original: Buffer): Promise<{
   const { imgW: W, imgH: H } = raw.source, T = raw.source.toImage as number[]
   const img = await loadOriginal(original, W, H)
   const edgeAt = (p: Pt) => { const [x, y] = apply(T, p), xi = Math.round(x), yi = Math.round(y); return xi < 0 || yi < 0 || xi >= W || yi >= H ? 0 : img.edge[yi * W + xi] }
-  const rectPts = (at: Pt, f: NonNullable<RawPlan['furniture']>[number], k: number) => {
-    const c = Math.cos(f.rot), s = Math.sin(f.rot), out: Pt[] = []
-    for (let u = -0.5; u <= 0.5; u += 0.04) for (let v = -0.5; v <= 0.5; v += 0.04) {
-      const lx = u * f.len * k, lz = v * f.depth * k // asse x locale ruotato come nel visore (rotation.y)
-      out.push([at[0] + c * lx + s * lz, at[1] - s * lx + c * lz])
+  type F = NonNullable<RawPlan['furniture']>[number]
+  const local = (at: Pt, f: F, u: number, v: number): Pt => { const c = Math.cos(f.rot), s = Math.sin(f.rot), lx = u * f.len, lz = v * f.depth; return [at[0] + c * lx + s * lz, at[1] - s * lx + c * lz] }
+  // forma attesa: il contorno del simbolo (fascia attorno al bordo del rettangolo) e un po' di segni dentro
+  // i punti vicini ai muri (25 cm) e alla scritta della stanza non contano: li' i segni ci sono comunque
+  const ring = (at: Pt, f: F, room: RawPlan['rooms'][number]) => {
+    let n = 0, e = 0, all = 0
+    for (let t = -0.5; t <= 0.5; t += 0.04) for (const k of [-0.06, 0, 0.06]) for (const p of [local(at, f, t, -0.5 + k), local(at, f, t, 0.5 + k), local(at, f, -0.5 + k, t), local(at, f, 0.5 + k, t)]) {
+      all++
+      if (nearWall(p) || (Math.abs(p[0] - room.center[0]) < 0.8 && Math.abs(p[1] - room.center[1]) < 0.45)) continue
+      n++; e += edgeAt(p)
     }
-    return out
+    return n >= 0.35 * all ? e / n : 0
   }
+  const nearWall = (p: Pt) => raw.walls.some(w => { const { L, d, n } = frame(w.a, w.b), dx = p[0] - w.a[0], dy = p[1] - w.a[1], along = dx * d[0] + dy * d[1], across = Math.abs(dx * n[0] + dy * n[1]); return along > -0.25 && along < L + 0.25 && across < w.t / 2 + 0.25 })
   const inAny = (p: Pt) => raw.furniture!.some(f => { const c = Math.cos(f.rot), s = Math.sin(f.rot), dx = p[0] - f.at[0], dz = p[1] - f.at[1]; return Math.abs(c * dx - s * dz) < f.len * 0.8 && Math.abs(s * dx + c * dz) < f.depth * 0.8 })
-  // pavimento vuoto della stanza: densita' di bordi lontano dai muri e dai mobili letti
+  // sfondo della stanza: lontano 25 cm dai muri, fuori dal riquadro della scritta (al centro) e dai mobili letti
   const base = new Map<number, number>()
   for (const r of raw.rooms) {
     const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]); let dk = 0, n = 0
-    for (let x = Math.min(...xs) + 0.3; x < Math.max(...xs) - 0.3; x += 0.06) for (let y = Math.min(...ys) + 0.3; y < Math.max(...ys) - 0.3; y += 0.06) {
-      const p: Pt = [x, y]; if (!inPoly(x, y, r.poly) || inAny(p)) continue
+    for (let x = Math.min(...xs) + 0.25; x < Math.max(...xs) - 0.25; x += 0.05) for (let y = Math.min(...ys) + 0.25; y < Math.max(...ys) - 0.25; y += 0.05) {
+      const p: Pt = [x, y]
+      if (!inPoly(x, y, r.poly) || inAny(p) || nearWall(p) || (Math.abs(x - r.center[0]) < 0.8 && Math.abs(y - r.center[1]) < 0.45)) continue
       dk += edgeAt(p); n++
     }
     base.set(r.id, n ? dk / n : 0)
   }
-  const keep: NonNullable<RawPlan['furniture']> = [], dropped: string[] = []
+  const BIG = new Set(['bed_double', 'bed_single', 'sofa'])
+  const keep: F[] = [], dropped: string[] = []
   for (const f of raw.furniture) {
     const room = raw.rooms.find(r => inPoly(f.at[0], f.at[1], r.poly))
     if (!room) { dropped.push(`${f.kind} (fuori)`); continue }
-    // la posizione letta e' approssimata: si cerca il simbolo entro 40 cm e ci si sposta li'
+    // la posizione letta e' approssimata: si cerca il contorno del simbolo entro 25 cm e ci si sposta li'
     let best = { d: -1, at: f.at }
-    for (let dx = -0.4; dx <= 0.401; dx += 0.1) for (let dy = -0.4; dy <= 0.401; dy += 0.1) {
+    for (let dx = -0.25; dx <= 0.251; dx += 0.05) for (let dy = -0.25; dy <= 0.251; dy += 0.05) {
       const at: Pt = [f.at[0] + dx, f.at[1] + dy]
       if (!inPoly(at[0], at[1], room.poly)) continue
-      const pts = rectPts(at, f, 1.1), d = pts.reduce((a, p) => a + edgeAt(p), 0) / pts.length - 0.002 * Math.hypot(dx, dy) * 10
+      const d = ring(at, f, room) - 0.02 * Math.hypot(dx, dy)
       if (d > best.d) best = { d, at }
     }
-    const b = base.get(room.id) ?? 0
-    // soglia prudente: si scarta solo cio' che non ha piu' segni del pavimento vuoto della stanza (mobili inventati)
-    if (best.d >= Math.max(0.03, 1.15 * b)) keep.push({ ...f, at: [Math.round(best.at[0] * 1000) / 1000, Math.round(best.at[1] * 1000) / 1000] })
-    else dropped.push(`${f.kind} (${(best.d * 100).toFixed(1)}% contro ${(b * 100).toFixed(1)}%)`)
+    const b = Math.max(0.01, base.get(room.id) ?? 0), score = best.d / b, conf = f.conf ?? 0.7
+    // letti e divani: confidenza almeno 0,75 e contorno sopra lo sfondo, oppure contorno molto netto; altri mobili 0,6
+    // contorno vero: almeno il 12% di segni sulla fascia del bordo (i simboli disegnati stanno tra 16 e 35%, i falsi quasi sempre sotto 10%)
+    const ok = best.d >= 0.12 && (BIG.has(f.kind) ? (conf >= 0.75 && score >= 1.1) || score >= 2 : conf >= 0.6 && score >= 1.15)
+    if (ok) keep.push({ ...f, at: [Math.round(best.at[0] * 1000) / 1000, Math.round(best.at[1] * 1000) / 1000] })
+    else dropped.push(`${f.kind} (conf ${conf}, contorno ${score.toFixed(2)}x)`)
   }
   return { raw: { ...raw, furniture: keep }, kept: keep.length, dropped }
 }
