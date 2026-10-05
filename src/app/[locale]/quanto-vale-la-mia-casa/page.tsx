@@ -7,6 +7,7 @@ import { platformFontVars } from '@/lib/platformFonts';
 import { FACTOR_TABLE } from '@/lib/valuation';
 import ValuationWizard from '@/components/valuation/ValuationWizard';
 import { CITIES } from '@/lib/omiCitta';
+import { SiteFooter } from '@/components/landing/AgenteImmoLanding';
 
 // Pagina SEO per i proprietari: "quanto vale la mia casa", valutazione gratuita online basata sulle quotazioni OMI.
 // Il risultato arriva per email (lead in valuation_leads): qui solo il percorso a passi e le spiegazioni. Solo in italiano.
@@ -153,6 +154,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
           </aside>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

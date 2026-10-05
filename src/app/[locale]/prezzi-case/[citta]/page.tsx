@@ -58,6 +58,11 @@ export default async function Page({ params }: Props) {
   const fasce = Object.keys(FASCE).map(f => [f, c.zone.filter(z => z.f === f)] as const).filter(([, zs]) => zs.length);
   const vicine = c.vicine.map(cityBySlug).filter((x): x is City => !!x);
   const regione = CITIES.filter(o => o !== c && o.regione === c.regione && !c.vicine.includes(o.slug)).slice(0, 4);
+  // città con prezzi medi vicini (2 sopra e 2 sotto in classifica): così anche le città isolate ricevono link
+  const shown = new Set([c.slug, ...vicine.map(o => o.slug), ...regione.map(o => o.slug)]);
+  const byPrice = [...CITIES].sort((a, b) => (b.s.avgMin + b.s.avgMax) - (a.s.avgMin + a.s.avgMax));
+  const at = byPrice.indexOf(c);
+  const simili = [byPrice[at - 1], byPrice[at + 1], byPrice[at - 2], byPrice[at + 2]].filter((o): o is City => !!o && !shown.has(o.slug)).slice(0, 4);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -166,6 +171,14 @@ export default async function Page({ params }: Props) {
               <li key={o.slug}><Link href={`/it/prezzi-case/${o.slug}`} className="block h-full rounded-[24px] bg-canvas p-5 ease-smooth transition-colors hover:bg-line/60"><span className="font-semibold">Prezzo case {o.nome}</span><span className="mt-1 block text-sm text-muted">{eur(o.s.avgMin)} - {eur(o.s.avgMax)} €/m² in media, {o.regione}</span></Link></li>
             ))}
           </ul>
+          {simili.length > 0 && <>
+            <div className="mt-10 font-display text-xl font-bold">Città con prezzi simili a {c.nome}</div>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {simili.map(o => (
+                <li key={o.slug}><Link href={`/it/prezzi-case/${o.slug}`} className="block h-full rounded-[24px] bg-canvas p-5 ease-smooth transition-colors hover:bg-line/60"><span className="font-semibold">Prezzo case {o.nome}</span><span className="mt-1 block text-sm text-muted">{eur(o.s.avgMin)} - {eur(o.s.avgMax)} €/m² in media, {o.regione}</span></Link></li>
+              ))}
+            </ul>
+          </>}
           <p className="mt-5 text-[15px]"><Link href="/it/prezzi-case" className="font-semibold text-brand underline underline-offset-4">Tutte le città: prezzi delle case al metro quadro</Link></p>
         </nav>
 
