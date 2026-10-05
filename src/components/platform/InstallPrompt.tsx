@@ -48,7 +48,7 @@ export default function InstallPrompt() {
   if (!open || (!ev && !ios)) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-24 z-[85] mx-auto max-w-[420px] md:bottom-6 md:left-auto md:right-6 md:mx-0">
+    <div className="fixed inset-x-3 bottom-24 z-[60] mx-auto max-w-[420px] md:bottom-6 md:left-auto md:right-6 md:mx-0">
       <div className="rise rounded-[32px] bg-white p-5 shadow-[0_24px_60px_-20px_rgba(0,0,0,.35)] ring-1 ring-black/5">
         <div className="flex items-start gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
