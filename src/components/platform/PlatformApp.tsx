@@ -5,7 +5,7 @@ import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Download, BookOpen, ChevronDown, Gift, Lock, Inbox } from 'lucide-react';
+import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Download, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -20,6 +20,7 @@ import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import CostsView from './CostsView';
 import AffiliatesView from './AffiliatesView';
+import BusinessPlanView from './BusinessPlanView';
 import StagingView from './StagingView';
 import MediaView, { useGalleryNews } from './MediaView';
 import PropertiesView from './PropertiesView';
@@ -267,6 +268,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
             <CostsView />
           ) : route === '/affiliati' && isPlatformAdmin(userData.email) ? (
             <AffiliatesView />
+          ) : route === '/business-plan' && isPlatformAdmin(userData.email) ? (
+            <BusinessPlanView userKey={userData.id} />
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} slug={profile?.slug ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
@@ -673,6 +676,9 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         </a>
         <a href="#/affiliati" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
           <Gift size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Affiliati', 'Affiliates')}</span><span className="block text-sm text-muted">{tr('Codici, crediti dati e utilizzi', 'Codes, credits given and uses')}</span></span>
+        </a>
+        <a href="#/business-plan" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
+          <LineChart size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Business plan', 'Business plan')}</span><span className="block text-sm text-muted">{tr('Proiezioni a 36 mesi da modificare dal vivo', '36-month projections you can edit live')}</span></span>
         </a>
       </>)}
       <Guides />
