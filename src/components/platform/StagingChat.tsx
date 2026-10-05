@@ -167,7 +167,13 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
 const videoCr = (anim?: VideoAnim) => anim === 'reel' ? CREDIT_COST.video_reel : anim === 'venduto' ? CREDIT_COST.video_venduto : anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' || anim === 'ristruttura' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : CREDIT_COST.video_render;
 // attesa tipica del video, misurata sulle prove del 29-30/09 (generazione su fal + foto GPT + montaggio, coda compresa)
-const waitFor = (anim?: VideoAnim) => anim === 'reel' || anim === 'venduto' ? tr('meno di un minuto', 'under a minute') : anim === 'cantiere' || anim === 'ristruttura' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
+// Annuncio e Venduto: stima dalle prove (05/10/2026). Vivace/Elegante su Lambda ~50 s + ~6 s a foto; Semplice/Classico sul server ~8 s + ~3 s a foto
+const reelWait = (r?: ReelState) => {
+  const n = r?.tpl === 'venduto' ? 1 : Math.max(1, r?.photos.length ?? 3), lambda = r?.style !== 'semplice' && r?.style !== 'classico';
+  const sec = lambda ? 50 + 6 * n : 8 + 3 * n;
+  return sec < 55 ? tr(`circa ${Math.round(sec / 10) * 10} secondi`, `about ${Math.round(sec / 10) * 10} seconds`) : sec < 80 ? tr('circa un minuto', 'about a minute') : tr('1-2 minuti', '1-2 minutes');
+};
+const waitFor = (anim?: VideoAnim, reel?: ReelState) => anim === 'reel' || anim === 'venduto' ? reelWait(reel) : anim === 'cantiere' || anim === 'ristruttura' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
 const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera' || anim === 'fpv' || anim === 'planwalk' || anim === 'ristruttura';
 // crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
 const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' || anim === 'reel' || anim === 'venduto' ? 0 : CREDIT_COST.video_prep);
@@ -1433,7 +1439,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" since={m.renderAt} /> · {tr('di solito', 'usually')} {waitFor(m.anim)}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" since={m.renderAt} /> · {tr('di solito', 'usually')} {waitFor(m.anim, m.reel)}</span>
                                 </div>
                               )}
                             </>}
