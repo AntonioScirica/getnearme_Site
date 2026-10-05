@@ -65,6 +65,8 @@ export type ViewerPlan = {
   doors: { axis: 'x' | 'z'; rooms: [number, number]; rect: [number, number, number, number]; swing: number; entrance?: boolean; varco?: boolean }[]
   rooms: { id: number; type: string; area: number; center: Pt; poly: Pt[]; rect: [number, number, number, number]; floor?: FloorKind; wall?: string }[]
   materials?: { frames: string; doors: string; facade: { kind: string; color: string }; roof: string; shutters: string }
+  // metri -> pixel della planimetria originale (per la miniatura che gira con la vista)
+  image?: { toImage: number[]; w: number; h: number }
   name?: string
 }
 

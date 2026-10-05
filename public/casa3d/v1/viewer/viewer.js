@@ -386,7 +386,7 @@ export async function createViewer(container, opts = {}) {
     setView, setTime, setFurnished,
     enterRoom: id => setView('walk', id),
     get state() { return { view: state.view, night: state.nightTarget === 1, furnished: state.furnished, mode: state.mode, hasDrawn, fps: Math.round(fps.value) } },
-    renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit },
+    plan, renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit },
     stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, geometries: renderer.info.memory.geometries }),
     // fotogramma della vista attuale (poster): si rende e si legge subito, senza tenere il buffer
     snapshot(type = 'image/jpeg', q = 0.86) { composer.render(); return renderer.domElement.toDataURL(type, q) },

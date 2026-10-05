@@ -40,6 +40,15 @@
   .err { position: fixed; inset: 0; display: none; place-items: center; z-index: 11; background: #eceae6; font-size: 15px; color: #555; padding: 24px; text-align: center; }
   .orig { position: fixed; top: max(12px, env(safe-area-inset-top)); right: 12px; z-index: 7; width: 168px; padding: 8px; background: #fff; border-radius: 24px; box-shadow: 0 8px 28px rgba(0,0,0,.14); cursor: zoom-in; transition: width .6s cubic-bezier(.22,1,.36,1); display: none; }
   .orig img { display: block; width: 100%; border-radius: 16px; }
+  /* miniatura che gira con la vista: la planimetria dentro un cerchio, ruotata attorno al centro della casa */
+  .mm { position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .orig img[hidden], .mm[hidden] { display: none; }
+  .mm .rot { position: absolute; left: 0; top: 0; will-change: transform; }
+  .mm .rot img { max-width: none; }
+  .mm .rot img { width: 100%; height: 100%; border-radius: 0; }
+  .mm .me { position: absolute; width: 0; height: 0; display: none; }
+  .mm .me svg { position: absolute; left: -22px; top: -40px; overflow: visible; }
+  .mm .north { position: absolute; left: 50%; top: 4px; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 8px solid var(--brand); opacity: .8; }
   .orig span { display: block; font: 600 11px inherit; font-family: inherit; color: #6a6a6a; padding: 6px 4px 0; }
   .orig.big { width: min(640px, 90vw); cursor: zoom-out; }
   .fps { position: fixed; bottom: 12px; right: 12px; font: 600 12px ui-monospace, monospace; background: rgba(0,0,0,.55); color: #fff; padding: 4px 8px; border-radius: 8px; z-index: 6; display: none; }
@@ -61,7 +70,7 @@
 <div class="floors glass" id="floors" hidden></div>
 <div class="hint glass" id="hint">Tocca una stanza per entrarci</div>
 <div class="fps" id="fps"></div>
-<div class="orig" id="orig" title="Planimetria"><img id="origImg" alt="Planimetria"><span>Planimetria, tocca per ingrandire</span></div>
+<div class="orig" id="orig" title="Planimetria"><img id="origImg" alt="Planimetria"><div class="mm" id="mm" hidden><div class="rot" id="mmRot"><img id="mmImg" alt="Planimetria"><div class="me" id="mmMe"><svg width="44" height="44" viewBox="-22 -40 44 44"><path d="M0 0 L-14 -34 A36 36 0 0 1 14 -34 Z" fill="rgba(83,126,236,.35)" stroke="#537eec" stroke-width="1.5"/><circle r="5" fill="#537eec" stroke="#fff" stroke-width="2"/></svg></div></div></div><span>Planimetria, tocca per ingrandire</span></div>
 <div class="bar glass" id="bar">
   <div class="seg"><button data-view="top" class="on">Dall'alto</button><button data-view="walk">Cammina</button></div>
   <div class="seg"><button data-time="day" class="on">Giorno</button><button data-time="night">Notte</button></div>
@@ -117,7 +126,13 @@ async function open(i) {
     })
     window.viewer = v
     cur = i
-    if (f.image && safe(f.image)) { $('#origImg').src = safe(f.image); $('#orig').style.display = 'block' } else $('#orig').style.display = 'none'
+    if (f.image && safe(f.image)) {
+      $('#origImg').src = safe(f.image); $('#mmImg').src = safe(f.image); $('#orig').style.display = 'block'
+      // con la trasformazione metri -> immagine la miniatura gira con la vista; le case vecchie restano con l'immagine ferma
+      const im = v.plan?.image
+      $('#mm').hidden = !im; $('#origImg').hidden = !!im
+      mini = im ? setupMini(im, v.plan) : null
+    } else { $('#orig').style.display = 'none'; mini = null }
     const origEnter = v.enterRoom; v.enterRoom = id => { origEnter(id); sync() }
     if (state.view === 'walk' && !poster) v.setView('walk')
     const l = $('#loading'); if (l) { l.style.opacity = 0; setTimeout(() => l.remove(), 700) }
@@ -138,6 +153,45 @@ if (floors.length > 1) {
   floors.forEach((f, i) => { const b = document.createElement('button'); b.dataset.floor = i; b.textContent = f.name || `Piano ${i + 1}`; b.onclick = () => open(i); box.appendChild(b) })
 }
 $('#orig').onclick = () => $('#orig').classList.toggle('big')
+// miniatura orientata come la vista: la direzione in cui guarda la camera (orizzontale) va in alto nella miniatura.
+// Vettore in metri (x, z) -> pixel dell'immagine con la parte lineare di toImage [a b c d e f]: px = a*x + c*z, py = b*x + d*z
+let mini = null, mmAngle = 0
+function setupMini(im, plan) {
+  const [a, b, c, d, e, f] = im.toImage, P = (x, z) => [a * x + c * z + e, b * x + d * z + f]
+  const pts = plan.outline.map(([x, z]) => P(x, z)), xs = pts.map(p => p[0]), ys = pts.map(p => p[1])
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2
+  const diag = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys))
+  return { a, b, c, d, P, cx, cy, diag, mirror: a * d - b * c < 0, w: im.w, h: im.h }
+}
+const fwd = { x: 0, y: 0, z: 0 }
+function tickMini() {
+  requestAnimationFrame(tickMini)
+  if (!mini || !v || $('#mm').hidden) return
+  const box = $('#mm'), D = box.clientWidth; if (!D) return
+  const k = 1.1 * D / mini.diag // la diagonale del riquadro e' piu' larga della casa: un po' di zoom
+  const dir = v.camera.getWorldDirection(new v.camera.position.constructor()); let fx = dir.x, fz = dir.z; const L = Math.hypot(fx, fz) || 1; fx /= L; fz /= L
+  // direzione di sguardo nell'immagine e angolo che la porta in alto (CSS: rotate positivo = orario, y in basso)
+  const wx = mini.a * fx + mini.c * fz, wy = mini.b * fx + mini.d * fz
+  let target = -90 - Math.atan2(wy, wx) * 180 / Math.PI
+  if (mini.mirror) target = -target
+  // nessuno scatto a 360 gradi: si segue l'angolo continuo
+  while (target - mmAngle > 180) target -= 360
+  while (target - mmAngle < -180) target += 360
+  mmAngle = target
+  const rot = $('#mmRot')
+  rot.style.width = `${mini.w * k}px`; rot.style.height = `${mini.h * k}px`
+  rot.style.left = `${D / 2 - mini.cx * k}px`; rot.style.top = `${D / 2 - mini.cy * k}px`
+  rot.style.transformOrigin = `${mini.cx * k}px ${mini.cy * k}px`
+  rot.style.transform = `${mini.mirror ? 'scaleX(-1) ' : ''}rotate(${mmAngle}deg)`
+  // in camminata: puntino e cono di sguardo nella posizione di chi cammina (nell'immagine, ruotano con lei)
+  const me = $('#mmMe')
+  if (v.state.view === 'walk') {
+    const [px, py] = mini.P(v.camera.position.x, v.camera.position.z)
+    me.style.display = 'block'; me.style.left = `${px * k}px`; me.style.top = `${py * k}px`
+    me.style.transform = `rotate(${Math.atan2(wy, wx) * 180 / Math.PI + 90}deg)`
+  } else me.style.display = 'none'
+}
+requestAnimationFrame(tickMini)
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { v?.setView(b.dataset.view); sync() })
 document.querySelectorAll('[data-time]').forEach(b => b.onclick = () => { state.time = b.dataset.time; v?.setTime(b.dataset.time); sync() })
 $('#furn').onclick = () => { if (!v) return; const s = v.state; v.setFurnished(s.hasDrawn ? ({ plan: 'auto', auto: 'empty', empty: 'plan' })[s.mode] : !s.furnished); sync() }
