@@ -89,33 +89,40 @@ export async function createViewer(container, opts = {}) {
   // arredo e lampade
   o.onProgress(0.4, 'Arredo')
   const catalog = createCatalog(o.assetsBase, M, { lowEnd })
-  const furnGroup = new THREE.Group(), bareGroup = new THREE.Group(); furnGroup.name = 'arredo'
-  scene.add(furnGroup, bareGroup)
+  // arredo: 'plan' = come disegnato sulla planimetria (le stanze senza mobili disegnati si arredano da sole),
+  // 'auto' = arredo automatico, 'empty' = vuota (solo le luci). Ogni modo ha il suo gruppo e la sua griglia mobili.
+  const hasDrawn = !!plan.furniture?.length
   const furnGrid = house.grid.furn
-  const fp = planFurniture(plan, house).furnish()
-  const savedFurn = furnGrid.slice()
-  house.grid.furn.fill(0)
-  const bare = planFurniture(plan, house).lightsOnly()
-  house.grid.furn.set(savedFurn)
-  await catalog.preload(fp.items.map(i => i.kind))
-  for (const it of fp.items) {
-    const obj = await catalog.make(it.kind, it.opts)
-    obj.position.set(it.x, it.y || 0, it.z); obj.rotation.y = it.rot; obj.userData.kind = it.kind
-    if (['pendant', 'ceilingLight'].includes(it.kind)) { house.hideInTop.push(obj); obj.traverse(m => { m.castShadow = false }) }
-    furnGroup.add(obj)
+  furnGrid.fill(0); const fp = planFurniture(plan, house).furnish(); const savedFurn = furnGrid.slice()
+  let fpPlan = null, savedPlan = null
+  if (hasDrawn) { furnGrid.fill(0); fpPlan = planFurniture(plan, house).furnish({ drawn: plan.furniture }); savedPlan = furnGrid.slice() }
+  furnGrid.fill(0); const bare = planFurniture(plan, house).lightsOnly()
+  furnGrid.set(savedFurn)
+  const furnGroup = new THREE.Group(), planGroup = new THREE.Group(), bareGroup = new THREE.Group(); furnGroup.name = 'arredo'
+  scene.add(furnGroup, planGroup, bareGroup)
+  await catalog.preload([...fp.items, ...(fpPlan?.items ?? [])].map(i => i.kind))
+  const place = async (list, group) => {
+    for (const it of list) {
+      const obj = await catalog.make(it.kind, it.opts)
+      obj.position.set(it.x, it.y || 0, it.z); obj.rotation.y = it.rot; obj.userData.kind = it.kind
+      if (['pendant', 'ceilingLight'].includes(it.kind)) { house.hideInTop.push(obj); obj.traverse(m => { m.castShadow = false }) }
+      group.add(obj)
+    }
+    // lampadine dentro i paralumi dei pendenti (si accendono di notte)
+    for (const it of list.filter(i => i.kind === 'pendant')) {
+      const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), M.bulb); b.position.set(it.x, H - 0.95 + 0.27, it.z); group.add(b); house.hideInTop.push(b)
+    }
   }
+  await place(fp.items, furnGroup)
+  if (fpPlan) await place(fpPlan.items, planGroup)
   for (const it of bare.items) { const obj = await catalog.make(it.kind, it.opts); obj.position.set(it.x, it.y || 0, it.z); house.hideInTop.push(obj); bareGroup.add(obj) }
-  // lampadine dentro i paralumi dei pendenti (si accendono di notte)
-  for (const it of fp.items.filter(i => i.kind === 'pendant')) {
-    const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), M.bulb); b.position.set(it.x, H - 0.95 + 0.27, it.z); furnGroup.add(b); house.hideInTop.push(b)
-  }
   // luci: tante "ancore" (lampade di ogni stanza) ma poche luci vere in un pool fisso, assegnate alle ancore piu'
   // vicine (in camminata) o alle principali di ogni stanza (dall'alto). Numero di luci costante: niente ricompilazioni.
   const mkAnchor = l => {
     const main = l.role === 'main', rr = house.rooms.get(l.room), win = house.windows.filter(w => w.room === l.room).reduce((a, w) => a + w.len, 0)
     return { ...l, main, base: main ? (l.dim ? 10 * l.dim : 10) : (l.dim ? 5 * l.dim : 5), fill: rr ? (2.2 + Math.min(win, 4) * 1.0) * Math.sqrt(rr.area / 10) : 2.5, area: rr?.area || 0 }
   }
-  const anchorsF = fp.lights.map(mkAnchor), anchorsB = bare.lights.map(mkAnchor)
+  const anchorsF = fp.lights.map(mkAnchor), anchorsB = bare.lights.map(mkAnchor), anchorsP = fpPlan ? fpPlan.lights.map(mkAnchor) : anchorsF
   const POOL = lowEnd ? 5 : 9, SHADOWS = lowEnd ? 0 : 2
   const pool = Array.from({ length: POOL }, (_, i) => {
     const p = new THREE.PointLight(0xffc489, 0, 9, 2)
@@ -125,9 +132,9 @@ export async function createViewer(container, opts = {}) {
   const lightsF = pool
   let poolKey = ''
   function assignPool(force) {
-    const list = state.furnished ? anchorsF : anchorsB
+    const list = state.mode === 'plan' ? anchorsP : state.mode === 'auto' ? anchorsF : anchorsB
     const cam = camera.position, cur = house.grid.roomAt(cam.x, cam.z)
-    const key = `${state.view}|${state.furnished}|${cur}|${Math.round(cam.x)}|${Math.round(cam.z)}`
+    const key = `${state.view}|${state.mode}|${cur}|${Math.round(cam.x)}|${Math.round(cam.z)}`
     if (!force && key === poolKey) return
     poolKey = key
     const score = a => state.view === 'top' ? (a.main ? -a.area : 100 - a.area) : Math.hypot(a.x - cam.x, a.z - cam.z) + (a.room === cur ? 0 : 2.5) + (a.main ? 0 : 0.5)
@@ -199,9 +206,12 @@ export async function createViewer(container, opts = {}) {
     renderer.toneMappingExposure = lerp(top ? 1.0 : 1.2, top ? 1.0 : 0.82, n)
     if (gtao) gtao.blendIntensity = lerp(0.85, 0.7, n)
   }
+  // v: 'plan' | 'auto' | 'empty' (true/false come prima: arredata col modo migliore / vuota)
   function setFurnished(v) {
-    state.furnished = v; furnGroup.visible = v; bareGroup.visible = !v
-    house.grid.furn.set(v ? savedFurn : new Uint8Array(savedFurn.length)); assignPool(true)
+    const mode = v === true ? (hasDrawn ? 'plan' : 'auto') : v === false ? 'empty' : (v === 'plan' && !hasDrawn ? 'auto' : v)
+    state.mode = mode; state.furnished = mode !== 'empty'
+    furnGroup.visible = mode === 'auto'; planGroup.visible = mode === 'plan'; bareGroup.visible = mode === 'empty'
+    house.grid.furn.set(mode === 'plan' ? savedPlan : mode === 'auto' ? savedFurn : new Uint8Array(savedFurn.length)); assignPool(true)
   }
 
   const tmpQ = new THREE.Quaternion()
@@ -336,7 +346,7 @@ export async function createViewer(container, opts = {}) {
   const api = {
     setView, setTime, setFurnished,
     enterRoom: id => setView('walk', id),
-    get state() { return { view: state.view, night: state.nightTarget === 1, furnished: state.furnished, fps: Math.round(fps.value) } },
+    get state() { return { view: state.view, night: state.nightTarget === 1, furnished: state.furnished, mode: state.mode, hasDrawn, fps: Math.round(fps.value) } },
     renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit },
     stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, geometries: renderer.info.memory.geometries }),
     // fotogramma della vista attuale (poster): si rende e si legge subito, senza tenere il buffer

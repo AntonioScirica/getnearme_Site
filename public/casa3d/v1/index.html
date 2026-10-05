@@ -96,7 +96,8 @@ const sync = () => {
   state.view = s.view; state.furnished = s.furnished
   document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === s.view))
   document.querySelectorAll('[data-time]').forEach(b => b.classList.toggle('on', (b.dataset.time === 'night') === s.night))
-  $('#furn').classList.toggle('on', s.furnished); $('#furn').textContent = s.furnished ? 'Arredata' : 'Vuota'
+  // arredo: con i mobili disegnati sulla planimetria tre modi (come in pianta, automatico, vuota), se no arredata o vuota
+  $('#furn').classList.toggle('on', s.furnished); $('#furn').textContent = s.hasDrawn ? ({ plan: 'Arredo come in pianta', auto: 'Arredo automatico', empty: 'Vuota' })[s.mode] : (s.furnished ? 'Arredata' : 'Vuota')
   $('#hint').textContent = hints[s.view]
   document.querySelectorAll('[data-floor]').forEach(b => b.classList.toggle('on', +b.dataset.floor === cur))
 }
@@ -139,7 +140,7 @@ if (floors.length > 1) {
 $('#orig').onclick = () => $('#orig').classList.toggle('big')
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { v?.setView(b.dataset.view); sync() })
 document.querySelectorAll('[data-time]').forEach(b => b.onclick = () => { state.time = b.dataset.time; v?.setTime(b.dataset.time); sync() })
-$('#furn').onclick = () => { v?.setFurnished(!v.state.furnished); sync() }
+$('#furn').onclick = () => { if (!v) return; const s = v.state; v.setFurnished(s.hasDrawn ? ({ plan: 'auto', auto: 'empty', empty: 'plan' })[s.mode] : !s.furnished); sync() }
 setInterval(sync, 500)
 await open(Math.min(floors.length - 1, Math.max(0, +(q.get('floor') || 0))))
 </script>

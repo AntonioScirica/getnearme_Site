@@ -274,8 +274,15 @@ export function planFurniture(plan, house) {
   }
 
   return {
-    furnish() {
-      for (const r of plan.rooms) recipes[r.type]?.(r)
+    // drawn: mobili disegnati sulla planimetria (plan.furniture): in quelle stanze si mettono loro, al loro posto
+    furnish({ drawn } = {}) {
+      const drawnRooms = new Set((drawn || []).map(i => i.room))
+      for (const it of drawn || []) {
+        const room = plan.rooms.find(r => r.id === it.room)
+        if (room) add(room, it.kind, it.x, it.z, it.rot, { w: it.w, d: it.d, opts: it.opts })
+      }
+      for (const id of drawnRooms) { const r = plan.rooms.find(x => x.id === id); if (r && !['balcone', 'terrazzo'].includes(r.type)) { const [cx, cz] = center(r); mainLight(r, cx, cz, 'ceilingLight') } }
+      for (const r of plan.rooms) if (!drawnRooms.has(r.id)) recipes[r.type]?.(r)
       curtains()
       return { items, lights }
     },
