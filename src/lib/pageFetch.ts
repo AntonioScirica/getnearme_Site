@@ -65,6 +65,11 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
   const text = decode(html.replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?>|<\/(p|div|li|h\d|tr)>/gi, '\n').replace(/<[^>]+>/g, ' '))
     .replace(/[ \t]+/g, ' ').replace(/\n\s*\n\s*\n+/g, '\n\n').trim().slice(0, 60_000)
   // immagini come l'estensione: og:image e URL jpg/webp nell'HTML (gallerie caricate dopo), senza loghi e icone
+  // sezione "immobili simili / correlati" (temi WordPress delle agenzie): le sue foto sono di altre case. Si guarda solo
+  // quello che viene prima, se li' ci sono gia' abbastanza foto (altrimenti la galleria potrebbe stare dopo, in uno script)
+  const cutAt = html.search(/<(?:section|div|aside|ul)\b[^>]*(?:class|id)=["'][^"']*(?:similar|related|simili|correlat|consigliat|potrebbe)[^"']*["']/i)
+  const head = cutAt > 0 ? html.slice(0, cutAt) : html
+  if (cutAt > 0 && (head.match(/https:\/\/[^"'\s]+?\.(?:jpe?g|webp)/gi) ?? []).length >= 3) html = head
   const flat = html.replace(/\\u002F/gi, '/').replace(/\\\//g, '/')
   const seen = new Set<string>(), photos: string[] = []
   // anche le immagini senza estensione (CDN con parametri, es. subito): src, data-src e la taglia piu' grande di srcset
@@ -75,6 +80,10 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
   })
   for (const u of [meta['og:image'], ...imgs, ...(flat.match(/https:\/\/[^"'\s)\\<>]+?\.(?:jpe?g|webp)(?:\?[^"'\s)\\<>]*)?/gi) ?? [])]) {
     if (!u || /logo|icon|avatar|sprite|placeholder|agency|agenzia|banner|badge|\.svg|\.gif/i.test(u)) continue
+    if (/agente|agent|team|staff|author|profil/i.test(u.split('?')[0].split('/').pop() ?? '')) continue // foto dell'agente (solo nome del file, non il dominio)
+    // miniatura WordPress (foto-680x510.jpg) senza la foto intera nella pagina: e' di un altro annuncio o del profilo
+    const thumb = u.match(/^(.+)-(\d{2,4})x(\d{2,4})(\.(?:jpe?g|webp|png))(?:\?.*)?$/i)
+    if (thumb && Number(thumb[2]) <= 700 && !html.includes(thumb[1] + thumb[4])) continue
     // stessa foto in piu' taglie: su immobiliare cambia l'ultimo pezzo (/image/ID/xxl.jpg), altrove l'ID e' l'ultimo pezzo
     const path = u.split('?')[0], last = path.split('/').pop() ?? ''
     const key = /[0-9a-f]{8,}|\d{6,}/i.test(last) ? path.replace(/\.(jpe?g|webp|png)$/i, '') : path.replace(/\/[^/]*$/, '')
