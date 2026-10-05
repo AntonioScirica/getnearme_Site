@@ -212,8 +212,8 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
         ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_camera' })).request_id]
       } else if (anim === 'drone') {
-        // Drone esterno: una foto, la camera sale e gira attorno alla casa (Kling 2.5 Turbo Pro, 1080p, 0,35 $)
-        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, prompt: DRONE_EXTERIOR, negative_prompt: DRONE_EXTERIOR_NEG, duration: '5', cfg_scale: 0.6 }, { userId: logUser, kind: 'video_drone' })).request_id]
+        // Drone esterno: una foto, la camera sale in alto fino alla casa intera vista dall'alto (Kling 2.5 Turbo Pro, 1080p, 0,35 $)
+        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, prompt: DRONE_EXTERIOR, negative_prompt: DRONE_EXTERIOR_NEG, duration: '5', cfg_scale: 0.7 }, { userId: logUser, kind: 'video_drone' })).request_id]
       } else if (anim === 'stagioni') {
         // Stagioni: la stessa scena nella stagione scelta (GPT Image), poi Kling Turbo dalla foto vera a quella (come Giorno e notte)
         const season = o.season ?? 'estate'

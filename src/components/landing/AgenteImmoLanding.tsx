@@ -52,7 +52,7 @@ const useLinks = () => {
   return { l, APP: `/${l}/dashboard`, TRIAL: `/${l}/prova`, TRIAL_LOGIN: `/${l}/accedi?next=/${l}/prova`, SIGNUP: `/${l}/accedi?next=/${l}/dashboard` };
 };
 // i modelli di video della piattaforma (stessi esempi della chat)
-const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Camminata', 'Walk-in'], ['agent', 'Con te in video', 'You on camera']];
+const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Camminata', 'Walk-in'], ['agent', 'Con te in video', 'You on camera'], ['drone', 'Drone esterno', 'Exterior drone'], ['stagioni', 'Stagioni', 'Seasons']];
 
 // Compare quando entra in vista. Se la pagina e' nascosta l'observer non scatta: dopo 1,5 s si mostra comunque.
 function Reveal({ children, className = '', delay = 0, as: Tag = 'div', anim = 'blur-in' }: { children: ReactNode; className?: string; delay?: number; as?: 'div' | 'section' | 'li'; anim?: 'blur-in' | 'in-left' | 'in-right' | 'rise' }) {
@@ -224,6 +224,8 @@ const VIDEO_TEMPLATES = [
   ['fpv', 'Volo nel cantiere', 'Site fly-through', 'Un volo tra le fondamenta, poi la casa finita', 'A fly-through the site, then the finished home', VIDEO_SAMPLES.fpv],
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', VIDEO_SAMPLES.daynight],
   ['camera', 'Camminata', 'Walkthrough', 'Entri nella stanza con una ripresa lenta', 'A slow walk into the room', VIDEO_SAMPLES.camera],
+  ['drone', 'Drone esterno', 'Exterior drone', 'La casa ripresa dall\'alto, come con un drone', 'The home filmed from above, like with a drone', VIDEO_SAMPLES.drone],
+  ['stagioni', 'Stagioni', 'Seasons', 'Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes', VIDEO_SAMPLES.stagioni],
 ] as const;
 // Prima e dopo: le due animazioni tra cui scegliere, come nella chat
 const PRIMA_DOPO = [
@@ -712,7 +714,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
-            {/* i sei modelli della piattaforma, con i loro esempi (si scaricano solo quando la sezione e' in vista) */}
+            {/* gli otto modelli della piattaforma, con i loro esempi (si scaricano solo quando la sezione e' in vista) */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {VIDEO_TEMPLATES_LP.map(([k, it, enl], i) => (
                 <div key={k} className="overflow-hidden rounded-[20px] bg-white p-1.5 shadow-[0_20px_50px_-25px_rgba(0,0,0,.35)] ring-1 ring-black/5">

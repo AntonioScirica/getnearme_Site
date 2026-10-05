@@ -20,7 +20,7 @@ export const VIDEO_SAMPLES = {
   reel: '/staging/videos/annuncio.mp4',
   venduto: '/staging/videos/venduto.mp4',
   // 05/10, generati con la ricetta vera (lib/videoJob) dal casale toscano in pietra (remotion/public/demo/card_casale.jpg)
-  drone: '/staging/videos/drone.mp4', // Kling 2.5 Turbo Pro da una foto: sale e gira attorno alla casa
+  drone: '/staging/videos/drone.mp4', // Kling 2.5 Turbo Pro da una foto: sale in alto fino alla casa intera vista dall'alto (prompt rivisto il 05/10)
   stagioni: '/staging/videos/stagioni.mp4', // Nevica: GPT Image (la casa con la neve) + Kling 2.5 Turbo Pro primo/ultimo fotogramma
 } as const;
 // primo fotogramma da mostrare mentre il video si carica
