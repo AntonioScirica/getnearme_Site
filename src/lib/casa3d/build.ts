@@ -281,6 +281,7 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
       if (near && near.d < 1.2) room = near.r
     }
     if (l.h >= 2.2 && l.h <= 4.5) hs.push(l.h)
+    if (!room && (l.type === 'terrazzo' || l.type === 'balcone')) { (p.outside_labels ??= []).push({ text: l.text.slice(0, 40), type: l.type, x: l.x, y: l.y }); continue }
     if (!room) continue
     const cur = best.get(room.id)
     // nella stessa stanza: prima il nome della stanza, poi i mq
@@ -310,14 +311,15 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
 }
 
 // Mobili disegnati sull'originale -> metri sulla pianta (stessa inversa di toImage delle scritte)
-const DRAWN_KINDS = new Set(['bed_double', 'bed_single', 'sofa', 'armchair', 'dining_table', 'desk', 'wardrobe', 'kitchen', 'wc', 'sink', 'shower', 'tv_unit'])
+const DRAWN_KINDS = new Set(['bed_double', 'bed_single', 'sofa', 'armchair', 'dining_table', 'desk', 'wardrobe', 'kitchen', 'wc', 'sink', 'shower', 'bathtub', 'tv_unit'])
 export function applyFurniture(raw: RawPlan, items: NonNullable<Fix['furniture']>): RawPlan {
   const p = clone(raw)
   const [a, b, c, d, e, f] = p.source.toImage, det = a * d - b * c, ppm = Math.sqrt(Math.abs(det))
   const toM = (px: number, py: number): Pt => [(d * (px - e) - c * (py - f)) / det, (-b * (px - e) + a * (py - f)) / det]
   p.furniture = []
   for (const it of items ?? []) {
-    if (!DRAWN_KINDS.has(it.kind) || !(it.x >= 0 && it.x <= 1 && it.y >= 0 && it.y <= 1)) continue // vasca: nessun modello
+    // solo i mobili disegnati con sicurezza (confidenza dal controllo; senza, li verifica l'inchiostro in pipeline)
+    if (!DRAWN_KINDS.has(it.kind) || !(it.x >= 0 && it.x <= 1 && it.y >= 0 && it.y <= 1) || (typeof it.confidence === 'number' && it.confidence < 0.6)) continue
     const at = toM(it.x * p.source.imgW, it.y * p.source.imgH)
     if (!p.rooms.some(r => inPoly(at[0], at[1], r.poly))) continue
     const vx = Math.cos(it.back * Math.PI / 180), vy = Math.sin(it.back * Math.PI / 180)
@@ -343,6 +345,7 @@ export function drawnToViewer(it: NonNullable<RawPlan['furniture']>[number]): { 
     case 'kitchen': { const w = cl(L, 1.2, 5); return { kind: 'kitchen', w, d: 0.64, opts: { w } } }
     case 'wc': return { kind: 'wc', w: 0.4, d: 0.6, opts: {} }
     case 'sink': return { kind: 'sink', w: 0.6, d: 0.5, opts: {} }
+    case 'bathtub': { const w = cl(L, 1.4, 1.9), dd = cl(D, 0.65, 0.9); return { kind: 'bathtub', w, d: dd, opts: { w, d: dd } } }
     case 'shower': { const w = cl(L, 0.7, 1.4), dd = cl(D, 0.7, 1.2); return { kind: 'shower', w, d: dd, opts: { w, d: dd } } }
     case 'tv_unit': { const w = cl(L, 1, 2.4); return { kind: 'tvcab', w, d: 0.42, opts: { w } } }
   }

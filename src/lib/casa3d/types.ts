@@ -28,7 +28,9 @@ export type RawSource = {
   toImage: [number, number, number, number, number, number]
   imgW: number; imgH: number
 }
-export type RawPlan = { version: 3; units: 'm'; height: number; source: RawSource; walls: RawWall[]; openings: RawOpening[]; rooms: RawRoom[]; furniture?: DrawnItem[]; materials?: Materials }
+export type RawPlan = { version: 3; units: 'm'; height: number; source: RawSource; walls: RawWall[]; openings: RawOpening[]; rooms: RawRoom[]; furniture?: DrawnItem[]; materials?: Materials
+  // scritte terrazzo/balcone lette fuori dalle stanze riconosciute (posizione 0-1 sull'originale): per ritrovare le zone esterne
+  outside_labels?: { text: string; type: string; x: number; y: number }[] }
 
 // Correzioni (dal controllo di Claude): stesso schema del prototipo in Python
 export type Fix = {
@@ -42,7 +44,7 @@ export type Fix = {
   labels?: { text: string; type: string; x: number; y: number; mq: number; h: number }[]
   // mobili disegnati sull'originale: centro 0-1, lato lungo e profondita' in frazioni della larghezza dell'immagine,
   // back = direzione (gradi, 0 = destra, 90 = giu') dal centro verso la schiena (testiera, schienale, lato contro il muro)
-  furniture?: { kind: string; x: number; y: number; len: number; depth: number; back: number }[]
+  furniture?: { kind: string; x: number; y: number; len: number; depth: number; back: number; confidence?: number }[]
 }
 // mobile disegnato, in metri sulla pianta (rot come nel visore: la schiena del modello e' -z)
 export type DrawnItem = { kind: string; at: Pt; rot: number; len: number; depth: number }

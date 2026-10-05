@@ -5,13 +5,14 @@ import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
-import { alignToOriginal } from './align'
+import { alignToOriginal, verifyFurniture } from './align'
 import { applyFix, applyFurniture, applyLabels, guessRoomTypes } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
 import { vectorizeImage } from './vectorize'
 import { readMaterials } from './materials'
+import { findOutdoor } from './outdoor'
 
 // prompt severo del prototipo (tools/redraw.mjs, 04/10): la geometria non si tocca, restano solo muri, porte e finestre
 export const REDRAW_PROMPT = `Redraw this floor plan as a clean architectural CAD wall plan seen from above. Keep exactly the same geometry, proportions, orientation, position and scale as the input: do not rotate, crop, move, mirror or straighten anything.
@@ -81,7 +82,12 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
     ms.allineamento = Date.now() - ta
   } catch (e) { console.error('casa3d allineamento', e) }
   if (fix?.labels?.length) raw = applyLabels(raw, fix.labels)
-  if (fix?.furniture?.length) raw = applyFurniture(raw, fix.furniture) // mobili disegnati: nel 3D al loro posto
+  if (fix?.furniture?.length) {
+    raw = applyFurniture(raw, fix.furniture) // mobili disegnati: nel 3D al loro posto
+    try { raw = (await verifyFurniture(raw, crop)).raw } catch (e) { console.error('casa3d mobili', e) } // solo quelli con inchiostro sull'originale
+  }
+  // terrazzi e balconi tratteggiati o con la scritta fuori dalle stanze, che il ridisegno ha cancellato
+  try { raw = (await findOutdoor(raw, crop)).raw } catch (e) { console.error('casa3d esterni', e) }
   raw = guessRoomTypes(raw)
   // materiali e colori dalle foto dell'immobile (una sola chiamata per casa: il chiamante passa le foto solo al primo piano)
   if (o.photos?.length) {
