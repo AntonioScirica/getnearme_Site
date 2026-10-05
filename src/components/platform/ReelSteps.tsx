@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { Check, ChevronLeft, ChevronRight, Coins, ImagePlus, Images, Loader2, Monitor, Plus, SunMedium, X } from 'lucide-react';
 import { fetchMedia, type MediaItem } from './MediaView';
 import { tr } from './i18n';
-import { authFetch } from './api';
+import BrandCard from './BrandCard';
 
 // Video dell'annuncio e Video Venduto o Affittato nella chat (05/10/2026): passi dentro il messaggio del video.
 // Foto (solo annuncio) -> dati -> video (crediti solo a video pronto). Niente AI.
@@ -223,9 +223,6 @@ export function ReelPhotos({ r, suggestions, onChange, onAdd, onPick, onNext }: 
 export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: ReelState; cost: number; onChange: (p: Partial<ReelState>) => void; onCreate: () => void; onSwapPhoto: (f: File) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const set = (p: Partial<ReelState>) => onChange(p);
-  // logo dal profilo (stessa fonte del sito): se manca si dice dove aggiungerlo; si riguarda a ogni apertura del passo
-  const [noLogo, setNoLogo] = useState(false);
-  useEffect(() => { authFetch('/api/platform/site').then(r => (r.ok ? r.json() : null)).then((d: { logo?: string | null; config?: { logo?: string } } | null) => setNoLogo(!!d && !d.config?.logo && !d.logo)).catch(() => {}); }, []);
   const rent = r.contract === 'affitto', sold = r.tpl === 'venduto';
   return (
     <div className="px-1">
@@ -264,7 +261,8 @@ export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: Reel
           <span className="relative h-6 w-10 rounded-full bg-black/15 ease-smooth transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:ease-smooth after:transition-transform peer-checked:bg-brand peer-checked:after:translate-x-4" />
         </label>
       </div>
-      {noLogo && <p className="blur-in mt-4 rounded-2xl bg-brand/5 px-4 py-3 text-[13px] text-ink/80">{tr('Il tuo logo non c’è ancora, ', 'Your logo is not there yet, ')}<a href="#/profilo" className="font-semibold text-brand underline-offset-2 hover:underline">{tr('aggiungilo nel profilo', 'add it in your profile')}</a>{tr(' per vederlo a fine video.', ' to see it at the end of the video.')}</p>}
+      {/* manca logo, agenzia o telefono: si completano qui e vanno nel profilo */}
+      <BrandCard inChat />
       <div className="flex flex-col items-start gap-2 pt-5">
         <button type="button" disabled={!!r.uploading} onClick={onCreate} className="flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-[14px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">
           {r.editing ? tr('Rifai il video, gratis', 'Redo the video, free') : <>{tr(`Crea il video, ${cost} crediti`, `Create the video, ${cost} credits`)}<Coins size={14} className="opacity-80" /></>}
