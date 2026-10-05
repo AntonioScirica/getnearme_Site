@@ -130,6 +130,29 @@ export function buildHouse(plan, M) {
   const roof = mesh(roofGeo, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }), { cast: true, receive: false })
   roof.name = 'solaio'
   group.add(ceiling, roof); hideInTop.push(ceiling, roof)
+  // gronda del tetto: cornice di 30 cm fuori dal filo dei muri, col colore di coppi o tegole; si vede solo da sotto
+  // (nella vista dall'alto e' nascosta come il solaio, dentro casa e' sopra il soffitto)
+  const ROOF_COL = { coppi: 0xb5562f, tegole: 0x9a4b30, piano: 0x8f8a84 }
+  if (ROOF_COL[plan.materials?.roof]) {
+    const quads = []
+    for (const P of roofFoot) {
+      const ring = P[0].slice(0, -1)
+      let ar = 0; for (let i = 0; i < ring.length; i++) { const a = ring[i], b = ring[(i + 1) % ring.length]; ar += a[0] * b[1] - b[0] * a[1] }
+      const o = ar > 0 ? 1 : -1 // normale verso fuori
+      for (let i = 0; i < ring.length; i++) {
+        const a = ring[i], b = ring[(i + 1) % ring.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < 0.05) continue
+        const nx = (b[1] - a[1]) / L * o * 0.3, nz = -(b[0] - a[0]) / L * o * 0.3
+        quads.push([[a, b, [b[0] + nx, b[1] + nz], [a[0] + nx, a[1] + nz], a]])
+      }
+    }
+    const band = quads.length ? D(U(quads), roofFoot) : []
+    if (band.length) {
+      const g = new THREE.ExtrudeGeometry(shapesOf(band), { depth: 0.16, bevelEnabled: false })
+      g.rotateX(-Math.PI / 2); g.translate(0, H + 0.12, 0)
+      const eave = mesh(g, new THREE.MeshStandardMaterial({ color: ROOF_COL[plan.materials.roof], roughness: 0.85 }), { cast: false })
+      eave.name = 'gronda'; group.add(eave); hideInTop.push(eave)
+    }
+  }
 
   // PAVIMENTI: poligono della stanza + soglie delle sue porte, meno i muri, meno le stanze gia' fatte (niente sovrapposizioni)
   let used = []
@@ -185,6 +208,7 @@ export function buildHouse(plan, M) {
   if (plan.materials?.frames) M.windowFrame.color.set(plan.materials.frames)
   const doorMat = plan.materials?.doors ? M.lacquer.clone() : M.lacquer
   if (plan.materials?.doors) doorMat.color.set(plan.materials.doors)
+  const shutters = []
   const wallBits = [], frames = [], glass = [], sills = [], doorWood = [], entranceLeaf = [], handles = [], radiators = []
   const bx = (xa, ya, za, xb, yb, zb) => boxGeo(Math.min(xa, xb), Math.min(ya, yb), Math.min(za, zb), Math.max(xa, xb), Math.max(ya, yb), Math.max(za, zb))
   const sideRoom = (cx, cz, nx, nz, o) => grid.roomAt(cx + nx * o, cz + nz * o)
@@ -270,6 +294,16 @@ export function buildHouse(plan, M) {
         radiators.push(ax ? boxGeo(p0, 0.14, q0, p1, 0.72, q1) : boxGeo(q0, 0.14, p0, q1, 0.72, p1))
       }
     }
+    // persiane (scuri) aperte, accostate al muro fuori, col colore letto dalle foto: due ante ai lati della finestra
+    if (plan.materials?.shutters && len > 0.4) {
+      const out = ax ? (inn[1] > 0 ? z0 : z1) : (inn[0] > 0 ? x0 : x1), sg = -(ax ? inn[1] : inn[0]) // faccia esterna e verso fuori
+      const lw = Math.min(0.75, len / 2), f0 = out + sg * 0.012, f1 = out + sg * 0.045
+      for (const [p0, p1] of [[a0 - lw - 0.02, a0 - 0.02], [a1 + 0.02, a1 + lw + 0.02]]) {
+        const box3 = (q0, q1, y0, y1, d0, d1) => shutters.push(ax ? bx(q0, y0, d0, q1, y1, d1) : bx(d0, y0, q0, d1, y1, q1))
+        box3(p0, p1, SILL - 0.02, HEAD + 0.02, f0, f1)
+        for (let y = SILL + 0.08; y < HEAD - 0.05; y += 0.075) box3(p0 + 0.04, p1 - 0.04, y, y + 0.03, f1, f1 + sg * 0.012) // lamelle
+      }
+    }
     windows.push({ ...w, center: [cx, cz], len, face, sillTop: SILL, head: HEAD })
   }
   const fr = merged(frames, M.windowFrame); if (fr) group.add(fr)
@@ -279,6 +313,7 @@ export function buildHouse(plan, M) {
   const dw = merged(doorWood, doorMat); if (dw) group.add(dw)
   const el = merged(entranceLeaf, M.oakDark); if (el) group.add(el)
   const ra = merged(radiators, M.radiator); if (ra) group.add(ra)
+  if (shutters.length) { const sm = new THREE.MeshStandardMaterial({ color: plan.materials.shutters, roughness: 0.55 }); const sh = merged(shutters, sm); if (sh) { sh.name = 'persiane'; group.add(sh) } }
 
   // battiscopa e rivestimenti: lungo i lati delle stanze che toccano un muro (non sulle soglie)
   const skirt = [], cladding = []
