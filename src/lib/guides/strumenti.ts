@@ -9,6 +9,7 @@ export const gestionale: Guide = {
   description: `Gestionale immobiliare: cosa deve fare, le funzioni indispensabili, una checklist per scegliere il migliore per la tua agenzia e gli errori da evitare.`,
   h1: `Gestionale immobiliare: cosa deve fare e come scegliere quello giusto`,
   intro: `Un gestionale immobiliare è il software che tiene insieme immobili, clienti, pubblicazione sui portali, documenti e agenda dell'agenzia. Qui trovi le funzioni che contano davvero, una checklist per sceglierlo e come valutarne il costo.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -24,7 +25,8 @@ export const gestionale: Guide = {
   <li><strong>vedere a che punto è ogni trattativa</strong> e quanto vale il portafoglio;</li>
   <li><strong>lavorare in squadra</strong> senza pestarsi i piedi sugli stessi clienti.</li>
 </ul>
-<p>La differenza con un <a href="/it/crm-immobiliare">CRM immobiliare</a> è di confini: il CRM si concentra sui contatti e sul loro percorso fino al rogito, il gestionale copre anche immobili, pubblicazione e documenti. Molti prodotti fanno entrambe le cose, e spesso le due parole vengono usate come sinonimi.</p>`,
+<p>La differenza con un <a href="/it/crm-immobiliare">CRM immobiliare</a> è di confini: il CRM si concentra sui contatti e sul loro percorso fino al rogito, il gestionale copre anche immobili, pubblicazione e documenti. Molti prodotti fanno entrambe le cose, e spesso le due parole vengono usate come sinonimi.</p>
+<p>Che tu sia un <a href="/it/agente-immobiliare">agente immobiliare</a> che lavora da solo o un'agenzia con più collaboratori, il gestionale è lo strumento su cui passerai più ore: per questo conviene sceglierlo con calma.</p>`,
     },
     {
       id: 'funzioni-indispensabili',
@@ -153,12 +155,13 @@ export const crm: Guide = {
   description: `CRM immobiliare per agenti: da dove arrivano i lead, le fasi dal primo contatto al rogito, regole di follow-up, automazioni e basi GDPR da rispettare.`,
   h1: `CRM immobiliare: gestire contatti e lead dal primo messaggio al rogito`,
   intro: `Un CRM immobiliare serve a non perdere nessun contatto: registra chi ti scrive, a che punto è e quando va richiamato. Qui trovi le fasi della pipeline, le regole di follow-up e come usarlo nel rispetto del GDPR.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
       id: 'cos-e-un-crm-immobiliare',
       title: `Cos'è un CRM immobiliare e perché serve a un agente`,
-      html: `<p>CRM sta per <em>Customer Relationship Management</em>: gestione delle relazioni con i clienti. Per un agente immobiliare significa avere in un unico posto <strong>tutti i contatti</strong> (proprietari, acquirenti, inquilini, notai, tecnici) con la loro storia: quando ti hanno scritto, cosa cercano, cosa si è detto, qual è il prossimo passo.</p>
+      html: `<p>CRM sta per <em>Customer Relationship Management</em>: gestione delle relazioni con i clienti. Per un <a href="/it/agente-immobiliare">agente immobiliare</a> significa avere in un unico posto <strong>tutti i contatti</strong> (proprietari, acquirenti, inquilini, notai, tecnici) con la loro storia: quando ti hanno scritto, cosa cercano, cosa si è detto, qual è il prossimo passo.</p>
 <p>Il problema che risolve è semplice: nel lavoro immobiliare i tempi sono lunghi. Un proprietario che oggi "ci sta pensando" può essere pronto a vendere tra sei mesi. Un acquirente che non ha trovato niente questo mese può essere perfetto per l'immobile che acquisisci il prossimo. Senza un sistema, questi contatti si perdono nella rubrica e nelle chat.</p>
 <p>Un CRM immobiliare ben usato ti permette di:</p>
 <ul>
@@ -291,6 +294,7 @@ export const sitoWeb: Guide = {
   description: `Sito web per agente immobiliare: perché serve oltre ai portali, le pagine indispensabili, come farsi trovare su Google in zona, quanto costa e come farlo.`,
   h1: `Sito web per agente immobiliare: come farlo e farti trovare in zona`,
   intro: `Un sito web da agente immobiliare è il posto dove proprietari e acquirenti trovano te, non solo l'annuncio: le tue proposte, la tua zona e un modo semplice per contattarti. Qui vedi quali pagine servono, come farti trovare su Google e cosa determina il costo.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -304,7 +308,8 @@ export const sitoWeb: Guide = {
   <li><strong>Dà una destinazione ai social</strong>. Reel e post portano traffico: senza sito, quel traffico non ha dove andare se non in un messaggio privato.</li>
   <li><strong>Raccoglie tutto in un link</strong>. Da mettere nella firma email, nel profilo Instagram, su WhatsApp, sui biglietti da visita.</li>
 </ul>
-<p>Il sito non sostituisce i portali: li affianca. Il portale porta la domanda sull'immobile, il sito costruisce la fiducia nell'agente.</p>`,
+<p>Il sito non sostituisce i portali: li affianca. Il portale porta la domanda sull'immobile, il sito costruisce la fiducia nell'agente.</p>
+<p>In breve: il portale vende l'immobile, il sito vende l'<a href="/it/agente-immobiliare">agente immobiliare</a>. Ed è l'agente che il proprietario sceglie quando affida la casa.</p>`,
     },
     {
       id: 'pagine-indispensabili',

@@ -4,6 +4,7 @@ import { permanentRedirect } from 'next/navigation';
 import { locales } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
 import { GUIDES } from '@/lib/guides';
+import { OWNER_STEPS } from '@/lib/guides/related';
 import { CITIES, eur } from '@/lib/omiCitta';
 import { HomeownerHeader, ValuationAside, ValuationCard } from '@/components/valuation/HomeownerCta';
 import { SiteFooter } from '@/components/landing/AgenteImmoLanding';
@@ -26,12 +27,8 @@ export const metadata: Metadata = {
   openGraph: { type: 'website', url: URL, siteName: 'Agente Immo', locale: 'it_IT', title: TITLE, description: DESCRIPTION, images: ['/immo/home/staging-after.webp'] },
 };
 
-// guide in ordine di percorso: prima il valore, poi costi e carte, poi come e quando vendere
-const STEPS: [string, string[]][] = [
-  ['1. Capire quanto vale la casa', ['come-valutare-una-casa', 'quotazioni-omi', 'superficie-commerciale']],
-  ['2. Costi, documenti e tasse', ['quanto-costa-vendere-casa', 'documenti-per-vendere-casa', 'plusvalenza-vendita-casa']],
-  ['3. Preparare e vendere', ['quando-conviene-vendere-casa', 'cosa-fare-prima-di-vendere-casa', 'come-vendere-casa-velocemente', 'vendere-casa-senza-agenzia']],
-];
+// guide in ordine di percorso (prima il valore, poi costi e carte, poi come e quando vendere): in related.ts
+const STEPS = OWNER_STEPS;
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -58,6 +55,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
         <nav aria-label="Percorso" className="pt-6 text-sm text-muted"><Link href="/it" className="hover:text-ink">Agente Immo</Link> / <span>Vendere casa</span></nav>
         <h1 className="mt-4 font-display text-[32px] font-extrabold leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">Vendere casa: tutto quello che ti serve sapere</h1>
         <p className="mt-5 text-lg leading-relaxed text-muted">Stai pensando di vendere casa? Qui trovi, in ordine, i passi da fare: capire quanto vale, sapere quanto costa vendere e quali documenti servono, preparare la casa e scegliere come venderla. Guide scritte in modo semplice, senza parole difficili.</p>
+        <p className="mt-6 rounded-[24px] bg-canvas p-5 text-[17px] leading-relaxed"><strong>In breve:</strong> per vendere casa parti dal valore (quotazioni OMI della zona per la superficie commerciale), metti in ordine i documenti, calcola costi e tasse, poi scegli se vendere con un agente immobiliare o da privato. Le guide qui sotto seguono questo ordine.</p>
 
         <ValuationCard />
 

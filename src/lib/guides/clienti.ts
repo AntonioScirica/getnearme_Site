@@ -14,6 +14,7 @@ export const messaggiAcquisire: Guide = {
   description: `Messaggi per acquisire immobili pronti da copiare: WhatsApp, SMS ed email per privati, ex clienti, vicini, eredi e affitti, con follow-up e regole privacy.`,
   h1: `Messaggi per acquisire immobili: modelli pronti per WhatsApp, SMS ed email`,
   intro: `Un buon messaggio per acquisire immobili è breve, personale e dà al proprietario un motivo concreto per risponderti: una vendita in zona, un acquirente vero, una valutazione gratuita. Qui trovi modelli pronti per WhatsApp, SMS ed email, divisi per tipo di contatto, con i tempi giusti, il follow-up e le regole di privacy da rispettare.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -26,7 +27,8 @@ export const messaggiAcquisire: Guide = {
   <li><strong>puoi allegare qualcosa di utile</strong>: una scheda prezzi della zona, una foto prima e dopo, un breve video;</li>
   <li><strong>la conversazione resta scritta</strong>, quindi è più facile riprenderla dopo settimane.</li>
 </ul>
-<p>Il limite è altrettanto chiaro: un messaggio non richiesto, generico o insistente viene percepito come spam più di una lettera. Per questo i messaggi di acquisizione funzionano bene <strong>quando c'è già un contatto</strong> (un annuncio privato con numero pubblicato per quella vendita, un ex cliente, una persona conosciuta in zona) e quasi mai come invio di massa. Il messaggio è uno strumento dentro una strategia più ampia, che trovi nella guida su <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>`,
+<p>Il limite è altrettanto chiaro: un messaggio non richiesto, generico o insistente viene percepito come spam più di una lettera. Per questo i messaggi di acquisizione funzionano bene <strong>quando c'è già un contatto</strong> (un annuncio privato con numero pubblicato per quella vendita, un ex cliente, una persona conosciuta in zona) e quasi mai come invio di massa. Il messaggio è uno strumento dentro una strategia più ampia, che trovi nella guida su <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>
+<p>Ricorda che il messaggio è solo il primo passo: il proprietario sceglie una persona di cui fidarsi. Cosa si aspetta da un <a href="/it/agente-immobiliare">agente immobiliare</a>, dalla valutazione al rogito, lo trovi nella guida completa.</p>`,
     },
     {
       id: 'regole-messaggio',
@@ -142,6 +144,7 @@ export const trovareClienti: Guide = {
   description: `Agente immobiliare, come trovare clienti venditori e acquirenti: canali online e offline, zona, referral, social, sito e un metodo settimanale da seguire.`,
   h1: `Agente immobiliare: come trovare clienti, venditori e acquirenti, con un metodo settimanale`,
   intro: `Per trovare clienti come agente immobiliare servono tre cose: una zona precisa da presidiare, pochi canali usati con costanza e un metodo settimanale che non dipenda dall'ispirazione. Prima vengono i venditori, perché senza immobili non arrivano acquirenti. Qui trovi i canali online e offline, come lavorare referral e social, e un calendario pronto da seguire.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -268,6 +271,7 @@ export const agenteIndipendente: Guide = {
   description: `Agente immobiliare indipendente: requisiti per aprire un'agenzia da solo, costi da prevedere, strumenti minimi, come farti conoscere ed errori da evitare.`,
   h1: `Agente immobiliare indipendente: come aprire un'agenzia immobiliare da solo`,
   intro: `Per diventare agente immobiliare indipendente ti servono l'abilitazione, un'attività registrata alla Camera di Commercio con partita IVA e una polizza professionale. Poi viene la parte più difficile: farti conoscere senza il marchio di una rete. Qui trovi i passaggi, i costi da mettere in conto, gli strumenti minimi e gli errori più comuni di chi apre da solo.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -396,12 +400,13 @@ export const personalBranding: Guide = {
   description: `Personal branding agente immobiliare: come farti conoscere in zona con social, video, sito, recensioni e contenuti locali, più un calendario pronto.`,
   h1: `Personal branding per agente immobiliare: come farsi conoscere in zona`,
   intro: `Il personal branding dell'agente immobiliare è il motivo per cui un proprietario chiama te e non un'agenzia qualsiasi: perché ti ha già visto, sa come lavori e ti associa alla sua zona. Non serve diventare famosi online: serve una presenza costante e locale su social, sito e recensioni. Qui trovi cosa pubblicare, quali video fare e un calendario settimanale.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
       id: 'cos-e',
       title: `Cos'è il personal branding per un agente immobiliare`,
-      html: `<p>Il personal branding è <strong>l'idea che le persone si fanno di te prima di incontrarti</strong>. Per un agente immobiliare si riassume in una frase che vorresti sentire dire nel tuo quartiere: "Per la casa chiama [Nome], conosce la zona e lavora bene".</p>
+      html: `<p>Il personal branding è <strong>l'idea che le persone si fanno di te prima di incontrarti</strong>. Per un <a href="/it/agente-immobiliare">agente immobiliare</a> si riassume in una frase che vorresti sentire dire nel tuo quartiere: "Per la casa chiama [Nome], conosce la zona e lavora bene".</p>
 <p>Ha tre ingredienti:</p>
 <ul>
   <li><strong>riconoscibilità</strong>: volto, nome, stile coerenti ovunque;</li>

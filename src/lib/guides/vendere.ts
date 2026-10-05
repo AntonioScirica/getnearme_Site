@@ -14,6 +14,7 @@ export const casaCheNonSiVende: Guide = {
   description: `Casa che non si vende: le cause vere (prezzo, foto, annuncio, stanze vuote, documenti), come fare la diagnosi e un piano per riposizionare l'immobile.`,
   h1: `Casa che non si vende: perché succede e come riposizionare l'immobile`,
   intro: `Una casa che non si vende ha quasi sempre una causa precisa: prezzo fuori mercato, foto che non fermano chi scorre, annuncio debole, stanze vuote o datate, documenti non pronti. La soluzione non è aspettare né abbassare il prezzo alla cieca: è capire dove si blocca il percorso dell'acquirente e intervenire lì, con un piano condiviso con il proprietario.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -29,7 +30,8 @@ export const casaCheNonSiVende: Guide = {
   <li><strong>Tempi e disponibilità</strong>: visite difficili da fissare, proprietario sempre presente che interviene, casa occupata in modo disordinato, chiavi non disponibili.</li>
   <li><strong>Caratteristiche oggettive</strong>: piano alto senza ascensore, esposizione, rumore, zona. Non si cambiano, ma vanno dichiarate e pesate nel prezzo.</li>
 </ul>
-<p>Le prime quattro cause dipendono quasi interamente da te e dal proprietario. Per questo vanno controllate prima di pensare a qualsiasi ribasso.</p>`,
+<p>Le prime quattro cause dipendono quasi interamente da te e dal proprietario. Per questo vanno controllate prima di pensare a qualsiasi ribasso.</p>
+<p>Qui conta l'esperienza: riconoscere in fretta la causa giusta è una delle competenze che distinguono un <a href="/it/agente-immobiliare">agente immobiliare</a> bravo da uno che si limita ad abbassare il prezzo.</p>`,
     },
     {
       id: 'diagnosi',
@@ -145,6 +147,7 @@ export const annuncioSenzaContatti: Guide = {
   description: `Annuncio immobiliare senza contatti? I controlli da fare su foto, titolo, prezzo, descrizione, rinnovo e social per far tornare a squillare il telefono.`,
   h1: `Annuncio immobiliare senza contatti: perché nessuno chiama e come rimediare`,
   intro: `Se un annuncio immobiliare non riceve contatti, il problema è quasi sempre in uno di questi punti: la prima foto non ferma chi scorre, il titolo non dice nulla, il prezzo è fuori dai filtri di ricerca o la descrizione lascia troppe domande. Parti dalla foto di copertina, poi controlla il resto nell'ordine di questa guida.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -156,7 +159,8 @@ export const annuncioSenzaContatti: Guide = {
   <li><strong>Compare ma non viene aperto</strong>: copertina debole, titolo generico, prezzo che sembra alto rispetto a quello che si vede.</li>
   <li><strong>Viene aperto ma nessuno contatta</strong>: galleria povera, descrizione vaga, dati mancanti, dubbi che l'acquirente risolve scartando l'annuncio invece di chiamare.</li>
 </ol>
-<p>Le statistiche del portale (visualizzazioni in lista, aperture, contatti, salvataggi) ti dicono in quale passaggio si perde l'acquirente. Se il problema è più ampio e la casa è ferma da tempo, leggi anche la guida sulla <a href="/it/casa-che-non-si-vende">casa che non si vende</a>.</p>`,
+<p>Le statistiche del portale (visualizzazioni in lista, aperture, contatti, salvataggi) ti dicono in quale passaggio si perde l'acquirente. Se il problema è più ampio e la casa è ferma da tempo, leggi anche la guida sulla <a href="/it/casa-che-non-si-vende">casa che non si vende</a>.</p>
+<p>Rendere visibile un immobile è uno dei compiti principali di un <a href="/it/agente-immobiliare">agente immobiliare</a>, ed è quello che il proprietario controlla di più: se l'annuncio non riceve chiamate, è il primo a chiederti perché.</p>`,
     },
     {
       id: 'foto',
@@ -270,6 +274,7 @@ export const homeStagingEsempi: Guide = {
   description: `Home staging esempi per ogni stanza: soggiorno, camera, cucina, bagno, esterni e stanza vuota. Cosa cambiare, che stile scegliere, fisico o virtuale.`,
   h1: `Home staging esempi: prima e dopo stanza per stanza, con cosa cambiare`,
   intro: `Un buon home staging non trasforma la casa: toglie quello che distrae, aggiunge pochi elementi che fanno capire come usare ogni spazio e sceglie uno stile adatto a chi comprerà. Qui trovi esempi concreti per soggiorno, camera, cucina, bagno, esterni e stanza vuota, con cosa cambiare prima e dopo e quando farlo dal vivo o in foto.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -282,7 +287,8 @@ export const homeStagingEsempi: Guide = {
   <li><strong>Luce</strong>: tende aperte, lampadine funzionanti e dello stesso colore, superfici libere che riflettono la luce.</li>
   <li><strong>Neutralità con un tocco di calore</strong>: colori chiari e tranquilli, più qualche elemento vivo (una pianta, un plaid, dei cuscini) che renda la casa abitabile e non da catalogo.</li>
 </ul>
-<p>Questi principi valgono sia per l'home staging fisico sia per quello virtuale. La differenza è dove si vede il risultato: nel fisico anche alla visita, nel virtuale solo nelle foto. Per le basi, parti dalla <a href="/it/home-staging-virtuale">guida all'home staging virtuale</a>.</p>`,
+<p>Questi principi valgono sia per l'home staging fisico sia per quello virtuale. La differenza è dove si vede il risultato: nel fisico anche alla visita, nel virtuale solo nelle foto. Per le basi, parti dalla <a href="/it/home-staging-virtuale">guida all'home staging virtuale</a>.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> questi esempi servono due volte: per l'annuncio e per l'appuntamento di acquisizione, quando mostri al proprietario come presenterai la sua casa.</p>`,
     },
     {
       id: 'soggiorno',
@@ -420,6 +426,7 @@ export const arredareFotoConAi: Guide = {
   description: `Arredare foto con AI: come funziona, come scattare la foto giusta, stili, prompt pronti in italiano, limiti e come usarla negli annunci in modo corretto.`,
   h1: `Arredare foto con AI: come arredare una stanza online partendo da una foto`,
   intro: `Per arredare una foto con l'AI carichi lo scatto della stanza in uno strumento di home staging virtuale, scrivi cosa vuoi (per esempio "arredala in stile moderno") e in pochi secondi ottieni la stessa stanza arredata. Il risultato dipende soprattutto da due cose: una foto di partenza ben fatta e una richiesta chiara. Qui trovi come fare entrambe e come usare l'immagine negli annunci.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -433,7 +440,8 @@ export const arredareFotoConAi: Guide = {
   <li><strong>Ottieni il risultato</strong> e lo confronti con l'originale, spesso con uno slider prima e dopo.</li>
   <li><strong>Correggi</strong> con una nuova richiesta, se qualcosa non ti convince, o rigeneri.</li>
 </ol>
-<p>Rispetto all'home staging virtuale fatto a mano da un grafico, la differenza principale è il tempo: secondi invece di ore o giorni, e la possibilità di provare più versioni. Per il quadro generale vedi la guida all'<a href="/it/home-staging-virtuale">home staging virtuale</a> e quella sull'<a href="/it/intelligenza-artificiale-agenti-immobiliari">intelligenza artificiale per agenti immobiliari</a>.</p>`,
+<p>Rispetto all'home staging virtuale fatto a mano da un grafico, la differenza principale è il tempo: secondi invece di ore o giorni, e la possibilità di provare più versioni. Per il quadro generale vedi la guida all'<a href="/it/home-staging-virtuale">home staging virtuale</a> e quella sull'<a href="/it/intelligenza-artificiale-agenti-immobiliari">intelligenza artificiale per agenti immobiliari</a>.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> il vantaggio pratico è poter presentare ogni immobile allo stesso livello, anche quelli per cui un home stager non sarebbe mai stato pagato.</p>`,
     },
     {
       id: 'scattare-la-foto',

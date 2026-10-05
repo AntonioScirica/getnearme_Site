@@ -8,6 +8,9 @@ import { GUIDES, guideBySlug } from '@/lib/guides';
 import ProvvigioneCalc from '@/components/ProvvigioneCalc';
 import { PRICING, photosFor } from '@/lib/pricing';
 import { HomeownerHeader, ValuationAside, ValuationCard } from '@/components/valuation/HomeownerCta';
+import { SiteFooter } from '@/components/landing/AgenteImmoLanding';
+import { AGENT_TOPICS, RELATED } from '@/lib/guides/related';
+import { ORG_ID, SITE_ID } from '@/lib/seo';
 
 // Guide SEO su /it/<slug> (pilastro "agente immobiliare" + satelliti), solo in italiano.
 // Le rotte statiche sotto [locale] hanno la precedenza: qui arrivano solo gli slug delle guide.
@@ -66,20 +69,24 @@ export default async function Page({ params }: Props) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Article', headline: g.title, description: g.description, inLanguage: 'it-IT', mainEntityOfPage: url,
-        datePublished: g.updated, dateModified: g.updated, image: 'https://agenteimmo.me/immo/home/staging-after.webp',
-        author: { '@type': 'Organization', name: 'Agente Immo', url: 'https://agenteimmo.me/it' },
-        publisher: { '@type': 'Organization', name: 'Agente Immo', logo: { '@type': 'ImageObject', url: 'https://agenteimmo.me/immo/logo-mark.png' } },
+        '@type': 'Article', '@id': `${url}#article`, headline: g.h1.length <= 110 ? g.h1 : g.title, name: g.title, description: g.description, inLanguage: 'it-IT',
+        mainEntityOfPage: { '@type': 'WebPage', '@id': url, url, name: g.title, isPartOf: { '@id': SITE_ID } },
+        datePublished: g.published ?? g.updated, dateModified: g.updated, image: 'https://agenteimmo.me/immo/home/staging-after.webp',
+        author: { '@type': 'Organization', '@id': ORG_ID, name: 'Agente Immo', url: 'https://agenteimmo.me/it/chi-siamo' },
+        publisher: { '@type': 'Organization', '@id': ORG_ID, name: 'Agente Immo', logo: { '@type': 'ImageObject', url: 'https://agenteimmo.me/immo/logo-mark.png' } },
+        ...(owner ? {} : { about: { '@type': 'Occupation', name: 'Agente immobiliare' } }),
       },
       { '@type': 'BreadcrumbList', itemListElement: crumbs.map(([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item })) },
       { '@type': 'FAQPage', mainEntity: g.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
     ],
   };
-  // le 6 guide che seguono nell'elenco (a giro): ogni guida ne linka altre, tutte ricevono link senza liste infinite
-  // (a giro tra le guide dello stesso pubblico: agenti con agenti, proprietari con proprietari)
-  const pool = GUIDES.filter(x => (x.audience === 'proprietari') === owner);
+  // "Leggi anche": le correlate scelte a mano in related.ts; per una guida nuova non ancora in mappa, le 5 che la seguono
+  // nell'elenco tra quelle dello stesso pubblico (agenti con agenti, proprietari con proprietari)
+  const pool = GUIDES.filter(x => (x.audience === 'proprietari') === owner && x.slug !== pillar.slug);
   const at = pool.indexOf(g);
-  const related = Array.from({ length: Math.min(6, pool.length - 1) }, (_, i) => pool[(at + 1 + i) % pool.length]);
+  const related = (RELATED[g.slug] ?? Array.from({ length: 5 }, (_, i) => pool[(at + 1 + i) % pool.length]?.slug))
+    .map(s => guideBySlug(s ?? '')).filter((x): x is NonNullable<typeof x> => !!x && x !== g);
+  const isPillar = g.slug === pillar.slug;
 
   return (
     <div className={`${platformFontVars} min-h-screen bg-white font-body text-ink`}>
@@ -100,6 +107,8 @@ export default async function Page({ params }: Props) {
         </nav>
         <h1 className="mt-4 font-display text-[32px] font-extrabold sm:text-4xl leading-[1.1] tracking-tight md:text-5xl">{g.h1}</h1>
         <p className="mt-5 text-lg leading-relaxed text-muted">{g.intro}</p>
+        {/* risposta in breve, in cima: la frase che Google e i motori AI possono citare */}
+        {g.summary && <p className="mt-6 rounded-[24px] bg-canvas p-5 text-[17px] leading-relaxed"><strong>In breve:</strong> {g.summary}</p>}
         <p className="mt-3 text-sm text-muted">Aggiornata il <time dateTime={g.updated}>{date}</time></p>
 
         <nav aria-label="Indice" className="mt-10 rounded-[28px] bg-canvas p-6">
@@ -128,7 +137,27 @@ export default async function Page({ params }: Props) {
           </section>
         </article>
 
-        <nav aria-label="Leggi anche" className="mt-14">
+        {/* pilastro: tutte le guide per agenti, divise per argomento */}
+        {isPillar && (
+          <nav aria-label="Guide per agenti immobiliari" className="mt-14">
+            <h2 className="font-display text-[26px] font-extrabold tracking-tight">Tutte le guide per l&apos;agente immobiliare</h2>
+            <p className="mt-2 text-[15px] text-muted">Ogni argomento di questa pagina, approfondito in una guida pratica.</p>
+            {AGENT_TOPICS.map(t => (
+              <section key={t.id} className="mt-8">
+                <h3 className="font-display text-xl font-bold">{t.title}</h3>
+                <p className="mt-1 text-[15px] text-muted">{t.text}</p>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {t.slugs.map(s => guideBySlug(s)).filter(x => !!x).map(r => (
+                    <li key={r.slug}><Link href={`/it/${r.slug}`} className="block h-full rounded-[24px] bg-canvas p-5 ease-smooth transition-colors hover:bg-line/60"><span className="font-semibold">{r.label}</span><span className="mt-1 block text-sm text-muted">{r.description}</span></Link></li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+            <p className="mt-8 text-[15px]">Hai clienti che devono vendere casa? Gira loro le <Link href="/it/vendere-casa" className="font-semibold text-brand underline underline-offset-4">guide per chi vende casa</Link> e la <Link href="/it/quanto-vale-la-mia-casa" className="font-semibold text-brand underline underline-offset-4">valutazione gratuita della casa</Link>.</p>
+          </nav>
+        )}
+
+        {!isPillar && <nav aria-label="Leggi anche" className="mt-14">
           <div className="font-display text-xl font-bold">Leggi anche</div>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {VALUATION_GUIDES.has(g.slug) && (
@@ -141,7 +170,8 @@ export default async function Page({ params }: Props) {
               <li key={r.slug}><Link href={`/it/${r.slug}`} className="block h-full rounded-[24px] bg-canvas p-5 ease-smooth transition-colors hover:bg-line/60"><span className="font-semibold">{r.label}</span><span className="mt-1 block text-sm text-muted">{r.description}</span></Link></li>
             ))}
           </ul>
-        </nav>
+          <p className="mt-5 text-[15px]">{owner ? <Link href="/it/vendere-casa" className="font-semibold text-brand underline underline-offset-4">Tutte le guide per chi vende casa</Link> : <Link href="/it/guide" className="font-semibold text-brand underline underline-offset-4">Tutte le guide per agenti immobiliari</Link>}</p>
+        </nav>}
 
         {owner ? <ValuationAside note="Stima indicativa basata sulle quotazioni OMI dell'Agenzia delle Entrate, non è una perizia." /> : <aside className="mt-16 rounded-[32px] bg-ink px-6 py-12 text-center text-white">
           <h2 className="mx-auto max-w-xl font-display text-3xl font-extrabold tracking-tight">Più incarichi, case vendute prima.</h2>
@@ -151,6 +181,7 @@ export default async function Page({ params }: Props) {
           <Link href={TRY} className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink max-sm:w-full">Provalo gratis sulla tua foto <ArrowRight size={16} /></Link>
         </aside>}
       </main>
+      <SiteFooter />
     </div>
   );
 }

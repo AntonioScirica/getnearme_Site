@@ -15,6 +15,7 @@ export const vendereCasaVelocemente: Guide = {
   description: `Come vendere casa velocemente, anche senza agenzia: prezzo giusto, documenti pronti, foto curate e un piano in 10 passi per non restare mesi in attesa.`,
   h1: 'Come vendere casa velocemente, anche senza agenzia',
   intro: `Per vendere casa velocemente servono soprattutto tre cose: un prezzo giusto fin dal primo giorno, i documenti già pronti e una casa presentata bene, in foto e dal vivo. Il resto conta, ma viene dopo. In questa guida trovi cosa fare, in che ordine, e un piano in 10 passi da seguire con o senza agenzia.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -148,6 +149,7 @@ export const vendereSenzaAgenzia: Guide = {
   description: `Vendere casa senza agenzia è legale e può farti risparmiare la provvigione: cosa devi fare, i documenti, i rischi concreti e quando conviene davvero.`,
   h1: 'Vendere casa senza agenzia: cosa fare, rischi e quando conviene',
   intro: `Sì, vendere casa senza agenzia è del tutto legale: due privati possono accordarsi direttamente, e il notaio resta comunque necessario per il rogito. Conviene se hai tempo, pazienza e voglia di seguire ogni passaggio, dal prezzo alla trattativa. Qui trovi cosa devi fare tu, i rischi concreti e come evitarli.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -275,6 +277,7 @@ export const quandoConvieneVendere: Guide = {
   description: `Quando conviene vendere casa: fattori personali, regola dei 5 anni, mutuo in corso, mercato della tua zona e stagione, con una checklist per decidere.`,
   h1: 'Quando conviene vendere casa: come scegliere il momento giusto',
   intro: `Conviene vendere casa quando hai un motivo chiaro per farlo, quando le tasse non ti penalizzano (attenzione alla regola dei 5 anni) e quando hai un'idea realistica del prezzo che puoi ottenere nella tua zona. Il "momento perfetto" del mercato nessuno lo conosce in anticipo: conta di più il tuo momento. Ecco i fattori da valutare, uno per uno.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -390,6 +393,7 @@ export const cosaFarePrimaDiVendere: Guide = {
   description: `Cosa fare prima di vendere casa: verifiche su catasto, conformità e APE, stima del valore, lavori utili, home staging, foto e checklist stanza per stanza.`,
   h1: 'Cosa fare prima di vendere casa: tutto quello che devi verificare',
   intro: `Prima di vendere casa devi fare tre cose: verificare che i documenti siano in regola (catasto, conformità urbanistica, APE), capire quanto vale davvero la casa e prepararla per foto e visite. Farlo prima di pubblicare l'annuncio ti evita sorprese al rogito e ti aiuta a vendere meglio. Qui trovi cosa controllare e una checklist stanza per stanza.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [

@@ -14,6 +14,7 @@ export const virtualStagingLegale: Guide = {
   description: 'Il virtual staging è legale negli annunci se non inganna: cosa puoi modificare, cosa mai, come dichiarare l\'arredo virtuale e una checklist per agenti.',
   h1: 'Virtual staging è legale? Come usare le foto arredate con AI negli annunci',
   intro: 'Sì, il virtual staging è legale: arredare in foto una stanza non è vietato. Diventa un problema quando la foto fa credere all\'acquirente qualcosa che non è vero sulla casa. La linea è semplice da ricordare: puoi aggiungere arredi, non puoi cambiare l\'immobile. E devi dirlo.',
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -26,7 +27,8 @@ export const virtualStagingLegale: Guide = {
   <li><strong>Le regole dei portali</strong>, che sono contrattuali: chi pubblica accetta condizioni che possono riguardare anche le immagini.</li>
 </ul>
 <p>Mettendo insieme questi punti, il criterio pratico è uno: una foto arredata virtualmente è corretta se chi la guarda capisce che l'arredo non c'è e se la casa che vede è la stessa che troverà alla visita. Se hai dubbi su un caso concreto, chiedi alla tua associazione di categoria o a un legale: questa guida dà indicazioni pratiche, non un parere legale.</p>
-<p>Per le basi su come funziona l'home staging virtuale e quando usarlo, parti dalla <a href="/it/home-staging-virtuale">guida all'home staging virtuale</a>.</p>`,
+<p>Per le basi su come funziona l'home staging virtuale e quando usarlo, parti dalla <a href="/it/home-staging-virtuale">guida all'home staging virtuale</a>.</p>
+<p>Chi pubblica l'annuncio ci mette la faccia: per un <a href="/it/agente-immobiliare">agente immobiliare</a> la correttezza delle foto fa parte della fiducia del cliente, oltre che del dovere di informare correttamente le parti.</p>`,
     },
     {
       id: 'modifiche-ammesse',
@@ -127,6 +129,7 @@ export const homeStagingCosto: Guide = {
   description: 'Home staging costo: da cosa dipende il prezzo di quello fisico, quanto costa quello virtuale a foto o in abbonamento, chi paga e quando conviene ciascuno.',
   h1: 'Home staging costo: quanto costa davvero, fisico e virtuale',
   intro: 'Il costo dell\'home staging dipende soprattutto da una scelta: allestire la casa dal vivo o arredarla solo in foto. Il fisico ha un prezzo che varia molto e va chiesto con un preventivo; il virtuale costa da pochi centesimi a qualche euro a foto, a seconda dello strumento. Qui trovi da cosa dipendono i costi e quando conviene l\'uno o l\'altro.',
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -142,7 +145,8 @@ export const homeStagingCosto: Guide = {
   <li><strong>Il professionista</strong>: la consulenza, il progetto e la sua esperienza hanno un valore a sé.</li>
   <li><strong>Piccoli interventi</strong>: tinteggiature, pulizie profonde, piccole riparazioni, a volte incluse, a volte no.</li>
 </ul>
-<p>Il consiglio pratico: chiedi sempre un preventivo scritto con le voci separate e con il costo di un eventuale prolungamento del noleggio. Solo così puoi confrontare due offerte e spiegare la spesa al proprietario.</p>`,
+<p>Il consiglio pratico: chiedi sempre un preventivo scritto con le voci separate e con il costo di un eventuale prolungamento del noleggio. Solo così puoi confrontare due offerte e spiegare la spesa al proprietario.</p>
+<p>Chi paga? Dipende dagli accordi: a volte il proprietario, a volte l'<a href="/it/agente-immobiliare">agente immobiliare</a> come investimento sull'incarico. Ne parliamo più avanti.</p>`,
     },
     {
       id: 'virtuale-prezzo',
@@ -234,6 +238,7 @@ export const apeAnnunci: Guide = {
   description: 'APE negli annunci immobiliari: obbligo di indicare classe energetica e indice di prestazione energetica in vendita e affitto, chi rilascia l\'APE.',
   h1: 'APE negli annunci immobiliari: classe energetica e indice obbligatori',
   intro: 'Negli annunci di vendita e di affitto la classe energetica e l\'indice di prestazione energetica dell\'immobile vanno indicati: lo prevede il D.Lgs. 192/2005 e le sue modifiche. Qui trovi cosa scrivere, dove prendere i dati, cosa fare se l\'APE non è ancora pronto e una checklist da usare prima di ogni pubblicazione.',
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -246,7 +251,8 @@ export const apeAnnunci: Guide = {
   <li><strong>L'indice di prestazione energetica globale</strong> (spesso indicato come EPgl), espresso in kWh/m² anno: è il numero da cui deriva la classe.</li>
   <li>Altri dati utili per rispondere alle domande: le raccomandazioni per migliorare la prestazione, la data di rilascio, il codice identificativo dell'attestato.</li>
 </ul>
-<p>Per chi compra o affitta, classe e indice sono un modo rapido per confrontare immobili diversi e farsi un'idea delle spese di gestione. Per te sono un dato obbligatorio dell'annuncio e, spesso, un argomento di vendita: un immobile ristrutturato con una buona classe va valorizzato, uno con una classe bassa va presentato con onestà, magari spiegando quali interventi potrebbero migliorarla.</p>`,
+<p>Per chi compra o affitta, classe e indice sono un modo rapido per confrontare immobili diversi e farsi un'idea delle spese di gestione. Per te sono un dato obbligatorio dell'annuncio e, spesso, un argomento di vendita: un immobile ristrutturato con una buona classe va valorizzato, uno con una classe bassa va presentato con onestà, magari spiegando quali interventi potrebbero migliorarla.</p>
+<p>Indicare la classe energetica è un obbligo per chi pubblica l'annuncio, privato o <a href="/it/agente-immobiliare">agente immobiliare</a>: nelle sezioni che seguono vedi cosa scrivere e cosa si rischia.</p>`,
     },
     {
       id: 'obbligo',

@@ -6,10 +6,12 @@ export const comeDiventare: Guide = {
   slug: 'come-diventare-agente-immobiliare',
   label: 'Come diventare agente immobiliare',
   title: 'Come diventare agente immobiliare: requisiti e corso 2026',
-  description: 'Come diventare agente immobiliare in Italia passo per passo: requisiti, corso regionale, esame alla Camera di Commercio, iscrizione, polizza e primi mesi di lavoro.',
+  description: 'Come diventare agente immobiliare in Italia passo per passo: requisiti, corso regionale, esame alla Camera di Commercio, iscrizione, polizza e primi passi.',
   h1: 'Come diventare agente immobiliare: requisiti, corso, esame e primi passi',
   intro: 'Il percorso per diventare agente immobiliare in Italia, dal diploma al primo incarico: cosa serve, in che ordine, e cosa conviene preparare prima di iniziare.',
-  updated: '2026-09-27',
+  summary: 'per diventare agente immobiliare in Italia servono maggiore età, diploma di scuola superiore, un corso abilitante riconosciuto dalla Regione e l\'esame alla Camera di Commercio; poi la SCIA (o l\'iscrizione al REA se lavori per un\'agenzia) e una polizza di responsabilità civile professionale.',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'requisiti',
@@ -55,7 +57,8 @@ export const comeDiventare: Guide = {
   <li>una presenza costante sui <strong>social</strong>, con gli immobili della zona;</li>
   <li>immobili presentati al meglio, con <strong>foto arredate e video</strong>, anche quando non hai budget per fotografi e home stager.</li>
 </ul>
-<p>Per approfondire il mestiere, leggi la <a href="/it/agente-immobiliare">guida completa all'agente immobiliare</a>.</p>`,
+<p>Per approfondire il mestiere, leggi la <a href="/it/agente-immobiliare">guida completa all'agente immobiliare</a>.</p>
+<p>Se scegli di partire da solo, leggi la guida all'<a href="/it/agente-immobiliare-indipendente">agente immobiliare indipendente</a>. Per i primi clienti c'è <a href="/it/come-trovare-clienti-agente-immobiliare">come trovare clienti da agente immobiliare</a>, e per capire come si guadagna quella sulla <a href="/it/provvigione-agente-immobiliare">provvigione dell'agente immobiliare</a>.</p>`,
     },
   ],
   faq: [
@@ -73,7 +76,9 @@ export const provvigione: Guide = {
   description: 'Provvigione dell\'agente immobiliare: quanto vale di solito, quando matura, chi la paga e un calcolatore gratuito con IVA per venditore e acquirente.',
   h1: 'Provvigione dell\'agente immobiliare: quanto è, quando matura e chi la paga',
   intro: 'Come funziona il compenso dell\'agente immobiliare: percentuali più comuni, il momento in cui la provvigione è dovuta, cosa succede se l\'affare salta e come si calcola.',
-  updated: '2026-09-30',
+  summary: 'la provvigione dell\'agente immobiliare non è fissata per legge: si concorda, e nella pratica vale spesso tra il 2% e il 4% del prezzo più IVA per ciascuna parte. Matura quando l\'affare è concluso, di solito con la proposta accettata o il preliminare, non al rogito (art. 1755 c.c.).',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'quanto',
@@ -108,7 +113,8 @@ export const provvigione: Guide = {
       id: 'valore',
       title: 'Come far sentire la provvigione "giusta"',
       html: `<p>Il proprietario accetta volentieri una provvigione quando vede <strong>cosa ottiene in cambio</strong>. Presentarsi con un piano concreto (foto arredate, un video, la pagina dell'immobile sul tuo sito, una strategia sui social) rende la trattativa sul compenso molto più semplice di una promessa generica.</p>
-<p>Per tutto il resto del mestiere, leggi la <a href="/it/agente-immobiliare">guida completa all'agente immobiliare</a>.</p>`,
+<p>Per tutto il resto del mestiere, leggi la <a href="/it/agente-immobiliare">guida completa all'agente immobiliare</a>.</p>
+<p>Come costruire quel piano lo trovi nella guida alla <a href="/it/presentazione-acquisizione-immobile">presentazione di acquisizione</a>, e le risposte all'obiezione sul compenso nello <a href="/it/script-telefonata-proprietari">script per la telefonata ai proprietari</a>. Se invece sei un proprietario e vuoi sapere quanto pesa la provvigione sul totale, leggi <a href="/it/quanto-costa-vendere-casa">quanto costa vendere casa</a>.</p>`,
     },
   ],
   faq: [
@@ -122,11 +128,13 @@ export const provvigione: Guide = {
 export const software: Guide = {
   slug: 'software-agenti-immobiliari',
   label: 'Software per agenti immobiliari',
-  title: 'Software e gestionale per agenti immobiliari: i migliori 2026',
+  title: 'Software e gestionale per agenti immobiliari: guida 2026',
   description: 'Il miglior gestionale immobiliare e i software che servono davvero all\'agente nel 2026: gestionale, portali, sito, home staging virtuale, video e social.',
   h1: 'Software per agenti immobiliari: quali servono davvero',
   intro: 'Gestionale, portali, sito, foto, video, social: gli strumenti digitali che un agente immobiliare usa ogni giorno, a cosa servono e come sceglierli senza pagare doppio.',
-  updated: '2026-09-27',
+  summary: 'a un agente immobiliare servono soprattutto un gestionale (immobili, clienti, portali), un sito personale e strumenti per foto e video. Conviene partire dal problema da risolvere, evitare i doppioni e provare ogni software su un immobile vero prima di pagare.',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'perche',
@@ -136,22 +144,26 @@ export const software: Guide = {
     {
       id: 'gestionale',
       title: 'Gestionale immobiliare',
-      html: `<p>È l'archivio dell'agenzia: immobili, clienti, richieste, appuntamenti, richiami. Il gestionale di solito pubblica anche gli annunci sui portali. Conta che sia facile da usare anche dal telefono e che permetta di <strong>esportare i dati</strong>, per non restare legato a un solo fornitore.</p>`,
+      html: `<p>È l'archivio dell'agenzia: immobili, clienti, richieste, appuntamenti, richiami. Il gestionale di solito pubblica anche gli annunci sui portali. Conta che sia facile da usare anche dal telefono e che permetta di <strong>esportare i dati</strong>, per non restare legato a un solo fornitore.</p>
+<p>Per scegliere leggi la guida al <a href="/it/gestionale-immobiliare">gestionale immobiliare</a>, il confronto con le <a href="/it/alternative-getrix-miogest">alternative a Getrix e Miogest</a> e cosa offre un <a href="/it/crm-immobiliare">CRM immobiliare</a> per seguire i contatti.</p>`,
     },
     {
       id: 'sito',
       title: 'Sito personale o di agenzia',
-      html: `<p>Sui portali l'acquirente sceglie la casa, non l'agente. Il sito è il posto dove ci sei solo tu: lo mandi ai clienti, lo metti in firma e soprattutto lo mostri ai proprietari quando ti giochi un incarico. Deve essere <strong>sempre aggiornato</strong> con i tuoi immobili, veloce da telefono e trovabile su Google per la tua zona. Un sito che aggiorni a mano ogni volta, di solito, dopo qualche mese resta vecchio.</p>`,
+      html: `<p>Sui portali l'acquirente sceglie la casa, non l'agente. Il sito è il posto dove ci sei solo tu: lo mandi ai clienti, lo metti in firma e soprattutto lo mostri ai proprietari quando ti giochi un incarico. Deve essere <strong>sempre aggiornato</strong> con i tuoi immobili, veloce da telefono e trovabile su Google per la tua zona. Un sito che aggiorni a mano ogni volta, di solito, dopo qualche mese resta vecchio.</p>
+<p>Cosa deve avere lo trovi nella guida al <a href="/it/sito-web-agente-immobiliare">sito web per agente immobiliare</a>.</p>`,
     },
     {
       id: 'foto',
       title: 'Foto e home staging virtuale',
-      html: `<p>La prima foto decide se un annuncio viene aperto. Gli strumenti di <strong>home staging virtuale</strong> arredano le stanze vuote o datate lasciando com'è la stanza (muri, finestre, pavimento): chi guarda capisce subito come vivrebbe quella casa. Per correttezza è buona regola indicare nell'annuncio che l'arredamento è virtuale.</p>`,
+      html: `<p>La prima foto decide se un annuncio viene aperto. Gli strumenti di <strong>home staging virtuale</strong> arredano le stanze vuote o datate lasciando com'è la stanza (muri, finestre, pavimento): chi guarda capisce subito come vivrebbe quella casa. Per correttezza è buona regola indicare nell'annuncio che l'arredamento è virtuale.</p>
+<p>Approfondisci nella guida all'<a href="/it/home-staging-virtuale">home staging virtuale</a> e nelle regole sul <a href="/it/virtual-staging-legale">virtual staging negli annunci</a>.</p>`,
     },
     {
       id: 'video',
       title: 'Video e social',
-      html: `<p>I video trattengono l'attenzione molto più delle foto, e sui social sono il modo migliore per farti conoscere nella tua zona. Oggi si possono creare dalle foto che hai già, senza riprese: l'importante è pubblicare <strong>con costanza</strong>, un immobile alla volta.</p>`,
+      html: `<p>I video trattengono l'attenzione molto più delle foto, e sui social sono il modo migliore per farti conoscere nella tua zona. Oggi si possono creare dalle foto che hai già, senza riprese: l'importante è pubblicare <strong>con costanza</strong>, un immobile alla volta.</p>
+<p>Idee e formati nella guida ai <a href="/it/video-immobiliari-social">video immobiliari per i social</a>.</p>`,
     },
     {
       id: 'scegliere',
@@ -179,7 +191,9 @@ export const homeStaging: Guide = {
   description: 'Home staging virtuale per agenti immobiliari: cos\'è, differenze con quello fisico, quando conviene, regole di correttezza negli annunci ed errori da evitare.',
   h1: 'Home staging virtuale: cos\'è e come usarlo per vendere prima',
   intro: 'Arredare le stanze in foto invece che dal vivo: quando ha senso, cosa cambia rispetto all\'home staging tradizionale e come usarlo negli annunci senza ingannare nessuno.',
-  updated: '2026-09-27',
+  summary: 'l\'home staging virtuale arreda in foto le stanze vuote o datate, senza toccare muri, finestre e dimensioni. Costa e richiede molto meno di quello fisico, ma va dichiarato nell\'annuncio insieme alla foto originale.',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'cose',
@@ -199,7 +213,8 @@ export const homeStaging: Guide = {
   <li><strong>Tempi</strong>: il fisico va organizzato e montato; il virtuale si fa in pochi minuti, anche prima di pubblicare.</li>
   <li><strong>Visita</strong>: con il fisico la casa è arredata anche dal vivo; con il virtuale no, quindi va detto chiaramente.</li>
   <li><strong>Flessibilità</strong>: con il virtuale puoi mostrare più stili per la stessa stanza.</li>
-</ul>`,
+</ul>
+<p>Per i prezzi nel dettaglio leggi <a href="/it/home-staging-costo">quanto costa l'home staging</a>; per vedere i risultati stanza per stanza ci sono gli <a href="/it/home-staging-esempi">esempi di home staging prima e dopo</a>.</p>`,
     },
     {
       id: 'correttezza',
@@ -209,7 +224,8 @@ export const homeStaging: Guide = {
   <li>indicare che l'arredamento è <strong>virtuale</strong> (nella foto o nella didascalia);</li>
   <li>pubblicare anche la <strong>foto originale</strong> della stanza;</li>
   <li>scegliere uno stile <strong>realistico</strong> e adatto all'immobile, non da rivista.</li>
-</ul>`,
+</ul>
+<p>Le regole complete, con cosa scrivere nell'annuncio, sono nella guida al <a href="/it/virtual-staging-legale">virtual staging legale</a>. Se vuoi farlo da solo, ecco come <a href="/it/arredare-foto-con-ai">arredare una foto con l'AI</a>.</p>`,
     },
     {
       id: 'errori',

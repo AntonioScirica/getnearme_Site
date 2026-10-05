@@ -10,6 +10,7 @@ export const scrivereAnnuncio: Guide = {
   description: `Come scrivere un annuncio immobiliare che riceve contatti: formula del titolo con 10 esempi, struttura della descrizione, dati essenziali e checklist.`,
   h1: `Come scrivere un annuncio immobiliare efficace: titolo, descrizione, dati e foto`,
   intro: `Un annuncio immobiliare efficace mette subito zona, tipologia e punto di forza nel titolo, apre la galleria con la foto migliore e dà nella descrizione tutti i dati che il compratore usa per decidere se chiamarti. Qui trovi la formula, gli esempi e la checklist da usare prima di pubblicare.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -24,7 +25,8 @@ export const scrivereAnnuncio: Guide = {
   <li><strong>Galleria completa e planimetria</strong>: permettono di capire la distribuzione degli spazi senza telefonare.</li>
 </ol>
 <p>L'errore più comune è trattare l'annuncio come una formalità: titolo generico, tre righe di descrizione, foto in ordine casuale. Il risultato sono meno contatti e, soprattutto, contatti meno qualificati: persone che chiamano per chiedere informazioni che avresti potuto scrivere, o che scoprono in visita che la casa non fa per loro.</p>
-<p>Un buon annuncio lavora al contrario: <strong>filtra</strong>. Chi ti contatta ha già visto piano, spese, classe energetica e stato dell'immobile, e ti chiama perché è interessato davvero. Meno visite inutili, più visite che portano a una proposta.</p>`,
+<p>Un buon annuncio lavora al contrario: <strong>filtra</strong>. Chi ti contatta ha già visto piano, spese, classe energetica e stato dell'immobile, e ti chiama perché è interessato davvero. Meno visite inutili, più visite che portano a una proposta.</p>
+<p>Un annuncio così fa lavorare meglio anche te: ogni visita inutile in meno è tempo che un <a href="/it/agente-immobiliare">agente immobiliare</a> può passare ad acquisire incarichi.</p>`,
     },
     {
       id: 'titolo-annuncio',
@@ -189,6 +191,7 @@ export const descrizioneEsempi: Guide = {
   description: `Descrizione immobile, esempi pronti da copiare per 7 tipologie: bilocale, trilocale, attico, villetta, da ristrutturare, affitto e casa al mare.`,
   h1: `Descrizione immobile: esempi da copiare per ogni tipologia di casa`,
   intro: `Qui trovi modelli di descrizione immobiliare pronti da copiare per sette tipologie di casa, con i campi da completare tra [parentesi quadre] e i consigli su cosa mettere per primo, che tono usare e quanto scrivere.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -208,7 +211,8 @@ export const descrizioneEsempi: Guide = {
   <li>Aggiungi almeno un dettaglio che conosci solo tu per averla visitata.</li>
   <li>Rileggi dal telefono prima di pubblicare.</li>
 </ul>
-<p>Per titolo, foto e checklist finale, parti dalla guida su <a href="/it/come-scrivere-annuncio-immobiliare">come scrivere un annuncio immobiliare</a>.</p>`,
+<p>Per titolo, foto e checklist finale, parti dalla guida su <a href="/it/come-scrivere-annuncio-immobiliare">come scrivere un annuncio immobiliare</a>.</p>
+<p>I modelli fanno risparmiare tempo, ma il dettaglio vero lo conosce solo l'<a href="/it/agente-immobiliare">agente immobiliare</a> che ha visto la casa: è quello che rende credibile la descrizione.</p>`,
     },
     {
       id: 'esempio-bilocale',
@@ -369,6 +373,7 @@ export const fotoSmartphone: Guide = {
   description: `Foto immobiliari con lo smartphone: come preparare la casa, scegliere luce e inquadratura, usare grandangolo e HDR, quante foto fare ed errori da evitare.`,
   h1: `Foto immobiliari con lo smartphone: come fotografare una casa per venderla`,
   intro: `Con uno smartphone recente si possono fare foto immobiliari ottime, se si curano quattro cose: casa preparata, luce giusta, telefono all'altezza corretta e linee verticali dritte. Ecco come farlo stanza per stanza, con gli errori da evitare.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -388,7 +393,8 @@ export const fotoSmartphone: Guide = {
   <li><strong>Esterni</strong>: balconi sgombri, prato tagliato, bidoni lontani.</li>
 </ul>
 <p>Non serve rendere la casa impersonale, ma ordinata: chi guarda deve potersi immaginare lì dentro. Se la casa è piena di mobili, spostane qualcuno fuori dall'inquadratura per dare respiro alla stanza.</p>
-<p>Se l'immobile è vuoto o arredato in modo molto datato, puoi comunque fotografarlo bene e valutare dopo un arredo virtuale. Ne parliamo più avanti.</p>`,
+<p>Se l'immobile è vuoto o arredato in modo molto datato, puoi comunque fotografarlo bene e valutare dopo un arredo virtuale. Ne parliamo più avanti.</p>
+<p>Preparare la casa è un lavoro da fare insieme al proprietario: spiegargli perché conta fa parte del mestiere di <a href="/it/agente-immobiliare">agente immobiliare</a> tanto quanto scattare le foto.</p>`,
     },
     {
       id: 'luce-orario',
@@ -537,6 +543,7 @@ export const migliorareFoto: Guide = {
   description: `Migliorare le foto di un annuncio immobiliare già scattate: luce, verticali, disordine, cielo, stanze vuote e staging virtuale, con le regole da seguire.`,
   h1: `Come migliorare le foto di un annuncio immobiliare già pubblicato`,
   intro: `Per migliorare le foto di un annuncio immobiliare parti dalle correzioni tecniche (luce, colori, verticali), poi togli il disordine e solo dopo valuta interventi come l'arredo virtuale, sempre dichiarati. Ecco come farlo, in che ordine e cosa è consentito.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -552,7 +559,8 @@ export const migliorareFoto: Guide = {
 <p>Se le foto da rifare sono tante, vale la pena organizzare un nuovo sopralluogo con la casa preparata. La guida sulle <a href="/it/foto-immobiliari-smartphone">foto immobiliari con lo smartphone</a> spiega come.</p>
 <h3>Quali foto sistemare per prime</h3>
 <p>Concentrati sulla <strong>copertina</strong> e sulle prime quattro o cinque immagini: sono quelle che vengono guardate di più. Una copertina migliorata può cambiare le visualizzazioni dell'annuncio più di dieci foto interne ritoccate.</p>
-<p>Un modo rapido per avere una diagnosi è far analizzare l'annuncio: in <a href="/it">Agente Immo</a> la funzione Miglioralo importa l'annuncio dal link e indica, tra le altre cose, quali foto sono scure, storte o ritraggono stanze vuote.</p>`,
+<p>Un modo rapido per avere una diagnosi è far analizzare l'annuncio: in <a href="/it">Agente Immo</a> la funzione Miglioralo importa l'annuncio dal link e indica, tra le altre cose, quali foto sono scure, storte o ritraggono stanze vuote.</p>
+<p>Foto curate sono anche il biglietto da visita di un <a href="/it/agente-immobiliare">agente immobiliare</a>: il proprietario che sceglie a chi affidare casa guarda come sono presentati gli altri tuoi immobili.</p>`,
     },
     {
       id: 'esposizione-colori',
@@ -708,6 +716,7 @@ export const reelImmobiliari: Guide = {
   description: `Reel immobiliari: 14 idee con gancio e struttura per Instagram e TikTok, più durata, sottotitoli, musica, frequenza e come riutilizzare ogni video.`,
   h1: `Reel immobiliari: idee, struttura e consigli per Instagram e TikTok`,
   intro: `Un reel immobiliare funziona quando cattura nei primi secondi con un gancio visivo o una frase, mostra una cosa sola e finisce con un invito chiaro. Qui trovi 14 idee pronte, con gancio e struttura, e le regole pratiche su durata, testi, musica e frequenza.`,
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -727,7 +736,8 @@ export const reelImmobiliari: Guide = {
   <li>Testi e volti lontani dai bordi, dove l'interfaccia dell'app copre il video.</li>
   <li>Buona luce e movimenti lenti: il telefono che traballa stanca.</li>
 </ul>
-<p>Se stai costruendo da zero la tua presenza video, leggi anche la guida sui <a href="/it/video-immobiliari-social">video immobiliari per i social</a>.</p>`,
+<p>Se stai costruendo da zero la tua presenza video, leggi anche la guida sui <a href="/it/video-immobiliari-social">video immobiliari per i social</a>.</p>
+<p>Un reel ben fatto non vende solo la casa: fa conoscere l'<a href="/it/agente-immobiliare">agente immobiliare</a> che c'è dietro, ed è così che arrivano i prossimi incarichi.</p>`,
     },
     {
       id: 'idee-immobili',

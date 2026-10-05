@@ -16,6 +16,7 @@ export const costoPortaliAgenzie: Guide = {
   description: `Immobiliare.it costo agenzia: come funzionano gli abbonamenti, anche su Idealista e Casa.it, cosa chiedere prima di firmare e come calcolare il ritorno.`,
   h1: `Immobiliare.it costo agenzia: come funzionano gli abbonamenti ai portali immobiliari`,
   intro: `Per le agenzie, Immobiliare.it, Idealista e Casa.it non pubblicano un listino unico: il costo dell'abbonamento si definisce su preventivo e dipende soprattutto da quanti annunci pubblichi, dalla visibilità extra e dai servizi aggiunti. Qui trovi come è fatto un abbonamento, cosa chiedere prima di firmare e come capire se ti conviene, con i numeri della tua agenzia.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -30,7 +31,8 @@ export const costoPortaliAgenzie: Guide = {
   <li><strong>Servizi aggiuntivi</strong>: profilo agenzia evidenziato, strumenti per l'acquisizione, valutazioni, tour virtuali, gestionale.</li>
   <li><strong>Durata e condizioni del contratto</strong>: annuale o pluriennale, rinnovo automatico, periodo di preavviso per disdire.</li>
 </ul>
-<p>Per un privato il discorso è diverso: in genere può pubblicare gratis un numero limitato di annunci e pagare solo le opzioni di visibilità. Per esempio, secondo le FAQ ufficiali di Casa.it (consultate a ottobre 2026), chiunque può pubblicare gratuitamente fino a 6 annunci di vendita o affitto. Le condizioni per privati però non dicono nulla su quanto pagherai tu come agenzia.</p>`,
+<p>Per un privato il discorso è diverso: in genere può pubblicare gratis un numero limitato di annunci e pagare solo le opzioni di visibilità. Per esempio, secondo le FAQ ufficiali di Casa.it (consultate a ottobre 2026), chiunque può pubblicare gratuitamente fino a 6 annunci di vendita o affitto. Le condizioni per privati però non dicono nulla su quanto pagherai tu come agenzia.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> o un'agenzia, invece, il costo dipende dall'abbonamento: vediamo come funziona.</p>`,
     },
     {
       id: 'confronto-portali',
@@ -134,6 +136,7 @@ export const contattiSenzaPortali: Guide = {
   description: `Alternative ai portali immobiliari: sito personale, Google Business Profile, social, passaparola, cartelli e newsletter per ricevere contatti diretti.`,
   h1: `Alternative ai portali immobiliari: come ricevere contatti senza dipendere solo dai portali`,
   intro: `Per ricevere contatti immobiliari senza portali servono canali che lavorano a tuo nome: un sito personale con i tuoi immobili, il profilo Google della tua attività, i social, il passaparola, cartelli e vetrina, una newsletter. Nessuno sostituisce da solo un portale, ma insieme riducono la dipendenza e portano richieste che arrivano solo a te. Qui trovi come usarli e come combinarli con i portali.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -151,7 +154,7 @@ export const contattiSenzaPortali: Guide = {
     {
       id: 'sito-personale',
       title: `Sito personale: le richieste immobiliari che arrivano solo a te`,
-      html: `<p>Il sito è il centro di tutti gli altri canali: il profilo Google, i social, i cartelli e il passaparola portano lì. Per un agente immobiliare un sito utile ha poche cose, ma fatte bene:</p>
+      html: `<p>Il sito è il centro di tutti gli altri canali: il profilo Google, i social, i cartelli e il passaparola portano lì. Per un <a href="/it/agente-immobiliare">agente immobiliare</a> un sito utile ha poche cose, ma fatte bene:</p>
 <ul>
   <li><strong>Tutti i tuoi immobili</strong>, ognuno con una pagina propria, foto, dati completi e un modo semplice per chiedere informazioni.</li>
   <li><strong>Chi sei</strong>: foto vera, zona in cui lavori, come lavori, recensioni.</li>
@@ -263,6 +266,7 @@ export const gestionaleGratuito: Guide = {
   description: `Gestionale immobiliare gratuito: versioni free, prove gratuite e licenze senza canone, con i limiti reali, quando conviene pagare e una checklist.`,
   h1: `Gestionale immobiliare gratuito: cosa esiste davvero, limiti e quando conviene pagare`,
   intro: `Un gestionale immobiliare gratuito esiste, ma quasi sempre con una condizione: una prova a tempo, un piano free con limiti, una licenza gratuita legata ad altri acquisti o un software gratis che si ripaga con servizi a parte. Qui trovi le formule che esistono davvero, alcuni esempi verificati a ottobre 2026, i limiti da controllare e quando conviene passare a un piano a pagamento.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -277,7 +281,8 @@ export const gestionaleGratuito: Guide = {
   <li><strong>Incluso in un altro abbonamento</strong>: il gestionale è compreso, o scontato, dentro un pacchetto più ampio, per esempio con un portale.</li>
   <li><strong>Open source</strong>: il software è libero, ma devi installarlo, ospitarlo e mantenerlo tu o un tecnico. Il costo si sposta su server, configurazione e tempo.</li>
 </ul>
-<p>Nessuna di queste formule è sbagliata. Il punto è sapere in anticipo <strong>cosa succede quando l'agenzia cresce</strong> o quando la condizione gratuita finisce. Se devi ancora capire cosa deve fare un gestionale, parti dalla guida al <a href="/it/gestionale-immobiliare">gestionale immobiliare</a>.</p>`,
+<p>Nessuna di queste formule è sbagliata. Il punto è sapere in anticipo <strong>cosa succede quando l'agenzia cresce</strong> o quando la condizione gratuita finisce. Se devi ancora capire cosa deve fare un gestionale, parti dalla guida al <a href="/it/gestionale-immobiliare">gestionale immobiliare</a>.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> che inizia, partire gratis può avere senso: basta sapere dove sono i limiti, che vediamo più avanti.</p>`,
     },
     {
       id: 'cosa-esiste',
@@ -380,6 +385,7 @@ export const alternativeGetrixMiogest: Guide = {
   description: `Alternative a Getrix e Miogest: cosa fanno secondo le fonti ufficiali, differenze, altri tipi di strumenti e come scegliere quello giusto per te.`,
   h1: `Alternative a Getrix e Miogest: confronto tra gestionali e strumenti per agenti immobiliari`,
   intro: `Getrix e Miogest sono due gestionali immobiliari molto diffusi in Italia: Getrix fa parte del gruppo Immobiliare.it, Miogest del gruppo idealista. Le alternative non sono solo altri gestionali: esistono anche CRM generici e strumenti dedicati a marketing e presentazione dell'immobile, che fanno un lavoro diverso. Qui trovi cosa fa ciascuno secondo le fonti ufficiali e come scegliere in base a come lavori.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -390,7 +396,8 @@ export const alternativeGetrixMiogest: Guide = {
 <p>Getrix è il gestionale di <strong>Immobiliare.it</strong>, pensato per agenzie e costruttori, disponibile online e con app per smartphone e tablet. Tra le funzioni dichiarate: agenda, contatti, immobili e progetti, immagini e video, acquisizione di annunci privati, gestione delle richieste e incroci con gli immobili, valutazione immobiliare, cartello vetrina, invio degli annunci a più portali, virtual tour 360, software per planimetrie, campagne pubblicitarie, email marketing, sito per l'agenzia e un sistema di collaborazione tra agenzie. Il prezzo non è pubblicato: si richiede una prova gratuita compilando un modulo e si viene ricontattati.</p>
 <h3>Miogest</h3>
 <p>Miogest è un gestionale online nato a Como nel 2009, dal 2020 parte del <strong>gruppo idealista</strong>. Tra le funzioni dichiarate: gestione di clienti, incarichi, richieste e lead, agenda sincronizzata con Google Calendar, messaggi via SMS, email e WhatsApp, esportazione sui portali, sincronizzazione delle richieste da Idealista e Casa.it, multiutente e multiufficio, automazioni con ChatGPT come opzione a pagamento. Il prezzo è pubblico: 499 € + IVA all'anno, con una prova gratuita di 30 giorni.</p>
-<p>Per le funzioni che in generale un gestionale deve avere, vedi la guida al <a href="/it/gestionale-immobiliare">gestionale immobiliare</a>.</p>`,
+<p>Per le funzioni che in generale un gestionale deve avere, vedi la guida al <a href="/it/gestionale-immobiliare">gestionale immobiliare</a>.</p>
+<p>Entrambi nascono per gestire immobili, clienti e pubblicazione sui portali, cioè il lavoro di ufficio di un <a href="/it/agente-immobiliare">agente immobiliare</a>.</p>`,
     },
     {
       id: 'getrix-o-miogest',

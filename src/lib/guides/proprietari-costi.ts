@@ -14,6 +14,7 @@ export const quantoCostaVendere: Guide = {
   description: `Quanto costa vendere casa con agenzia, dal notaio, prima dei 5 anni o se è ereditata: le spese voce per voce, chi paga cosa e una checklist pratica.`,
   h1: 'Quanto costa vendere casa: le spese di chi vende, voce per voce',
   intro: `Vendere casa costa meno di quanto molti pensano, perché il notaio di solito lo paga chi compra. Le spese principali del venditore sono la provvigione dell'agenzia (se ne usi una), l'APE, eventuali regolarizzazioni dei documenti e, se c'è un mutuo, la sua estinzione. Qui trovi ogni voce spiegata in modo semplice, con una tabella finale su chi paga cosa.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -174,6 +175,7 @@ export const documentiVendereCasa: Guide = {
   description: `Documenti per vendere casa nel 2026: cosa sono, dove si chiedono e quando servono, anche tra privati o per una casa ereditata. Con checklist stampabile.`,
   h1: 'Documenti per vendere casa: cosa serve, dove si prende e quando',
   intro: `Per vendere casa servono soprattutto l'atto con cui l'hai avuta, visura e planimetria catastale aggiornate, i documenti edilizi del Comune, l'APE e i documenti del condominio. Alcuni li hai già in un cassetto, altri vanno chiesti a un tecnico o all'amministratore. Qui trovi ogni documento spiegato in parole semplici, con una tabella e una checklist da stampare.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -340,6 +342,7 @@ export const plusvalenzaVenditaCasa: Guide = {
   description: `Plusvalenza vendita casa: quando si paga se vendi prima dei 5 anni, quando no, casa ereditata o donata, come si calcola e cosa chiedere al notaio.`,
   h1: 'Plusvalenza sulla vendita della casa: quando si paga, quando no e come si calcola',
   intro: `La plusvalenza è il guadagno che fai vendendo una casa a più di quanto l'hai pagata. Si paga solo se vendi entro 5 anni dall'acquisto o dalla costruzione, e anche in quel caso spesso non è dovuta: per esempio se è stata la tua abitazione principale o se l'hai ereditata. Questa guida spiega le regole di base; per il tuo caso concreto chiedi sempre al notaio o al commercialista.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [

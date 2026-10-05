@@ -14,12 +14,13 @@ export const videoMarketing: Guide = {
   description: `Video marketing immobiliare: quali video fare per agenzia e immobili, formati per ogni piattaforma, costi di videomaker, fai da te e AI, come misurarli.`,
   h1: `Video marketing immobiliare: quali video fare, dove pubblicarli, quanto costano e come misurarli`,
   intro: `Il video marketing immobiliare è l'uso dei video per due scopi: vendere gli immobili che hai in incarico e far conoscere te nella tua zona, così i proprietari ti chiamano quando decidono di vendere. Non serve un video perfetto per ogni casa: serve un piano con pochi formati ripetibili, adattati a ogni canale e misurati sui contatti che portano.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
       id: 'cos-e',
       title: `Cos'è il video marketing immobiliare e a cosa serve`,
-      html: `<p>Pubblicare un video ogni tanto non è video marketing. Lo diventa quando ogni video ha un <strong>obiettivo</strong>, un <strong>canale</strong> e un <strong>modo per misurarlo</strong>. Per un agente immobiliare gli obiettivi sono quasi sempre tre:</p>
+      html: `<p>Pubblicare un video ogni tanto non è video marketing. Lo diventa quando ogni video ha un <strong>obiettivo</strong>, un <strong>canale</strong> e un <strong>modo per misurarlo</strong>. Per un <a href="/it/agente-immobiliare">agente immobiliare</a> gli obiettivi sono quasi sempre tre:</p>
 <ol>
   <li><strong>Vendere o affittare un immobile</strong>: far arrivare richieste qualificate sull'incarico, con meno visite inutili perché chi chiama ha già capito com'è la casa.</li>
   <li><strong>Acquisire incarichi</strong>: far vedere ai proprietari della zona come presenti le case. Un proprietario che ha visto i tuoi video arriva all'appuntamento con un'idea precisa di cosa farai per lui.</li>
@@ -141,6 +142,7 @@ export const cosaPubblicareInstagram: Guide = {
   description: `Cosa pubblicare su Instagram da agente immobiliare: 30 idee di post divise per tipo, frequenza, bio, storie e caption pronte da copiare e adattare.`,
   h1: `Cosa pubblicare su Instagram da agente immobiliare: 30 idee di post, bio, storie e caption`,
   intro: `Su Instagram un agente immobiliare dovrebbe pubblicare quattro tipi di contenuti: gli immobili che segue, la zona in cui lavora, consigli utili a chi compra o vende e un po' di sé e del proprio lavoro. Qui trovi 30 idee di post divise per tipo, una frequenza sostenibile, come scrivere la bio, cosa mettere nelle storie e caption pronte da adattare.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -153,7 +155,8 @@ export const cosaPubblicareInstagram: Guide = {
   <li><strong>Mostra il lavoro</strong>, non lo slogan. Foto prima e dopo, case presentate bene, venduti, consigli concreti.</li>
   <li><strong>Fatti vedere</strong>. Il proprietario affida la casa a una persona, non a un logo.</li>
 </ul>
-<p>Le idee che seguono sono divise in cinque categorie. Mescolale: un profilo con solo annunci sembra una vetrina, uno con solo consigli sembra un blog.</p>`,
+<p>Le idee che seguono sono divise in cinque categorie. Mescolale: un profilo con solo annunci sembra una vetrina, uno con solo consigli sembra un blog.</p>
+<p>In sintesi, Instagram serve a un <a href="/it/agente-immobiliare">agente immobiliare</a> per farsi riconoscere nella sua zona prima ancora di presentarsi.</p>`,
     },
     {
       id: 'idee-immobili',
@@ -299,6 +302,7 @@ export const planimetriaAnnuncio: Guide = {
   description: `Planimetria annuncio immobiliare: differenza tra catastale e commerciale, come prepararla a colori, arredata o in 3D online e cosa è corretto mostrare.`,
   h1: `Planimetria nell'annuncio immobiliare: catastale o commerciale, a colori, arredata e 3D`,
   intro: `Nell'annuncio immobiliare conviene pubblicare una planimetria commerciale, cioè un disegno chiaro e leggibile della casa, ricavato dalla planimetria catastale e verificato sullo stato reale. La catastale resta il documento ufficiale da tenere nel fascicolo e da controllare prima di vendere. Qui trovi le differenze, come preparare la planimetria a colori, arredata o in 3D e cosa è corretto mostrare.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -312,7 +316,8 @@ export const planimetriaAnnuncio: Guide = {
   <li><strong>riduce le domande ripetitive</strong> al telefono;</li>
   <li><strong>fa sembrare l'annuncio completo</strong>, cosa che pesa quando l'acquirente confronta più immobili.</li>
 </ul>
-<p>Nell'ordine delle immagini, la planimetria va di solito dopo le foto principali, non in copertina. Trovi uno schema completo nella guida su <a href="/it/come-scrivere-annuncio-immobiliare">come scrivere un annuncio immobiliare</a>.</p>`,
+<p>Nell'ordine delle immagini, la planimetria va di solito dopo le foto principali, non in copertina. Trovi uno schema completo nella guida su <a href="/it/come-scrivere-annuncio-immobiliare">come scrivere un annuncio immobiliare</a>.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> è anche un modo di filtrare le visite: chi arriva ha già capito come sono disposte le stanze.</p>`,
     },
     {
       id: 'catastale-commerciale',
@@ -437,13 +442,15 @@ export const presentazioneAcquisizione: Guide = {
   description: `Presentazione acquisizione immobile: come strutturarla, cosa mostrare al proprietario, come rispondere alle obiezioni e proporre l'esclusiva.`,
   h1: `Presentazione di acquisizione dell'immobile: come convincere il proprietario a darti l'incarico`,
   intro: `Una presentazione di acquisizione efficace mostra al proprietario tre cose: quanto vale la sua casa, come la venderai e in quanto tempo, con quali passaggi. Non è un discorso su quanto è brava l'agenzia, è un piano concreto sulla sua casa, con foto arredate, video e pagina sul sito già pronti da fargli vedere. Qui trovi la struttura passo per passo, le risposte alle obiezioni più comuni e come proporre l'esclusiva in modo corretto.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
       id: 'cosa-e',
       title: `Cos'è la presentazione di acquisizione e quando farla`,
       html: `<p>È il momento in cui, dopo il sopralluogo, ti siedi con il proprietario e gli presenti la tua proposta: valutazione, strategia di vendita e condizioni dell'incarico. Può avvenire nello stesso incontro del sopralluogo o, meglio, in un secondo appuntamento, quando hai avuto il tempo di preparare valutazione e materiali.</p>
-<p>Il secondo appuntamento ha due vantaggi: arrivi con un lavoro fatto <strong>sulla sua casa</strong>, non con una brochure generica, e il proprietario capisce che hai dedicato tempo al suo immobile. Se il primo contatto è arrivato da una lettera o da una telefonata, trovi i passaggi precedenti nelle guide sulla <a href="/it/lettera-acquisizione-immobili">lettera di acquisizione</a> e sullo <a href="/it/script-telefonata-proprietari">script per la telefonata ai proprietari</a>. Per la strategia generale, parti da <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>`,
+<p>Il secondo appuntamento ha due vantaggi: arrivi con un lavoro fatto <strong>sulla sua casa</strong>, non con una brochure generica, e il proprietario capisce che hai dedicato tempo al suo immobile. Se il primo contatto è arrivato da una lettera o da una telefonata, trovi i passaggi precedenti nelle guide sulla <a href="/it/lettera-acquisizione-immobili">lettera di acquisizione</a> e sullo <a href="/it/script-telefonata-proprietari">script per la telefonata ai proprietari</a>. Per la strategia generale, parti da <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>
+<p>L'acquisizione è il lavoro che decide il reddito di un <a href="/it/agente-immobiliare">agente immobiliare</a>: chi ha più incarichi vende di più.</p>`,
     },
     {
       id: 'struttura',

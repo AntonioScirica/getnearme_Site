@@ -14,6 +14,7 @@ export const comeValutareCasa: Guide = {
   description: `Come valutare una casa da vendere anche da soli: superficie commerciale, quotazioni OMI, annunci simili e correzioni, con un esempio di calcolo completo.`,
   h1: 'Come valutare una casa da vendere: il metodo passo passo',
   intro: `Per valutare una casa calcoli la superficie commerciale, la moltiplichi per il prezzo al metro quadro della zona (partendo dalle quotazioni OMI dell'Agenzia delle Entrate) e correggi il risultato per piano, stato, extra e classe energetica. Poi confronti il numero con gli annunci di case simili vicino a te. In questa guida trovi ogni passo spiegato e un esempio di calcolo completo.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -53,7 +54,7 @@ export const comeValutareCasa: Guide = {
   <li>Scegli la <strong>tipologia</strong> giusta: per un normale appartamento di solito "abitazioni civili", per case più modeste "abitazioni di tipo economico", per immobili di pregio "abitazioni signorili", per le case indipendenti "ville e villini".</li>
   <li>Guarda lo <strong>stato conservativo</strong> (normale, ottimo, scadente) e annota il minimo e il massimo.</li>
 </ol>
-<p>Le quotazioni OMI non sono il prezzo della tua casa: sono un intervallo di riferimento per un immobile "medio" di quella zona. Ti dicono in che campo stai giocando. Per capire bene come leggerle leggi la guida alle <a href="/it/quotazioni-omi">quotazioni OMI</a>. Se vivi in una grande città, puoi farti un'idea dei valori anche dalle pagine dei <a href="/it/prezzi-case">prezzi delle case per città</a>.</p>`,
+<p>Le quotazioni OMI non sono il prezzo della tua casa: sono un intervallo di riferimento per un immobile "medio" di quella zona. Ti dicono in che campo stai giocando. Per capire bene come leggerle leggi la guida alle <a href="/it/quotazioni-omi">quotazioni OMI</a>. Se vivi in una grande città, puoi farti un'idea dei valori anche dalle pagine dei <a href="/it/prezzi-case">prezzi delle case per città</a>, per esempio i prezzi delle case a <a href="/it/prezzi-case/roma">Roma</a>, <a href="/it/prezzi-case/milano">Milano</a>, <a href="/it/prezzi-case/napoli">Napoli</a>, <a href="/it/prezzi-case/torino">Torino</a> e <a href="/it/prezzi-case/palermo">Palermo</a>.</p>`,
     },
     {
       id: 'annunci-simili',
@@ -165,6 +166,7 @@ export const quotazioniOmi: Guide = {
   description: `Quotazioni OMI dell'Agenzia delle Entrate: cosa sono, come consultarle gratis con la mappa GEOPOI e come usarle per stimare la tua casa, con un esempio.`,
   h1: 'Quotazioni OMI: cosa sono, come consultarle e come usarle per stimare casa',
   intro: `Le quotazioni OMI sono i valori minimi e massimi al metro quadro che l'Agenzia delle Entrate pubblica ogni semestre per ogni zona di ogni comune, divisi per tipo di immobile. Si consultano gratis sul sito dell'Agenzia, con una mappa. Non sono il prezzo della tua casa, ma sono il punto di partenza più solido per stimarlo.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -325,6 +327,7 @@ export const superficieCommerciale: Guide = {
   description: `Superficie commerciale di un appartamento: come si calcola con muri, balconi, cantina e giardino, differenza con calpestabile e catastale, con esempio.`,
   h1: 'Superficie commerciale: come si calcola per un appartamento',
   intro: `La superficie commerciale è la misura usata per vendere una casa: comprende i locali interni con i muri, più balconi, terrazzi, cantina e giardino calcolati con una percentuale ridotta. Non esiste una formula unica imposta dalla legge per la compravendita, ma ci sono criteri di riferimento usati da tutti. Qui trovi come applicarli, con un esempio completo.`,
+  published: '2026-10-05',
   updated: '2026-10-05',
   audience: 'proprietari',
   sections: [
@@ -430,7 +433,8 @@ export const superficieCommerciale: Guide = {
   </tbody>
 </table></div>
 <p>Al contrario, se vuoi sapere il <strong>prezzo al metro quadro</strong> di un annuncio, dividi il prezzo per la superficie: 220.000 € diviso 92 m² fa circa 2.391 €/m². Controlla sempre che i metri dell'annuncio siano commerciali, altrimenti il confronto non regge.</p>
-<p>Questo è solo il punto di partenza: poi vanno considerati piano, ascensore, stato, box, classe energetica e gli altri elementi che rendono la casa diversa dalla media. Se non vuoi fare i conti a mano, il calcolatore per sapere <a href="/it/quanto-vale-la-mia-casa">quanto vale la tua casa</a> applica queste correzioni partendo dal tuo indirizzo. Il metodo completo è nella guida su <a href="/it/come-valutare-una-casa">come valutare una casa</a>, mentre per capire da dove vengono i prezzi al metro quadro di zona leggi la guida alle <a href="/it/quotazioni-omi">quotazioni OMI</a>.</p>`,
+<p>Questo è solo il punto di partenza: poi vanno considerati piano, ascensore, stato, box, classe energetica e gli altri elementi che rendono la casa diversa dalla media. Se non vuoi fare i conti a mano, il calcolatore per sapere <a href="/it/quanto-vale-la-mia-casa">quanto vale la tua casa</a> applica queste correzioni partendo dal tuo indirizzo. Il metodo completo è nella guida su <a href="/it/come-valutare-una-casa">come valutare una casa</a>, mentre per capire da dove vengono i prezzi al metro quadro di zona leggi la guida alle <a href="/it/quotazioni-omi">quotazioni OMI</a>.</p>
+<p>Per farti un'idea dei prezzi al metro quadro nella tua città, zona per zona, guarda le quotazioni OMI raccolte per <a href="/it/prezzi-case/roma">Roma</a>, <a href="/it/prezzi-case/milano">Milano</a>, <a href="/it/prezzi-case/bologna">Bologna</a> e <a href="/it/prezzi-case/firenze">Firenze</a>, o cerca la tua nell'<a href="/it/prezzi-case">elenco dei prezzi delle case per città</a>.</p>`,
     },
     {
       id: 'errori',

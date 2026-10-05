@@ -6,7 +6,9 @@ export type Guide = {
   description: string
   h1: string
   intro: string
-  updated: string // AAAA-MM-GG
+  published?: string // AAAA-MM-GG, prima pubblicazione (datePublished)
+  updated: string // AAAA-MM-GG, ultima modifica sostanziale (dateModified)
+  summary?: string // risposta in 1-2 frasi in cima alla pagina ("In breve"), per Google e per i motori AI
   sections: { id: string; title: string; html: string }[]
   faq: [string, string][]
   // 'proprietari' = guida per chi vende casa: invito alla valutazione gratuita al posto della prova per agenti,

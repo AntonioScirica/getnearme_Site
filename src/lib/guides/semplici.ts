@@ -15,6 +15,7 @@ export const whatsappBusinessAgenzia: Guide = {
   description: `Come usare WhatsApp Business in agenzia immobiliare, passo passo: installarlo, profilo, messaggio di assenza, risposte rapide, etichette. Facile.`,
   h1: 'Come usare WhatsApp Business in agenzia immobiliare: guida facile, passo passo',
   intro: `WhatsApp Business è una app gratuita, uguale al WhatsApp che usi già, con in più alcuni strumenti pensati per chi lavora: il profilo dell'agenzia, le risposte automatiche quando sei in visita, i messaggi pronti e le etichette per ordinare i clienti. Si installa in dieci minuti e non serve essere esperti. Qui trovi i passaggi uno per uno, con esempi pronti per un'agenzia immobiliare.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -26,7 +27,7 @@ export const whatsappBusinessAgenzia: Guide = {
   <li><strong>I messaggi automatici</strong>: se sei in visita o in ferie, l'app risponde da sola con un messaggio che scrivi tu una volta.</li>
   <li><strong>L'ordine</strong>: puoi mettere un'etichetta colorata a ogni cliente ("Venditore", "Cerca bilocale", "Visita fissata") e ritrovarli in un attimo.</li>
 </ul>
-<p>Perché conviene a un agente immobiliare? Perché oggi molti clienti preferiscono scrivere invece di telefonare. Il proprietario che ha visto il tuo cartello, la coppia che ha visto l'annuncio, il notaio che ti manda un documento: passano quasi tutti da WhatsApp. Se lo usi già col numero personale, sai bene il problema: lavoro e famiglia mescolati, messaggi alle dieci di sera, foto del nipote in mezzo alle planimetrie.</p>
+<p>Perché conviene a un <a href="/it/agente-immobiliare">agente immobiliare</a>? Perché oggi molti clienti preferiscono scrivere invece di telefonare. Il proprietario che ha visto il tuo cartello, la coppia che ha visto l'annuncio, il notaio che ti manda un documento: passano quasi tutti da WhatsApp. Se lo usi già col numero personale, sai bene il problema: lavoro e famiglia mescolati, messaggi alle dieci di sera, foto del nipote in mezzo alle planimetrie.</p>
 <p><strong>Quanto costa?</strong> L'app WhatsApp Business si scarica e si usa gratis. Esistono servizi a pagamento per grandi aziende che mandano migliaia di messaggi, ma a un'agenzia non servono.</p>`,
     },
     {
@@ -184,6 +185,7 @@ export const agenziaGoogleMaps: Guide = {
   description: `Come mettere l'agenzia immobiliare su Google Maps, passo passo: creare la scheda gratis, verificarla, foto, orari e recensioni per farti trovare in zona.`,
   h1: 'Come mettere l\'agenzia immobiliare su Google Maps: guida passo passo',
   intro: `Per mettere l'agenzia su Google Maps serve creare la scheda gratuita di Google, che si chiama Profilo dell'attività su Google (prima si chiamava Google My Business). Si fa dal sito business.google.com, in una ventina di minuti, poi Google chiede di verificare che l'agenzia sia davvero tua. Da quel momento chi cerca "agenzia immobiliare" nella tua zona ti trova sulla mappa, con telefono, orari e recensioni.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -196,7 +198,8 @@ export const agenziaGoogleMaps: Guide = {
   <li><strong>Essere chiamato con un tocco</strong>: dalla scheda il cliente telefona, apre la strada con il navigatore o visita il tuo sito.</li>
   <li><strong>Mostrare le recensioni</strong>: il passaparola che hai sempre avuto, scritto e visibile a tutti.</li>
 </ul>
-<p>Ed è <strong>gratis</strong>. Non serve un sito, non serve essere esperti. A volte la scheda esiste già, creata da Google o da un cliente: in quel caso non va rifatta, va <strong>rivendicata</strong>, cioè dichiarata tua. Vediamo come.</p>`,
+<p>Ed è <strong>gratis</strong>. Non serve un sito, non serve essere esperti. A volte la scheda esiste già, creata da Google o da un cliente: in quel caso non va rifatta, va <strong>rivendicata</strong>, cioè dichiarata tua. Vediamo come.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> che lavora su una zona precisa, la scheda è spesso il primo posto in cui un proprietario lo trova.</p>`,
     },
     {
       id: 'controlla',
@@ -307,6 +310,7 @@ export const recensioniGoogleAgenzia: Guide = {
   description: `Come chiedere recensioni su Google per l'agenzia immobiliare: il link da mandare, messaggi WhatsApp pronti e come rispondere alle recensioni negative.`,
   h1: 'Come chiedere recensioni su Google per l\'agenzia immobiliare, e come rispondere',
   intro: `Il modo più semplice per avere recensioni su Google è chiederle, al momento giusto, con un link diretto. Lo prendi dalla scheda Google dell'agenzia e lo mandi su WhatsApp al cliente contento, di solito dopo il rogito o la firma del contratto d'affitto. Qui trovi i passaggi per ottenere il link, i messaggi pronti da copiare e come rispondere anche alle recensioni negative senza perdere la calma.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -319,7 +323,8 @@ export const recensioniGoogleAgenzia: Guide = {
   <li><strong>Visibilità</strong>: le recensioni sono uno degli elementi che Google considera per le ricerche locali, insieme a quanto la scheda è completa e alla vicinanza.</li>
   <li><strong>Argomento all'appuntamento</strong>: durante l'acquisizione puoi dire "guardi cosa scrivono i clienti", invece di dire "siamo bravi".</li>
 </ul>
-<p>Per avere recensioni serve prima la scheda Google. Se non ce l'hai ancora, parti dalla guida su <a href="/it/agenzia-immobiliare-google-maps">come mettere l'agenzia su Google Maps</a>.</p>`,
+<p>Per avere recensioni serve prima la scheda Google. Se non ce l'hai ancora, parti dalla guida su <a href="/it/agenzia-immobiliare-google-maps">come mettere l'agenzia su Google Maps</a>.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> sono la versione scritta del passaparola: il motivo per cui un proprietario che non ti conosce ti chiama.</p>`,
     },
     {
       id: 'link',
@@ -443,6 +448,7 @@ export const vetrinaAgenziaImmobiliare: Guide = {
   description: `Vetrina agenzia immobiliare: conviene ancora nel 2026? Come organizzarla, cartelli, monitor, QR code per farti scrivere e gli errori da evitare.`,
   h1: 'Vetrina agenzia immobiliare: conviene ancora e come farla funzionare oggi',
   intro: `Sì, la vetrina dell'agenzia immobiliare conviene ancora, se è curata e aggiornata. Oggi chi cerca casa guarda soprattutto online, ma la vetrina lavora su un'altra persona: il proprietario del quartiere che passa ogni giorno e un giorno deciderà di vendere. Qui trovi come organizzarla, cartelli o monitor, come collegarla al telefono con un codice QR e gli errori da evitare.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -454,7 +460,8 @@ export const vetrinaAgenziaImmobiliare: Guide = {
   <li><strong>Dice che sei vivo</strong>. Una vetrina piena di case nuove e di cartelli "venduto" dice: qui si lavora. Una vetrina con fogli ingialliti dice il contrario.</li>
   <li><strong>Fa entrare chi preferisce il contatto di persona</strong>: chi non usa internet, chi vuole guardarti in faccia prima di fidarsi.</li>
 </ul>
-<p>Quindi la domanda giusta non è "vetrina sì o no", ma "<strong>la mia vetrina lavora o è solo arredamento?</strong>". Se hai un ufficio su strada, la vetrina c'è già e la paghi già con l'affitto: tanto vale farla lavorare. Se invece lavori senza ufficio, puoi farne a meno e concentrarti su scheda Google e online.</p>`,
+<p>Quindi la domanda giusta non è "vetrina sì o no", ma "<strong>la mia vetrina lavora o è solo arredamento?</strong>". Se hai un ufficio su strada, la vetrina c'è già e la paghi già con l'affitto: tanto vale farla lavorare. Se invece lavori senza ufficio, puoi farne a meno e concentrarti su scheda Google e online.</p>
+<p>Una vetrina che lavora mostra anche chi sei: per un <a href="/it/agente-immobiliare">agente immobiliare</a> di quartiere è una pubblicità che i proprietari della zona vedono ogni giorno.</p>`,
     },
     {
       id: 'cosa-mettere',
@@ -564,6 +571,7 @@ export const chatgptAgentiImmobiliari: Guide = {
   description: `ChatGPT per agenti immobiliari spiegato semplice: cos'è, come iniziare gratis, 10 richieste pronte per annunci, lettere e messaggi, cosa non chiedergli.`,
   h1: 'ChatGPT per agenti immobiliari: cos\'è e come usarlo, spiegato semplice',
   intro: `ChatGPT è un programma di intelligenza artificiale a cui scrivi una domanda, come in una chat, e che ti risponde con un testo. Per un agente immobiliare è utile soprattutto per scrivere: annunci, lettere ai proprietari, messaggi ai clienti, risposte alle recensioni. Si usa gratis dal sito chatgpt.com o dall'app sul telefono, non serve essere esperti. Qui trovi come iniziare e le richieste pronte da copiare.`,
+  published: '2026-10-02',
   updated: '2026-10-02',
   sections: [
     {
@@ -581,7 +589,8 @@ export const chatgptAgentiImmobiliari: Guide = {
   <li><strong>Può sbagliare</strong>. A volte scrive cose inventate con grande sicurezza: metri quadri, leggi, prezzi. Tutto quello che riguarda numeri, norme e dati dell'immobile va controllato da te.</li>
   <li><strong>Non sostituisce l'agente</strong>. Non conosce il proprietario, non fa la visita, non sente l'odore di umidità in cantina. Ti fa risparmiare tempo sulla scrittura, il resto resta tuo.</li>
 </ul>
-<p>ChatGPT è solo uno dei modi in cui l'intelligenza artificiale entra nel lavoro dell'agente. Per una visione più ampia leggi la guida sull'<a href="/it/intelligenza-artificiale-agenti-immobiliari">intelligenza artificiale per agenti immobiliari</a>.</p>`,
+<p>ChatGPT è solo uno dei modi in cui l'intelligenza artificiale entra nel lavoro dell'agente. Per una visione più ampia leggi la guida sull'<a href="/it/intelligenza-artificiale-agenti-immobiliari">intelligenza artificiale per agenti immobiliari</a>.</p>
+<p>In altre parole, ChatGPT scrive, ma il lavoro dell'<a href="/it/agente-immobiliare">agente immobiliare</a> (valutare, far vedere, trattare) resta tuo.</p>`,
     },
     {
       id: 'iniziare',

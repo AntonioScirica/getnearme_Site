@@ -10,6 +10,7 @@ export const letteraAcquisizione: Guide = {
   description: 'Lettera acquisizione immobili: 5 modelli pronti per proprietari di casa (zona, palazzo, privati, eredi, affitto), consegna, follow-up ed errori da evitare.',
   h1: 'Lettera acquisizione immobili: modelli pronti per scrivere ai proprietari di casa',
   intro: 'Una buona lettera di acquisizione non chiede "vuoi vendere?". Dà al proprietario un motivo concreto per chiamarti: una vendita appena chiusa nel suo palazzo, un acquirente che cerca proprio in quella via, una valutazione gratuita e senza impegno. Qui trovi la struttura, cinque modelli da copiare e adattare, e le regole per consegnarla senza infastidire nessuno.',
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -22,7 +23,8 @@ export const letteraAcquisizione: Guide = {
   <li><strong>è breve</strong>: si legge in trenta secondi;</li>
   <li><strong>offre qualcosa di utile</strong>: una valutazione, un'informazione sul mercato della zona, un contatto diretto con una persona e non con un marchio.</li>
 </ul>
-<p>La lettera è uno dei canali di acquisizione, non l'unico. Per la strategia completa, cioè come presentarti all'appuntamento e vincere il confronto con le altre agenzie, leggi la guida su <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>`,
+<p>La lettera è uno dei canali di acquisizione, non l'unico. Per la strategia completa, cioè come presentarti all'appuntamento e vincere il confronto con le altre agenzie, leggi la guida su <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>
+<p>Se sei agli inizi, la lettera è anche un modo economico per farti conoscere nella zona: il resto del mestiere lo trovi nella guida su <a href="/it/agente-immobiliare">cosa fa un agente immobiliare</a>.</p>`,
     },
     {
       id: 'struttura-lettera',
@@ -137,6 +139,7 @@ export const scriptTelefonata: Guide = {
   description: 'Script telefonata acquisizione immobiliare: come chiamare un privato che vende casa, apertura, obiezioni, provvigione, appuntamento e regole da rispettare.',
   h1: 'Script telefonata acquisizione immobiliare: come chiamare un privato che vende casa',
   intro: 'Chi pubblica un annuncio da privato riceve molte chiamate di agenzie, quasi tutte uguali. Per ottenere un appuntamento non serve insistere: serve essere diversi nei primi venti secondi, ascoltare, e proporre un incontro breve e utile. Qui trovi lo script completo, le risposte alle obiezioni più frequenti e le regole da rispettare.',
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -150,7 +153,8 @@ export const scriptTelefonata: Guide = {
   <li><strong>Guarda le foto con occhio critico</strong>: sono buie, storte, con stanze in disordine? È il tuo argomento più concreto.</li>
   <li><strong>Prepara due fasce orarie</strong> da proporre per l'appuntamento.</li>
 </ul>
-<p>Il tuo obiettivo non è ottenere l'incarico al telefono. È ottenere <strong>un incontro di venti minuti</strong>. Tutto lo script serve a questo.</p>`,
+<p>Il tuo obiettivo non è ottenere l'incarico al telefono. È ottenere <strong>un incontro di venti minuti</strong>. Tutto lo script serve a questo.</p>
+<p>Tieni pronto anche un altro argomento: spesso il privato non sa cosa fa un <a href="/it/agente-immobiliare">agente immobiliare</a> oltre a pubblicare l'annuncio. Valutazione, verifiche sui documenti, visite filtrate, trattativa e accompagnamento al rogito sono la risposta più concreta all'obiezione "vendo da solo".</p>`,
     },
     {
       id: 'apertura',
@@ -248,6 +252,7 @@ export const valutazioneAcquisizione: Guide = {
   description: 'Valutazione immobile gratuita dell\'agente: metodo con comparabili e dati OMI, come presentarla, strategia di prezzo e cosa portare per ottenere l\'incarico.',
   h1: 'Valutazione immobile gratuita: come l\'agente la usa per acquisire l\'incarico',
   intro: 'La valutazione gratuita è il momento in cui il proprietario decide a chi affidare la casa. Non vince chi dice il prezzo più alto: vince chi spiega il prezzo meglio, con dati verificabili, e mostra in modo concreto come venderà l\'immobile. Qui trovi il metodo, come presentarla, come parlare di prezzo e cosa portare all\'appuntamento.',
+  published: '2026-09-30',
   updated: '2026-09-30',
   sections: [
     {
@@ -261,7 +266,8 @@ export const valutazioneAcquisizione: Guide = {
   <li><strong>mostrare come lavori</strong>, così che la scelta non sia solo sul prezzo o sulla provvigione.</li>
 </ol>
 <p>L'errore più comune è trattarla come un numero da comunicare. Un proprietario che riceve tre valutazioni vede tre cifre diverse: se la tua non è spiegata, sceglierà la più alta, o quella dell'agente più simpatico. Per il quadro generale su come vincere il confronto con le altre agenzie, parti dalla guida su <a href="/it/acquisire-incarichi-immobiliari">come acquisire incarichi immobiliari</a>.</p>
-<p>Una nota di correttezza: la valutazione dell'agente è una <strong>stima commerciale</strong> del prezzo di vendita probabile, non una perizia giurata. Dillo chiaramente al proprietario.</p>`,
+<p>Una nota di correttezza: la valutazione dell'agente è una <strong>stima commerciale</strong> del prezzo di vendita probabile, non una perizia giurata. Dillo chiaramente al proprietario.</p>
+<p>Per i dati di partenza usa le fonti pubbliche: le <a href="/it/quotazioni-omi">quotazioni OMI</a> dell'Agenzia delle Entrate, che trovi zona per zona nelle pagine dei prezzi delle case di città come <a href="/it/prezzi-case/milano">Milano</a>, <a href="/it/prezzi-case/roma">Roma</a> e <a href="/it/prezzi-case/torino">Torino</a>, tutte nell'<a href="/it/prezzi-case">indice dei prezzi delle case per città</a>. La valutazione è uno dei motivi per cui il proprietario si rivolge a un <a href="/it/agente-immobiliare">agente immobiliare</a>: farla bene è già una prova di competenza.</p>`,
     },
     {
       id: 'metodo-valutazione',

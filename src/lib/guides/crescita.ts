@@ -7,10 +7,12 @@ export const intelligenzaArtificiale: Guide = {
   slug: 'intelligenza-artificiale-agenti-immobiliari',
   label: 'AI per agenti immobiliari',
   title: 'Intelligenza artificiale per agenti immobiliari: guida 2026',
-  description: 'Come un agente immobiliare può usare l\'intelligenza artificiale ogni giorno: foto arredate, annunci, video e sito. Cosa funziona, cosa evitare e come non perdere tempo.',
+  description: 'Come un agente immobiliare può usare l\'intelligenza artificiale ogni giorno: foto arredate, annunci, video e sito. Cosa funziona e cosa evitare.',
   h1: 'Intelligenza artificiale per agenti immobiliari: cosa usare davvero',
   intro: 'Non serve diventare esperti di tecnologia. Serve sapere in quali punti del lavoro l\'AI fa risparmiare ore e fa presentare meglio gli immobili, e in quali invece è solo rumore.',
-  updated: '2026-09-27',
+  summary: 'l\'intelligenza artificiale non sostituisce l\'agente immobiliare: gli toglie il lavoro intorno all\'immobile. Rende di più su foto arredate, testi degli annunci, video per i social e sito, a patto di dichiarare le foto modificate e rileggere i testi.',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'dove-serve',
@@ -21,7 +23,8 @@ export const intelligenzaArtificiale: Guide = {
   <li><strong>Testi</strong>: descrizioni degli annunci scritte in un attimo, da rileggere e correggere.</li>
   <li><strong>Video</strong>: clip per Instagram e TikTok partendo dalle foto, senza riprese né montaggio.</li>
   <li><strong>Presenza online</strong>: un sito con i tuoi immobili che si aggiorna da solo.</li>
-</ul>`,
+</ul>
+<p>Per ognuno di questi punti c'è una guida pratica: <a href="/it/arredare-foto-con-ai">arredare le foto con l'AI</a>, <a href="/it/chatgpt-agenti-immobiliari">usare ChatGPT per gli annunci</a>, i <a href="/it/video-immobiliari-social">video immobiliari per i social</a> e il <a href="/it/sito-web-agente-immobiliare">sito web dell'agente immobiliare</a>. Per tutto quello che l'AI non fa c'è la guida su <a href="/it/agente-immobiliare">cosa fa un agente immobiliare</a>.</p>`,
     },
     {
       id: 'acquisizione',
@@ -31,8 +34,8 @@ export const intelligenzaArtificiale: Guide = {
     {
       id: 'annunci',
       title: 'Annunci: foto prima, testo dopo',
-      html: `<p>Sui portali la prima cosa che si guarda è la foto di copertina. Con l'home staging virtuale ogni immobile può avere una copertina che ferma chi scorre, anche quando la casa è vuota o da sistemare. Il testo viene dopo: l'AI scrive una prima versione, tu aggiungi quello che conosci solo tu (il vicinato, la luce del pomeriggio, il motivo per cui il proprietario vende).</p>
-<p>Una regola vale sempre: <strong>le foto arredate vanno dichiarate</strong> e affiancate a quelle originali. L'AI serve a far immaginare la casa, non a cambiarla.</p>`,
+      html: `<p>Sui portali la prima cosa che si guarda è la foto di copertina. Con l'<a href="/it/home-staging-virtuale">home staging virtuale</a> ogni immobile può avere una copertina che ferma chi scorre, anche quando la casa è vuota o da sistemare. Il testo viene dopo: l'AI scrive una prima versione, tu aggiungi quello che conosci solo tu (il vicinato, la luce del pomeriggio, il motivo per cui il proprietario vende).</p>
+<p>Una regola vale sempre: <strong><a href="/it/virtual-staging-legale">le foto arredate vanno dichiarate</a></strong> e affiancate a quelle originali. L'AI serve a far immaginare la casa, non a cambiarla.</p>`,
     },
     {
       id: 'errori',
@@ -64,12 +67,15 @@ export const videoSocial: Guide = {
   description: 'Perché un agente immobiliare dovrebbe pubblicare video su Instagram e TikTok, che video funzionano, ogni quanto pubblicarli e come farli senza videomaker.',
   h1: 'Video immobiliari per i social: perché farli e come farli bene',
   intro: 'Nella tua zona i clienti chiamano l\'agente che conoscono già. E oggi lo conoscono prima di tutto dai video che vedono scorrendo il telefono.',
-  updated: '2026-09-27',
+  summary: 'per un agente immobiliare i video sui social servono soprattutto a farsi conoscere nella propria zona. Funzionano video verticali brevi (prima e dopo, nuovo incarico, venduto, zona), pubblicati con costanza, e si possono creare dalle foto senza videomaker.',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'perche',
       title: 'Perché i video contano più delle foto sui social',
-      html: `<p>Sul portale l'acquirente cerca una casa. Sui social, invece, nessuno sta cercando casa: scorre. Per fermarlo serve movimento, ed è quello che fa un video. Ma il vero motivo per pubblicarli è un altro: <strong>i video fanno conoscere te</strong>. Chi vede ogni settimana le case che segui, nella sua zona, quando deciderà di vendere si ricorderà del tuo nome.</p>`,
+      html: `<p>Sul portale l'acquirente cerca una casa. Sui social, invece, nessuno sta cercando casa: scorre. Per fermarlo serve movimento, ed è quello che fa un video. Ma il vero motivo per pubblicarli è un altro: <strong>i video fanno conoscere te</strong>. Chi vede ogni settimana le case che segui, nella sua zona, quando deciderà di vendere si ricorderà del tuo nome.</p>
+<p>Per un <a href="/it/agente-immobiliare">agente immobiliare</a> è il modo più semplice per presidiare una zona. Se vuoi un piano completo, con obiettivi, costi e misure, leggi la guida al <a href="/it/video-marketing-immobiliare">video marketing immobiliare</a>; per le idee pronte c'è quella sui <a href="/it/reel-immobiliari-instagram-tiktok">reel immobiliari per Instagram e TikTok</a>.</p>`,
     },
     {
       id: 'quali',
@@ -89,7 +95,8 @@ export const videoSocial: Guide = {
     {
       id: 'costanza',
       title: 'La costanza conta più della perfezione',
-      html: `<p>Un video bellissimo al mese vale meno di un video semplice a settimana. Il pubblico della tua zona ti deve rivedere spesso per ricordarti. Il problema di solito non è l'idea ma il tempo: riprese, montaggio, musica. Per questo conviene partire dalle foto che hai già: ogni nuovo incarico diventa un video senza uscire di casa.</p>`,
+      html: `<p>Un video bellissimo al mese vale meno di un video semplice a settimana. Il pubblico della tua zona ti deve rivedere spesso per ricordarti. Il problema di solito non è l'idea ma il tempo: riprese, montaggio, musica. Per questo conviene partire dalle foto che hai già: ogni nuovo incarico diventa un video senza uscire di casa.</p>
+<p>Non sai cosa pubblicare tra un immobile e l'altro? Trovi molti spunti in <a href="/it/cosa-pubblicare-instagram-agente-immobiliare">cosa pubblicare su Instagram</a>, e per partire bastano buone <a href="/it/foto-immobiliari-smartphone">foto immobiliari fatte con lo smartphone</a>.</p>`,
     },
     {
       id: 'senza-videomaker',
@@ -111,12 +118,15 @@ export const acquisireIncarichi: Guide = {
   description: 'Come acquisire immobili e trovare più incarichi di vendita: cosa guarda il proprietario quando sceglie l\'agente e come presentarti con prove concrete.',
   h1: 'Come acquisire più incarichi: vince chi si presenta meglio',
   intro: 'Il proprietario ha sentito altre agenzie. Tutte gli hanno promesso di vendere bene e in fretta. Cosa gli fa scegliere te?',
-  updated: '2026-09-27',
+  summary: 'il proprietario affida la casa all\'agente che gli mostra meglio come la venderà. Per acquisire più incarichi presentati con prove concrete (foto arredate, un video, la pagina sul tuo sito), fatti trovare online prima dell\'appuntamento e mantieni quello che hai mostrato.',
+  published: '2026-09-27',
+  updated: '2026-10-05',
   sections: [
     {
       id: 'cosa-guarda',
       title: 'Cosa guarda il proprietario quando sceglie',
-      html: `<p>Chi affida la propria casa vuole capire tre cose: <strong>quanto vale</strong>, <strong>come verrà presentata</strong> e <strong>chi se ne occuperà</strong>. Sulla valutazione le agenzie si somigliano. È sulla presentazione e sulla fiducia che si vince o si perde l'incarico.</p>`,
+      html: `<p>Chi affida la propria casa vuole capire tre cose: <strong>quanto vale</strong>, <strong>come verrà presentata</strong> e <strong>chi se ne occuperà</strong>. Sulla valutazione le agenzie si somigliano. È sulla presentazione e sulla fiducia che si vince o si perde l'incarico.</p>
+<p>Per presentarti forte su tutti e tre i punti prepara bene la <a href="/it/valutazione-immobile-acquisizione">valutazione dell'immobile per l'acquisizione</a> e segui lo schema della <a href="/it/presentazione-acquisizione-immobile">presentazione di acquisizione</a>. Acquisire è metà del lavoro di un <a href="/it/agente-immobiliare">agente immobiliare</a>: senza immobili da vendere non si vende niente.</p>`,
     },
     {
       id: 'mostrare',
@@ -132,7 +142,8 @@ export const acquisireIncarichi: Guide = {
     {
       id: 'presenza',
       title: 'Farsi trovare prima dell\'appuntamento',
-      html: `<p>Molti incarichi si decidono prima ancora dell'incontro: il proprietario cerca il tuo nome, guarda i tuoi annunci, i tuoi video, il tuo sito. Se trova annunci curati e una presenza costante nella sua zona, arriva all'appuntamento già convinto a metà. Se trova solo il profilo sul portale, sei uno dei tanti.</p>`,
+      html: `<p>Molti incarichi si decidono prima ancora dell'incontro: il proprietario cerca il tuo nome, guarda i tuoi annunci, i tuoi video, il tuo sito. Se trova annunci curati e una presenza costante nella sua zona, arriva all'appuntamento già convinto a metà. Se trova solo il profilo sul portale, sei uno dei tanti.</p>
+<p>I canali per farti trovare sono quelli che controlli tu: la <a href="/it/agenzia-immobiliare-google-maps">scheda dell'agenzia su Google Maps</a> con le recensioni dei clienti, un <a href="/it/sito-web-agente-immobiliare">sito personale con i tuoi immobili</a> e i <a href="/it/video-immobiliari-social">video sui social</a>. Per il primo contatto con chi vende da privato aiutano la <a href="/it/lettera-acquisizione-immobili">lettera di acquisizione</a> e lo <a href="/it/script-telefonata-proprietari">script per la telefonata ai proprietari</a>.</p>`,
     },
     {
       id: 'dopo',
