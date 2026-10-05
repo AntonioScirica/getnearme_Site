@@ -8,8 +8,6 @@
 //    L'indirizzo cade in un poligono della zona: si prende min e max di quella zona per la tipologia.
 // 2. COMUNE (riserva, finche' i file sopra non ci sono): prezzo medio OMI del comune (2° semestre 2025, media elaborata
 //    da Evitalya, CC BY 4.0) in src/data/omiComuni.json, con un margine dichiarato del 15% sopra e sotto.
-import { readFile } from 'fs/promises'
-import path from 'path'
 import comuniAvg from '@/data/omiComuni.json'
 
 export type OmiQuote = {
@@ -38,10 +36,9 @@ const TTL = 12 * 3600_000
 export const norm = (s = '') => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
 const semLabel = (s: string) => `${s.slice(4)}° semestre ${s.slice(0, 4)}` // 20252 -> 2° semestre 2025
 
-// file dei dati OMI: prima cartella locale (sviluppo, o file messi nel deploy), poi R2
+// file dei dati OMI da R2 (caricati da scripts/omi-import.mjs). Niente lettura da disco: col percorso calcolato da
+// process.cwd() il tracer di Next metteva tutto il progetto nelle funzioni (oltre 250 MB, deploy fallito il 05/10).
 async function readOmi<T>(rel: string): Promise<T | null> {
-  const dir = process.env.OMI_DIR || path.join(process.cwd(), 'data', 'omi')
-  try { return JSON.parse(await readFile(path.join(dir, rel), 'utf8')) as T } catch { /* non in locale */ }
   const base = process.env.OMI_BASE_URL || (process.env.R2_PUBLIC_URL ? `${process.env.R2_PUBLIC_URL}/omi` : '')
   if (!base) return null
   return fetch(`${base}/${rel}`, { signal: AbortSignal.timeout(15000) }).then(r => (r.ok ? r.json() : null)).catch(() => null)
