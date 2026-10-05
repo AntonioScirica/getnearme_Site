@@ -69,7 +69,11 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
   // foto trovate prima, se sono almeno 3; altrimenti la galleria sta dopo (es. lightbox in fondo) e si guarda tutta la pagina
   const cutAt = html.search(/<(?:section|div|aside|ul)\b[^>]*(?:class|id)=["'][^"']*(?:similar|related|simili|correlat|consigliat|potrebbe)[^"']*["']/i)
   const before = cutAt > 0 ? collectPhotos(html.slice(0, cutAt), meta) : []
-  const photos = before.length >= 3 ? before : collectPhotos(html, meta)
+  const all = before.length >= 3 ? before : collectPhotos(html, meta)
+  // planimetrie in fondo, cosi' la copertina e' una foto vera: dal nome del file o dalla galleria "floor-plans" del tema
+  const planUrls = new Set([...html.matchAll(/data-fancybox=["'][^"']*(?:floor|plan|pianta)[^"']*["'][^>]*?(?:href|data-src)=["']([^"']+)["']|(?:href|data-src)=["']([^"']+)["'][^>]*?data-fancybox=["'][^"']*(?:floor|plan|pianta)[^"']*["']/gi)].map(m => decode(m[1] || m[2])))
+  const isPlan = (u: string) => planUrls.has(u) || /planimetr|pianta|piantina|floor.?plan|(?:^|[-_/])(?:pt|p\d|primop|secondop|terzop|quartop|plan)[-_.]/i.test(u.split('?')[0].split('/').pop() ?? '')
+  const photos = [...all.filter(u => !isPlan(u)), ...all.filter(isPlan)]
   return { raw: { text, json, meta, images: photos }, photos, title: meta['og:title'] || title }
 }
 
