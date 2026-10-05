@@ -72,7 +72,7 @@ async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 800
   const ask = (withPhotos: boolean) => anthropic!.messages.create({
     model,
     max_tokens: maxTokens,
-    output_config: { effort: 'low', format: { type: 'json_schema', schema } },
+    output_config: { ...(/haiku/.test(model) ? {} : { effort: 'low' as const }), format: { type: 'json_schema', schema } }, // Haiku 4.5 rifiuta effort (400)
     system,
     messages: [{
       role: 'user',
