@@ -5,7 +5,7 @@ import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
-import { alignToOriginal, verifyFurniture } from './align'
+import { alignToOriginal, openDoorsFromOriginal, verifyFurniture } from './align'
 import { applyFix, applyFurniture, applyLabels, guessRoomTypes } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
@@ -19,7 +19,7 @@ export const REDRAW_PROMPT = `Redraw this floor plan as a clean architectural CA
 Drawing rules:
 - Walls: solid pure black filled bands with their real thickness (exterior walls about 30 cm, interior partitions about 10 cm, at the same scale as the plan).
 - Windows: the opening in the wall filled with flat light grey (#A0A0A0) across the full wall thickness, no other lines.
-- Doors: an empty white gap in the wall, plus a thin black quarter-circle arc showing the door swing.
+- Doors: an empty white gap in the wall, plus a thin black quarter-circle arc showing the door swing. In cadastral plans doors are drawn as a gap closed by a thin line, with small thin crosses or ticks at the jambs: draw every such gap as a door (empty gap with arc), never as wall.
 - Stairs: only thin outline lines.
 Remove everything else: no furniture, no beds, no sofas, no tables, no bathroom fixtures (no toilet, sink, shower, bathtub), no kitchen counters, no text, no letters, no numbers, no dimension lines, no arrows, no hatching, no colours, no shadows, no floor textures, no paper texture, no frame or border.
 Pure white background. Draw only the main dwelling; keep every wall, door and window of the original and do not add any new ones.`
@@ -79,6 +79,7 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
   try {
     const ta = Date.now()
     raw = (await alignToOriginal(raw, crop)).raw
+    raw = (await openDoorsFromOriginal(raw, crop)).raw // porte delle catastali (varchi con segni a croce) chiuse dal ridisegno
     ms.allineamento = Date.now() - ta
   } catch (e) { console.error('casa3d allineamento', e) }
   if (fix?.labels?.length) raw = applyLabels(raw, fix.labels)

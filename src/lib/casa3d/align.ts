@@ -265,3 +265,64 @@ export async function verifyFurniture(raw: RawPlan, original: Buffer): Promise<{
   }
   return { raw: { ...raw, furniture: keep }, kept: keep.length, dropped }
 }
+
+// Porte delle catastali chiuse dal ridisegno: lungo ogni muro si guardano le due facce sull'ORIGINALE; un tratto di 55-130
+// cm dove mancano tutte e due (al piu' una linea sottile che chiude il varco, o i segni a croce degli stipiti), tra due
+// tratti di muro presenti, con stanze diverse ai lati, e' una porta: si apre anche se il ridisegno l'ha chiusa con un muro.
+export async function openDoorsFromOriginal(raw0: RawPlan, original: Buffer): Promise<{ raw: RawPlan; added: number }> {
+  const raw = clone(raw0)
+  if ((raw.source.fit?.error_cm ?? 0) > 8) return { raw, added: 0 } // pianta non abbastanza allineata all'originale
+  const { imgW: W, imgH: H } = raw.source, T = raw.source.toImage as number[]
+  const img = await loadOriginal(original, W, H)
+  const darkNear = (p: Pt, r = 2) => { const [x, y] = apply(T, p), xi = Math.round(x), yi = Math.round(y); for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const X = xi + dx, Y = yi + dy; if (X >= 0 && Y >= 0 && X < W && Y < H && img.dark[Y * W + X]) return true } return false }
+  const roomAt = (p: Pt) => raw.rooms.find(r => r.type !== 'esterno' && inPoly(p[0], p[1], r.poly))?.id ?? -1
+  // stipite a croce: segno sottile perpendicolare al muro che esce dalle due facce (10-22 cm fuori da tutte e due)
+  const tickAt = (w: { a: Pt; b: Pt; t: number }, s: number) => {
+    const { d, n } = frame(w.a, w.b), c: Pt = [w.a[0] + d[0] * s, w.a[1] + d[1] * s]
+    let out = 0
+    for (const sg of [-1, 1]) for (const k of [0.1, 0.16, 0.22]) if (darkNear([c[0] + sg * n[0] * (w.t / 2 + k), c[1] + sg * n[1] * (w.t / 2 + k)], 1)) { out++; break }
+    return out === 2
+  }
+  const ticks = (w: { a: Pt; b: Pt; t: number }, s0: number, s1: number) => {
+    const pos: number[] = []
+    for (let s = s0; s <= s1; s += 0.02) if (tickAt(w, s)) { if (!pos.length || s - pos[pos.length - 1] > 0.12) pos.push(s); else pos[pos.length - 1] = (pos[pos.length - 1] + s) / 2 }
+    return pos
+  }
+  let added = 0, n = 0
+  const sides = (w: { a: Pt; b: Pt; t: number }, m: Pt) => { const { n: nn } = frame(w.a, w.b), off = w.t / 2 + 0.3; return [roomAt([m[0] + nn[0] * off, m[1] + nn[1] * off]), roomAt([m[0] - nn[0] * off, m[1] - nn[1] * off])] }
+  const open = (w: { a: Pt; b: Pt; t: number }, s0: number, s1: number, rs: number[]) => {
+    const { d } = frame(w.a, w.b), P = (s: number): Pt => [Math.round((w.a[0] + d[0] * s) * 1000) / 1000, Math.round((w.a[1] + d[1] * s) * 1000) / 1000]
+    raw.openings.push({ type: rs[0] < 0 || rs[1] < 0 ? 'entrance' : 'door', a: P(s0), b: P(s1), t: w.t, width: Math.round((s1 - s0) * 100) / 100, rooms: rs, suspect: true, label: `C${++n}`, added: true })
+    added++
+  }
+  // 1. aperture chiuse dal controllo (muri 'chiusa-...'): con gli stipiti a croce ai due capi sull'originale si riaprono
+  for (const w of [...raw.walls].filter(x => /^chiusa-/.test(x.label ?? ''))) {
+    const { L, d } = frame(w.a, w.b)
+    if (L < 0.5 || L > 1.4) continue
+    // si guarda anche un po' oltre i capi (gli stipiti stanno sul bordo del varco)
+    const ext = { a: [w.a[0] - d[0] * 0.15, w.a[1] - d[1] * 0.15] as Pt, b: w.b, t: w.t }
+    const tk = ticks(ext, 0, L + 0.3)
+    const m: Pt = [(w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2], rs = sides(w, m)
+    if (process.env.CASA3D_DEBUG) console.log('chiusa', w.label, L.toFixed(2), 'stipiti', tk.map(x => x.toFixed(2)).join(','), 'stanze', rs.join(','))
+    if (tk.length < 1 || rs[0] === rs[1] || (rs[0] < 0 && rs[1] < 0)) continue
+    raw.walls = raw.walls.filter(x => x !== w)
+    const wl = { ...w }
+    open(wl, 0, L, rs)
+  }
+  // 2. lungo i muri: due stipiti a croce a 55-130 cm, senza apertura in mezzo, stanze diverse ai lati = porta
+  for (const w of [...raw.walls]) {
+    const { L, d } = frame(w.a, w.b)
+    if (L < 0.9 || w.t < 0.06 || /^chiusa-/.test(w.label ?? '')) continue
+    const tk = ticks(w, 0.05, L - 0.05)
+    for (let i = 0; i + 1 < tk.length; i++) {
+      const s0 = tk[i], s1 = tk[i + 1], len = s1 - s0
+      if (len < 0.55 || len > 1.3) continue
+      const m: Pt = [w.a[0] + d[0] * (s0 + s1) / 2, w.a[1] + d[1] * (s0 + s1) / 2]
+      if (raw.openings.some(o => { const om: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2]; return Math.hypot(om[0] - m[0], om[1] - m[1]) < Math.max(0.5, len / 2 + 0.2) })) continue
+      const rs = sides(w, m)
+      if (rs[0] === rs[1] || (rs[0] < 0 && rs[1] < 0)) continue
+      open(w, s0, s1, rs); i++
+    }
+  }
+  return { raw, added }
+}

@@ -271,8 +271,9 @@ export function vectorize(g0: Uint8Array, W0: number, H0: number, up: number, sr
         if (self > 0.35) continue
         const { wr, arc } = clsGap(axis, c, t, b0, a1)
         let typ: Gap['type']
-        if (wr > 0.25) typ = 'window'
-        else if (arc > 0.02 && gap <= 12 * T) typ = 'door'
+        // l'arco prima del grigio: l'antialias dell'arco che attraversa il varco sembrava grigio di finestra (porta chiusa a muro)
+        if (arc > 0.02 && gap <= 12 * T && wr < 0.6) typ = 'door'
+        else if (wr > 0.25) typ = 'window'
         else if (gap <= 9.5 * T && row0 && row1) typ = 'door?' // niente simbolo, tra due pezzi dello stesso muro
         else typ = 'gap?' // niente simbolo: finestra se da' fuori, porta o varco se interno (deciso dopo le stanze)
         gaps.push({ axis, c, t, a0: b0, a1, type: typ, win: Math.round(wr * 100) / 100, arc: Math.round(arc * 1000) / 1000 })
@@ -405,19 +406,22 @@ export function vectorize(g0: Uint8Array, W0: number, H0: number, up: number, sr
     let type: OpType | 'drop' | 'wall', ok = true
     if (o.type === 'window') {
       // grigio tra due stanze: quasi sempre un tramezzo sottile disegnato grigio (antialias), non una finestra interna
-      if (interior) type = o.blob ? 'drop' : 'wall'
+      // grigio tra due stanze: largo da porta (fino a 1,25 m) e' una porta (catastali: varco chiuso da una linea sottile),
+      // piu' largo e' un tramezzo sottile disegnato grigio
+      if (interior) { type = o.blob ? 'drop' : wm <= 1.25 && wm >= 0.55 ? 'door' : 'wall'; ok = false }
       else if (facade) { type = 'window'; ok = wm >= 0.5 && wm <= 2.6 }
       else { type = nr.length ? 'window' : 'drop'; ok = false }
     } else if (o.type === 'gap?' || o.type === 'door?') {
       // interruzione senza simbolo: sul perimetro e' una finestra, dentro una porta o un varco
       if (facade) { type = wm >= 0.5 && wm <= 2.6 ? 'window' : 'drop' }
-      else if (interior) type = wm <= 1.0 ? (wm >= 0.55 ? 'door' : 'drop') : wm <= 2.4 ? 'varco' : 'drop'
+      // varco 60-120 cm tra due stanze = porta interna (catastali: niente arco), oltre = passaggio
+      else if (interior) type = wm <= 1.25 ? (wm >= 0.55 ? 'door' : 'drop') : wm <= 2.4 ? 'varco' : 'drop'
       else type = 'drop'
       ok = o.type === 'door?' && type === 'door' // senza simbolo: da guardare (tranne la porta tra due pezzi di muro)
     } else {
       // porta con l'arco: verso fuori e' l'ingresso
       if (facade) { type = 'entrance'; ok = wm >= 0.8 && wm <= 1.25 }
-      else { type = wm > 1.0 ? 'varco' : 'door'; ok = type === 'door' ? wm >= 0.6 && wm <= 1.0 : wm <= 2.4; if (!interior) ok = false }
+      else { type = wm > 1.25 ? 'varco' : 'door'; ok = type === 'door' ? wm >= 0.6 && wm <= 1.25 : wm <= 2.4; if (!interior) ok = false }
     }
     return { o, type, rooms, ok }
   })
