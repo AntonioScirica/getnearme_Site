@@ -6,7 +6,8 @@
   "scripts": {
     "studio": "remotion studio",
     "typecheck": "tsc --noEmit",
-    "render": "remotion render"
+    "render": "remotion render",
+    "deploy": "remotion lambda sites create src/index.ts --site-name=agenteimmo-video --region=eu-central-1"
   },
   "dependencies": {
     "@remotion/cli": "4.0.421",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@remotion/bundler": "4.0.421",
+    "@remotion/lambda": "4.0.421",
     "@remotion/renderer": "4.0.421",
     "@types/react": "19.2.2",
     "typescript": "5.9.3"

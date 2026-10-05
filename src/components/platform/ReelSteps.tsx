@@ -14,11 +14,35 @@ export type ReelTpl = 'reel' | 'venduto';
 export type ReelPhoto = { src: string; staged: boolean; key?: string }; // key: indirizzo di partenza (data: della chat), per riconoscerla dopo il caricamento
 export type ReelState = {
   tpl: ReelTpl; photos: ReelPhoto[]; title: string; place: string; price: string; mq: string; rooms: string; days: string;
-  contract: 'vendita' | 'affitto'; style: 'vivace' | 'elegante'; enhance: boolean; more?: boolean;
+  contract: 'vendita' | 'affitto'; style: ReelStyle; enhance: boolean; more?: boolean;
   uploading?: number;
   redo?: string | null; redosLeft?: number; editing?: boolean; // dopo il video: correggere i testi e' gratis
 };
 export const MAX_REEL_PHOTOS = 8;
+// Quattro stili (05/10/2026): Vivace ed Elegante = video Remotion, Semplice e Classico = il montaggio di prima
+export type ReelStyle = 'vivace' | 'elegante' | 'semplice' | 'classico';
+const REEL_STYLES: ReelStyle[] = ['vivace', 'elegante', 'semplice', 'classico'];
+export const reelStyleLabel = (s: ReelStyle) => ({ vivace: tr('Vivace', 'Lively'), elegante: tr('Elegante', 'Elegant'), semplice: tr('Semplice', 'Simple'), classico: tr('Classico', 'Classic') })[s] ?? s;
+// una riga di quattro card con un fotogramma del video in quello stile (public/staging/reel-styles) e il nome sotto
+function StylePick({ tpl, value, onChange }: { tpl: ReelTpl; value: ReelStyle; onChange: (v: ReelStyle) => void }) {
+  const still = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return (
+    <div role="radiogroup" aria-label={tr('Stile', 'Style')} className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      {REEL_STYLES.map(v => {
+        const on = value === v, l = reelStyleLabel(v), base = `/staging/reel-styles/${tpl === 'venduto' ? 'venduto' : 'annuncio'}-${v}`;
+        return (
+          <button key={v} type="button" role="radio" aria-checked={on} onClick={() => onChange(v)} className="group flex min-w-0 flex-col items-center gap-1.5">
+            <span className={`block aspect-[9/16] w-full overflow-hidden rounded-2xl bg-black/5 ease-smooth transition-shadow ${on ? 'outline outline-[3px] outline-offset-2 outline-brand' : 'ring-1 ring-black/10 group-hover:ring-black/25'}`}>
+              {/* clip corta in loop dello stile; con "riduci movimento" resta il fotogramma fermo */}
+              <video key={`${tpl}-${v}`} src={`${base}.mp4`} poster={`${base}.webp`} autoPlay={!still} muted loop playsInline preload="metadata" draggable={false} onError={e => { e.currentTarget.style.visibility = 'hidden'; }} className="h-full w-full object-cover" />
+            </span>
+            <span className={`text-[13px] font-semibold leading-tight ${on ? 'text-ink' : 'text-ink/60 group-hover:text-ink'}`}>{l}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 const field = 'h-11 w-full min-w-0 rounded-2xl bg-canvas px-4 text-[15px] outline-none ring-1 ring-inset ring-transparent placeholder:text-muted/60 focus:bg-white focus:ring-brand/50';
 function Seg<T extends string>({ value, options, onChange }: { value: T; options: [T, string][]; onChange: (v: T) => void }) {
@@ -205,7 +229,7 @@ export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: Reel
   const rent = r.contract === 'affitto', sold = r.tpl === 'venduto';
   return (
     <div className="px-1">
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+      <div className={`grid gap-4 ${sold ? 'sm:grid-cols-[1fr_auto]' : ''}`}>{/* la colonna a destra (foto) c'e' solo nel Venduto: senza, i campi arrivano fino al bordo */}
         <div className="grid min-w-0 gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <Seg value={r.contract} onChange={v => set({ contract: v })} options={sold ? [['vendita', tr('Venduto', 'Sold')], ['affitto', tr('Affittato', 'Rented')]] : [['vendita', tr('Vendita', 'For sale')], ['affitto', tr('Affitto', 'For rent')]]} />
@@ -216,6 +240,8 @@ export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: Reel
           {sold && <label className="block"><Label>{rent ? tr('Affittato in quanti giorni? (facoltativo)', 'Rented in how many days? (optional)') : tr('Venduto in quanti giorni? (facoltativo)', 'Sold in how many days? (optional)')}</Label><input value={r.days} maxLength={4} inputMode="numeric" onChange={e => set({ days: e.target.value.replace(/[^\d]/g, '') })} placeholder={tr('es. 23', 'e.g. 23')} className={field} /></label>}
           {!sold && (r.more
             ? <div className="grid grid-cols-2 gap-3">
+                {/* chiudere "Altri dati" li toglie anche dal video */}
+                <button type="button" onClick={() => onChange({ more: false, mq: '', rooms: '' })} className="col-span-2 -mb-1 flex w-fit items-center gap-1 px-1 text-[13px] font-semibold text-muted hover:text-ink"><X size={14} />{tr('Togli metri quadri e locali', 'Remove size and rooms')}</button>
                 <label className="block"><Label>{tr('Metri quadri', 'Square metres')}</Label><NumField value={r.mq} onChange={v => set({ mq: v.slice(0, 5) })} placeholder="85" suffix="m²" /></label>
                 <label className="block"><Label>{tr('Locali', 'Rooms')}</Label><input value={r.rooms} maxLength={2} inputMode="numeric" onChange={e => set({ rooms: e.target.value.replace(/\D/g, '') })} placeholder="3" className={field} /></label>
               </div>
@@ -229,9 +255,10 @@ export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: Reel
           </div>
         )}
       </div>
-      <div className="mt-5 grid gap-3 rounded-3xl bg-canvas p-3 sm:flex sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3"><span className="pl-1 text-xs font-medium text-muted">{tr('Stile', 'Style')}</span><Seg value={r.style} onChange={v => set({ style: v })} options={[['vivace', tr('Vivace', 'Lively')], ['elegante', tr('Elegante', 'Elegant')]]} /></div>
-        <label className="flex cursor-pointer items-center gap-2.5 px-1 text-[13px] font-medium">
+      <div className="mt-5 grid gap-4 rounded-3xl bg-canvas p-4">
+        <div><Label>{tr('Stile', 'Style')}</Label><div className="mt-3"><StylePick tpl={r.tpl} value={r.style} onChange={v => set({ style: v })} /></div></div>
+        <span className="h-px bg-black/10" aria-hidden />{/* divisore tra gli stili e Migliora la luce */}
+        <label className="flex w-fit cursor-pointer items-center gap-2.5 px-1 text-[13px] font-medium">
           <SunMedium size={16} className="text-muted" />{tr('Migliora la luce', 'Improve the light')}
           <input type="checkbox" checked={r.enhance} onChange={e => set({ enhance: e.target.checked })} className="peer sr-only" />
           <span className="relative h-6 w-10 rounded-full bg-black/15 ease-smooth transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:ease-smooth after:transition-transform peer-checked:bg-brand peer-checked:after:translate-x-4" />

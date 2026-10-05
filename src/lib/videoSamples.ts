@@ -15,6 +15,10 @@ export const VIDEO_SAMPLES = {
   walk: '/staging/videos/cambia-stile.mp4', // prova del 04/10, tutta AI: l'agente gira il soggiorno e la tendina mostra l'arredo in stile nordico
   agent: '/staging/videos/agente-v3.mp4', // prova del 29/09: l'agente parla, esce e la stanza si arreda
   ristruttura: '/staging/videos/ristrutturazione.mp4', // prova del 05/10, tutta AI: soggiorno in cantiere, finito vuoto, poi arredato (Kling o3, 2 clip)
-  reel: '/staging/videos/annuncio.mp4', // 05/10, fatto con il renderer vero (src/lib/reel): 5 foto, stile Vivace
-  venduto: '/staging/videos/venduto.mp4', // 05/10, stesso renderer: timbro VENDUTO, stile Vivace
+  // 05/10, anteprime per le card 16:9 (composizioni CardAnnuncio e CardVenduto in remotion/): il video Vivace vero
+  // dentro una cornice da telefono, video interi (annuncio 3 foto 15 s, venduto 8 s), il loop riparte dopo la chiusura
+  reel: '/staging/videos/annuncio.mp4',
+  venduto: '/staging/videos/venduto.mp4',
 } as const;
+// primo fotogramma da mostrare mentre il video si carica
+export const VIDEO_POSTERS: Partial<Record<string, string>> = { [VIDEO_SAMPLES.reel]: '/staging/videos/annuncio.webp', [VIDEO_SAMPLES.venduto]: '/staging/videos/venduto.webp' };

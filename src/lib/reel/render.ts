@@ -49,6 +49,8 @@ const num = (s: string) => clean(s).replace(/[^\d.,]/g, '').slice(0, 6)
 export const contractWord = (c: Contract, done = false) => (done ? (c === 'affitto' ? 'AFFITTATO' : 'VENDUTO') : c === 'affitto' ? 'IN AFFITTO' : 'IN VENDITA')
 
 // ---- foto ------------------------------------------------------------------------------------------------
+// luce migliore senza AI (anche per le foto dei video Remotion, src/lib/reel/lambda.ts)
+export const lighten = (p: sharp.Sharp) => p.normalise({ lower: 0.5, upper: 99.5 }).linear(1.04, -4).modulate({ brightness: 1.03, saturation: 1.06 })
 // Foto pronta per la scena: alta 1920; verticale = 1080 di larghezza (solo zoom), orizzontale fino a 1620 (panoramica).
 // enhance: luce migliore senza AI (livelli automatici leggeri, un filo di contrasto e colore)
 async function prepPhoto(buf: Buffer, enhance: boolean): Promise<{ img: Buffer; wi: number }> {
@@ -57,7 +59,7 @@ async function prepPhoto(buf: Buffer, enhance: boolean): Promise<{ img: Buffer; 
   const r = width / height
   const wi = r <= 0.75 ? W : Math.min(1620, Math.round((H * r) / 2) * 2)
   let p = sharp(await base.toBuffer()).resize(wi, H, { fit: 'cover', kernel: 'lanczos3' })
-  if (enhance) p = p.normalise({ lower: 0.5, upper: 99.5 }).linear(1.04, -4).modulate({ brightness: 1.03, saturation: 1.06 })
+  if (enhance) p = lighten(p)
   return { img: await p.sharpen({ sigma: 0.6 }).jpeg({ quality: 92 }).toBuffer(), wi }
 }
 // sfondo del finale: l'ultima foto sfocata e coperta dal colore (Vivace) o dal nero (Elegante)
