@@ -38,7 +38,7 @@ export async function createViewer(container, opts = {}) {
   renderer.domElement.style.touchAction = 'none'
 
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.05, 160)
+  const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.05, 600)
 
   o.onProgress(0.1, 'Materiali')
   const M = createMaterials(o.assetsBase, renderer, { lowEnd })
@@ -162,7 +162,7 @@ export async function createViewer(container, opts = {}) {
   // controlli: orbita (vista dall'alto) e camminata
   const orbit = new OrbitControls(camera, renderer.domElement)
   orbit.target.set(cx, 0.6, cz); orbit.enableDamping = true; orbit.dampingFactor = 0.08
-  orbit.minDistance = 5; orbit.maxDistance = Math.max(40, R * 6); orbit.maxPolarAngle = 1.2; orbit.minPolarAngle = 0.05
+  orbit.minDistance = 5; orbit.maxDistance = Math.max(60, R * 10); orbit.maxPolarAngle = 1.2; orbit.minPolarAngle = 0.05
   orbit.screenSpacePanning = false
   const walk = new WalkControls(camera, renderer.domElement, house.grid, { eye: 1.6, lowEnd })
 
@@ -262,14 +262,21 @@ export async function createViewer(container, opts = {}) {
     }
   }
   const topPose = () => {
-    // distanza per far stare tutta la casa nell'inquadratura (anche in verticale sul telefono): raggio della casa
-    // sul campo visivo piu' stretto (orizzontale in verticale, verticale in orizzontale)
-    const asp = container.clientWidth / container.clientHeight, fov = (asp < 1 ? 72 : 50) * Math.PI / 180
-    const hfov = 2 * Math.atan(Math.tan(fov / 2) * asp), half = Math.min(fov, hfov) / 2
-    const dist = Math.max(8, (R - 0.6) / Math.sin(half) * 0.8)
-    const dir = new THREE.Vector3(0.15, 0.82, 0.56).normalize()
-    const pos = new THREE.Vector3(cx + dir.x * dist, dir.y * dist, cz + dir.z * dist)
-    const m = new THREE.Matrix4().lookAt(pos, new THREE.Vector3(cx, 0.4, cz), new THREE.Vector3(0, 1, 0))
+    // distanza minima perche' tutti gli angoli della casa (pavimento e cima dei muri) stiano nell'inquadratura con un
+    // margine, col campo visivo vero del rapporto d'aspetto (telefono in verticale compreso): ricerca per bisezione
+    const asp = Math.max(0.2, container.clientWidth / Math.max(1, container.clientHeight))
+    const cam = new THREE.PerspectiveCamera(asp < 1 ? 72 : 50, asp, 0.05, 500)
+    const dir = new THREE.Vector3(0.15, 0.82, 0.56).normalize(), target = new THREE.Vector3(cx, 0.4, cz)
+    const pts = []
+    for (const x of [B.x0, B.x1]) for (const z of [B.z0, B.z1]) for (const y of [0, H]) pts.push(new THREE.Vector3(x, y, z))
+    const fits = d => {
+      cam.position.set(cx + dir.x * d, dir.y * d, cz + dir.z * d); cam.lookAt(target); cam.updateMatrixWorld(); cam.updateProjectionMatrix()
+      return pts.every(p => { const q = p.clone().project(cam); return Math.abs(q.x) <= 0.9 && Math.abs(q.y) <= 0.82 && q.z < 1 })
+    }
+    let lo = 4, hi = 400
+    for (let k = 0; k < 30; k++) { const mid = (lo + hi) / 2; if (fits(mid)) hi = mid; else lo = mid }
+    const pos = new THREE.Vector3(cx + dir.x * hi, dir.y * hi, cz + dir.z * hi)
+    const m = new THREE.Matrix4().lookAt(pos, target, new THREE.Vector3(0, 1, 0))
     return { pos, quat: new THREE.Quaternion().setFromRotationMatrix(m) }
   }
   function roomPose(id) {
