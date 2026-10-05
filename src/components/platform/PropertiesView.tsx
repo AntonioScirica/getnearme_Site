@@ -12,7 +12,10 @@ import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { addFitButton } from '@/components/ui/LeafletMap';
 import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 import { pageLocale, tr } from './i18n';
+
 import { useCredits } from './PlanView';
+// anteprima leggera (api/thumb, WebP ridotto e in cache): le card caricano tutte subito; data: e blob: restano come sono
+const thumb = (u: string, w: number) => (/^https:\/\//.test(u) ? `/api/thumb?w=${w}&u=${encodeURIComponent(u)}` : u);
 
 // Pagina Immobili: in alto la mappa con tutti gli immobili (pin con la foto, clic = scheda),
 // sotto la lista. Le coordinate arrivano dall'indirizzo (Nominatim) e restano in cache nel browser.
@@ -240,7 +243,7 @@ function PropertyCard({ p, demo, onHover, onChange, siteOk, videos = [], views }
         {cur
           ? /\.mp4($|#)/.test(cur)
             ? <video key={cur} src={cur} autoPlay muted loop playsInline className="h-full w-full object-cover" />
-            : <img key={cur} src={cur} alt="" className="blur-in h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
+            : <img key={cur} src={thumb(cur, 640)} alt="" loading="lazy" decoding="async" className="blur-in h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
           : <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={36} /></div>}
         {media.length > 1 && <>
           <button type="button" onClick={step(-1)} aria-label={tr('Foto precedente', 'Previous photo')} className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink opacity-0 shadow ease-smooth transition-opacity group-hover/card:opacity-100 [@media(hover:none)]:opacity-100"><ChevronLeft size={18} /></button>
@@ -337,7 +340,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     for (const p of pinned) {
       const ll = spot(p);
       // foto come sfondo (cover): riempie sempre il cerchio, anche con le regole di Leaflet sulle <img> dei marker
-      const html = `<div class="pin transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] hover:scale-110" style="width:48px;height:48px;border-radius:9999px;border:3px solid #fff;box-shadow:${PIN_SHADOW};background:#f4f4f5 ${p.cover ? `url('${encodeURI(p.cover)}')` : ''} center/cover no-repeat;box-sizing:border-box"></div>`;
+      const html = `<div class="pin transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] hover:scale-110" style="width:48px;height:48px;border-radius:9999px;border:3px solid #fff;box-shadow:${PIN_SHADOW};background:#f4f4f5 ${p.cover ? `url('${/^https:\/\//.test(p.cover) ? thumb(p.cover, 160) : encodeURI(p.cover)}')` : ''} center/cover no-repeat;box-sizing:border-box"></div>`;
       const mk = Lf.marker(ll, { icon: Lf.divIcon({ html, className: '', iconSize: [48, 48], iconAnchor: [24, 24] }), riseOnHover: true })
         .on('click', e => { Lf.DomEvent.stopPropagation(e); setSel(p.id); })
         .addTo(m);
@@ -437,7 +440,7 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
     <aside className="blur-in absolute bottom-28 right-5 top-24 z-[500] flex w-[360px] flex-col overflow-hidden rounded-[28px] bg-white/95 shadow-[0_18px_50px_rgba(0,0,0,.18)] ring-1 ring-black/5 backdrop-blur-xl">
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="relative aspect-[2/1] shrink-0 bg-canvas">
-          {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover" />}
+          {p.cover && <img src={thumb(p.cover, 160)} alt="" className="h-full w-full object-cover" />}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
           <button onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm backdrop-blur-md hover:text-ink"><X size={15} /></button>
           <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
