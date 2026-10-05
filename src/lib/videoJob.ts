@@ -9,7 +9,7 @@ import sharp from 'sharp'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
 import { FAKE_VIDEO, isFakeUser } from '@/lib/fakeAi'
-import { RENO_FINISHED_IMAGE, RENO_FURNISHED_IMAGE, RENO_1, RENO_2, DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
+import { RENO_FINISHED_IMAGE, RENO_FURNISHED_IMAGE, RENO_1, RENO_2, DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR, DRONE_EXTERIOR, DRONE_EXTERIOR_NEG, SEASON_IMAGE, SEASON_VIDEO, SEASON_NEG, type Season } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
@@ -71,7 +71,10 @@ const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, di
 const PLAN_TOP_3D = 'Turn this floor plan into a photorealistic 3D cutaway view of the same furnished apartment seen straight from above, like a dollhouse with no roof: walls with real thickness cut at about 2 m height, floors, doors and windows exactly where the plan has them, every room furnished realistically for its use in a simple modern style, soft natural daylight. Keep exactly the same layout, room shapes and proportions as the plan. Fill the whole frame with the apartment on a plain light background. No text, no labels, no measurements, no plan lines.'
 const PLAN_DIVE = 'One continuous cinematic camera move with no cuts: the camera starts high above the 3D cutaway apartment looking straight down, then smoothly descends and tilts forward, flying down between the walls into one room, and slows to a stop at eye height inside that room, ending exactly on the last image. The layout of the apartment never changes; walls, doors and furniture stay solid and consistent. Calm, smooth, elegant movement.'
 const RENO_ROOMS: Record<string, string> = { soggiorno: 'a living room', openspace: 'a living room with an open kitchen', cucina: 'a kitchen', camera: 'a double bedroom', cameretta: 'a children\'s bedroom', bagno: 'a bathroom', sala: 'a dining room', studio: 'a home office', ingresso: 'an entrance hall', corridoio: 'a hallway' }
-const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true, ristruttura: true }
+const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true, ristruttura: true, drone: true, stagioni: true }
+// Drone esterno e Stagioni (05/10): Kling 2.5 Turbo Pro esce a 1080p; la foto di partenza si prepara gia' a 1920x1080
+// (o 1080x1920), cosi' il video finale resta in Full HD (regola: costi giu', qualita' no)
+const HD: Partial<Record<Anim, true>> = { drone: true, stagioni: true }
 // Volo nel cantiere (30/09, prove in ~/Desktop/prove-video-template/costruzione-fpv, versione 21): intro FPV fissa nel
 // cantiere fino allo scavo (templates/volo-cantiere su R2, fatta una volta), poi la camera esce dallo scavo e si ribalta
 // scoprendo il palazzo dell'agente quasi finito, che si completa fino alla foto vera. Verticale (-kf) o, con una foto
@@ -95,7 +98,7 @@ const VANISH: Record<Anim, string> = {
   particles: 'Each object dissolves on the spot into a cloud of fine, soft golden dust particles that drift slightly upward and fade away, leaving the bare floor and walls exactly as in the last image. Objects never slide or fly. ',
   // invertito: i mobili compaiono a scatti, uno per volta, come in stop-motion
   stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
-  cantiere: '', daynight: '', camera: '', fpv: '', planwalk: '', ristruttura: '',
+  cantiere: '', daynight: '', camera: '', fpv: '', planwalk: '', ristruttura: '', drone: '', stagioni: '',
 }
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
@@ -146,12 +149,13 @@ export const fal = async (url: string, body?: { duration?: unknown } & Record<st
 }
 
 export type VideoResult = { job?: string; url?: string; id?: string; status?: number | 'working'; error?: string }
-export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv' | 'planwalk' | 'ristruttura'
-export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv', 'planwalk', 'ristruttura'] as const).find(x => x === a) ?? 'popup'
+export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'fpv' | 'planwalk' | 'ristruttura' | 'drone' | 'stagioni'
+export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera', 'fpv', 'planwalk', 'ristruttura', 'drone', 'stagioni'] as const).find(x => x === a) ?? 'popup'
+export const parseSeason = (s: unknown): Season => (['estate', 'primavera', 'neve'] as const).find(x => x === s) ?? 'estate'
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string; room?: string; look?: string }): Promise<VideoResult & FramesResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean; plan?: string; room?: string; look?: string; season?: Season }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -162,7 +166,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const src = imageBase64 ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
     const { width = 0, height = 0 } = await sharp(src).rotate().metadata()
     const landscape = width >= height
-    const [W, H] = landscape ? [1280, 720] : [720, 1280]
+    const [W, H] = HD[anim] ? (landscape ? [1920, 1080] : [1080, 1920]) : landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
     const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'popup' ? '-p' : anim === 'particles' ? '-d' : KLING[anim] ? '' : '-g'}` // Kling: il suffisso (-k, -kc, -km) si aggiunge dopo
     const key = `videos/${owner}/${name}`
@@ -207,6 +211,15 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       } else if (anim === 'camera') {
         // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
         ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_camera' })).request_id]
+      } else if (anim === 'drone') {
+        // Drone esterno: una foto, la camera sale e gira attorno alla casa (Kling 2.5 Turbo Pro, 1080p, 0,35 $)
+        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, prompt: DRONE_EXTERIOR, negative_prompt: DRONE_EXTERIOR_NEG, duration: '5', cfg_scale: 0.6 }, { userId: logUser, kind: 'video_drone' })).request_id]
+      } else if (anim === 'stagioni') {
+        // Stagioni: la stessa scena nella stagione scelta (GPT Image), poi Kling Turbo dalla foto vera a quella (come Giorno e notte)
+        const season = o.season ?? 'estate'
+        const after = await frame(SEASON_IMAGE[season], `stagione-${season}`)
+        if (!after) return { error: 'ai_failed', status: 502 }
+        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, tail_image_url: after, prompt: SEASON_VIDEO[season], negative_prompt: SEASON_NEG, duration: '5' }, { userId: logUser, kind: 'video_stagioni' })).request_id]
       } else if (anim === 'planwalk') {
         // Dalla pianta alla stanza: la planimetria in 3D vista dall'alto, poi insieme: discesa dall'alto dentro la stanza
         // fino alla foto (scattata da un punto della pianta) e camminata in avanti dalla foto. Due clip montate di seguito.
@@ -237,7 +250,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         ids = [(await kling(empty, fullUrl, GNM_STOPMOTION)).request_id]
       }
       if (ids.some(x => !x)) { console.error('video kling submit', ids); return { error: 'ai_failed', status: 502 } }
-      const kname = `${name}${anim === 'fpv' ? (landscape ? '-kh' : '-kf') : anim === 'planwalk' ? '-kp' : ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : '-k'}`
+      const kname = `${name}${anim === 'fpv' ? (landscape ? '-kh' : '-kf') : anim === 'planwalk' ? '-kp' : ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : anim === 'drone' ? '-kd' : anim === 'stagioni' ? '-ks' : '-k'}`
       const id = ids.join('+')
       const job = `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}`
       await markPending(owner, kname, job)
@@ -373,7 +386,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-kp|-ka|-kw|-kf|-kh|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-kp|-ka|-kw|-kf|-kh|-kd|-ks|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -382,7 +395,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   // Kling (flussi GetNearMe): una clip, o due per il cantiere (scavo -> struttura, struttura -> casa).
   // Dall'alto (-g) e' su Kling con l'id k_...: clip in avanti, poi dissolvenza sulla foto vera come i video Veo.
   const gk = id.startsWith('k_')
-  const kling = /-k[cmpawfh]?$/.test(name) || gk
+  const kling = /-k[cmpawfhds]?$/.test(name) || gk
   const base = kling ? KLING_BASE : FAL
   const ids = id.replace(/^k_/, '').split('+')
   const st = await Promise.all(ids.map(r => fal(`${base}/requests/${r}/status`)))
@@ -439,17 +452,17 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // taglio dove l'animazione si ferma (stanza vuota per i video al contrario, mobili posati per Dall'alto)
     const gray = veo ? await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']) : Buffer.alloc(0)
     const cut = gk ? Math.min(KLING_SECONDS, calmPoint(gray, 320 * 180)) : kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : calmPoint(gray, 320 * 180)
-    // Giorno e notte (-k): 1,6x, il cambio di luce di Kling e' lento (29/09); gli altri a velocita' vera
-    const speed = /-k$/.test(name) ? 1.6 : 1
+    // Giorno e notte (-k): 1,6x, il cambio di luce di Kling e' lento (29/09); Stagioni (-ks) 1,25x; gli altri a velocita' vera
+    const speed = /-k$/.test(name) ? 1.6 : /-ks$/.test(name) ? 1.25 : 1
     const shown = cut / speed // durata della clip nel video finale
     // Camminata (-km): la ripresa finisce da sola, niente fermo ne' zoom finale
-    const walkCam = /-k[mp]$/.test(name), hold = walkCam ? 0 : HOLD // anche Dalla pianta alla stanza (-kp): finisce camminando
+    const walkCam = /-k[mpd]$/.test(name), hold = walkCam ? 0 : HOLD // anche Dalla pianta alla stanza (-kp) e Drone (-kd): finiscono in movimento
     const total = shown + hold, n = Math.round(total * 30)
     // zoom 3% ease-in-out solo nel finale, dal passaggio alla foto vera in poi (Kling e Svuota: ultimi 2 s);
     // sub-pixel (perspective con interpolazione: niente tremolio)
     const z0 = Math.round((veo ? shown - XFADE : shown) * 30)
-    // Giorno e notte (-k): zoom lento e costante (6%) dal primo all'ultimo fotogramma, come un livello sopra il video
-    const z = /-k$/.test(name) ? `(1+0.06*in/${n})` : `(1+0.03*(0.5-0.5*cos(PI*min(max(in-${z0}\\,0)/${n - z0}\\,1))))`, o = `(1-1/${z})/2`
+    // Giorno e notte (-k) e Stagioni (-ks): zoom lento e costante (6%) dal primo all'ultimo fotogramma, come un livello sopra il video
+    const z = /-ks?$/.test(name) ? `(1+0.06*in/${n})` : `(1+0.03*(0.5-0.5*cos(PI*min(max(in-${z0}\\,0)/${n - z0}\\,1))))`, o = `(1-1/${z})/2`
     const zoom = `perspective=x0='W*${o}':y0='H*${o}':x1='W-W*${o}':y1='H*${o}':x2='W*${o}':y2='H-H*${o}':x3='W-W*${o}':y3='H-H*${o}':interpolation=cubic:eval=frame,format=yuv420p[v];`
     const audio = `atrim=end=${total.toFixed(2)},afade=t=out:st=${(total - 1.2).toFixed(2)}:d=1.2,volume=0.8[a]`
     const clip = `[0:v]trim=end=${cut.toFixed(2)},setpts=(PTS-STARTPTS)/${speed},${popup ? 'reverse,' : ''}fps=30,format=yuv420p`

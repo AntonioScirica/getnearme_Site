@@ -12,6 +12,7 @@ type Entry = { text: string; room: string; from?: string }
 // nome del video dal suffisso del file (vedi videoJob: -p Prima e dopo, -kc Cantiere...): prima erano tutti "Video"
 const VIDEO_NAMES: [RegExp, string][] = [
   [/-prova\.mp4$/, 'Video della prova'], [/-ra\.mp4$/, 'dell’annuncio'], [/-vs\.mp4$/, 'Venduto o Affittato'], [/-k[hf]\.mp4$/, 'Volo nel cantiere'], [/-kc\.mp4$/, 'Cantiere'], [/-km\.mp4$/, 'Camminata'],
+  [/-kd\.mp4$/, 'Drone esterno'], [/-ks\.mp4$/, 'Stagioni'],
   [/-ka\.mp4$/, 'Con te in video'], [/-kw\.mp4$/, 'Camminata nel tuo video'], [/-k\.mp4$/, 'Giorno e notte'],
   [/-g\.mp4$/, 'Prima e dopo, dall’alto'], [/-d\.mp4$/, 'Prima e dopo, particelle'], [/-[pf]\.mp4$/, 'Prima e dopo'],
 ]
@@ -63,15 +64,16 @@ export async function GET(req: NextRequest) {
     const vkeys = await listKeys(`videos/${userId}/`)
     const vall = new Set(vkeys.map(k => k.key))
     const videos = vkeys.filter(k => k.key.endsWith('.mp4')).map(({ key, at: t }) => {
-      const cover = key.replace(/\.mp4$/, '-arredata.jpg')
-      return { id: key, video: publicUrl(key), dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: videoName(key), room: '', steps: [], all: videoName(key).toLowerCase(), keys: [key] }
+      // i video Kling hanno il suffisso (-k, -km, -kd...) solo sul video, la foto di partenza no
+      const cover = [key.replace(/\.mp4$/, '-arredata.jpg'), key.replace(/-k[a-z]?\.mp4$/, '-arredata.jpg')].find(c => vall.has(c)) ?? ''
+      return { id: key, video: publicUrl(key), dopo: cover ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: videoName(key), room: '', steps: [], all: videoName(key).toLowerCase(), keys: [key] }
     })
     // video in lavorazione (segnaposto <nome>.job.json senza il suo .mp4, degli ultimi 30 minuti): la Galleria li segue
     const pending = await Promise.all(vkeys.filter(k => k.key.endsWith('.job.json') && !vall.has(k.key.replace(/\.job\.json$/, '.mp4')) && Date.now() - k.at < 30 * 60_000).map(async ({ key, at: t }) => {
       const j = await fetch(publicUrl(key), { signal: AbortSignal.timeout(10_000) }).then(r => (r.ok ? r.json() : null)).catch(() => null) as { job?: string } | null
       if (!j?.job) return null
       const base = key.replace(/\.job\.json$/, '')
-      const cover = `${base.replace(/-(k|kc)$/, '')}-arredata.jpg`
+      const cover = `${base.replace(/-k[a-z]?$/, '')}-arredata.jpg`
       return { id: base + '.mp4', video: '', pending: true, job: j.job, dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: 'Video in lavorazione', room: '', steps: [], all: 'video', keys: [] }
     }))
     return NextResponse.json({ items: [...items, ...videos, ...pending.filter(Boolean)].sort((a, b) => b!.at - a!.at) })

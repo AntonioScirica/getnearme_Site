@@ -19,6 +19,9 @@ export const VIDEO_SAMPLES = {
   // del Vivace a tutto riquadro, annuncio 6,7 s (titolo, prezzo, cambio foto), venduto 5 s (timbro a 0,6 s), loop morbido
   reel: '/staging/videos/annuncio.mp4',
   venduto: '/staging/videos/venduto.mp4',
+  // 05/10, generati con la ricetta vera (lib/videoJob) dal casale toscano in pietra (remotion/public/demo/card_casale.jpg)
+  drone: '/staging/videos/drone.mp4', // Kling 2.5 Turbo Pro da una foto: sale e gira attorno alla casa
+  stagioni: '/staging/videos/stagioni.mp4', // Nevica: GPT Image (la casa con la neve) + Kling 2.5 Turbo Pro primo/ultimo fotogramma
 } as const;
 // primo fotogramma da mostrare mentre il video si carica
-export const VIDEO_POSTERS: Partial<Record<string, string>> = { [VIDEO_SAMPLES.reel]: '/staging/videos/annuncio.webp', [VIDEO_SAMPLES.venduto]: '/staging/videos/venduto.webp' };
+export const VIDEO_POSTERS: Partial<Record<string, string>> = { [VIDEO_SAMPLES.reel]: '/staging/videos/annuncio.webp', [VIDEO_SAMPLES.venduto]: '/staging/videos/venduto.webp', [VIDEO_SAMPLES.drone]: '/staging/videos/drone.webp', [VIDEO_SAMPLES.stagioni]: '/staging/videos/stagioni.webp' };

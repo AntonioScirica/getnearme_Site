@@ -16,7 +16,11 @@
 // Starter 1000 crediti = 333 foto o 10 video; Plus 1500 = 500 foto o 15 video; Pro 2500 = 833 foto o 25 video.
 // Video Prima e dopo (29/09): 1 credito quando si preparano Prima e Dopo (le foto GPT, pagate anche se poi si annulla),
 // il resto (video_render = 99) quando si consegna il video: chi arriva in fondo paga sempre 100 (video).
-export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, video_fpv: 200, video_planwalk: 150, video_reel: 10, video_venduto: 5, riscrivi: 1 };
+export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, video_fpv: 200, video_planwalk: 150, video_reel: 10, video_venduto: 5, video_drone: 40, video_stagioni: 40, riscrivi: 1 };
+// Drone esterno (05/10): Kling 2.5 Turbo Pro da una foto, 5 s a 1080p (0,35 $, nessuna foto GPT); la Camminata usa Kling 1.6
+// standard a 720p (0,28 $ -> 30): a parita' di margine (~107 crediti per $) 0,35 $ fa ~38 -> 40, come Giorno e notte.
+// Stagioni (05/10): 1 GPT Image a qualita' bassa (la stagione scelta, ~0,014 $) + Kling 2.5 Turbo Pro primo/ultimo
+// fotogramma 5 s (0,35 $) = ~0,37 $, la stessa ricetta e lo stesso costo di Giorno e notte -> 40.
 // Video dell'annuncio e Video Venduto o Affittato (05/10): niente AI, solo montaggio FFmpeg (costo nostro ~0): 10 e 5,
 // scalati solo a video pronto; correggere i testi dopo e' gratis (3 volte per video, vedi api/platform/video-reel).
 // Dalla pianta alla stanza (02/10): 1 GPT (pianta 3D dall'alto, ~0,04 $) + Kling 2.5 Turbo 5 s (discesa, 0,35 $) + Kling 1.6 5 s (camminata, 0,28 $) -> 150.
