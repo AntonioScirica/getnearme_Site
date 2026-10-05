@@ -183,6 +183,8 @@ export interface MetricsData {
 }
 
 export type PageId =
+  | "agenteimmo"
+  | "bp"
   | "overview"
   | "newsletter"
   | "users"

@@ -50,7 +50,8 @@ function readList<T>(k: string): T[] {
 const complete = (i: Partial<BPInputs>): BPInputs => ({ ...clonePreset('base'), ...i });
 
 // noActuals: pagina con password del sito (/it/business-plan), niente dati reali dal database
-export default function BusinessPlanView({ userKey, noActuals = false }: { userKey: string; noActuals?: boolean }) {
+// actualsHeaders: dashboard /metrics, i dati reali arrivano con la sua chiave (x-metrics-key) invece del token admin
+export default function BusinessPlanView({ userKey, noActuals = false, actualsHeaders }: { userKey: string; noActuals?: boolean; actualsHeaders?: Record<string, string> }) {
   const [state, setState] = useState(() => {
     const s = readJSON<{ scenario: Scen; inputs: BPInputs; compare: boolean }>(storeKey(userKey), { scenario: 'base', inputs: clonePreset('base'), compare: false });
     return { ...s, inputs: complete(s.inputs) };
@@ -75,11 +76,15 @@ export default function BusinessPlanView({ userKey, noActuals = false }: { userK
   useEffect(() => {
     if (noActuals) return;
     let alive = true;
-    authFetch('/api/platform/bp-actuals', { cache: 'no-store' })
+    const req = actualsHeaders
+      ? fetch('/api/platform/bp-actuals', { cache: 'no-store', headers: actualsHeaders })
+      : authFetch('/api/platform/bp-actuals', { cache: 'no-store' })
+    req
       .then(async r => { if (!r.ok) throw new Error(r.status === 403 ? tr('Solo per admin.', 'Admins only.') : `${tr('Errore', 'Error')} ${r.status}`); return r.json(); })
       .then(d => { if (alive) setActuals(d); })
       .catch(e => { if (alive) setActErr((e as Error).message); });
     return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- headers fissi per la vita della pagina
   }, [noActuals]);
   const useActuals = () => {
     if (!actuals) return;

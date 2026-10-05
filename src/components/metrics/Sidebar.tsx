@@ -18,11 +18,15 @@ import {
   ListTodo,
   Sun,
   Moon,
+  House,
+  TrendingUp,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
 
 const navItems: { id: PageId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "agenteimmo",  label: "Agente Immo",  icon: House },
+  { id: "bp",          label: "Business plan", icon: TrendingUp },
   { id: "overview",    label: "Overview",     icon: LayoutDashboard },
   { id: "newsletter",  label: "Marketing",    icon: Megaphone },
   { id: "users",       label: "Utenti",       icon: Users },
