@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
+import { alignToOriginal } from './align'
 import { applyFix, applyLabels, guessRoomTypes } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
@@ -23,12 +24,12 @@ Pure white background. Draw only the main dwelling; keep every wall, door and wi
 
 export type RecognizeResult = {
   raw: RawPlan; crop: Buffer; cad: Buffer; overlay: Buffer; fix: Fix | null
-  ms: { ritaglio: number; ridisegno: number; riconoscimento: number; controllo: number; totale: number }; usd: number
+  ms: { ritaglio: number; ridisegno: number; riconoscimento: number; controllo: number; allineamento: number; totale: number }; usd: number
 }
 
 export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean }): Promise<RecognizeResult> {
   const T0 = Date.now()
-  const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, totale: 0 }
+  const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, allineamento: 0, totale: 0 }
   let usd = 0
   // 1. solo l'appartamento (catastali con intestazione, timbri, cantina a parte), lato lungo almeno 1536 px
   let crop: Buffer
@@ -66,11 +67,19 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
       ms.controllo = c.ms; usd += c.usage.usd
       await logUsage({ userId: o.userId, kind: 'casa3d_controllo' }, false, c.ms, { input: c.usage.input, output: c.usage.output }, true, 'claude-sonnet-5').catch(() => {})
       fix = c.fix
-      raw = applyLabels(applyFix(v.plan, c.fix), c.fix.labels ?? []) // le scritte dell'originale vincono sui tipi ipotizzati
+      raw = applyFix(v.plan, c.fix)
     } catch (e) {
       console.error('casa3d controllo', e) // senza controllo si va avanti: l'agente corregge a mano
     }
   }
+  // la pianta (fatta sul ridisegno) torna sull'originale: allineamento e aggancio dei muri alle linee vere; poi le scritte
+  // dell'originale (posizioni sull'originale, quindi dopo l'allineamento) che vincono sui tipi ipotizzati
+  try {
+    const ta = Date.now()
+    raw = (await alignToOriginal(raw, crop)).raw
+    ms.allineamento = Date.now() - ta
+  } catch (e) { console.error('casa3d allineamento', e) }
+  if (fix?.labels?.length) raw = applyLabels(raw, fix.labels)
   raw = guessRoomTypes(raw) // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
   ms.totale = Date.now() - T0
   return { raw, crop, cad, overlay, fix, ms, usd }

@@ -201,7 +201,9 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
   const raw = floor.raw
   const svg = useRef<SVGSVGElement>(null)
   const [sel, setSel] = useState<Sel>(null)
-  const [orig, setOrig] = useState(false)
+  // opacita' dell'originale sotto la pianta (cursore): se il ridisegno non combacia si parte a meta' per confrontare
+  const diverge = !!raw.source.fit?.diverge
+  const [origOp, setOrigOp] = useState(diverge ? 50 : 15)
   const [area, setArea] = useState('')
   const total = totalArea(raw)
   // riquadro della pianta in metri, con margine
@@ -233,8 +235,8 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
     <div className="mt-4 grid min-h-0 gap-4 lg:grid-cols-[1fr_280px]">
       <div className="relative min-h-0 overflow-hidden rounded-[24px] bg-canvas p-2">
         <svg ref={svg} viewBox={vb.join(' ')} className="block h-[44vh] w-full touch-manipulation select-none sm:h-[52vh]" style={{ overflow: 'hidden' }} onClick={() => setSel(null)}>
-          {floor.image && <image href={floor.image} width={raw.source.imgW} height={raw.source.imgH} transform={imgM} opacity={orig ? 1 : 0.18} preserveAspectRatio="none" />}
-          <g opacity={orig ? 0.25 : 1}>
+          {floor.image && <image href={floor.image} width={raw.source.imgW} height={raw.source.imgH} transform={imgM} opacity={origOp / 100} preserveAspectRatio="none" />}
+          <g opacity={1 - (origOp / 100) * 0.7}>
             {raw.rooms.map(r => (
               <polygon key={r.id} points={r.poly.map(p => p.join(',')).join(' ')} fill={ROOM_FILL[r.type] ?? ROOM_FILL.stanza} stroke={sel?.kind === 'room' && sel.id === r.id ? BRAND : 'none'} strokeWidth={0.08}
                 className="cursor-pointer" onClick={e => { e.stopPropagation(); setSel({ kind: 'room', id: r.id }) }} />
@@ -262,12 +264,16 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
           </g>
         </svg>
         <div className="absolute left-4 top-4 flex gap-2">
-          <button type="button" onClick={() => setOrig(o => !o)} className={pill(orig)}>{orig ? tr('Pianta riconosciuta', 'Recognized plan') : tr('Originale', 'Original')}</button>
+          <label className="flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-ink/80 ring-1 ring-inset ring-black/10">
+            {tr('Originale', 'Original')}
+            <input type="range" min={0} max={100} value={origOp} onChange={e => setOrigOp(Number(e.target.value))} aria-label={tr('Opacità della planimetria originale', 'Original plan opacity')} className="w-24 accent-[#537eec]" />
+          </label>
           {floor.history.length > 0 && <button type="button" onClick={() => { onUndo(); setSel(null) }} className={`${pill(false)} flex items-center gap-1.5`}><RotateCcw size={13} /> {tr('Annulla', 'Undo')}</button>}
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-col gap-4 overflow-y-auto lg:h-[calc(52vh+16px)]">{/* alta come la pianta: la finestra non cambia misura a ogni tocco */}
+      <div className="flex min-h-0 flex-col gap-4 overflow-y-auto lg:h-[calc(52vh+16px)]">
+        {diverge && <p className="rounded-[24px] bg-brand/10 p-4 text-sm font-medium text-brand">{tr('In alcuni punti il disegno si discosta dall’originale: muovi il cursore Originale per confrontare e correggi le stanze che non tornano.', 'In some spots the drawing differs from the original: move the Original slider to compare and fix rooms that do not match.')}</p>}{/* alta come la pianta: la finestra non cambia misura a ogni tocco */}
         {multi && (
           <label className="block text-sm">
             <span className="text-muted">{tr('Nome del piano', 'Floor name')}</span>
