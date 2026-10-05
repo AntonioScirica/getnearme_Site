@@ -13,6 +13,7 @@ import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './
 import { PublicSwitch, toSite } from './PortfolioView';
 import { useCredits } from './PlanView';
 import { useViews } from './useViews';
+import Casa3DCard from './Casa3DCard';
 import { printHtml } from '@/lib/printHtml';
 import { tr, trf } from './i18n';
 import { Chips, Counter, EnergyScale, NumberField, TextField, Toggle } from './NewPropertyWizard';
@@ -512,6 +513,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
             </div>
           </section>
         )}
+        {/* casa 3D dalle planimetrie dell'immobile (sul sito: Vedi in 3D) */}
+        <Casa3DCard project={project} photos={photos} onChanged={onAdded} />
         {GROUPS.map(([title, titleEn, keys]) => (
           <section key={title}>
             <h3 className="text-sm font-semibold">{tr(title, titleEn)}</h3>

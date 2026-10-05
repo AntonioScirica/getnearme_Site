@@ -1,6 +1,8 @@
 'use client';
 
 import PlanCamera, { CamMark } from './PlanCamera';
+import Casa3DFlow, { viewerUrl } from './Casa3DFlow';
+import type { Casa3d } from '@/lib/casa3d/types';
 import { VIDEO_POSTERS, VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -96,13 +98,14 @@ function ErrLine({ err, className = '' }: { err: string; className?: string }) {
 type Msg =
   | { id: string; role: 'divider'; image: string }
   | { id: string; role: 'note'; text: string } // risposta fissa della chat, senza AI (saluti, foto da riconoscere)
+  | { id: string; role: 'casa3d'; casa: Casa3d; plan: string } // casa 3D fatta dalla planimetria (si apre nel visore, si corregge)
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest; at?: number; recover?: boolean }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
   | { id: string; role: 'video'; renderAt?: number; queued?: boolean; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'season' | 'mode' | 'previews' | 'frames' | 'render' | 'rphotos' | 'rdata'; photo: string; season?: Season; reel?: ReelState & { prevUrl?: string }; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
-type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura' | 'reel' | 'venduto' | 'drone' | 'stagioni';
+type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura' | 'reel' | 'venduto' | 'drone' | 'stagioni' | 'casa3d';
 // Stagioni: la scelta della stagione (passo suo, pill come la stanza), stessi id del server (gnmVideoPrompts)
 type Season = 'estate' | 'primavera' | 'neve';
 const SEASONS: { id: Season; label: string; icon: typeof Sun }[] = [{ id: 'estate', label: tr('Arriva l’estate', 'Summer arrives'), icon: Sun }, { id: 'primavera', label: tr('Fioritura di primavera', 'Spring blossom'), icon: Flower2 }, { id: 'neve', label: tr('Nevica', 'Snowfall'), icon: Snowflake }];
@@ -111,10 +114,14 @@ const REEL_STEPS = new Set(['rphotos', 'rdata']);
 // scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
 type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'cam' | 'agent' | 'style' | 'keep' | 'photo' | 'tag' | 'drone' | 'season'; src?: string };
 const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, cam: VideoIcon, agent: UserRound, style: Palette, keep: Sofa, photo: ImageIcon, tag: Tag, drone: Drone, season: SunSnow };
-const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam', planwalk: 'cam', ristruttura: 'build', reel: 'steps', venduto: 'tag', drone: 'drone', stagioni: 'season' };
+const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', fpv: 'build', daynight: 'moon', camera: 'cam', agent: 'agent', walk: 'cam', planwalk: 'cam', ristruttura: 'build', reel: 'steps', venduto: 'tag', drone: 'drone', stagioni: 'season', casa3d: 'cam' };
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
   // solo per le foto nate da "Foto da un punto" della planimetria (il messaggio video ha la pianta): primo della lista
+  // Casa 3D (05/10): non e' un video, apre il riconoscimento della pianta e la casa navigabile (Casa3DFlow)
+  { id: 'casa3d', label: tr('Casa 3D', '3D home'), desc: tr('La casa navigabile in 3D, dall’alto e camminando, di giorno e di notte', 'The home in 3D, from above and walking through, by day and by night'), sample: VIDEO_SAMPLES.casa3d, anims: [
+    { id: 'casa3d', label: tr('Casa 3D', '3D home'), desc: tr('La casa navigabile in 3D, dall’alto e camminando, di giorno e di notte', 'The home in 3D, from above and walking through, by day and by night'), sample: VIDEO_SAMPLES.casa3d },
+  ] },
   { id: 'pianta', label: tr('Dalla pianta', 'From the plan'), desc: tr('Dalla pianta in 3D si scende nella stanza e si cammina', 'From the 3D plan down into the room, then a walk'), sample: VIDEO_SAMPLES.camera, anims: [
     { id: 'planwalk', label: tr('Dalla pianta', 'From the plan'), desc: tr('Dalla pianta in 3D si scende nella stanza e si cammina', 'From the 3D plan down into the room, then a walk'), sample: VIDEO_SAMPLES.camera },
   ] },
@@ -176,7 +183,7 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
   && (isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef);
 // crediti di un video per animazione; Cantiere e Giorno/notte partono subito dopo la scelta (niente passo Prima/Dopo)
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
-const videoCr = (anim?: VideoAnim) => anim === 'reel' ? CREDIT_COST.video_reel : anim === 'venduto' ? CREDIT_COST.video_venduto : anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' || anim === 'ristruttura' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : anim === 'drone' ? CREDIT_COST.video_drone : anim === 'stagioni' ? CREDIT_COST.video_stagioni : CREDIT_COST.video_render;
+const videoCr = (anim?: VideoAnim) => anim === 'casa3d' ? CREDIT_COST.casa3d : anim === 'reel' ? CREDIT_COST.video_reel : anim === 'venduto' ? CREDIT_COST.video_venduto : anim === 'fpv' ? CREDIT_COST.video_fpv : anim === 'cantiere' || anim === 'ristruttura' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : anim === 'planwalk' ? CREDIT_COST.video_planwalk : anim === 'drone' ? CREDIT_COST.video_drone : anim === 'stagioni' ? CREDIT_COST.video_stagioni : CREDIT_COST.video_render;
 // attesa tipica del video, misurata sulle prove del 29-30/09 (generazione su fal + foto GPT + montaggio, coda compresa)
 // Annuncio e Venduto: stima dalle prove (05/10/2026). Vivace/Elegante su Lambda ~50 s + ~6 s a foto; Semplice/Classico sul server ~8 s + ~3 s a foto
 const reelWait = (r?: ReelState) => {
@@ -187,7 +194,7 @@ const reelWait = (r?: ReelState) => {
 const waitFor = (anim?: VideoAnim, reel?: ReelState) => anim === 'reel' || anim === 'venduto' ? reelWait(reel) : anim === 'cantiere' || anim === 'ristruttura' ? '4-8 min' : anim === 'camera' ? '2-5 min' : anim === 'fpv' || anim === 'daynight' || anim === 'agent' || anim === 'drone' || anim === 'stagioni' ? '2-4 min' : anim === 'walk' ? '10-15 min' : anim === 'planwalk' ? '3-6 min' : tr('circa 2 min', 'about 2 min');
 const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera' || anim === 'fpv' || anim === 'planwalk' || anim === 'ristruttura' || anim === 'drone' || anim === 'stagioni';
 // crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
-const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' || anim === 'reel' || anim === 'venduto' ? 0 : CREDIT_COST.video_prep);
+const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'casa3d' || anim === 'agent' || anim === 'walk' || anim === 'reel' || anim === 'venduto' ? 0 : CREDIT_COST.video_prep);
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
   : req.planimetria ? CREDIT_COST.arreda
   : req.style === 'empty' ? CREDIT_COST.svuota
@@ -1016,6 +1023,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Foto da un punto della planimetria: la richiesta parte dalla pianta con la fotocamera scelta (PlanCamera)
   const [camOpen, setCamOpen] = useState(false);
+  // Casa 3D dalla planimetria: popup di riconoscimento e correzione (nuova o da correggere)
+  const [casaOpen, setCasaOpen] = useState<{ plan: string; existing?: Casa3d; msg?: string } | null>(null);
+  const casaDone = (c: Casa3d) => {
+    const o = casaOpen
+    setMsgs(ms => { const k = ms.findIndex(x => x.role === 'casa3d' && (x.id === o?.msg || x.casa.key === c.key)); if (k >= 0) return ms.map((x, n) => (n === k ? { ...x, casa: c } as Msg : x)); return [...ms, { id: uid(), role: 'casa3d', casa: c, plan: o?.plan ?? '' }]; });
+    toBottom();
+  };
   const sendCamera = async (camera: NonNullable<EditRequest['camera']>, style: string) => {
     setCamOpen(false);
     if (!base || busy) return;
@@ -1125,6 +1139,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     return outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
   };
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
+  // planimetria: la casa 3D navigabile, prima degli stili della pianta
+  const casaChip = base && scene === 'planimetria' ? [
+    <button key="casa3d" disabled={busy} onClick={() => setCasaOpen({ plan: sourcePhoto ?? base })}
+      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink py-1.5 pl-3.5 pr-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><LayoutGrid size={13} /> {tr('Casa 3D', '3D home')}<Cr n={CREDIT_COST.casa3d} dark /></button>,
+  ] : [];
   const videoChip = base && scene !== 'planimetria' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
       className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> {tr('Crea video', 'Create video')}</button>,
@@ -1137,7 +1156,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     <button key={d} role="radio" aria-checked={typedDensity === d} onClick={() => setTextDensity(d)}
       className={`flex h-8 shrink-0 items-center rounded-full px-3.5 pb-px text-[13px] font-medium leading-none shadow-sm ease-smooth transition-colors ${typedDensity === d ? 'bg-ink text-white' : 'bg-white text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-canvas'}`}>{l}</button>
   ));
-  const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
+  const chips = [...casaChip, ...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} data-density-chip disabled={busy} onClick={e => {
       if (x.id === 'p-camera') { setCamOpen(true); return; } // fotocamera sulla pianta: prima si sceglie il punto
       if (!furnishes(x.req) || scene !== 'interno') { void send(x.label, x); return; }
@@ -1211,6 +1230,21 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             </div>
           ) : m.role === 'note' ? (
             <div key={m.id} className="blur-in flex justify-start"><p className="max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm">{m.text}</p></div>
+          ) : m.role === 'casa3d' ? (
+            // casa 3D pronta: la vista dall'alto (poster) che apre il visore, e la correzione della pianta
+            <div key={m.id} className="blur-in flex justify-start">
+              <div className={`w-full max-w-[560px] overflow-hidden rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>
+                <a href={viewerUrl(m.casa.manifest)} target="_blank" rel="noreferrer" className="group relative block overflow-hidden rounded-[20px] bg-canvas">
+                  {m.casa.poster ? <img src={m.casa.poster} alt={tr('Casa 3D vista dall’alto', '3D home from above')} className="aspect-video w-full object-cover ease-smooth transition-transform duration-[600ms] group-hover:scale-[1.02]" /> : <span className="flex aspect-video w-full items-center justify-center text-sm text-muted"><Loader2 size={16} className="mr-2 animate-spin" /> {tr('Preparo l’anteprima', 'Preparing the preview')}</span>}
+                  <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3.5 py-1.5 text-[13px] font-semibold shadow-sm">{tr('Apri la casa 3D', 'Open the 3D home')}</span>
+                </a>
+                <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-3">
+                  <span className="mr-auto text-xs text-muted">{m.casa.floors.length > 1 ? `${m.casa.floors.length} ${tr('piani', 'floors')}` : ''}{project ? `${m.casa.floors.length > 1 ? ', ' : ''}${tr('salvata nella scheda dell’immobile', 'saved in the listing')}` : ''}</span>
+                  <button type="button" onClick={() => setCasaOpen({ plan: m.plan, existing: m.casa, msg: m.id })} className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-3.5 text-[13px] font-semibold hover:bg-black/[0.06]"><Pencil size={13} /> {tr('Correggi la pianta', 'Fix the plan')}</button>
+                  <a href={viewerUrl(m.casa.manifest)} target="_blank" rel="noreferrer" className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-[13px] font-semibold text-white hover:bg-brand"><ExternalLink size={13} /> {tr('Apri', 'Open')}</a>
+                </div>
+              </div>
+            </div>
           ) : m.role === 'video' ? (
             // video: tutta la larghezza, un solo contenitore che cambia contenuto a ogni scelta (le scelte fatte restano in alto)
             <div key={m.id} data-mid={m.id} className="blur-in scroll-mt-24">
@@ -1241,11 +1275,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">{/* telefono: 2 colonne, si vedono piu' stili senza scorrere */}
-                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente' && t.id !== 'cammina-stile' && (t.id !== 'pianta' || !!m.plan)) /* Con te in video e Cambia stile: solo dopo aver mandato un video; Dalla pianta: solo da una foto della planimetria */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
+                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente' && t.id !== 'cammina-stile' && ((t.id !== 'pianta' && t.id !== 'casa3d') || !!m.plan)) /* Con te in video e Cambia stile: solo dopo aver mandato un video; Dalla pianta: solo da una foto della planimetria */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
                           const off = templateOff(t.id) // i disponibili prima, i non disponibili in fondo
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const solo = one?.length === 1 ? one[0].id : m.step === 'anim' ? t.id as VideoAnim : undefined; if (solo === 'reel' || solo === 'venduto') { startReel(m, solo, t.label); return; } /* Annuncio e Venduto: passi loro (foto, dati, anteprima gratis) */ if (solo === 'ristruttura') { if (short(m, fullCr(solo))) return; patchV(m.id, { step: 'room', anim: solo, err: undefined, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }); return; } /* Ristrutturazione: prima che stanza e' */ if (solo === 'stagioni') { if (short(m, fullCr(solo))) return; patchV(m.id, { step: 'season', anim: solo, err: undefined, picks: [{ label: t.label, icon: ANIM_ICON[solo] }] }); return; } /* Stagioni: prima quale stagione */ if (solo && directVideo(solo)) { if (short(m, fullCr(solo))) return; patchV(m.id, { anim: solo }); void makeVideo({ ...m, anim: solo, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }, m.photo, '', m.photo); return; } /* lo stile lo chiede solo Prima e dopo: gli altri video partono subito con la foto com'e' */ const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: one[0].id === 'walk' ? 'warn' : 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
+                            <button disabled={!!off} onClick={() => { if (t.id === 'casa3d' && m.plan) { setCasaOpen({ plan: m.plan }); return; } /* Casa 3D: riconoscimento e correzione nel popup, poi il risultato in chat */ const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const solo = one?.length === 1 ? one[0].id : m.step === 'anim' ? t.id as VideoAnim : undefined; if (solo === 'reel' || solo === 'venduto') { startReel(m, solo, t.label); return; } /* Annuncio e Venduto: passi loro (foto, dati, anteprima gratis) */ if (solo === 'ristruttura') { if (short(m, fullCr(solo))) return; patchV(m.id, { step: 'room', anim: solo, err: undefined, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }); return; } /* Ristrutturazione: prima che stanza e' */ if (solo === 'stagioni') { if (short(m, fullCr(solo))) return; patchV(m.id, { step: 'season', anim: solo, err: undefined, picks: [{ label: t.label, icon: ANIM_ICON[solo] }] }); return; } /* Stagioni: prima quale stagione */ if (solo && directVideo(solo)) { if (short(m, fullCr(solo))) return; patchV(m.id, { anim: solo }); void makeVideo({ ...m, anim: solo, picks: m.step === 'anim' ? [...m.picks, { label: t.label, icon: ANIM_ICON[solo] }] : [{ label: t.label, icon: ANIM_ICON[solo] }] }, m.photo, '', m.photo); return; } /* lo stile lo chiede solo Prima e dopo: gli altri video partono subito con la foto com'e' */ const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: one[0].id === 'walk' ? 'warn' : 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-white p-1.5 text-left sm:rounded-[28px] sm:p-2 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} poster={VIDEO_POSTERS[t.sample]} autoPlay loop muted playsInline className={`aspect-[4/3] w-full rounded-[18px] object-cover sm:aspect-video sm:rounded-[20px] ${t.sample === VIDEO_SAMPLES.popup ? 'object-bottom' : ''}`} />
@@ -1639,6 +1673,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             <div className="blur-in -mx-1 mb-4 flex gap-1.5 overflow-x-auto sm:mb-2 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(STYLE_FROM_PHOTO, null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
+          {casaOpen && <Casa3DFlow plans={[{ src: casaOpen.plan }]} existing={casaOpen.existing} projectId={project ?? undefined} onClose={() => setCasaOpen(null)} onDone={casaDone} />}
           {camOpen && base && <PlanCamera src={sourcePhoto ?? base} onClose={() => setCamOpen(false)} onConfirm={(c, st) => void sendCamera(c, st)} />}
           {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send(STYLE_FROM_PHOTO, null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}
           <div className={`relative flex items-end gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>

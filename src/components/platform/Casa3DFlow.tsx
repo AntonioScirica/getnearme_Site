@@ -116,7 +116,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
   // nel body: dentro pannelli con transform o blur il fixed resterebbe chiuso nel pannello
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4" onClick={() => step !== 'build' && step !== 'work' && onClose()}>
-      <div className="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] bg-white p-4 shadow-2xl sm:p-6" onClick={e => e.stopPropagation()}>
+      <div className="flex max-h-full w-full max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-[32px] bg-white p-4 shadow-2xl sm:p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="font-display text-xl font-bold tracking-tight">{step === 'done' ? tr('La casa 3D è pronta', 'The 3D home is ready') : step === 'edit' ? tr('Controlla la pianta', 'Check the plan') : tr('Casa 3D', '3D home')}</h2>
@@ -231,8 +231,8 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
 
   return (
     <div className="mt-4 grid min-h-0 gap-4 lg:grid-cols-[1fr_280px]">
-      <div className="relative min-h-0 rounded-[24px] bg-canvas p-2">
-        <svg ref={svg} viewBox={vb.join(' ')} className="block h-[52vh] w-full touch-manipulation select-none" onClick={() => setSel(null)}>
+      <div className="relative min-h-0 overflow-hidden rounded-[24px] bg-canvas p-2">
+        <svg ref={svg} viewBox={vb.join(' ')} className="block h-[44vh] w-full touch-manipulation select-none sm:h-[52vh]" style={{ overflow: 'hidden' }} onClick={() => setSel(null)}>
           {floor.image && <image href={floor.image} width={raw.source.imgW} height={raw.source.imgH} transform={imgM} opacity={orig ? 1 : 0.18} preserveAspectRatio="none" />}
           <g opacity={orig ? 0.25 : 1}>
             {raw.rooms.map(r => (

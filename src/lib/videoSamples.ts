@@ -10,6 +10,7 @@ export const VIDEO_SAMPLES = {
   stopmotion: '/staging/videos/stopmotion_room_v2.mp4',
   cantiere: `${REELS}/social-frames/bbe5b3fa-e484-4f34-8c55-341f02907f19/base.mp4`,
   daynight: `${REELS}/social-frames/b4938420-a308-413b-853f-0ea38719dd5e/daynight.mp4`,
+  casa3d: '/staging/videos/casa3d.mp4', // Casa 3D (05/10): giro attorno alla casa nel visore, registrato in locale
   camera: '/staging/videos/camera-v2.mp4', // prova del 29/09 (Kling 1.6, la passeggiata di GetNearMe)
   fpv: '/staging/videos/volo-cantiere.mp4', // prova del 30/09: volo nel cantiere, flip, il palazzo si svela finito
   walk: '/staging/videos/cambia-stile.mp4', // prova del 04/10, tutta AI: l'agente gira il soggiorno e la tendina mostra l'arredo in stile nordico
@@ -24,4 +25,4 @@ export const VIDEO_SAMPLES = {
   stagioni: '/staging/videos/stagioni.mp4', // Nevica: GPT Image (la casa con la neve) + Kling 2.5 Turbo Pro primo/ultimo fotogramma
 } as const;
 // primo fotogramma da mostrare mentre il video si carica
-export const VIDEO_POSTERS: Partial<Record<string, string>> = { [VIDEO_SAMPLES.reel]: '/staging/videos/annuncio.webp', [VIDEO_SAMPLES.venduto]: '/staging/videos/venduto.webp', [VIDEO_SAMPLES.drone]: '/staging/videos/drone.webp', [VIDEO_SAMPLES.stagioni]: '/staging/videos/stagioni.webp' };
+export const VIDEO_POSTERS: Partial<Record<string, string>> = { [VIDEO_SAMPLES.casa3d]: '/staging/videos/casa3d.webp', [VIDEO_SAMPLES.reel]: '/staging/videos/annuncio.webp', [VIDEO_SAMPLES.venduto]: '/staging/videos/venduto.webp', [VIDEO_SAMPLES.drone]: '/staging/videos/drone.webp', [VIDEO_SAMPLES.stagioni]: '/staging/videos/stagioni.webp' };

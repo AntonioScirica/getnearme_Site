@@ -407,7 +407,7 @@ export function vectorize(g0: Uint8Array, W0: number, H0: number, up: number, sr
       // grigio tra due stanze: quasi sempre un tramezzo sottile disegnato grigio (antialias), non una finestra interna
       if (interior) type = o.blob ? 'drop' : 'wall'
       else if (facade) { type = 'window'; ok = wm >= 0.5 && wm <= 2.6 }
-      else type = nr.length ? 'window' : 'drop', ok = false
+      else { type = nr.length ? 'window' : 'drop'; ok = false }
     } else if (o.type === 'gap?' || o.type === 'door?') {
       // interruzione senza simbolo: sul perimetro e' una finestra, dentro una porta o un varco
       if (facade) { type = wm >= 0.5 && wm <= 2.6 ? 'window' : 'drop' }
