@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   // file tracer doesn't include it on its own → the reel story render crashed on
   // Vercel with "/var/task/node_modules/@sparticuz/chromium/bin does not exist".
   // NB: glob key — "[action]" would be parsed as a char-class, so use "**".
+  // valutazione casa: lib/omi legge data/omi in locale con un percorso calcolato da process.cwd(), e il tracer di Next
+  // si portava dietro mezzo progetto (public/ con video e foto): la funzione superava i 250 MB e il deploy falliva (05/10).
+  // In produzione i dati OMI arrivano da R2.
+  outputFileTracingExcludes: {
+    "/api/valutazione": ["./public/**", "./data/**", "./scripts/**", "./remotion/**", "./node_modules/@sparticuz/**", "./node_modules/ffmpeg-static/**", "./node_modules/puppeteer-core/**"],
+  },
   outputFileTracingIncludes: {
     "/api/social/cron/**": ["./node_modules/@sparticuz/chromium/**"],
     // video della chat: il binario di ffmpeg-static (montaggio del video Veo)
