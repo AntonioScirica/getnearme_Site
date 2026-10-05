@@ -322,7 +322,9 @@ export function applyFurniture(raw: RawPlan, items: NonNullable<Fix['furniture']
     if (!p.rooms.some(r => inPoly(at[0], at[1], r.poly))) continue
     const vx = Math.cos(it.back * Math.PI / 180), vy = Math.sin(it.back * Math.PI / 180)
     const bx = (d * vx - c * vy) / det, bz = (-b * vx + a * vy) / det
-    p.furniture.push({ kind: it.kind, at: [r3(at[0]), r3(at[1])], rot: Math.round(Math.atan2(-bx, -bz) * 1000) / 1000, len: r3(it.len * p.source.imgW / ppm), depth: r3(it.depth * p.source.imgW / ppm) })
+    // i muri della pianta sono dritti: il verso letto (spesso approssimato sull'originale ruotato) si aggancia al quarto di giro
+    const rot = Math.round(Math.atan2(-bx, -bz) / (Math.PI / 2)) * (Math.PI / 2)
+    p.furniture.push({ kind: it.kind, at: [r3(at[0]), r3(at[1])], rot: Math.round(rot * 1000) / 1000, len: r3(it.len * p.source.imgW / ppm), depth: r3(it.depth * p.source.imgW / ppm) })
   }
   return p
 }
