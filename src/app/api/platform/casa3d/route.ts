@@ -69,7 +69,13 @@ export async function POST(req: NextRequest) {
     const image = await imageBuffer(b.image)
     if (!image) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     // pianta gia' ridisegnata (prove in locale: niente GPT da ripagare)
-    const cad = process.env.NODE_ENV !== 'production' ? await imageBuffer(b.cad) : null
+    // in locale: pianta ridisegnata passata o gia' pronta su R2 per quell'immagine (casa3d-dev/cad-<sha1>.png), niente GPT
+    let cad = process.env.NODE_ENV !== 'production' ? await imageBuffer(b.cad) : null
+    if (!cad && process.env.NODE_ENV === 'development') {
+      const h = (await import('crypto')).createHash('sha1').update(image).digest('hex')
+      const r = await fetch(`${process.env.R2_PUBLIC_URL}/casa3d-dev/cad-${h}.png`).catch(() => null)
+      if (r?.ok) cad = Buffer.from(await r.arrayBuffer())
+    }
     const areaM2 = typeof b.areaM2 === 'number' && b.areaM2 > 10 && b.areaM2 < 2000 ? b.areaM2 : undefined
     try {
       const r = await recognizeFloor({ userId, image, areaM2, cad: cad ?? undefined, check: b.check !== false })
@@ -105,10 +111,12 @@ export async function POST(req: NextRequest) {
       ])
       out.push({ name, raw: rawUrl, plan: planUrl, image: typeof f.image === 'string' && allowedUrl(f.image) ? f.image : '' })
     }
+    // elenco dei piani letto dal visore (public/casa3d/v1/index.html?src=...)
+    const manifest = await uploadFile(Buffer.from(JSON.stringify({ floors: out.map(f => ({ name: f.name, plan: f.plan, image: f.image })) })), `${base}/casa-${v}.json`, 'application/json')
     const now = new Date().toISOString()
     const p = await projectOf(userId, b.projectId)
     const prev = ((p?.import_data as { details?: { casa3d?: Casa3d } } | null)?.details?.casa3d) ?? null
-    const casa: Casa3d = { status: 'ready', key, floors: out, created: prev?.key === key ? prev.created : now, updated: now, ...(prev?.key === key && prev.poster ? { poster: prev.poster } : {}) }
+    const casa: Casa3d = { status: 'ready', key, floors: out, manifest, created: prev?.key === key ? prev.created : now, updated: now, ...(prev?.key === key && prev.poster ? { poster: prev.poster } : {}) }
     if (p && !(await saveCasa(p, casa))) return NextResponse.json({ error: 'failed' }, { status: 500 })
     return NextResponse.json({ casa3d: casa })
   }

@@ -41,7 +41,9 @@ export type ViewerPlan = {
 // Un piano della casa salvato su R2 (raw = modificabile, plan = per il visore)
 export type Casa3dFloor = { name: string; raw: string; plan: string; image: string; cad?: string }
 // Casa 3D dell'immobile, in import_data.details.casa3d (niente colonne nuove)
-export type Casa3d = { status: 'ready' | 'working'; floors: Casa3dFloor[]; poster?: string; created: string; updated?: string; key: string }
+export type Casa3d = { status: 'ready' | 'working'; floors: Casa3dFloor[]; manifest: string; poster?: string; created: string; updated?: string; key: string }
+// indirizzo del visore (pagina statica in public/casa3d, versione nel nome per la cache)
+export const VIEWER_PATH = '/casa3d/v1/index.html'
 
 export const ROOM_TYPES = ['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'ingresso', 'corridoio', 'studio', 'ripostiglio', 'balcone', 'terrazzo', 'scala'] as const
 export const ROOM_LABEL_IT: Record<string, string> = {
