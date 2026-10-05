@@ -53,7 +53,7 @@ function meanDist(img: Img, T: number[], pts: Pt[]) {
 const pxPerM = (T: number[]) => Math.sqrt(Math.abs(T[0] * T[3] - T[1] * T[2]))
 
 export async function alignToOriginal(raw0: RawPlan, original: Buffer): Promise<{ raw: RawPlan; metrics: AlignMetrics }> {
-  let raw = clone(raw0)
+  const raw = clone(raw0)
   const { imgW: W, imgH: H } = raw.source
   const img = await loadOriginal(original, W, H)
   const T0 = raw.source.toImage as number[]
