@@ -6,9 +6,9 @@
 // una finestra; tocca una porta o una finestra = togli o cambia; superficie totale in mq. Una scheda per piano.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Box, Check, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Square, Trash2, X } from 'lucide-react';
+import { Box, Check, Combine, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Scissors, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
-import { addOpening, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, totalArea } from '@/lib/casa3d/build';
+import { addOpening, inPoly, mergeRooms, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
 import { FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, WALL_COLORS, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
 import { authFetch } from './api';
 import { pageLang, tr } from './i18n';
@@ -201,6 +201,8 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
   const raw = floor.raw
   const svg = useRef<SVGSVGElement>(null)
   const [sel, setSel] = useState<Sel>(null)
+  // strumenti sulle stanze: dividi (due tocchi per la linea) e unisci (tocca la stanza vicina)
+  const [tool, setTool] = useState<{ kind: 'split'; id: number; pts: Pt[] } | { kind: 'merge'; id: number } | null>(null)
   // opacita' dell'originale sotto la pianta (cursore): se il ridisegno non combacia si parte a meta' per confrontare
   const diverge = !!raw.source.fit?.diverge
   const [origOp, setOrigOp] = useState(diverge ? 50 : 15)
@@ -266,6 +268,18 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
               </text>
             ))}
           </g>
+          {tool && (
+            <>
+              {tool.kind === 'split' && tool.pts.map((q, i) => <circle key={i} cx={q[0]} cy={q[1]} r={0.12} fill={BRAND} />)}
+              {tool.kind === 'split' && tool.pts.length === 2 && <line x1={tool.pts[0][0]} y1={tool.pts[0][1]} x2={tool.pts[1][0]} y2={tool.pts[1][1]} stroke={BRAND} strokeWidth={0.08} strokeDasharray="0.2 0.12" />}
+              <rect x={vb[0]} y={vb[1]} width={vb[2]} height={vb[3]} fill="transparent" className="cursor-crosshair" onClick={e => {
+                e.stopPropagation()
+                const q = toM(e)
+                if (tool.kind === 'split') { if (tool.pts.length < 2) setTool({ ...tool, pts: [...tool.pts, q] }) }
+                else { const other = raw.rooms.find(r => r.id !== tool.id && inPoly(q[0], q[1], r.poly)); if (other) { onEdit(r => mergeRooms(r, tool.id, other.id)); setTool(null); setSel(null) } }
+              }} />
+            </>
+          )}
         </svg>
         <div className="absolute left-4 top-4 flex gap-2">
           <label className="flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-ink/80 ring-1 ring-inset ring-black/10">
@@ -286,15 +300,30 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
         )}
         {/* azione sull'elemento toccato */}
         <div className="rounded-[24px] bg-canvas p-4">
-          {!sel && <p className="text-sm text-muted">{tr('Tocca un elemento della pianta.', 'Tap an element of the plan.')}</p>}
-          {!sel && (
+          {tool && (
+            <div>
+              <p className="text-sm font-semibold">{tool.kind === 'split' ? (tool.pts.length < 2 ? tr(`Tocca due punti sui muri per tracciare la divisione (${tool.pts.length} di 2)`, `Tap two points on the walls to draw the split (${tool.pts.length} of 2)`) : tr('Cosa c’è sulla linea?', 'What is on the line?')) : tr('Tocca la stanza vicina da unire', 'Tap the neighbouring room to merge')}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tool.kind === 'split' && tool.pts.length === 2 && ([['muro', tr('Muro', 'Wall')], ['porta', tr('Muro con porta', 'Wall with door')], ['passaggio', tr('Passaggio aperto', 'Open passage')]] as const).map(([m, l]) => (
+                  <button key={m} type="button" onClick={() => { onEdit(r => splitRoom(r, tool.id, tool.pts[0], tool.pts[1], m)); setTool(null); setSel(null) }} className={pill(false)}>{l}</button>
+                ))}
+                <button type="button" onClick={() => setTool(null)} className={pill(false)}>{tr('Annulla', 'Cancel')}</button>
+              </div>
+            </div>
+          )}
+          {!tool && !sel && <p className="text-sm text-muted">{tr('Tocca un elemento della pianta.', 'Tap an element of the plan.')}</p>}
+          {!tool && !sel && (
             <div className="mt-3">
               <p className="text-sm font-semibold">{tr('Facciata', 'Facade')}{raw.materials?.from ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
               <Swatches colors={[...new Set([raw.materials?.facade?.color, ...FACADE_COLORS].filter((x): x is string => !!x))]} value={raw.materials?.facade?.color} onPick={c => onEdit(r => setFacade(r, c))} />
             </div>
           )}
-          {selRoom && (
+          {selRoom && !tool && (
             <>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button type="button" onClick={() => setTool({ kind: 'split', id: selRoom.id, pts: [] })} className={`${pill(false)} flex items-center gap-1.5`}><Scissors size={14} /> {tr('Dividi', 'Split')}</button>
+                <button type="button" onClick={() => setTool({ kind: 'merge', id: selRoom.id })} className={`${pill(false)} flex items-center gap-1.5`}><Combine size={14} /> {tr('Unisci', 'Merge')}</button>
+              </div>
               <p className="text-sm font-semibold">{tr('Che stanza è?', 'Which room is it?')} <span className="font-normal text-muted">{String(selRoom.area).replace('.', ',')} m²</span></p>
               {selRoom.label && <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-brand"><ScanText size={13} /> {tr('Letto dalla planimetria', 'Read from the plan')}: «{selRoom.label}»{selRoom.written_mq ? `, ${String(selRoom.written_mq).replace('.', ',')} m²` : ''}</p>}
               <div className="mt-3 flex flex-wrap gap-2">

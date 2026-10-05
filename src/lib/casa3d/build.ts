@@ -2,6 +2,7 @@
 // gira sul server e nel browser (schermata di correzione). Le correzioni (Claude o agente) si applicano alla
 // pianta riconosciuta; il visore riceve muri come poligoni, porte e finestre come rettangoli con asse, stanze
 // con tipo e rettangolo utile per i mobili.
+import { fillPoly, simplifyRing, traceContour } from './raster'
 import { OUTDOOR, type Fix, type OpType, type Pt, type RawOpening, type RawPlan, type ViewerPlan } from './types'
 
 const OUT_TYPES = new Set(['esterno'])
@@ -361,4 +362,106 @@ export function setFacade(raw: RawPlan, color: string): RawPlan {
   const p = clone(raw)
   p.materials = { rooms: {}, frames: '#f7f6f3', doors: '#f3f1ec', roof: 'non_visibile', shutters: '', from: 0, ...p.materials, facade: { kind: p.materials?.facade?.kind ?? 'intonaco', color } }
   return p
+}
+
+// --- dividi e unisci stanze (schermata di correzione) ---
+const shoelace = (P: Pt[]) => { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1] } return a / 2 }
+const centerOf = (P: Pt[]): Pt => {
+  const A = shoelace(P); let cx = 0, cy = 0
+  for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length], k = p[0] * q[1] - q[0] * p[1]; cx += (p[0] + q[0]) * k; cy += (p[1] + q[1]) * k }
+  const c: Pt = A ? [cx / (6 * A), cy / (6 * A)] : P[0]
+  if (inPoly(c[0], c[1], P)) return [r3(c[0]), r3(c[1])]
+  const xs = P.map(p => p[0]), ys = P.map(p => p[1]); return [r3((Math.min(...xs) + Math.max(...xs)) / 2), r3((Math.min(...ys) + Math.max(...ys)) / 2)]
+}
+// semipiano a sinistra della retta (o, d): Sutherland-Hodgman
+function clipHalf(P: Pt[], o: Pt, d: Pt, keepLeft: boolean): Pt[] {
+  const side = (p: Pt) => (d[0] * (p[1] - o[1]) - d[1] * (p[0] - o[0])) * (keepLeft ? 1 : -1)
+  const out: Pt[] = []
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], sa = side(a), sb = side(b)
+    if (sa >= 0) out.push(a)
+    if ((sa >= 0) !== (sb >= 0)) { const t = sa / (sa - sb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]) }
+  }
+  return out
+}
+// p1, p2: punti toccati; la linea si raddrizza se e' quasi orizzontale o verticale
+export function splitRoom(raw: RawPlan, id: number, p1: Pt, p2: Pt, mode: 'muro' | 'porta' | 'passaggio'): RawPlan {
+  const p = clone(raw), r = p.rooms.find(x => x.id === id)
+  if (!r) return p
+  let d: Pt = [p2[0] - p1[0], p2[1] - p1[1]]
+  const L = Math.hypot(d[0], d[1]); if (L < 0.2) return p
+  d = [d[0] / L, d[1] / L]
+  const o: Pt = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2]
+  if (Math.abs(d[1]) < 0.17) d = [Math.sign(d[0]) || 1, 0]; else if (Math.abs(d[0]) < 0.17) d = [0, Math.sign(d[1]) || 1]
+  const A = clipHalf(r.poly, o, d, true), B = clipHalf(r.poly, o, d, false)
+  const aA = Math.abs(shoelace(A)), aB = Math.abs(shoelace(B))
+  if (A.length < 3 || B.length < 3 || aA < 0.5 || aB < 0.5) return p
+  // corda: intersezioni della retta col contorno, le piu' vicine al punto di mezzo da una parte e dall'altra
+  const ts: number[] = []
+  for (let i = 0; i < r.poly.length; i++) {
+    const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length], e: Pt = [b[0] - a[0], b[1] - a[1]]
+    const den = d[0] * e[1] - d[1] * e[0]; if (Math.abs(den) < 1e-9) continue
+    const t = ((a[0] - o[0]) * e[1] - (a[1] - o[1]) * e[0]) / den, u = ((a[0] - o[0]) * d[1] - (a[1] - o[1]) * d[0]) / den
+    if (u >= -1e-6 && u <= 1 + 1e-6) ts.push(t)
+  }
+  const t0 = Math.max(...ts.filter(t => t <= 0), -50), t1 = Math.min(...ts.filter(t => t >= 0), 50)
+  const ca: Pt = [r3(o[0] + d[0] * t0), r3(o[1] + d[1] * t0)], cb: Pt = [r3(o[0] + d[0] * t1), r3(o[1] + d[1] * t1)]
+  const nid = Math.max(...p.rooms.map(x => x.id)) + 1
+  const mk = (P: Pt[], id2: number) => ({ ...r, id: id2, poly: P.map(q => [r3(q[0]), r3(q[1])] as Pt), area: Math.round(Math.abs(shoelace(P)) * 10) / 10, center: centerOf(P), written_mq: undefined })
+  p.rooms = p.rooms.flatMap(x => (x.id === id ? [mk(A, id), { ...mk(B, nid), label: undefined }] : [x]))
+  if (mode !== 'passaggio') p.walls.push({ a: ca, b: cb, t: 0.1, label: `divisione-${nid}` })
+  if (mode === 'porta') {
+    const cl = Math.hypot(cb[0] - ca[0], cb[1] - ca[1]), w = Math.min(0.8, cl - 0.2), m = (cl - w) / 2
+    if (w > 0.5) p.openings.push({ type: 'door', a: [r3(ca[0] + d[0] * m), r3(ca[1] + d[1] * m)], b: [r3(ca[0] + d[0] * (m + w)), r3(ca[1] + d[1] * (m + w))], t: 0.1, width: r3(w), rooms: [id, nid], suspect: false, label: `D${nid}`, added: true })
+  }
+  return p
+}
+// unisce due stanze vicine: via i muri (e le loro aperture) che stanno solo tra le due; contorno nuovo su griglia di 5 cm
+export function mergeRooms(raw: RawPlan, idA: number, idB: number): RawPlan {
+  const p = clone(raw), A = p.rooms.find(x => x.id === idA), B = p.rooms.find(x => x.id === idB)
+  if (!A || !B || idA === idB) return p
+  const at = (x: number, z: number) => (inPoly(x, z, A.poly) ? idA : inPoly(x, z, B.poly) ? idB : 0)
+  // tratto di ogni muro che ha A da una parte e B dall'altra: si toglie quel tratto (il resto del muro resta)
+  const gone: { a: Pt; b: Pt; t: number }[] = [], keepW: typeof p.walls = []
+  for (const w of p.walls) {
+    const { L, d, n } = frame(w.a, w.b), off = w.t / 2 + 0.2
+    let s0 = -1, s1 = -1
+    for (let s = 0.025; s < L; s += 0.05) {
+      const q: Pt = [w.a[0] + d[0] * s, w.a[1] + d[1] * s]
+      const sides = new Set([at(q[0] + n[0] * off, q[1] + n[1] * off), at(q[0] - n[0] * off, q[1] - n[1] * off)])
+      if (sides.has(idA) && sides.has(idB)) { if (s0 < 0) s0 = s; s1 = s }
+    }
+    if (s0 < 0 || s1 - s0 < 0.2) { keepW.push(w); continue }
+    const P = (s: number): Pt => [r3(w.a[0] + d[0] * s), r3(w.a[1] + d[1] * s)]
+    const c0 = Math.max(0, s0 - 0.05), c1 = Math.min(L, s1 + 0.05)
+    gone.push({ a: P(c0), b: P(c1), t: w.t })
+    if (c0 > 0.15) keepW.push({ ...w, b: P(c0) })
+    if (L - c1 > 0.15) keepW.push({ ...w, a: P(c1) })
+  }
+  if (!gone.length) return p // non sono vicine
+  const onGone = (o: RawOpening) => gone.some(w => { const m: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2]; return inPoly(m[0], m[1], quad(w.a, w.b, w.t + 0.04)) })
+  p.openings = p.openings.filter(o => !onGone(o))
+  p.walls = keepW
+  // contorno: stanze + muri tolti su una griglia, chiusura di una cella, contorno esterno
+  const C = 0.05, all = [...A.poly, ...B.poly, ...gone.flatMap(w => quad(w.a, w.b, w.t))]
+  const x0 = Math.min(...all.map(q => q[0])) - 0.2, z0 = Math.min(...all.map(q => q[1])) - 0.2
+  const W = Math.ceil((Math.max(...all.map(q => q[0])) + 0.2 - x0) / C), H = Math.ceil((Math.max(...all.map(q => q[1])) + 0.2 - z0) / C)
+  const toG = (P: Pt[]) => P.map(q => [(q[0] - x0) / C, (q[1] - z0) / C] as [number, number])
+  let m = new Uint8Array(W * H)
+  fillPolyMask(m, W, H, toG(A.poly)); fillPolyMask(m, W, H, toG(B.poly)); for (const w of gone) fillPolyMask(m, W, H, toG(quad(w.a, w.b, w.t + 0.02)))
+  m = closeGrid(m, W, H)
+  const lab = new Int32Array(W * H); for (let i = 0; i < m.length; i++) lab[i] = m[i]
+  const ring = simplifyRing(traceContour(lab, 1, W, H).map(([x, y]) => [x + 0.5, y + 0.5] as [number, number]), 1.2)
+  const poly = ring.map(([x, y]) => [r3(x0 + x * C), r3(z0 + y * C)] as Pt)
+  const merged = { ...A, poly, area: Math.round(Math.abs(shoelace(poly)) * 10) / 10, center: centerOf(poly), written_mq: undefined }
+  p.rooms = p.rooms.filter(x => x.id !== idB).map(x => (x.id === idA ? merged : x))
+  return p
+}
+function fillPolyMask(m: Uint8Array, w: number, h: number, poly: [number, number][]) { fillPoly(m, w, h, poly) }
+function closeGrid(m: Uint8Array, w: number, h: number) {
+  const d = new Uint8Array(m.length)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = 0; for (let dy = -1; dy <= 1 && !v; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && m[yy * w + xx]) { v = 1; break } } d[y * w + x] = v }
+  const e = new Uint8Array(m.length)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = 1; for (let dy = -1; dy <= 1 && v; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h || !d[yy * w + xx]) { v = 0; break } } e[y * w + x] = v }
+  return e
 }
