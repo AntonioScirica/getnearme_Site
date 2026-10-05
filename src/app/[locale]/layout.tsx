@@ -98,7 +98,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     category: "technology",
     applicationName: "Agente Immo",
     manifest: "/manifest.json",
-    appleWebApp: { title: "Agente Immo" },
+    appleWebApp: { title: "Agente Immo", capable: true, statusBarStyle: "default" },
   };
 }
 

@@ -1,6 +1,7 @@
 import localFont from 'next/font/local';
 import { platformFontVars } from '@/lib/platformFonts';
 import type { ReactNode } from 'react';
+import InstallPrompt from '@/components/platform/InstallPrompt';
 
 // Figtree is the design's typeface. Scope it to the dashboard so the marketing
 // site (Satoshi) is untouched.
@@ -10,6 +11,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className={`${figtree.className} ${platformFontVars}`} style={{ height: '100vh', overflow: 'hidden', background: '#faf9f7' }}>
       {children}
+      <InstallPrompt />
     </div>
   );
 }
