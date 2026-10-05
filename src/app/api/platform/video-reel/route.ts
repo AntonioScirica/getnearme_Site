@@ -4,7 +4,7 @@ import { createHash, createHmac } from 'crypto'
 import { canAfford, spendOnce } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
 import { allowedUrl } from '@/lib/safeUrl'
-import { uploadFile, uploadJpeg } from '@/lib/r2'
+import { publicUrl, uploadFile, uploadJpeg } from '@/lib/r2'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 import { DEFAULT_COLOR, MUSIC_MOOD, renderVideo, type AgentInfo, type Job, type Photo } from '@/lib/reel/render'
 import { cleanLambda, fetchLambdaVideo, lambdaProgress, lambdaReady, startLambda, type LambdaJob } from '@/lib/reel/lambda'
@@ -181,6 +181,11 @@ export async function GET(req: NextRequest) {
     await cleanLambda(w.r, w.b, srcFiles(w))
     return NextResponse.json({ url: `${url}?v=${w.n}`, credits, redo: redoToken(u.id, w.name, w.n, w.p), redosLeft: FREE_REDOS - w.n })
   } catch (e) {
+    // un altro controllo (seconda scheda, pagina ricaricata) ha gia' salvato il video e ripulito Lambda: si risponde con quello
+    const key = `videos/${u.id}/${w.name}.mp4`
+    const head = await fetch(publicUrl(key), { method: 'HEAD', cache: 'no-store' }).catch(() => null)
+    const at = Date.parse(head?.headers.get('last-modified') ?? '')
+    if (head?.ok && at >= w.at - 60_000) return NextResponse.json({ url: `${publicUrl(key)}?v=${w.n}`, redo: redoToken(u.id, w.name, w.n, w.p), redosLeft: FREE_REDOS - w.n })
     console.error('video-reel lambda poll', w.r, e)
     return NextResponse.json({ error: 'render_failed' }, { status: 502 })
   }

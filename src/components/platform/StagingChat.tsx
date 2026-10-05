@@ -962,7 +962,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   };
   type ReelReply = { url?: string; redo?: string | null; redosLeft?: number; error?: string; status?: string; job?: string };
   const reelDone = (id: string, d: ReelReply) => {
-    if (!d.url) { patchV(id, { job: undefined, err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'photo_unreadable' ? tr('Una delle foto non si apre, toglila e riprova.', 'One of the photos won\'t open, remove it and try again.') : tr('Video non riuscito, nessun credito scalato. Riprova.', 'Video failed, no credits used. Please try again.') }); return; }
+    if (!d.url) { /* se il video e' gia' arrivato da un altro controllo, l'errore non lo copre */ patchV(id, m => m.url ? {} : { job: undefined, err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'photo_unreadable' ? tr('Una delle foto non si apre, toglila e riprova.', 'One of the photos won\'t open, remove it and try again.') : tr('Video non riuscito, nessun credito scalato. Riprova.', 'Video failed, no credits used. Please try again.') }); return; }
     patchV(id, m => ({ url: d.url, job: undefined, reel: m.reel && { ...m.reel, editing: false, prevUrl: undefined, redo: d.redo ?? null, redosLeft: d.redosLeft ?? 0 } }));
     window.dispatchEvent(new Event('agenteimmo:media')); window.dispatchEvent(new Event('agenteimmo:credits'));
     toMsg(id);
