@@ -31,11 +31,11 @@ const newKey = () => `c3d-${Date.now().toString(36)}${Math.random().toString(36)
 export const viewerUrl = (manifest: string, extra = '') => `${VIEWER_PATH}?src=${encodeURIComponent(manifest)}${extra}`;
 
 // fasi del riconoscimento di una pianta, con i tempi misurati (per l'attesa: niente rotellina muta)
-const PHASES: [number, string, string][] = [
-  [0, 'Ritaglio la pianta', 'Cropping the plan'],
-  [3, 'Ridisegno la pianta pulita', 'Redrawing a clean plan'],
-  [25, 'Riconosco muri, porte e finestre', 'Finding walls, doors and windows'],
-  [33, 'Controllo stanze e aperture', 'Checking rooms and openings'],
+const PHASES: [number, string, string, string, string][] = [
+  [0, 'Ritaglio la pianta', 'Cropping the plan', 'Tengo solo la casa, via cornici e scritte del foglio', 'Keeping only the home, no sheet borders or captions'],
+  [3, 'Ridisegno la pianta pulita', 'Redrawing a clean plan', 'Muri pieni, porte e finestre ben visibili', 'Solid walls, clear doors and windows'],
+  [25, 'Riconosco muri, porte e finestre', 'Finding walls, doors and windows', 'Misuro le stanze e leggo le scritte', 'Measuring rooms and reading the labels'],
+  [33, 'Controllo stanze e aperture', 'Checking rooms and openings', 'Ultimo controllo prima di mostrarti la pianta', 'Last check before showing you the plan'],
 ];
 const EXPECTED = 50; // misurato il 05/10 su una catastale nuova: ritaglio 1,7 s, ridisegno 19 s, riconoscimento ~5 s, controllo 6 s
 
@@ -132,17 +132,44 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
         </div>
 
         {step === 'work' && (
-          <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_1fr] sm:items-center">
-            <div className="flex justify-center rounded-[24px] bg-canvas p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={plans[work.i]?.src} alt="" className="block max-h-[46vh] w-auto max-w-full rounded-[16px] opacity-80" />
+          <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] sm:items-stretch">
+            {/* la planimetria su carta da progetto, con il fascio blu che la scorre: si vede che la sta leggendo */}
+            <div className="relative overflow-hidden rounded-[24px] bg-[#f4f6fb] p-4" style={{ backgroundImage: 'linear-gradient(rgba(83,126,236,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(83,126,236,.07) 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+              <div className="relative flex h-full items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={plans[work.i]?.src} alt="" className={`block max-h-[44vh] w-auto max-w-full rounded-[16px] mix-blend-multiply transition-[filter] duration-[600ms] ${elapsed >= PHASES[2][0] ? '[filter:sepia(1)_hue-rotate(185deg)_saturate(3)_brightness(.95)]' : 'grayscale'}`} />
+                <div className="pointer-events-none absolute inset-x-0 -bottom-6 -top-6" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)' }}>
+                  <div className="absolute inset-x-0 bottom-6 top-6 will-change-transform" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
+                    <div className="absolute inset-x-0 top-0 h-20 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/15 to-transparent" />
+                    <div className="absolute inset-x-0 top-0 h-0.5 -translate-y-1/2 bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
+                  </div>
+                </div>
+              </div>
+              <div className="absolute inset-x-4 bottom-4 h-1.5 overflow-hidden rounded-full bg-white/80"><div className="h-full rounded-full bg-brand transition-[width] duration-[600ms]" style={{ width: `${pct}%` }} /></div>
             </div>
-            <div>
-              <p className="flex items-center gap-2 text-[15px] font-semibold"><Loader2 size={16} className="animate-spin text-brand" /> {pageLang() === 'en' ? phase[2] : phase[1]}</p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-brand transition-[width] duration-[600ms]" style={{ width: `${pct}%` }} /></div>
-              <ul className="mt-4 space-y-1.5 text-sm text-muted">
-                {PHASES.map(p => <li key={p[1]} className={elapsed >= p[0] ? 'text-ink' : ''}>{elapsed > p[0] && p !== phase ? <Check size={14} className="mr-1.5 inline text-brand" /> : <span className="mr-1.5 inline-block w-[14px]" />}{pageLang() === 'en' ? p[2] : p[1]}</li>)}
-              </ul>
+            {/* i passi come una linea del tempo: fatto, in corso (anello che pulsa), da fare */}
+            <div className="flex flex-col justify-center rounded-[24px] bg-canvas p-5">
+              <ol className="relative">
+                {PHASES.map((p, k) => {
+                  const done = elapsed >= p[0] && p !== phase, now = p === phase, en = pageLang() === 'en';
+                  return (
+                    <li key={p[1]} className="relative flex gap-3 pb-5 last:pb-0">
+                      {k < PHASES.length - 1 && <span className={`absolute left-[15px] top-8 h-[calc(100%-2rem)] w-0.5 rounded-full transition-colors duration-[600ms] ${done ? 'bg-brand' : 'bg-black/10'}`} aria-hidden />}
+                      <span className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors duration-[600ms] ${done ? 'bg-brand text-white' : now ? 'bg-white text-brand ring-2 ring-brand' : 'bg-white text-muted ring-1 ring-black/10'}`}>
+                        {done ? <Check size={15} /> : now ? <Loader2 size={15} className="animate-spin" /> : k + 1}
+                        {now && <span className="absolute inset-0 animate-ping rounded-full ring-2 ring-brand/40" aria-hidden />}
+                      </span>
+                      <span className="min-w-0 pt-1">
+                        <span className={`block text-[15px] font-semibold leading-tight ${done || now ? 'text-ink' : 'text-muted'}`}>{en ? p[2] : p[1]}</span>
+                        {now && <span className="blur-in mt-1 block text-[13px] leading-snug text-muted">{en ? p[4] : p[3]}</span>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+              <p className="mt-5 border-t border-black/5 pt-4 text-[13px] text-muted">
+                <span className="font-semibold tabular-nums text-ink">{Math.floor(elapsed / 60)}:{String(Math.floor(elapsed % 60)).padStart(2, '0')}</span> · {tr('poi controlli la pianta e crei la casa', 'then you check the plan and create the home')}
+              </p>
             </div>
           </div>
         )}
