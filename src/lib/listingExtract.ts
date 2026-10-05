@@ -15,7 +15,13 @@ ${KEYS.join(', ')}, planimetria (true se l'annuncio ha la planimetria, altriment
 - prezzo, mq, locali, camere, bagni: solo il numero. spese_condominiali: importo mensile. zona: quartiere o via e citta'. contratto: vendita o affitto.`
 
 const s = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? String(v).trim() : '')
-const num = (v: string) => v.match(/\d[\d.]*(?:,\d+)?/)?.[0].replace(/\.(?=\d{3})/g, '') ?? ''
+// numero da testo di portale: "575.000", "575,000" (siti in inglese), "1.250.000,50", "85,5" -> senza separatori delle migliaia
+export const num = (v: string) => {
+  const m = v.match(/\d[\d.,]*/)?.[0].replace(/[.,]$/, '') ?? ''
+  if (/^\d{1,3}([.,]\d{3})+$/.test(m)) return m.replace(/[.,]/g, '') // solo migliaia, punto o virgola
+  const dec = Math.max(m.lastIndexOf(','), m.lastIndexOf('.'))
+  return dec < 0 ? m : `${m.slice(0, dec).replace(/[.,]/g, '')},${m.slice(dec + 1)}`
+}
 
 // immobiliare.it: l'annuncio intero sta nei dati di Next (__NEXT_DATA__ -> detailData.realEstate). Lettura precisa,
 // senza AI: il portale principale non deve dipendere da Gemini. null se la pagina non e' di immobiliare.
