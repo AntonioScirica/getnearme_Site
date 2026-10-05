@@ -69,3 +69,20 @@ export async function getRelatedPosts(locale: string, pillar: string, excludeSlu
   }
   return (data as BlogPost[]) ?? [];
 }
+
+// articolo precedente e successivo (per data): ogni articolo riceve link da almeno due altri, oltre che dall'indice
+export async function getAdjacentPosts(locale: string, slug: string): Promise<{ prev: Pick<BlogPost, 'slug' | 'title'> | null; next: Pick<BlogPost, 'slug' | 'title'> | null }> {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('slug, title, published_at')
+    .eq('locale', locale)
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+  if (error || !data?.length) return { prev: null, next: null };
+  const i = data.findIndex(p => p.slug === slug);
+  if (i < 0 || data.length < 2) return { prev: null, next: null };
+  // a giro: il piu' vecchio rimanda al piu' recente e viceversa
+  const at = (k: number) => data[(k + data.length) % data.length];
+  return { prev: at(i + 1), next: at(i - 1) };
+}

@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { SiteFooter } from "@/components/landing/AgenteImmoLanding";
 import { type Locale } from "@/lib/i18n";
 import { getPublishedPosts } from "@/lib/blog";
+import { breadcrumbs, ORG_ID, SITE_ID } from "@/lib/seo";
 import EndCta from "./components/EndCta";
 import BlogPostCard from "./components/BlogPostCard";
 
@@ -16,23 +18,27 @@ type Props = {
 };
 
 const BASE_URL = "https://agenteimmo.me";
+const TITLE = "Blog Agente Immo: risorse per agenti immobiliari";
+const DESCRIPTION = "Articoli pratici per agenti immobiliari: home staging virtuale, video per i social, report di zona, strumenti AI, sito personale e lavoro in agenzia.";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (locale !== "it") return {};
 
   return {
-    title: "Blog Agente Immo, risorse per agenti immobiliari",
+    title: { absolute: TITLE },
     description:
-      "Guide pratiche su home staging virtuale, video per i social, sito personale e lavoro in agenzia per agenti immobiliari.",
+      DESCRIPTION,
     alternates: {
       canonical: `${BASE_URL}/${locale}/blog`,
+      languages: { it: `${BASE_URL}/it/blog`, "x-default": `${BASE_URL}/it/blog` },
     },
     openGraph: {
-      title: "Blog Agente Immo, risorse per agenti immobiliari",
+      title: TITLE,
       description:
-        "Guide pratiche su home staging virtuale, video per i social, sito personale e lavoro in agenzia per agenti immobiliari.",
+        DESCRIPTION,
       type: "website",
+      url: `${BASE_URL}/it/blog`,
     },
   };
 }
@@ -45,9 +51,18 @@ export default async function BlogHubPage({ params }: Props) {
   if (locale !== "it") notFound();
 
   const posts = await getPublishedPosts(locale);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Blog", "@id": `${BASE_URL}/it/blog`, url: `${BASE_URL}/it/blog`, name: TITLE, description: DESCRIPTION, inLanguage: "it-IT", isPartOf: { "@id": SITE_ID }, publisher: { "@id": ORG_ID },
+        blogPost: posts.slice(0, 20).map((p) => ({ "@type": "BlogPosting", headline: p.title, url: `${BASE_URL}/it/blog/${p.slug}`, datePublished: p.published_at, dateModified: p.updated_at || p.published_at })) },
+      breadcrumbs([["Agente Immo", `${BASE_URL}/it`], ["Blog", `${BASE_URL}/it/blog`]]),
+    ],
+  };
 
   return (
     <div className="min-h-screen overflow-x-clip" style={{ background: "#fafaf8", color: "#1a1a2e" }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="sticky top-0 z-50">
         <Navbar locale={locale} />
       </div>
@@ -67,6 +82,9 @@ export default async function BlogHubPage({ params }: Props) {
         </h1>
         <p style={{ fontSize: 15, color: "#6b7280", maxWidth: 486, margin: "0 auto", lineHeight: 1.6 }}>
           Home staging virtuale, video per i social e il tuo sito: guide pratiche per vincere più incarichi.
+        </p>
+        <p style={{ fontSize: 14, color: "#6b7280", maxWidth: 486, margin: "10px auto 0", lineHeight: 1.6 }}>
+          Cerchi il quadro completo? Parti da <Link href="/it/agente-immobiliare" style={{ color: "#537eec", fontWeight: 700 }}>agente immobiliare: cosa fa</Link> o sfoglia tutte le <Link href="/it/guide" style={{ color: "#537eec", fontWeight: 700 }}>guide per agenti immobiliari</Link>.
         </p>
       </section>
 

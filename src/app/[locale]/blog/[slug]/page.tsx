@@ -7,13 +7,14 @@ import remarkGfm from "remark-gfm";
 import Navbar from "@/components/Navbar";
 import { SiteFooter } from "@/components/landing/AgenteImmoLanding";
 import { type Locale } from "@/lib/i18n";
-import { getPostBySlug, getRelatedPosts } from "@/lib/blog";
+import { getAdjacentPosts, getPostBySlug, getRelatedPosts } from "@/lib/blog";
+import { guidesForPost } from "@/lib/blogGuides";
+import { breadcrumbs, ORG_ID, SITE_ID } from "@/lib/seo";
 import { getCoverImage } from "@/lib/blog-images";
 import FaqAccordion from "../components/FaqAccordion";
 import EndCta from "../components/EndCta";
 import BlogPostCard from "../components/BlogPostCard";
 import InlineCta from "../components/InlineCta";
-import { GUIDES } from "@/lib/guides";
 
 export const revalidate = 3600;
 
@@ -53,8 +54,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug(locale, slug);
   if (!post) return {};
 
+  // " | Agente Immo" del layout solo se il titolo resta entro 60 caratteri
+  const title = post.seo_title.length + 14 <= 60 ? `${post.seo_title} | Agente Immo` : post.seo_title;
   return {
-    title: post.seo_title,
+    title: { absolute: title },
     description: post.seo_description,
     alternates: {
       canonical: `${BASE_URL}/${locale}/blog/${slug}`,
@@ -84,21 +87,29 @@ export default async function BlogPostPage({ params }: Props) {
   const post = await getPostBySlug(locale, slug);
   if (!post) notFound();
 
-  const relatedPosts = await getRelatedPosts(locale, post.pillar, slug);
+  const [relatedPosts, adjacent] = await Promise.all([getRelatedPosts(locale, post.pillar, slug), getAdjacentPosts(locale, slug)]);
+  const guides = guidesForPost(post);
+  const url = `${BASE_URL}/${locale}/blog/${slug}`;
   const cover = getCoverImage(post.pillar, post.slug);
 
   const articleJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.seo_description,
-    image: cover,
-    author: { "@type": "Organization", name: "Agente Immo", url: BASE_URL },
-    publisher: { "@type": "Organization", name: "Agente Immo", url: BASE_URL },
-    mainEntityOfPage: { "@type": "WebPage", "@id": `${BASE_URL}/${locale}/blog/${slug}` },
-    inLanguage: locale,
-    datePublished: post.published_at,
-    dateModified: post.updated_at,
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#article`,
+        headline: post.title,
+        description: post.seo_description,
+        image: cover.startsWith("http") ? cover : `${BASE_URL}${cover}`,
+        author: { "@type": "Organization", "@id": ORG_ID, name: "Agente Immo", url: `${BASE_URL}/it/chi-siamo` },
+        publisher: { "@type": "Organization", "@id": ORG_ID, name: "Agente Immo", logo: { "@type": "ImageObject", url: `${BASE_URL}/immo/logo-mark.png` } },
+        mainEntityOfPage: { "@type": "WebPage", "@id": url, url, isPartOf: { "@id": SITE_ID } },
+        inLanguage: "it-IT",
+        datePublished: post.published_at,
+        dateModified: post.updated_at || post.published_at,
+      },
+      breadcrumbs([["Agente Immo", `${BASE_URL}/it`], ["Blog", `${BASE_URL}/it/blog`], [post.title, url]]),
+    ],
   };
 
   const faqJsonLd = post.faq_items.length > 0 ? {
@@ -171,14 +182,15 @@ export default async function BlogPostPage({ params }: Props) {
         </section>
       )}
 
-      {/* guide di riferimento: ogni articolo passa link alla pagina pilastro e alle satelliti */}
+      {/* guide correlate (per tema e parole del titolo) e la pagina pilastro: l'articolo passa link al gruppo di guide */}
       <section style={{ maxWidth: 780, margin: "0 auto", padding: "14px 22px 14px" }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 10px" }}>Guide per agenti immobiliari</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 10px" }}>Guide correlate</h2>
         <ul style={{ display: "flex", flexWrap: "wrap", gap: 10, listStyle: "none", padding: 0, margin: 0 }}>
-          {GUIDES.map((g) => (
+          {guides.map((g) => (
             <li key={g.slug}><Link href={`/it/${g.slug}`} style={{ display: "inline-block", padding: "8px 14px", borderRadius: 999, background: "#f7f7f7", fontSize: 14, fontWeight: 600, color: "#222" }}>{g.label}</Link></li>
           ))}
         </ul>
+        <p style={{ fontSize: 14, margin: "14px 0 0" }}>Il mestiere dall&apos;inizio: <Link href="/it/agente-immobiliare" style={{ color: "#537eec", fontWeight: 700, textDecoration: "underline" }}>agente immobiliare, cosa fa e come trovare incarichi</Link>. Tutte le guide: <Link href="/it/guide" style={{ color: "#537eec", fontWeight: 700, textDecoration: "underline" }}>guide per agenti immobiliari</Link>.</p>
       </section>
 
       {relatedPosts.length > 0 && (
@@ -190,6 +202,13 @@ export default async function BlogPostPage({ params }: Props) {
             ))}
           </div>
         </section>
+      )}
+
+      {(adjacent.prev || adjacent.next) && (
+        <nav aria-label="Altri articoli" style={{ maxWidth: 780, margin: "0 auto", padding: "0 22px 43px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 14 }}>
+          {adjacent.prev && <Link href={`/it/blog/${adjacent.prev.slug}`} style={{ display: "block", padding: 18, borderRadius: 16, background: "#f4f4f5", color: "#1a1a2e", textDecoration: "none" }}><span style={{ display: "block", fontSize: 12, color: "#71717a" }}>Articolo precedente</span><span style={{ fontWeight: 700 }}>{adjacent.prev.title}</span></Link>}
+          {adjacent.next && <Link href={`/it/blog/${adjacent.next.slug}`} style={{ display: "block", padding: 18, borderRadius: 16, background: "#f4f4f5", color: "#1a1a2e", textDecoration: "none" }}><span style={{ display: "block", fontSize: 12, color: "#71717a" }}>Articolo successivo</span><span style={{ fontWeight: 700 }}>{adjacent.next.title}</span></Link>}
+        </nav>
       )}
 
       <EndCta locale={locale} title="Il prossimo incarico, vincilo così." />
