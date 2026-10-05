@@ -6,6 +6,7 @@ import { allowedUrl } from '@/lib/safeUrl'
 import { deleteKeys, listKeys, uploadFile } from '@/lib/r2'
 import { getTeamUserIds } from '@/lib/teamScope'
 import { buildViewerPlan } from '@/lib/casa3d/build'
+import { CASA3D_ON } from '@/lib/casa3d/flag'
 import { recognizeFloor, validRaw } from '@/lib/casa3d/pipeline'
 import { pickPhotos } from '@/lib/casa3d/materials'
 import type { Casa3d, RawPlan } from '@/lib/casa3d/types'
@@ -55,6 +56,7 @@ async function imageBuffer(src: unknown): Promise<Buffer | null> {
 }
 
 export async function POST(req: NextRequest) {
+  if (!CASA3D_ON) return NextResponse.json({ error: 'not_found' }, { status: 404 })
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   let b: Record<string, unknown>

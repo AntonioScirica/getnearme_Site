@@ -1,6 +1,7 @@
 'use client';
 
 import PlanCamera, { CamMark } from './PlanCamera';
+import { CASA3D_ON } from '@/lib/casa3d/flag';
 import Casa3DFlow, { viewerUrl } from './Casa3DFlow';
 import type { Casa3d } from '@/lib/casa3d/types';
 import { VIDEO_POSTERS, VIDEO_SAMPLES } from '@/lib/videoSamples';
@@ -1141,7 +1142,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
   // planimetria: la casa 3D navigabile, prima degli stili della pianta
   const casaChip = base && scene === 'planimetria' ? [
-    <button key="casa3d" disabled={busy} onClick={() => setCasaOpen({ plan: sourcePhoto ?? base })}
+    CASA3D_ON && <button key="casa3d" disabled={busy} onClick={() => setCasaOpen({ plan: sourcePhoto ?? base })}
       className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink py-1.5 pl-3.5 pr-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><LayoutGrid size={13} /> {tr('Casa 3D', '3D home')}<Cr n={CREDIT_COST.casa3d} dark /></button>,
   ] : [];
   const videoChip = base && scene !== 'planimetria' ? [
@@ -1275,7 +1276,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">{/* telefono: 2 colonne, si vedono piu' stili senza scorrere */}
-                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente' && t.id !== 'cammina-stile' && ((t.id !== 'pianta' && t.id !== 'casa3d') || !!m.plan)) /* Con te in video e Cambia stile: solo dopo aver mandato un video; Dalla pianta: solo da una foto della planimetria */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
+                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => (CASA3D_ON || t.id !== 'casa3d') && t.id !== 'agente' && t.id !== 'cammina-stile' && ((t.id !== 'pianta' && t.id !== 'casa3d') || !!m.plan)) /* Con te in video e Cambia stile: solo dopo aver mandato un video; Dalla pianta: solo da una foto della planimetria */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).slice().sort((a, b) => Number(!!templateOff(a.id)) - Number(!!templateOff(b.id))).map((t, k) => {
                           const off = templateOff(t.id) // i disponibili prima, i non disponibili in fondo
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>

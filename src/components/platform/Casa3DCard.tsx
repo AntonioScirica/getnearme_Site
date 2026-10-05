@@ -3,6 +3,7 @@
 // Scheda immobile, sezione Casa 3D: stato (non creata / in creazione / pronta con anteprima), creazione dalle
 // planimetrie dell'immobile (piu' planimetrie = piu' piani), correzione, rifacimento ed eliminazione.
 import { useState } from 'react';
+import { CASA3D_ON } from '@/lib/casa3d/flag';
 import { createPortal } from 'react-dom';
 import { Box, Check, ExternalLink, ImagePlus, Loader2, Pencil, RotateCcw, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
@@ -25,7 +26,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
   const plans = photos.filter(p => d.rooms?.[p]?.scene === 'planimetria')
 
   // niente planimetria tra le foto e nessuna casa gia' fatta: la sezione non c'e' (la Casa 3D nasce solo dalla planimetria vera)
-  if (!plans.length && !casa && !flow && !picking) return null
+  if (!CASA3D_ON || (!plans.length && !casa && !flow && !picking)) return null
 
   const remove = async () => {
     if (!confirm(tr('Tolgo la casa 3D da questo immobile?', 'Remove the 3D home from this listing?'))) return

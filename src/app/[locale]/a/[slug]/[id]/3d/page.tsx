@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { loadSite, siteUrl } from '@/lib/portfolio';
 import { casa3dOf } from '@/lib/casa3d/types';
+import { CASA3D_ON } from '@/lib/casa3d/flag';
 import ViewBeacon from '@/components/site/ViewBeacon';
 
 // Casa 3D dell'immobile a schermo intero (da condividere o incorporare: ?embed=1 toglie il ritorno alla scheda).
@@ -27,7 +28,7 @@ export default async function Casa3DPage({ params, searchParams }: Props) {
   const s = await loadSite(locale, slug);
   const p = s && !s.cfg.hidden.includes('page:immobile') ? s.properties.find(x => x.id === id) : null;
   const c = p ? casa3dOf(p) : null;
-  if (!p || !c) notFound();
+  if (!CASA3D_ON || !p || !c) notFound();
   return (
     <div className="fixed inset-0 bg-[#eceae6]">
       <iframe src={`/casa3d/v1/index.html?src=${encodeURIComponent(c.manifest)}`} title={`Casa 3D di ${p.titolo}`} allow="fullscreen" allowFullScreen className="h-full w-full border-0" />

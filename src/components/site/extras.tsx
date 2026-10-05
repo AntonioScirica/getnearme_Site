@@ -1,6 +1,7 @@
 'use client';
 
 import LeafletMap from '@/components/ui/LeafletMap';
+import { CASA3D_ON } from '@/lib/casa3d/flag';
 import { casa3dOf } from '@/lib/casa3d/types';
 import { iconFor } from '@/lib/fieldIcons';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -214,7 +215,7 @@ export function TourBlock({ p }: { p: SiteProperty }) {
 // Casa 3D (dalla planimetria, piattaforma): poster della vista dall'alto e pulsante; il visore (three.js, texture e
 // mobili, qualche MB) si carica solo al clic, la pagina non pesa nulla in piu'. Il visore sta in public/casa3d.
 export function Casa3DBlock({ p }: { p: SiteProperty }) {
-  const c = casa3dOf(p);
+  const c = CASA3D_ON ? casa3dOf(p) : null;
   const [on, setOn] = useState(false);
   if (!c) return null;
   const src = `/casa3d/v1/index.html?src=${encodeURIComponent(c.manifest)}`;
