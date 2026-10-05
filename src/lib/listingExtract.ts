@@ -28,7 +28,7 @@ export const num = (v: string) => {
 type Imm = { caption?: string; description?: string; surface?: string; rooms?: string; bedRoomsNumber?: string; bathrooms?: string
   floor?: { value?: string }; energy?: { class?: { name?: string }; heatingType?: string }; costs?: { condominiumExpenses?: string }
   buildingYear?: number; condition?: string; garage?: string; features?: string[]; elevator?: boolean; availability?: string
-  multimedia?: { photos?: { urls?: { large?: string; xxl?: string } }[]; floorplans?: unknown[] }; location?: { address?: string; macrozone?: string; city?: string } }
+  multimedia?: { photos?: { urls?: { large?: string; xxl?: string } }[]; floorplans?: { urls?: { large?: string; xxl?: string; medium?: string } }[] }; location?: { address?: string; macrozone?: string; city?: string } }
 // Si legge dall'HTML intero appena scaricato (il JSON e' ~230.000 caratteri: nel formato grezzo verrebbe tagliato).
 export function immobiliare(html: string): { fields: Partial<Fields>; photos: string[] } | null {
   const m = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)
@@ -39,7 +39,11 @@ export function immobiliare(html: string): { fields: Partial<Fields>; photos: st
   if (!re || !p) return null
   const feats = (p.features ?? []).map(f => f.toLowerCase())
   return {
-    photos: (p.multimedia?.photos ?? []).map(x => x.urls?.large || x.urls?.xxl || '').filter(Boolean),
+    // planimetrie in fondo e sempre salvate (le foto si tagliano prima, il tetto e' 40): servono anche per la Casa 3D
+    photos: (() => {
+      const plans = (p.multimedia?.floorplans ?? []).map(x => x.urls?.xxl || x.urls?.large || x.urls?.medium || '').filter(Boolean)
+      return [...(p.multimedia?.photos ?? []).map(x => x.urls?.large || x.urls?.xxl || '').filter(Boolean).slice(0, 40 - plans.length), ...plans]
+    })(),
     fields: {
       titolo: s(p.caption), descrizione: s(p.description), prezzo: re.price?.value ? String(re.price.value) : '',
       mq: num(s(p.surface)), locali: s(p.rooms), camere: s(p.bedRoomsNumber), bagni: s(p.bathrooms), piano: s(p.floor?.value),
