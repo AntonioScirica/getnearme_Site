@@ -177,6 +177,14 @@ export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
       g.push(box(0.03, 1.0, 0.03, M.chrome, 0, 0.9, -d / 2 + 0.03))
       return grp(g)
     },
+    bathtub({ w = 1.7, d = 0.75 } = {}) { // vasca rettangolare in ceramica: fondo, quattro sponde, bordo, rubinetto a un'estremita'
+      const t = 0.07, h = 0.56, g = [box(w, 0.06, d, M.ceramic, 0, 0, 0, 0.01)]
+      g.push(box(w, h, t, M.ceramic, 0, 0, -d / 2 + t / 2, 0.02), box(w, h, t, M.ceramic, 0, 0, d / 2 - t / 2, 0.02))
+      g.push(box(t, h, d - 2 * t, M.ceramic, -w / 2 + t / 2, 0, 0, 0.02), box(t, h, d - 2 * t, M.ceramic, w / 2 - t / 2, 0, 0, 0.02))
+      g.push(cyl(0.02, 0.025, 0.2, M.chrome, -w / 2 + 0.12, h, -d / 2 + 0.12))
+      const sp = cyl(0.012, 0.012, 0.14, M.chrome, -w / 2 + 0.12, h + 0.18, -d / 2 + 0.18); sp.rotation.x = Math.PI / 2; g.push(sp)
+      return grp(g)
+    },
     desk({ w = 1.3, d = 0.65 } = {}) {
       const g = [box(w, 0.03, d, M.oak, 0, 0.72, 0, 0.004)]
       for (const s of [-1, 1]) { g.push(box(0.03, 0.72, 0.03, M.metalBlack, s * (w / 2 - 0.05), 0, d / 2 - 0.05), box(0.03, 0.72, 0.03, M.metalBlack, s * (w / 2 - 0.05), 0, -d / 2 + 0.05), box(0.03, 0.03, d - 0.1, M.metalBlack, s * (w / 2 - 0.05), 0.08, 0)) }

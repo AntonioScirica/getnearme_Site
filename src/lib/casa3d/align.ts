@@ -12,15 +12,17 @@ import { dist0 } from './raster'
 import { clone, inPoly } from './build'
 import type { Pt, RawPlan } from './types'
 
-type Img = { dark: Uint8Array; dt: Float32Array; w: number; h: number }
+type Img = { dark: Uint8Array; edge: Uint8Array; dt: Float32Array; w: number; h: number }
 export type AlignMetrics = { before_cm: number; global_cm: number; after_cm: number; unsupported: number; walls: number; moved: number; global: { s: number; r: number; tx: number; ty: number } }
 
 async function loadOriginal(orig: Buffer, w: number, h: number): Promise<Img> {
   const { data } = await sharp(orig).rotate().flatten({ background: '#ffffff' }).resize(w, h, { fit: 'fill' }).grayscale().raw().toBuffer({ resolveWithObject: true })
-  const dark = new Uint8Array(w * h)
+  const dark = new Uint8Array(w * h), edge = new Uint8Array(w * h)
   for (let i = 0; i < dark.length; i++) dark[i] = data[i] < 150 ? 1 : 0
+  // bordi (contrasto locale): le linee dei simboli si', i pavimenti colorati o grigi dei rendering no
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) { const i = y * w + x; edge[i] = Math.max(Math.abs(data[i + 1] - data[i - 1]), Math.abs(data[i + w] - data[i - w])) > 45 ? 1 : 0 }
   const notDark = new Uint8Array(w * h); for (let i = 0; i < dark.length; i++) notDark[i] = dark[i] ? 0 : 1
-  return { dark, dt: dist0(notDark, w, h), w, h } // dt = distanza (px) dal tratto scuro piu' vicino
+  return { dark, edge, dt: dist0(notDark, w, h), w, h } // dt = distanza (px) dal tratto scuro piu' vicino
 }
 
 const apply = (T: number[], p: Pt): Pt => [T[0] * p[0] + T[2] * p[1] + T[4], T[1] * p[0] + T[3] * p[1] + T[5]]
@@ -206,4 +208,50 @@ export async function alignToOriginal(raw0: RawPlan, original: Buffer): Promise<
   const diverge = after > 12 || unsupported > 0.25 * raw.walls.length
   raw.source = { ...raw.source, fit: { error_cm: metrics.after_cm, before_cm: metrics.before_cm, unsupported, walls: raw.walls.length, diverge } }
   return { raw, metrics }
+}
+
+// Mobili letti da Claude: si tengono solo quelli con inchiostro nel loro ingombro sull'originale (contorno del simbolo),
+// confrontato col pavimento vuoto della stessa stanza. Scarta i mobili "immaginati" dal tipo di stanza.
+export async function verifyFurniture(raw: RawPlan, original: Buffer): Promise<{ raw: RawPlan; kept: number; dropped: string[] }> {
+  if (!raw.furniture?.length) return { raw, kept: 0, dropped: [] }
+  const { imgW: W, imgH: H } = raw.source, T = raw.source.toImage as number[]
+  const img = await loadOriginal(original, W, H)
+  const edgeAt = (p: Pt) => { const [x, y] = apply(T, p), xi = Math.round(x), yi = Math.round(y); return xi < 0 || yi < 0 || xi >= W || yi >= H ? 0 : img.edge[yi * W + xi] }
+  const rectPts = (at: Pt, f: NonNullable<RawPlan['furniture']>[number], k: number) => {
+    const c = Math.cos(f.rot), s = Math.sin(f.rot), out: Pt[] = []
+    for (let u = -0.5; u <= 0.5; u += 0.04) for (let v = -0.5; v <= 0.5; v += 0.04) {
+      const lx = u * f.len * k, lz = v * f.depth * k // asse x locale ruotato come nel visore (rotation.y)
+      out.push([at[0] + c * lx + s * lz, at[1] - s * lx + c * lz])
+    }
+    return out
+  }
+  const inAny = (p: Pt) => raw.furniture!.some(f => { const c = Math.cos(f.rot), s = Math.sin(f.rot), dx = p[0] - f.at[0], dz = p[1] - f.at[1]; return Math.abs(c * dx - s * dz) < f.len * 0.8 && Math.abs(s * dx + c * dz) < f.depth * 0.8 })
+  // pavimento vuoto della stanza: densita' di bordi lontano dai muri e dai mobili letti
+  const base = new Map<number, number>()
+  for (const r of raw.rooms) {
+    const xs = r.poly.map(p => p[0]), ys = r.poly.map(p => p[1]); let dk = 0, n = 0
+    for (let x = Math.min(...xs) + 0.3; x < Math.max(...xs) - 0.3; x += 0.06) for (let y = Math.min(...ys) + 0.3; y < Math.max(...ys) - 0.3; y += 0.06) {
+      const p: Pt = [x, y]; if (!inPoly(x, y, r.poly) || inAny(p)) continue
+      dk += edgeAt(p); n++
+    }
+    base.set(r.id, n ? dk / n : 0)
+  }
+  const keep: NonNullable<RawPlan['furniture']> = [], dropped: string[] = []
+  for (const f of raw.furniture) {
+    const room = raw.rooms.find(r => inPoly(f.at[0], f.at[1], r.poly))
+    if (!room) { dropped.push(`${f.kind} (fuori)`); continue }
+    // la posizione letta e' approssimata: si cerca il simbolo entro 40 cm e ci si sposta li'
+    let best = { d: -1, at: f.at }
+    for (let dx = -0.4; dx <= 0.401; dx += 0.1) for (let dy = -0.4; dy <= 0.401; dy += 0.1) {
+      const at: Pt = [f.at[0] + dx, f.at[1] + dy]
+      if (!inPoly(at[0], at[1], room.poly)) continue
+      const pts = rectPts(at, f, 1.1), d = pts.reduce((a, p) => a + edgeAt(p), 0) / pts.length - 0.002 * Math.hypot(dx, dy) * 10
+      if (d > best.d) best = { d, at }
+    }
+    const b = base.get(room.id) ?? 0
+    // soglia prudente: si scarta solo cio' che non ha piu' segni del pavimento vuoto della stanza (mobili inventati)
+    if (best.d >= Math.max(0.03, 1.15 * b)) keep.push({ ...f, at: [Math.round(best.at[0] * 1000) / 1000, Math.round(best.at[1] * 1000) / 1000] })
+    else dropped.push(`${f.kind} (${(best.d * 100).toFixed(1)}% contro ${(b * 100).toFixed(1)}%)`)
+  }
+  return { raw: { ...raw, furniture: keep }, kept: keep.length, dropped }
 }
