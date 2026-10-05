@@ -5,7 +5,7 @@ import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
-import { applyFix } from './build'
+import { applyFix, guessRoomTypes } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
@@ -71,6 +71,7 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
       console.error('casa3d controllo', e) // senza controllo si va avanti: l'agente corregge a mano
     }
   }
+  raw = guessRoomTypes(raw) // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
   ms.totale = Date.now() - T0
   return { raw, crop, cad, overlay, fix, ms, usd }
 }

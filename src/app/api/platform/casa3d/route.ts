@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     }
     const areaM2 = typeof b.areaM2 === 'number' && b.areaM2 > 10 && b.areaM2 < 2000 ? b.areaM2 : undefined
     try {
-      const r = await recognizeFloor({ userId, image, areaM2, cad: cad ?? undefined, check: b.check !== false })
+      const r = await recognizeFloor({ userId, image, areaM2, cad: cad ?? undefined, check: !(process.env.NODE_ENV === 'development' && process.env.CASA3D_DEV_NOCHECK) }) // prove in locale senza Claude: CASA3D_DEV_NOCHECK=1
       const v = Date.now().toString(36)
       const [crop, cadUrl, overlay] = await Promise.all([
         uploadFile(await (await import('sharp')).default(r.crop).jpeg({ quality: 85 }).toBuffer(), `${base}/f${floor}-orig-${v}.jpg`, 'image/jpeg'),

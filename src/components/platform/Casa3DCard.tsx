@@ -68,6 +68,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
 function PlanPicker({ photos, plans, onClose, onPick }: { photos: string[]; plans: string[]; onClose: () => void; onPick: (p: PlanSource[]) => void }) {
   const [sel, setSel] = useState<string[]>(plans.length === 1 ? plans : [])
   const [extra, setExtra] = useState<string[]>([])
+  const [broken, setBroken] = useState<string[]>([]) // foto che non si caricano: via dalla griglia (niente celle vuote)
   const list = [...extra, ...plans, ...photos.filter(p => !plans.includes(p))]
   const toggle = (p: string) => setSel(s => (s.includes(p) ? s.filter(x => x !== p) : s.length >= 4 ? s : [...s, p]))
   const addFiles = async (files: FileList | null) => {
@@ -92,12 +93,12 @@ function PlanPicker({ photos, plans, onClose, onPick }: { photos: string[]; plan
             <input type="file" accept="image/*" multiple className="hidden" onChange={e => { void addFiles(e.target.files); e.target.value = '' }} />
             <ImagePlus size={20} className="text-muted" /><span className="text-sm font-semibold">{tr('Carica una planimetria', 'Upload a floor plan')}</span>
           </label>
-          {list.map(p => {
-            const k = sel.indexOf(p)
+          {list.filter(p => !broken.includes(p)).map(p => {
+            const k = sel.indexOf(p), plan = plans.includes(p)
             return (
-              <button key={p.slice(0, 200)} type="button" onClick={() => toggle(p)} className={`relative aspect-[4/3] overflow-hidden rounded-[20px] bg-canvas ring-2 transition-shadow duration-[600ms] ${k >= 0 ? 'ring-brand' : 'ring-transparent hover:ring-black/10'}`}>
-                <img src={p} alt="" loading="lazy" className="h-full w-full object-contain" />
-                {plans.includes(p) && <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold shadow-sm">{tr('Planimetria', 'Floor plan')}</span>}
+              <button key={p.slice(0, 200)} type="button" onClick={() => toggle(p)} className={`relative aspect-[4/3] overflow-hidden rounded-[20px] ring-2 transition-shadow duration-[600ms] ${plan || p.startsWith('data:') ? 'bg-white' : 'bg-canvas'} ${k >= 0 ? 'ring-brand' : 'ring-black/10 hover:ring-black/25'}`}>
+                <Thumb src={p} plan={plan} onFail={() => setBroken(b => [...b, p])} />
+                {plan && <span className="absolute left-2 top-2 rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm">{tr('Planimetria', 'Floor plan')}</span>}
                 {k >= 0 && <span className="absolute right-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-brand px-2 text-xs font-bold text-white">{sel.length > 1 ? k + 1 : <Check size={14} />}</span>}
               </button>
             )
@@ -112,5 +113,19 @@ function PlanPicker({ photos, plans, onClose, onPick }: { photos: string[]; plan
       </div>
     </div>,
     document.body,
+  )
+}
+
+// miniatura leggera (api/thumb, WebP) con lo scheletro finche' non arriva; le planimetrie intere (contain) su bianco
+function Thumb({ src, plan, onFail }: { src: string; plan: boolean; onFail: () => void }) {
+  const [url, setUrl] = useState(/^https:\/\//.test(src) ? `/api/thumb?w=480&u=${encodeURIComponent(src)}` : src)
+  const [ok, setOk] = useState(false)
+  return (
+    <>
+      {!ok && <span className="absolute inset-0 animate-pulse bg-black/[0.05]" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="" onLoad={() => setOk(true)} onError={() => (url !== src ? setUrl(src) : onFail())}
+        className={`h-full w-full transition-opacity duration-[600ms] ${plan || src.startsWith('data:') ? 'object-contain p-2' : 'object-cover'} ${ok ? 'opacity-100' : 'opacity-0'}`} />
+    </>
   )
 }

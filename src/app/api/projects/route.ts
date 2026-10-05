@@ -164,6 +164,15 @@ export async function PUT(req: NextRequest) {
   if (tipologia !== undefined) updates.tipologia = tipologia
   if (icons !== undefined) updates.icons = icons
   if (import_data !== undefined) updates.import_data = import_data
+  // Casa 3D: la scrive solo api/platform/casa3d. Un client con import_data vecchio (scheda aperta prima della casa)
+  // la cancellerebbe: si tiene sempre quella salvata sul server.
+  if (import_data && typeof import_data === 'object') {
+    const { data: cur } = await admin.from('projects').select('import_data').eq('id', id).in('user_id', await getTeamUserIds(admin, userId)).maybeSingle()
+    const saved = ((cur?.import_data as { details?: { casa3d?: unknown } } | null)?.details?.casa3d)
+    const det = { ...(((import_data as { details?: unknown }).details && typeof (import_data as { details?: unknown }).details === 'object') ? (import_data as { details: Record<string, unknown> }).details : {}) }
+    if (saved) det.casa3d = saved; else delete det.casa3d
+    if (saved || (import_data as { details?: unknown }).details) updates.import_data = { ...(import_data as Record<string, unknown>), details: det }
+  }
   if (typeof is_public === 'boolean') updates.is_public = is_public
 
   // Team agenzia: i membri possono modificare gli immobili condivisi del team.

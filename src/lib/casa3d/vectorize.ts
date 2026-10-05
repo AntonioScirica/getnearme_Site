@@ -466,6 +466,26 @@ export function vectorize(g0: Uint8Array, W0: number, H0: number, up: number, sr
       scaleFrom = 'mq'
     }
   }
+  // misure plausibili? porta mediana fuori 60-110 cm, stanze vere (>= 2 m2) in media sotto 6 m2 o casa sotto 25 m2 = scala
+  // sbagliata (provato sulle 5 piante: nessun falso allarme; la catastale di Il Mulino, 39 m2 con 9 stanze, scatta)
+  // (catastali tratteggiate o porte senza arco). Con i mq dell'immobile si prova a riscalare (solo se le porte tornano
+  // tra 60 e 120 cm: se no i mq sono di tutta la casa); altrimenti l'agente scrive i mq (avviso nella correzione).
+  let scaleWarn = false
+  {
+    const doorsPx = dec.filter(d => d.type === 'door').map(d => d.o.a1 - d.o.a0)
+    const areas = rooms.map(r => r.px * mpx * mpx), net = areas.reduce((a, b) => a + b, 0)
+    const real = areas.filter(a => a >= 2), mean = real.length ? real.reduce((a, b) => a + b, 0) / real.length : 0
+    const odd = (dm: number, k: number) => (doorsPx.length >= 2 && (dm * k < 0.6 || dm * k > 1.1)) || mean * k * k < 6 || net * k * k < 25
+    const dm = median(doorsPx) * mpx
+    if (rooms.length && scaleFrom !== 'mq' && !opts.mPerPx && odd(dm, 1)) {
+      const k = opts.areaM2 ? Math.sqrt(opts.areaM2 / 1.2 / net) : 0
+      // e la correzione non deve essere enorme (oltre 2x i lati, 4x l'area, i mq sono di tutta la casa su piu' piani)
+      if (k && k <= 2 && (doorsPx.length < 2 || (dm * k >= 0.6 && dm * k <= 1.2))) {
+        mpx *= k; scaleFrom = 'mq'
+        scaleNote = `misure poco plausibili (${Math.round(net)} m2 netti): uso i mq dell'immobile`
+      } else scaleWarn = true
+    }
+  }
   const openings: Gap[] = dec.map(({ o, type, rooms: rs, ok }) => ({ ...o, type: type as OpType, rooms: rs, width: Math.round((o.a1 - o.a0) * mpx * 100) / 100, suspect: !ok || (o.arc === 0 && type !== 'window' && o.type !== 'door?') }))
 
   // 10. uscita in metri, origine al centro della casa
@@ -497,7 +517,7 @@ export function vectorize(g0: Uint8Array, W0: number, H0: number, up: number, sr
     version: 3, units: 'm', height: 2.7,
     source: {
       angle: A, m_per_px: mpx * up, scala_porte: scaleDoors * up, scala_tramezzi: scalePart * up, tramezzo_px: T, classi_spessore_m: classes.map(c => r3(c * mpx)),
-      scale_from: scaleFrom, ...(scaleNote ? { scale_note: scaleNote } : {}), toImage, imgW: srcW, imgH: srcH,
+      scale_from: scaleFrom, ...(scaleNote ? { scale_note: scaleNote } : {}), ...(scaleWarn ? { scale_warn: true } : {}), toImage, imgW: srcW, imgH: srcH,
     },
     walls: wallsOut, openings: opsOut, rooms: roomsOut,
   }

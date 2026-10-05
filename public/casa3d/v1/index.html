@@ -45,7 +45,13 @@
   .fps { position: fixed; bottom: 12px; right: 12px; font: 600 12px ui-monospace, monospace; background: rgba(0,0,0,.55); color: #fff; padding: 4px 8px; border-radius: 8px; z-index: 6; display: none; }
   body.noui .bar, body.noui .hint, body.noui .floors, body.noui .orig { display: none !important; }
   @media (max-width: 560px) { .orig { width: 96px; padding: 6px; border-radius: 16px; } .orig span { display: none; } .bar { gap: 4px; padding: 6px; border-radius: 20px; } .bar button { padding: 9px 10px; font-size: 13px; } .hint { font-size: 12px; } }
-  @media (max-width: 420px) { .bar { max-width: calc(100vw - 16px); } .seg { padding: 3px; } .bar button { padding: 8px 8px; font-size: 12px; } .hint { display: none; } }
+  /* schermi stretti (telefono, visore dentro un popup): la barra va a capo e sta tutta nello schermo, niente tagliato */
+  @media (max-width: 460px) {
+    .bar { width: max-content; max-width: calc(100vw - 16px); flex-wrap: wrap; justify-content: center; gap: 4px; padding: 5px; border-radius: 20px; }
+    .seg { padding: 3px; }
+    .bar button { padding: 8px 9px; font-size: 12px; }
+    .hint { display: none; }
+  }
 </style>
 </head>
 <body>

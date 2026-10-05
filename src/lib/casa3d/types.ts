@@ -9,7 +9,7 @@ export type RawOpening = { type: OpType; a: Pt; b: Pt; t: number; width: number;
 export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: string }
 export type RawSource = {
   angle: number; m_per_px: number; scala_porte: number; scala_tramezzi: number; tramezzo_px: number; classi_spessore_m: number[]
-  scale_from: 'porte' | 'tramezzi' | 'mq' | 'manuale'; scale_note?: string
+  scale_from: 'porte' | 'tramezzi' | 'mq' | 'manuale'; scale_note?: string; scale_warn?: boolean
   // metri -> pixel dell'immagine di partenza (stessa misura della planimetria originale ritagliata): [a, b, c, d, e, f]
   // con x_img = a*x + c*y + e, y_img = b*x + d*y + f (come la matrice SVG)
   toImage: [number, number, number, number, number, number]

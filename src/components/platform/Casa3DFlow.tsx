@@ -60,7 +60,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
       setWork({ i, t0: Date.now() })
       const r = await authFetch('/api/platform/casa3d', {
         method: 'POST', headers: { 'x-no-modal': '1' },
-        body: JSON.stringify({ action: 'recognize', key, floor: i, image: plans[i].src, projectId, ...(plans.length === 1 && areaM2 ? { areaM2 } : {}), ...(localStorage.getItem('casa3d-nocheck') ? { check: false } : {}) }), // casa3d-nocheck: prove senza il controllo di Claude
+        body: JSON.stringify({ action: 'recognize', key, floor: i, image: plans[i].src, projectId, ...(plans.length === 1 && areaM2 ? { areaM2 } : {}) }),
       }).catch(() => null)
       const d = await r?.json().catch(() => null) as { raw?: RawPlan; image?: string; error?: string } | null
       if (!r?.ok || !d?.raw) { setErr(d?.error === 'no_credits' ? 'no_credits' : d?.error === 'no_rooms' ? 'no_rooms' : d?.error === 'limit' ? 'limit' : 'failed'); setFloors(out); setStep('error'); return }
@@ -306,7 +306,8 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
             </>
           )}
         </div>
-        <div className="rounded-[24px] bg-canvas p-4">
+        <div className={`rounded-[24px] p-4 transition-colors duration-[600ms] ${raw.source.scale_warn ? 'bg-brand/10 ring-2 ring-brand' : 'bg-canvas'}`}>
+          {raw.source.scale_warn && <p className="mb-2 text-sm font-semibold text-brand">{tr('Le misure sembrano piccole, scrivi i mq della casa', 'Sizes look small, type the home m²')}</p>}
           <p className="text-sm font-semibold">{tr('Superficie della casa', 'Home surface')}</p>
           <p className="mt-1 text-xs text-muted">{tr('Somma delle stanze. Se non torna, scrivi i mq giusti e le misure si adattano.', 'Sum of the rooms. If it is wrong, type the right m² and sizes adapt.')}</p>
           <div className="mt-3 flex gap-2">

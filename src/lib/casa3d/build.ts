@@ -107,7 +107,7 @@ export function rescaleTo(raw: RawPlan, totalM2: number): RawPlan {
   for (const o of p.openings) { o.a = S(o.a); o.b = S(o.b); o.width = r3(o.width * k) }
   for (const r of p.rooms) { r.poly = r.poly.map(S); r.center = S(r.center); r.area = Math.round(r.area * k * k * 10) / 10 }
   const t = p.source.toImage, inv = 1 / k
-  p.source = { ...p.source, m_per_px: p.source.m_per_px * k, scale_from: 'manuale', toImage: [t[0] * inv, t[1] * inv, t[2] * inv, t[3] * inv, t[4], t[5]] }
+  p.source = { ...p.source, m_per_px: p.source.m_per_px * k, scale_from: 'manuale', scale_warn: false, toImage: [t[0] * inv, t[1] * inv, t[2] * inv, t[3] * inv, t[4], t[5]] }
   return p
 }
 export const totalArea = (raw: RawPlan) => Math.round(raw.rooms.filter(r => !OUT_TYPES.has(r.type)).reduce((a, r) => a + r.area, 0) * 10) / 10
@@ -202,4 +202,30 @@ export function planCounts(p: ViewerPlan) {
     muri: p.walls.length, porte: p.doors.filter(d => !d.entrance && !d.varco).length, ingressi: p.doors.filter(d => d.entrance).length,
     varchi: p.doors.filter(d => d.varco).length, finestre: p.windows.length, stanze: p.rooms.length, mq: Math.round(p.rooms.reduce((a, r) => a + r.area, 0) * 10) / 10,
   }
+}
+
+// Tipi delle stanze rimaste senza tipo ('stanza'), senza AI: area, forma, finestre, ingresso e vicinanze.
+// Serve quando il controllo di Claude manca o salta una stanza: l'agente li conferma nella schermata di correzione.
+export function guessRoomTypes(raw: RawPlan): RawPlan {
+  const p = clone(raw)
+  const todo = p.rooms.filter(r => r.type === 'stanza' || !r.type)
+  if (!todo.length) return p
+  const has = (id: number, t: OpType) => p.openings.some(o => o.type === t && o.rooms.includes(id))
+  const near = (a: number, b: number) => p.openings.some(o => o.type !== 'window' && o.rooms.includes(a) && o.rooms.includes(b))
+  const box = (r: (typeof p.rooms)[number]) => { const xs = r.poly.map(q => q[0]), ys = r.poly.map(q => q[1]); const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys); return { lo: Math.min(w, h), hi: Math.max(w, h) } }
+  const set = (r: (typeof p.rooms)[number], t: string) => { r.type = t; todo.splice(todo.indexOf(r), 1) }
+  const taken = (t: string) => p.rooms.some(r => r.type === t)
+  for (const r of [...todo]) { const b = box(r); if (b.lo < 1.5 && b.hi / Math.max(b.lo, 0.1) > 2.2 && r.area < 12) set(r, 'corridoio') }
+  for (const r of [...todo]) if (r.area < 2.5) set(r, 'ripostiglio')
+  for (const r of [...todo]) if (!taken('ingresso') && has(r.id, 'entrance') && r.area < 10) set(r, 'ingresso')
+  if (!taken('soggiorno')) { const big = [...todo].sort((a, b) => b.area - a.area)[0]; if (big && big.area >= 10) set(big, 'soggiorno') }
+  const living = p.rooms.find(r => r.type === 'soggiorno')
+  if (!taken('cucina')) {
+    const c = todo.filter(r => r.area >= 4.5 && r.area <= 16).sort((a, b) => Number(!!living && near(b.id, living.id)) - Number(!!living && near(a.id, living.id)) || Number(has(b.id, 'window')) - Number(has(a.id, 'window')) || a.area - b.area)[0]
+    if (c) set(c, 'cucina')
+  }
+  const nBagni = p.rooms.length >= 7 ? 2 : 1
+  for (const r of todo.filter(r => r.area >= 2.5 && r.area <= 7.5).sort((a, b) => a.area - b.area).slice(0, Math.max(0, nBagni - p.rooms.filter(x => x.type === 'bagno').length))) set(r, 'bagno')
+  for (const r of [...todo]) set(r, r.area >= 9 ? 'camera' : r.area >= 6 ? 'cameretta' : r.area >= 4 && has(r.id, 'window') ? 'studio' : 'ripostiglio')
+  return p
 }
