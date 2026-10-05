@@ -13,9 +13,11 @@ export default function LoginScreen({ onAuth }: LoginScreenProps) {
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // la chiave si controlla sul server (non sta piu' nel JavaScript della pagina)
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw === "ZuoQ6k*_6wmBbUQQim!B") {
+    const ok = await fetch("/api/metrics", { headers: { "x-metrics-key": pw } }).then(r => r.ok).catch(() => false);
+    if (ok) {
       onAuth(pw);
     } else {
       setError(true);

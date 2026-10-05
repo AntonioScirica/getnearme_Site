@@ -201,7 +201,7 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
             <Card label="In prova o gratis" value={fmt(s.n - s.paying)} sub={`conversione ${s.n ? pct((s.paying / s.n) * 100) : "-"}`} />
             <Card label="MRR attuale" value={euro(data.mrr.eur)} sub={`${fmt(data.mrr.customers)} clienti, fonte ${data.mrr.source}; da questi iscritti ${euro(s.mrrSignups)}`} accent="text-indigo-400" />
             <Card label={`Incassato dal ${sinceLabel}`} value={euro(s.paid)} sub={data.stripeOk ? `Stripe totale ${euro(data.totals.chargesEur)}, non collegato ${euro(data.totals.chargesUnmatchedEur)}` : "Stripe non raggiungibile"} />
-            <Card label={`Costo AI dal ${sinceLabel}`} value={euro(s.ai)} sub={`tutta la piattaforma ${euro(data.totals.aiAllEur)} (anche prove e admin)`} accent="text-amber-400" />
+            <Card label={`Costo AI dal ${sinceLabel}`} value={euro(s.ai)} accent="text-amber-400" />
             <Card label="Costo AI medio" value={s.n ? euro(s.ai / s.n) : "-"} sub={`per iscritto; per pagante ${s.paying ? euro(s.aiPaying / s.paying) : "-"}`} />
             <Card label="Margine" value={euro(margin)} sub="incassato meno costo AI" accent={margin >= 0 ? "text-emerald-400" : "text-red-400"} />
           </div>

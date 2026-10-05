@@ -14,7 +14,9 @@ export const eur = (usd: number) => usd * USD_EUR
 export type Plan = 'starter' | 'plus' | 'pro'
 
 export const isAdminEmail = (e?: string | null) => !!e && PLATFORM_ADMIN_EMAILS.includes(e)
-export const isTestEmail = (e?: string | null) => !!e && e.endsWith(TEST_DOMAIN)
+// account nostri o di prova, mai contati come iscritti o clienti
+const OWN_EMAILS = ['lookgameyt@gmail.com', 'mfabbriconi@gmail.com', 'd@gmail.com', 'g@gmail.com']
+export const isTestEmail = (e?: string | null) => !!e && (e.endsWith(TEST_DOMAIN) || OWN_EMAILS.includes(e.toLowerCase()))
 /** account da escludere dai numeri: admin della piattaforma e account di test */
 export const isHiddenEmail = (e?: string | null) => isAdminEmail(e) || isTestEmail(e)
 

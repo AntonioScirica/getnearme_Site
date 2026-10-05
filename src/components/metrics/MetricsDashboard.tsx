@@ -4,20 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2, RefreshCw, LogOut, X,
-  LayoutDashboard, Users, Contact, Wallet, MoreHorizontal,
-  Megaphone, Building2, Mail, Share2, ListTodo, Sun, Moon, House, TrendingUp,
+  LayoutDashboard, Contact, MoreHorizontal,
+  Mail, Share2, ListTodo, Sun, Moon, House, TrendingUp, Target,
 } from "lucide-react";
-import type { MetricsData, PageId } from "./types";
+import type { PageId } from "./types";
 import { MONO } from "./types";
 import LoginScreen from "./LoginScreen";
 import Sidebar from "./Sidebar";
-import OverviewPage from "./pages/OverviewPage";
-import UsersPage from "./pages/UsersPage";
-import NewsletterPage from "./pages/NewsletterPage";
-import ExportsPage from "./pages/ExportsPage";
-import StripePage from "./pages/StripePage";
-import AmbassadorPage from "./pages/AmbassadorPage";
-import CostsPage from "./pages/CostsPage";
 import EmailsPage from "./pages/EmailsPage";
 import CrmPage from "./pages/CrmPage";
 import AdsPage from "./pages/AdsPage";
@@ -27,23 +20,17 @@ import BusinessPlanPage from "./pages/BusinessPlanPage";
 
 // Mobile bottom-nav: 4 primary tabs; everything else lives in the "Altro" sheet.
 const MOBILE_TABS: { id: PageId; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: "overview", label: "Home", icon: LayoutDashboard },
-  { id: "users", label: "Utenti", icon: Users },
+  { id: "agenteimmo", label: "Iscritti", icon: House },
+  { id: "bp", label: "Piano", icon: TrendingUp },
   { id: "crm", label: "CRM", icon: Contact },
-  { id: "costs", label: "Costi", icon: Wallet },
+  { id: "ads", label: "Ads", icon: Target },
 ];
 const MOBILE_MORE: { id: PageId; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: "agenteimmo", label: "Agente Immo", icon: House },
-  { id: "bp", label: "Business plan", icon: TrendingUp },
-  { id: "newsletter", label: "Marketing", icon: Megaphone },
-  { id: "exports", label: "Agenzie", icon: Building2 },
   { id: "emails", label: "Email", icon: Mail },
   { id: "tasks", label: "Tasks", icon: ListTodo },
 ];
 const PAGE_TITLES: Record<string, string> = {
-  agenteimmo: "Agente Immo", bp: "Business plan",
-  overview: "Overview", newsletter: "Marketing", users: "Utenti", exports: "Agenzie",
-  stripe: "Stripe", ambassador: "Ambassador", costs: "Costi", emails: "Email", crm: "CRM", tasks: "Tasks",
+  agenteimmo: "Agente Immo", bp: "Business plan", ads: "Ads", emails: "Email", crm: "CRM", tasks: "Tasks",
 };
 
 export default function MetricsDashboard() {
@@ -59,10 +46,11 @@ export default function MetricsDashboard() {
     return () => document.documentElement.classList.remove("metrics-light");
   }, [light]);
   const [authKey, setAuthKey] = useState<string | null>(null);
-  const [data, setData] = useState<MetricsData | null>(null);
+  const [data, setData] = useState<{ timestamp: string } | null>(null);
+  const [tick, setTick] = useState(0); // Aggiorna: le pagine ricaricano i loro dati
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activePage, setActivePage] = useState<PageId>("overview");
+  const [activePage, setActivePage] = useState<PageId>("agenteimmo");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const router = useRouter();
@@ -83,6 +71,7 @@ export default function MetricsDashboard() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(json);
+      setTick(t => t + 1);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Fetch failed");
     } finally {
@@ -147,20 +136,6 @@ export default function MetricsDashboard() {
   // Render active page
   const renderPage = () => {
     switch (activePage) {
-      case "overview":
-        return <OverviewPage data={data} />;
-      case "newsletter":
-        return <NewsletterPage data={data} />;
-      case "users":
-        return <UsersPage data={data} onRefresh={() => fetchData(authKey)} loading={loading} authKey={authKey} />;
-      case "exports":
-        return <ExportsPage data={data} />;
-      case "stripe":
-        return <StripePage data={data} />;
-      case "ambassador":
-        return <AmbassadorPage data={data} authKey={authKey!} />;
-      case "costs":
-        return <CostsPage />;
       case "emails":
         return <EmailsPage />;
       case "crm":
@@ -231,7 +206,7 @@ export default function MetricsDashboard() {
         </div>
 
         {/* Page content */}
-        <div className="p-4 pb-24 md:p-6 md:pb-6 max-w-7xl mx-auto">{renderPage()}</div>
+        <div key={tick} className="p-4 pb-24 md:p-6 md:pb-6 max-w-7xl mx-auto">{renderPage()}</div>
       </main>
 
       {/* Mobile bottom nav */}

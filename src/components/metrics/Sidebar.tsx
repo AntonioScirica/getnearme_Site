@@ -3,14 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
-  Megaphone,
-  Building2,
   RefreshCw,
   LogOut,
   ChevronUp,
-  Wallet,
   Mail,
   Share2,
   Contact,
@@ -27,11 +22,6 @@ import type { PageId } from "./types";
 const navItems: { id: PageId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "agenteimmo",  label: "Agente Immo",  icon: House },
   { id: "bp",          label: "Business plan", icon: TrendingUp },
-  { id: "overview",    label: "Overview",     icon: LayoutDashboard },
-  { id: "newsletter",  label: "Marketing",    icon: Megaphone },
-  { id: "users",       label: "Utenti",       icon: Users },
-  { id: "exports",     label: "Agenzie",      icon: Building2 },
-  { id: "costs",       label: "Costi",        icon: Wallet },
   { id: "emails",      label: "Email",        icon: Mail },
   { id: "crm",         label: "CRM",          icon: Contact },
   { id: "ads",         label: "Ads",          icon: Target },
