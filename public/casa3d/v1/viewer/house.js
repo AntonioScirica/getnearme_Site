@@ -5,7 +5,10 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { worldUV } from './materials.js'
 import pc from '../vendor/polygon-clipping.js'
 
-export const OUTDOOR = new Set(['balcone', 'terrazzo']) // all'aperto: niente soffitto, parapetti bassi
+export const OUTDOOR = new Set(['balcone', 'terrazzo'])
+// pavimenti letti dalle foto (plan.rooms[].floor) -> materiali
+const FLOOR_MAT = { parquet_chiaro: 'parquetLight', parquet_medio: 'parquet', parquet_scuro: 'parquetDark', gres_chiaro: 'tiles', gres_scuro: 'tilesDark', marmo: 'marble', cotto: 'cotto', graniglia: 'graniglia' }
+const WALL_BASE = 0xf1ece4, FACADE_BASE = 0xefe6d6 // all'aperto: niente soffitto, parapetti bassi
 export const FLOOR_OF = { cucina: 'tiles', bagno: 'marble', balcone: 'tiles', terrazzo: 'tiles', lavanderia: 'tiles', scala: 'marble' }
 const SILL = 0.9, HEAD = 2.25, DOOR_H = 2.1
 
@@ -139,7 +142,7 @@ export function buildHouse(plan, M) {
     floorPolys.set(r.id, fp)
     if (!fp.length) continue
     const g = new THREE.ShapeGeometry(shapesOf(fp)); g.rotateX(-Math.PI / 2)
-    const m = mesh(g, M[FLOOR_OF[r.type] || 'parquet'], { cast: false }); m.userData.roomId = r.id; m.name = `pavimento-${r.id}`
+    const m = mesh(g, M[FLOOR_MAT[r.floor]] || M[FLOOR_OF[r.type] || 'parquet'], { cast: false }); m.userData.roomId = r.id; m.name = `pavimento-${r.id}`
     group.add(m); floors.push(m)
   }
   // parapetti dei terrazzi e balconi: muretto alto 1,05 m (si vede fuori, non si attraversa)
@@ -154,6 +157,34 @@ export function buildHouse(plan, M) {
   }
   const grid = new Grid(plan, parFree.length ? U([band0, parFree]) : band0)
 
+  // colori dei muri per stanza (letti dalle foto o scelti dall'agente) e facciata fuori: colore per vertice, guardando
+  // la stanza che sta davanti a ogni faccia (5 cm verso la normale)
+  const wallColor = new Map(plan.rooms.map(r => [r.id, new THREE.Color(r.wall || WALL_BASE)]))
+  const facade = new THREE.Color(plan.materials?.facade?.color || FACADE_BASE), base = new THREE.Color(WALL_BASE)
+  for (const r of plan.rooms) if (OUTDOOR.has(r.type)) wallColor.set(r.id, facade) // dal terrazzo si vede la facciata
+  group.traverse(o => {
+    if (!o.isMesh || o.material !== M.wall) return
+    // per triangolo (geometria non indicizzata): dal baricentro, lungo la normale da entrambe le parti (il verso dipende dal
+    // giro del poligono e una parte e' dentro il muro), fino a 18 cm: la stanza davanti alla faccia, se no la facciata
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry
+    if (g !== o.geometry) o.geometry = g
+    const pos = g.attributes.position, nor = g.attributes.normal, col = new Float32Array(pos.count * 3)
+    for (let t = 0; t + 2 < pos.count; t += 3) {
+      const x = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3, z = (pos.getZ(t) + pos.getZ(t + 1) + pos.getZ(t + 2)) / 3
+      const nx = nor.getX(t), ny = nor.getY(t), nz = nor.getZ(t)
+      let c = base
+      if (Math.abs(ny) < 0.5) {
+        let id = 0
+        for (const k of [0.04, 0.09, 0.14, 0.18]) { id = grid.roomAt(x + nx * k, z + nz * k) || grid.roomAt(x - nx * k, z - nz * k); if (id) break }
+        c = id ? (wallColor.get(id) || base) : facade
+      }
+      for (let q = t; q < t + 3; q++) { col[q * 3] = c.r; col[q * 3 + 1] = c.g; col[q * 3 + 2] = c.b }
+    }
+        o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3))
+  })
+  if (plan.materials?.frames) M.windowFrame.color.set(plan.materials.frames)
+  const doorMat = plan.materials?.doors ? M.lacquer.clone() : M.lacquer
+  if (plan.materials?.doors) doorMat.color.set(plan.materials.doors)
   const wallBits = [], frames = [], glass = [], sills = [], doorWood = [], entranceLeaf = [], handles = [], radiators = []
   const bx = (xa, ya, za, xb, yb, zb) => boxGeo(Math.min(xa, xb), Math.min(ya, yb), Math.min(za, zb), Math.max(xa, xb), Math.max(ya, yb), Math.max(za, zb))
   const sideRoom = (cx, cz, nx, nz, o) => grid.roomAt(cx + nx * o, cz + nz * o)
@@ -245,7 +276,7 @@ export function buildHouse(plan, M) {
   const gl = merged(glass, M.glass, { cast: false, receive: false }); if (gl) { gl.renderOrder = 2; gl.name = 'vetri'; group.add(gl) }
   const si = merged(sills, M.sill); if (si) group.add(si)
   const ha = merged(handles, M.chrome, { cast: false }); if (ha) group.add(ha)
-  const dw = merged(doorWood, M.lacquer); if (dw) group.add(dw)
+  const dw = merged(doorWood, doorMat); if (dw) group.add(dw)
   const el = merged(entranceLeaf, M.oakDark); if (el) group.add(el)
   const ra = merged(radiators, M.radiator); if (ra) group.add(ra)
 

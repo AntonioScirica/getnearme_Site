@@ -41,11 +41,18 @@ export function createMaterials(assetsBase, renderer, { lowEnd = false } = {}) {
   }
   const M = {
     // muri: intonaco bianco caldo, solo rilievo e ruvidita' dalla texture (niente macchie)
-    wall: pbr('plastered_wall_04', { map: false, color: 0xf1ece4, normalScale: 0.25, roughness: 1, ao: false }),
+    // muri: intonaco, colore per vertice (stanza per stanza, facciata fuori: vedi house.js), bianco caldo di base
+    wall: pbr('plastered_wall_04', { map: false, color: 0xffffff, normalScale: 0.25, roughness: 1, ao: false, vertexColors: true }),
     wallCut: new THREE.MeshStandardMaterial({ color: 0x2f2d2b, roughness: 0.9 }),
     ceiling: new THREE.MeshStandardMaterial({ color: 0xf6f3ee, roughness: 0.95, side: THREE.BackSide }),
     parquet: pbr('laminate_floor_02', { roughness: 0.62, normalScale: 0.6 }),
     tiles: pbr('interior_tiles', { roughness: 0.7, normalScale: 0.7 }),
+    // varianti dei pavimenti letti dalle foto dell'immobile (stesse texture CC0, tinte)
+    parquetLight: pbr('laminate_floor_02', { roughness: 0.62, normalScale: 0.6, color: 0xfff1dc }),
+    parquetDark: pbr('laminate_floor_02', { roughness: 0.58, normalScale: 0.6, color: 0x7a5a42 }),
+    tilesDark: pbr('interior_tiles', { roughness: 0.6, normalScale: 0.7, color: 0x8d8984 }),
+    cotto: pbr('interior_tiles', { roughness: 0.85, normalScale: 0.8, color: 0xc77b55 }),
+    graniglia: pbr('marble_01', { roughness: 0.45, normalScale: 0.5, color: 0xd8cdbf }),
     marble: pbr('marble_01', { roughness: 0.5, normalScale: 0.5 }),
     wallTiles: pbr('long_white_tiles', { roughness: 0.35, normalScale: 0.6 }),
     slab: new THREE.MeshStandardMaterial({ color: 0x8a857e, roughness: 1 }),

@@ -6,11 +6,12 @@ import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
 import { alignToOriginal } from './align'
-import { applyFix, applyLabels, guessRoomTypes } from './build'
+import { applyFix, applyFurniture, applyLabels, guessRoomTypes } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
 import { vectorizeImage } from './vectorize'
+import { readMaterials } from './materials'
 
 // prompt severo del prototipo (tools/redraw.mjs, 04/10): la geometria non si tocca, restano solo muri, porte e finestre
 export const REDRAW_PROMPT = `Redraw this floor plan as a clean architectural CAD wall plan seen from above. Keep exactly the same geometry, proportions, orientation, position and scale as the input: do not rotate, crop, move, mirror or straighten anything.
@@ -24,12 +25,12 @@ Pure white background. Draw only the main dwelling; keep every wall, door and wi
 
 export type RecognizeResult = {
   raw: RawPlan; crop: Buffer; cad: Buffer; overlay: Buffer; fix: Fix | null
-  ms: { ritaglio: number; ridisegno: number; riconoscimento: number; controllo: number; allineamento: number; totale: number }; usd: number
+  ms: { ritaglio: number; ridisegno: number; riconoscimento: number; controllo: number; allineamento: number; materiali: number; totale: number }; usd: number
 }
 
-export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean }): Promise<RecognizeResult> {
+export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean; photos?: string[] }): Promise<RecognizeResult> {
   const T0 = Date.now()
-  const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, allineamento: 0, totale: 0 }
+  const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, allineamento: 0, materiali: 0, totale: 0 }
   let usd = 0
   // 1. solo l'appartamento (catastali con intestazione, timbri, cantina a parte), lato lungo almeno 1536 px
   let crop: Buffer
@@ -80,7 +81,15 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
     ms.allineamento = Date.now() - ta
   } catch (e) { console.error('casa3d allineamento', e) }
   if (fix?.labels?.length) raw = applyLabels(raw, fix.labels)
-  raw = guessRoomTypes(raw) // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
+  if (fix?.furniture?.length) raw = applyFurniture(raw, fix.furniture) // mobili disegnati: nel 3D al loro posto
+  raw = guessRoomTypes(raw)
+  // materiali e colori dalle foto dell'immobile (una sola chiamata per casa: il chiamante passa le foto solo al primo piano)
+  if (o.photos?.length) {
+    const tm = Date.now()
+    const m = await readMaterials(o.userId, o.photos)
+    ms.materiali = Date.now() - tm
+    if (m) { raw = { ...raw, materials: m }; usd += 0.015 }
+  } // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
   ms.totale = Date.now() - T0
   return { raw, crop, cad, overlay, fix, ms, usd }
 }

@@ -5,6 +5,7 @@
 import { OUTDOOR, type Fix, type OpType, type Pt, type RawOpening, type RawPlan, type ViewerPlan } from './types'
 
 const OUT_TYPES = new Set(['esterno'])
+const hex = (x?: string) => (typeof x === 'string' && /^#[0-9a-fA-F]{6}$/.test(x) ? x : undefined)
 const r3 = (v: number) => Math.round(v * 1000) / 1000
 
 export const inPoly = (x: number, z: number, pts: Pt[]) => {
@@ -195,7 +196,10 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     }
     const lr = largestRect(e, w, h)
     const rect: [number, number, number, number] = lr ? [r3(x0 + lr[0] * C), r3(z0 + lr[1] * C), r3(x0 + lr[2] * C), r3(z0 + lr[3] * C)] : [Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)]
-    rooms.push({ id: r.id, type: r.type, area: r.area, center: r.center, poly: r.poly, rect })
+    // pavimento e muri: scelta dell'agente, poi quelli letti dalle foto per quel tipo di stanza, se no quelli del visore
+    const mt = plan.materials?.rooms?.[r.type]
+    const floor = r.floor ?? mt?.floor, wall = hex(r.wall) ?? hex(mt?.wall)
+    rooms.push({ id: r.id, type: r.type, area: r.area, center: r.center, poly: r.poly, rect, ...(floor ? { floor } : {}), ...(wall ? { wall } : {}) })
   }
   // muri del terrazzo e del balcone verso fuori: parapetto basso (nessun lato su una stanza interna, almeno uno sul terrazzo)
   const roomAtAll = (x: number, z: number) => { for (const r of plan.rooms) if (inPoly(x, z, r.poly)) return r.type === 'esterno' ? -1 : r.id; return -1 }
@@ -215,7 +219,12 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
   const parapets = plan.walls.filter(isParapet).map(poly)
   const all = [...walls.flatMap(w => w.outer), ...parapets.flatMap(w => w.outer), ...rooms.flatMap(r => r.poly)]
   const X0 = Math.min(...all.map(p => p[0])), Z0 = Math.min(...all.map(p => p[1])), X1 = Math.max(...all.map(p => p[0])), Z1 = Math.max(...all.map(p => p[1]))
-  return { version: 3, units: 'm', height: plan.height || 2.7, outline: [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]], walls, ...(parapets.length ? { parapets } : {}), windows, doors, rooms, ...(name ? { name } : {}) }
+  const furniture: NonNullable<ViewerPlan['furniture']> = []
+  for (const it of plan.furniture ?? []) {
+    const m = drawnToViewer(it), room = rooms.find(r => inPoly(it.at[0], it.at[1], r.poly))
+    if (m && room) furniture.push({ kind: m.kind, x: it.at[0], z: it.at[1], rot: it.rot, w: m.w, d: m.d, room: room.id, opts: m.opts })
+  }
+  return { version: 3, units: 'm', height: plan.height || 2.7, outline: [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]], ...(furniture.length ? { furniture } : {}), ...(plan.materials ? { materials: { frames: hex(plan.materials.frames) ?? '#f7f6f3', doors: hex(plan.materials.doors) ?? '#f3f1ec', facade: { kind: plan.materials.facade?.kind ?? 'intonaco', color: hex(plan.materials.facade?.color) ?? '#efe6d6' }, roof: plan.materials.roof, shutters: hex(plan.materials.shutters) ?? '' } } : {}), walls, ...(parapets.length ? { parapets } : {}), windows, doors, rooms, ...(name ? { name } : {}) }
 }
 
 export function planCounts(p: ViewerPlan) {
@@ -297,5 +306,54 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
     }
   }
   if (hs.length) { hs.sort((u, v) => u - v); p.height = Math.round(hs[Math.floor(hs.length / 2)] * 100) / 100 }
+  return p
+}
+
+// Mobili disegnati sull'originale -> metri sulla pianta (stessa inversa di toImage delle scritte)
+const DRAWN_KINDS = new Set(['bed_double', 'bed_single', 'sofa', 'armchair', 'dining_table', 'desk', 'wardrobe', 'kitchen', 'wc', 'sink', 'shower', 'tv_unit'])
+export function applyFurniture(raw: RawPlan, items: NonNullable<Fix['furniture']>): RawPlan {
+  const p = clone(raw)
+  const [a, b, c, d, e, f] = p.source.toImage, det = a * d - b * c, ppm = Math.sqrt(Math.abs(det))
+  const toM = (px: number, py: number): Pt => [(d * (px - e) - c * (py - f)) / det, (-b * (px - e) + a * (py - f)) / det]
+  p.furniture = []
+  for (const it of items ?? []) {
+    if (!DRAWN_KINDS.has(it.kind) || !(it.x >= 0 && it.x <= 1 && it.y >= 0 && it.y <= 1)) continue // vasca: nessun modello
+    const at = toM(it.x * p.source.imgW, it.y * p.source.imgH)
+    if (!p.rooms.some(r => inPoly(at[0], at[1], r.poly))) continue
+    const vx = Math.cos(it.back * Math.PI / 180), vy = Math.sin(it.back * Math.PI / 180)
+    const bx = (d * vx - c * vy) / det, bz = (-b * vx + a * vy) / det
+    p.furniture.push({ kind: it.kind, at: [r3(at[0]), r3(at[1])], rot: Math.round(Math.atan2(-bx, -bz) * 1000) / 1000, len: r3(it.len * p.source.imgW / ppm), depth: r3(it.depth * p.source.imgW / ppm) })
+  }
+  return p
+}
+const cl = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v || lo))
+// mobile disegnato -> modello del catalogo del visore con le misure (w lungo x locale, d lungo z)
+export function drawnToViewer(it: NonNullable<RawPlan['furniture']>[number]): { kind: string; w: number; d: number; opts: Record<string, number> } | null {
+  const L = it.len, D = it.depth
+  switch (it.kind) {
+    case 'bed_double': { const w = cl(D, 1.4, 1.9), l = cl(L, 1.9, 2.2); return { kind: 'bed', w, d: l, opts: { w, l } } }
+    case 'bed_single': { const w = cl(D, 0.8, 1.2), l = cl(L, 1.9, 2.1); return { kind: 'bed', w, d: l, opts: { w, l } } }
+    case 'sofa': { const w = cl(L, 1.4, 3.2); return { kind: 'sofa', w, d: 0.95, opts: { w } } }
+    case 'armchair': return { kind: 'armchair', w: 0.82, d: 0.85, opts: {} }
+    case 'dining_table': { const w = cl(L, 0.8, 2.4), dd = cl(D, 0.7, 1.2); return { kind: 'table', w, d: dd, opts: { w, d: dd } } }
+    case 'desk': { const w = cl(L, 0.8, 2), dd = cl(D, 0.5, 0.9); return { kind: 'desk', w, d: dd, opts: { w, d: dd } } }
+    case 'wardrobe': { const w = cl(L, 0.8, 3.6); return { kind: 'wardrobe', w, d: 0.62, opts: { w } } }
+    case 'kitchen': { const w = cl(L, 1.2, 5); return { kind: 'kitchen', w, d: 0.64, opts: { w } } }
+    case 'wc': return { kind: 'wc', w: 0.4, d: 0.6, opts: {} }
+    case 'sink': return { kind: 'sink', w: 0.6, d: 0.5, opts: {} }
+    case 'shower': { const w = cl(L, 0.7, 1.4), dd = cl(D, 0.7, 1.2); return { kind: 'shower', w, d: dd, opts: { w, d: dd } } }
+    case 'tv_unit': { const w = cl(L, 1, 2.4); return { kind: 'tvcab', w, d: 0.42, opts: { w } } }
+  }
+  return null
+}
+
+export function setRoomLook(raw: RawPlan, id: number, look: { floor?: RawPlan['rooms'][number]['floor']; wall?: string }): RawPlan {
+  const p = clone(raw), r = p.rooms.find(x => x.id === id)
+  if (r) Object.assign(r, look)
+  return p
+}
+export function setFacade(raw: RawPlan, color: string): RawPlan {
+  const p = clone(raw)
+  p.materials = { rooms: {}, frames: '#f7f6f3', doors: '#f3f1ec', roof: 'non_visibile', shutters: '', from: 0, ...p.materials, facade: { kind: p.materials?.facade?.kind ?? 'intonaco', color } }
   return p
 }

@@ -8,8 +8,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Check, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
-import { addOpening, removeOpening, rescaleTo, setRoomType, totalArea } from '@/lib/casa3d/build';
-import { ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
+import { addOpening, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, totalArea } from '@/lib/casa3d/build';
+import { FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, WALL_COLORS, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
 import { authFetch } from './api';
 import { pageLang, tr } from './i18n';
 
@@ -254,6 +254,10 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
                 <polygon points={quadPts(o.a, o.b, Math.max(o.t + 0.06, 0.4))} fill="transparent" />
               </g>
             ))}
+            {(raw.furniture ?? []).map((f, i) => (
+              <rect key={`f${i}`} x={f.at[0] - f.len / 2} y={f.at[1] - f.depth / 2} width={f.len} height={f.depth} rx={0.05} fill="rgba(0,0,0,.06)" stroke="#8a8a85" strokeWidth={0.03}
+                transform={`rotate(${-f.rot * 180 / Math.PI} ${f.at[0]} ${f.at[1]})`} pointerEvents="none" />
+            ))}
             {raw.rooms.filter(r => r.type !== 'esterno').map(r => (
               <text key={r.id} x={r.center[0]} y={r.center[1]} textAnchor="middle" fontSize={fs} fontWeight={700} fill="#1d1d1b" pointerEvents="none" style={{ fontFamily: 'inherit' }}>
                 <tspan x={r.center[0]} dy={0}>{roomName(r.type)}</tspan>
@@ -283,6 +287,12 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
         {/* azione sull'elemento toccato */}
         <div className="rounded-[24px] bg-canvas p-4">
           {!sel && <p className="text-sm text-muted">{tr('Tocca un elemento della pianta.', 'Tap an element of the plan.')}</p>}
+          {!sel && (
+            <div className="mt-3">
+              <p className="text-sm font-semibold">{tr('Facciata', 'Facade')}{raw.materials?.from ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
+              <Swatches colors={[...new Set([raw.materials?.facade?.color, ...FACADE_COLORS].filter((x): x is string => !!x))]} value={raw.materials?.facade?.color} onPick={c => onEdit(r => setFacade(r, c))} />
+            </div>
+          )}
           {selRoom && (
             <>
               <p className="text-sm font-semibold">{tr('Che stanza è?', 'Which room is it?')} <span className="font-normal text-muted">{String(selRoom.area).replace('.', ',')} m²</span></p>
@@ -291,6 +301,17 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
                 {ROOM_TYPES.map(t => <button key={t} type="button" onClick={() => onEdit(r => setRoomType(r, selRoom.id, t))} className={pill(selRoom.type === t)}>{roomName(t)}</button>)}
                 <button type="button" onClick={() => onEdit(r => setRoomType(r, selRoom.id, 'esterno'))} className={pill(selRoom.type === 'esterno')}>{tr('Non è della casa', 'Not part of the home')}</button>
               </div>
+              {(() => {
+                const mt = raw.materials?.rooms?.[selRoom.type], floor = selRoom.floor ?? mt?.floor, wall = selRoom.wall ?? mt?.wall
+                return (
+                  <>
+                    <p className="mt-4 text-sm font-semibold">{tr('Pavimento', 'Floor')}{mt && !selRoom.floor ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">{FLOOR_KINDS.map(f => <button key={f} type="button" onClick={() => onEdit(r => setRoomLook(r, selRoom.id, { floor: f }))} className={`${pill(floor === f)} !px-3 !py-1.5 !text-xs`}>{tr(...FLOOR_LABEL[f])}</button>)}</div>
+                    <p className="mt-4 text-sm font-semibold">{tr('Colore dei muri', 'Wall colour')}{mt && !selRoom.wall ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
+                    <Swatches colors={[...new Set([mt?.wall, ...WALL_COLORS].filter((x): x is string => !!x))]} value={wall} onPick={c => onEdit(r => setRoomLook(r, selRoom.id, { wall: c }))} />
+                  </>
+                )
+              })()}
             </>
           )}
           {sel?.kind === 'wall' && (
@@ -329,6 +350,18 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
           <span className="flex items-center gap-1.5"><Minus size={14} strokeWidth={5} className="text-black/30" style={{ strokeDasharray: '3 3' }} /> {tr('Da controllare', 'To check')}</span>
         </div>
       </div>
+    </div>
+  )
+}
+
+// tondi di colore toccabili (muri, facciata)
+function Swatches({ colors, value, onPick }: { colors: string[]; value?: string; onPick: (c: string) => void }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-2">
+      {colors.slice(0, 10).map(c => (
+        <button key={c} type="button" onClick={() => onPick(c)} aria-label={c} style={{ background: c }}
+          className={`h-8 w-8 rounded-full ring-1 ring-inset ring-black/15 transition-shadow duration-[600ms] ${value?.toLowerCase() === c.toLowerCase() ? 'outline outline-2 outline-offset-2 outline-brand' : ''}`} />
+      ))}
     </div>
   )
 }
