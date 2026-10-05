@@ -24,6 +24,9 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
   const [busy, setBusy] = useState(false)
   const plans = photos.filter(p => d.rooms?.[p]?.scene === 'planimetria')
 
+  // niente planimetria tra le foto e nessuna casa gia' fatta: la sezione non c'e' (la Casa 3D nasce solo dalla planimetria vera)
+  if (!plans.length && !casa && !flow && !picking) return null
+
   const remove = async () => {
     if (!confirm(tr('Tolgo la casa 3D da questo immobile?', 'Remove the 3D home from this listing?'))) return
     setBusy(true)

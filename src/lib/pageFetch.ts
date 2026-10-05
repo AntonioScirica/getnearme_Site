@@ -1,4 +1,5 @@
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
+import { isPlanUrl, PLAN_MARK } from '@/lib/planUrl'
 import { idealista, immobiliare, type Raw } from '@/lib/listingExtract'
 import { logUsage } from '@/lib/ai'
 
@@ -72,8 +73,8 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
   const all = before.length >= 3 ? before : collectPhotos(html, meta)
   // planimetrie in fondo, cosi' la copertina e' una foto vera: dal nome del file o dalla galleria "floor-plans" del tema
   const planUrls = new Set([...html.matchAll(/data-fancybox=["'][^"']*(?:floor|plan|pianta)[^"']*["'][^>]*?(?:href|data-src)=["']([^"']+)["']|(?:href|data-src)=["']([^"']+)["'][^>]*?data-fancybox=["'][^"']*(?:floor|plan|pianta)[^"']*["']/gi)].map(m => decode(m[1] || m[2])))
-  const isPlan = (u: string) => planUrls.has(u) || /planimetr|pianta|piantina|floor.?plan|(?:^|[-_/])(?:pt|p\d|primop|secondop|terzop|quartop|plan)[-_.]/i.test(u.split('?')[0].split('/').pop() ?? '')
-  const photos = [...all.filter(u => !isPlan(u)), ...all.filter(isPlan)]
+  const isPlan = (u: string) => planUrls.has(u) || isPlanUrl(u)
+  const photos = [...all.filter(u => !isPlan(u)), ...all.filter(isPlan).map(u => u + PLAN_MARK)]
   return { raw: { text, json, meta, images: photos }, photos, title: meta['og:title'] || title }
 }
 

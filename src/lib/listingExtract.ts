@@ -1,4 +1,5 @@
 import { geminiFreeJson } from '@/lib/geminiFree'
+import { PLAN_MARK } from '@/lib/planUrl'
 import { EMPTY_FIELDS, type Fields } from '@/lib/listingRules'
 
 // Dalla pagina di un annuncio (letta dall'estensione o dal server, vedi pageFetch) ai campi del verdetto.
@@ -41,7 +42,7 @@ export function immobiliare(html: string): { fields: Partial<Fields>; photos: st
   return {
     // planimetrie in fondo e sempre salvate (le foto si tagliano prima, il tetto e' 40): servono anche per la Casa 3D
     photos: (() => {
-      const plans = (p.multimedia?.floorplans ?? []).map(x => x.urls?.xxl || x.urls?.large || x.urls?.medium || '').filter(Boolean)
+      const plans = (p.multimedia?.floorplans ?? []).map(x => x.urls?.xxl || x.urls?.large || x.urls?.medium || '').filter(Boolean).map(u => u + PLAN_MARK)
       return [...(p.multimedia?.photos ?? []).map(x => x.urls?.large || x.urls?.xxl || '').filter(Boolean).slice(0, 40 - plans.length), ...plans]
     })(),
     fields: {
