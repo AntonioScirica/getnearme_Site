@@ -889,7 +889,7 @@ export const reelImmobiliari: Guide = {
   <li><strong>Cantiere</strong> e <strong>Volo nel cantiere</strong>: dal grezzo alla casa finita.</li>
   <li><strong>Giorno e notte</strong>: la facciata o il giardino che passa alla sera.</li>
   <li><strong>Camminata</strong>: un movimento dentro la stanza, come un breve tour.</li>
-  <li><strong>Drone esterno</strong>: la casa ripresa dall'alto, come con un drone, da una sola foto della facciata.</li>
+  <li><strong>Giro col drone</strong>: carichi una foto fatta col drone e il video gira piano attorno alla casa, alla stessa quota.</li>
   <li><strong>Stagioni</strong>: il giardino o il terrazzo che passa all'estate, alla primavera fiorita o sotto la neve.</li>
   <li><strong>Con te in video</strong>: tu che presenti l'immobile.</li>
 </ul>

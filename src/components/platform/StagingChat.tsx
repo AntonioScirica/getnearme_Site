@@ -126,8 +126,9 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
     { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto },
   ] },
   // solo foto di esterni (facciata, giardino; Stagioni anche terrazzi e balconi): con un interno non si mostrano, vedi templateHidden
-  { id: 'drone', label: tr('Drone esterno', 'Exterior drone'), desc: tr('La casa ripresa dall’alto, come con un drone', 'The home filmed from above, like with a drone'), sample: VIDEO_SAMPLES.drone, anims: [
-    { id: 'drone', label: tr('Drone esterno', 'Exterior drone'), desc: tr('La casa ripresa dall’alto, come con un drone', 'The home filmed from above, like with a drone'), sample: VIDEO_SAMPLES.drone },
+  // Giro col drone: la foto e' gia' aerea (fatta col drone dall'agente); nessuna classificazione affidabile per le foto aeree, quindi vale per gli esterni
+  { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone, anims: [
+    { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone },
   ] },
   { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni, anims: [
     { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni },
@@ -1114,7 +1115,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const both = id === 'giorno-notte' || id === 'camera' || id === 'daynight' || id === 'annuncio' || id === 'venduto' || id === 'reel'
     return outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
   };
-  // Drone esterno e Stagioni: nascosti se la foto non e' un esterno (anche finche' il tipo di foto non e' noto);
+  // Giro col drone e Stagioni: nascosti se la foto non e' un esterno (anche finche' il tipo di foto non e' noto);
   // Stagioni anche per terrazzi e balconi (room:balcone)
   const templateHidden = (id: string) => id === 'drone' ? kind !== 'scene:esterno' && kind !== 'scene:giardino'
     : id === 'stagioni' ? kind !== 'scene:esterno' && kind !== 'scene:giardino' && kind !== 'room:balcone' : false;

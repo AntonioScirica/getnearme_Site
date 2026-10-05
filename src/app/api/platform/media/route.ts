@@ -12,7 +12,7 @@ type Entry = { text: string; room: string; from?: string }
 // nome del video dal suffisso del file (vedi videoJob: -p Prima e dopo, -kc Cantiere...): prima erano tutti "Video"
 const VIDEO_NAMES: [RegExp, string][] = [
   [/-prova\.mp4$/, 'Video della prova'], [/-ra\.mp4$/, 'dell’annuncio'], [/-vs\.mp4$/, 'Venduto o Affittato'], [/-k[hf]\.mp4$/, 'Volo nel cantiere'], [/-kc\.mp4$/, 'Cantiere'], [/-km\.mp4$/, 'Camminata'],
-  [/-kd\.mp4$/, 'Drone esterno'], [/-ks\.mp4$/, 'Stagioni'],
+  [/-kd\.mp4$/, 'Giro col drone'], [/-ks\.mp4$/, 'Stagioni'],
   [/-ka\.mp4$/, 'Con te in video'], [/-kw\.mp4$/, 'Camminata nel tuo video'], [/-k\.mp4$/, 'Giorno e notte'],
   [/-g\.mp4$/, 'Prima e dopo, dall’alto'], [/-d\.mp4$/, 'Prima e dopo, particelle'], [/-[pf]\.mp4$/, 'Prima e dopo'],
 ]

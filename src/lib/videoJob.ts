@@ -72,7 +72,7 @@ const PLAN_TOP_3D = 'Turn this floor plan into a photorealistic 3D cutaway view 
 const PLAN_DIVE = 'One continuous cinematic camera move with no cuts: the camera starts high above the 3D cutaway apartment looking straight down, then smoothly descends and tilts forward, flying down between the walls into one room, and slows to a stop at eye height inside that room, ending exactly on the last image. The layout of the apartment never changes; walls, doors and furniture stay solid and consistent. Calm, smooth, elegant movement.'
 const RENO_ROOMS: Record<string, string> = { soggiorno: 'a living room', openspace: 'a living room with an open kitchen', cucina: 'a kitchen', camera: 'a double bedroom', cameretta: 'a children\'s bedroom', bagno: 'a bathroom', sala: 'a dining room', studio: 'a home office', ingresso: 'an entrance hall', corridoio: 'a hallway' }
 const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true, fpv: true, planwalk: true, ristruttura: true, drone: true, stagioni: true }
-// Drone esterno e Stagioni (05/10): Kling 2.5 Turbo Pro esce a 1080p; la foto di partenza si prepara gia' a 1920x1080
+// Giro col drone e Stagioni (05/10): Kling 2.5 Turbo Pro esce a 1080p; la foto di partenza si prepara gia' a 1920x1080
 // (o 1080x1920), cosi' il video finale resta in Full HD (regola: costi giu', qualita' no)
 const HD: Partial<Record<Anim, true>> = { drone: true, stagioni: true }
 // Volo nel cantiere (30/09, prove in ~/Desktop/prove-video-template/costruzione-fpv, versione 21): intro FPV fissa nel
@@ -212,8 +212,8 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
         ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_camera' })).request_id]
       } else if (anim === 'drone') {
-        // Drone esterno: una foto, la camera sale in alto fino alla casa intera vista dall'alto (Kling 2.5 Turbo Pro, 1080p, 0,35 $)
-        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, prompt: DRONE_EXTERIOR, negative_prompt: DRONE_EXTERIOR_NEG, duration: '5', cfg_scale: 0.7 }, { userId: logUser, kind: 'video_drone' })).request_id]
+        // Giro col drone: dalla foto aerea dell'agente, piccola orbita lenta alla stessa quota (Kling 2.5 Turbo Pro, 1080p, 0,35 $)
+        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, prompt: DRONE_EXTERIOR, negative_prompt: DRONE_EXTERIOR_NEG, duration: '5', cfg_scale: 0.6 }, { userId: logUser, kind: 'video_drone' })).request_id]
       } else if (anim === 'stagioni') {
         // Stagioni: la stessa scena nella stagione scelta (GPT Image), poi Kling Turbo dalla foto vera a quella (come Giorno e notte)
         const season = o.season ?? 'estate'

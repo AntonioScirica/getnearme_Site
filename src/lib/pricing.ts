@@ -17,7 +17,7 @@
 // Video Prima e dopo (29/09): 1 credito quando si preparano Prima e Dopo (le foto GPT, pagate anche se poi si annulla),
 // il resto (video_render = 99) quando si consegna il video: chi arriva in fondo paga sempre 100 (video).
 export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_prep: 1, video_render: 99, video_cantiere: 200, video_daynight: 40, video_camera: 30, video_agent: 40, video_walk: 150, video_fpv: 200, video_planwalk: 150, video_reel: 10, video_venduto: 5, video_drone: 40, video_stagioni: 40, riscrivi: 1 };
-// Drone esterno (05/10): Kling 2.5 Turbo Pro da una foto, 5 s a 1080p (0,35 $, nessuna foto GPT); la Camminata usa Kling 1.6
+// Giro col drone (05/10): Kling 2.5 Turbo Pro da una foto, 5 s a 1080p (0,35 $, nessuna foto GPT); la Camminata usa Kling 1.6
 // standard a 720p (0,28 $ -> 30): a parita' di margine (~107 crediti per $) 0,35 $ fa ~38 -> 40, come Giorno e notte.
 // Stagioni (05/10): 1 GPT Image a qualita' bassa (la stagione scelta, ~0,014 $) + Kling 2.5 Turbo Pro primo/ultimo
 // fotogramma 5 s (0,35 $) = ~0,37 $, la stessa ricetta e lo stesso costo di Giorno e notte -> 40.
