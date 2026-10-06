@@ -1693,7 +1693,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             </div>
           )}
           {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image)?.seen !== null && (
-            <div className="blur-in -mx-2 -mt-1 mb-3 flex gap-1.5 overflow-x-auto sm:mb-1 px-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
+            <div className="blur-in -mx-6 -mt-1 mb-3 flex gap-1.5 overflow-x-auto px-6 py-1 sm:-mx-2 sm:mb-1 sm:px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(STYLE_FROM_PHOTO, null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
           {casaView && <Casa3DViewer manifest={casaView} onClose={() => setCasaView(null)} />}
