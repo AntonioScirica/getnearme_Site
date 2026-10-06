@@ -882,10 +882,10 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const setZ = (v: number) => setFrame(curPhoto!.src, { z: Math.min(3, Math.max(1, Math.round(v * 100) / 100)) });
     const seg = (on: boolean, fit: 'cover' | 'contain', Icon: typeof Crop, label: string) => (
       <button type="button" role="radio" aria-checked={on} onClick={() => setFrame(curPhoto!.src, { fit })} title={label}
-        className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${on ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}><Icon size={14} /> {label}</button>
+        className={`flex h-8 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-xs font-semibold ease-smooth transition-colors ${on ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}><Icon size={13} /> {label}</button>
     );
     return (
-      <div className="blur-in absolute inset-x-3 bottom-3 z-10 flex flex-wrap items-center justify-center gap-1 rounded-full bg-white/95 p-1 shadow-lg ring-1 ring-black/5 backdrop-blur" onPointerDown={e => e.stopPropagation()}>
+      <div className="blur-in flex flex-nowrap items-center gap-0.5 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/10">
         <div role="radiogroup" aria-label={tr('Come mostrare la foto', 'How to show the photo')} className="flex">
           {seg(curFit, 'cover', Maximize2, tr('Riempi', 'Fill'))}
           {seg(!curFit, 'contain', Minimize2, tr('Intera', 'Whole'))}
@@ -894,7 +894,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         <button type="button" onClick={() => setZ(z - 0.1)} disabled={z <= 1} aria-label={tr('Meno zoom', 'Zoom out')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomOut size={15} /></button>
         <input type="range" min={1} max={3} step={0.01} defaultValue={fr.z} key={`${curPhoto!.src}-${fr.z}`} aria-label={tr('Zoom', 'Zoom')}
           onChange={e => frameLive(curPhoto!.src, { ...(live2.current?.src === curPhoto!.src ? live2.current.f : fr), z: Number(e.target.value) }, curFit)}
-          onPointerUp={commitFrame} onKeyUp={commitFrame} className="h-8 w-20 accent-[#537eec] sm:w-24" />
+          onPointerUp={commitFrame} onKeyUp={commitFrame} className="h-8 w-16 accent-[#537eec] sm:w-20" />
         <button type="button" onClick={() => setZ(z + 0.1)} disabled={z >= 3} aria-label={tr('Più zoom', 'Zoom in')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomIn size={15} /></button>
         {changed && <button type="button" onClick={() => setFrames(o => { const c = { ...o }; delete c[curPhoto!.src]; return c; })} aria-label={tr('Ripristina', 'Reset')} title={tr('Ripristina', 'Reset')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink"><RotateCcw size={14} /></button>}
       </div>
@@ -909,7 +909,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           ? <span className="px-6 text-center text-sm text-muted">{tr('Scegli almeno una foto', 'Choose at least one photo')}</span>
           : <MorphPost build={shown} boxW={boxW} boxH={boxH} fw={fmt.w} fh={fmt.h} />}
         {framable && <div onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-hidden className="absolute inset-3 cursor-grab touch-none active:cursor-grabbing" />}
-        {frameBar}
         {!showVid && nSlides > 1 && (
           <>
             <button type="button" onClick={() => setSlideIx(Math.max(0, six - 1))} disabled={!six} aria-label={tr('Slide precedente', 'Previous slide')} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronLeft size={18} /></button>
@@ -917,7 +916,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           </>
         )}
       </div>
-      <div className="flex h-8 items-center gap-1.5">
+      <div className="flex min-h-8 items-center gap-1.5">
         {showVid ? <span className="text-xs text-muted">{withVideo ? tr('Video', 'Video') : tr('Esempio dello stile', 'Style sample')} {reelStyleLabel(vid.style)}, 9:16, 1080×1920</span> : nSlides > 1 ? (
           <>
             {Array.from({ length: nSlides }, (_, i) => (
@@ -927,8 +926,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             ))}
             <span className="ml-2 w-12 text-xs tabular-nums text-muted">{six + 1} / {nSlides}</span>
           </>
-        ) : <span className="text-xs text-muted">{net.label}, {fmt.label} {fmt.ratio}, {fmt.w}×{fmt.h}</span>}
+        ) : frameBar ?? <span className="text-xs text-muted">{net.label}, {fmt.label} {fmt.ratio}, {fmt.w}×{fmt.h}</span>}
       </div>
+      {!showVid && nSlides > 1 && frameBar}
     </div>
   );
 
