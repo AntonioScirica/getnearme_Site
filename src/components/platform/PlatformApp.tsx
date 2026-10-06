@@ -5,7 +5,7 @@ import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Upload, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
+import { ArrowLeft, ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Upload, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -407,7 +407,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   }, [open, onClose]);
 
   const width = { closed: 'sm:w-80 delay-[120ms]', input: 'sm:w-[34rem]', browser: 'sm:w-[56rem]', done: 'sm:w-[56rem]' }[phase];
-  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
+  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[15rem] p-6 pt-14 delay-[120ms] max-sm:h-[18rem]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
     <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s', viewTransitionName: 'ob-card-0' }}>
@@ -428,7 +428,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] ease-smooth ${height} ${open ? '' : 'max-sm:flex-row max-sm:items-center max-sm:gap-4'} ${CARD_SHADOW} ${open ? 'shadow-[0_1px_3px_rgba(0,0,0,.04),0_16px_40px_-22px_rgba(0,0,0,.18)]' : ''}`}>
         {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
         <button type="button" onClick={onClose} aria-label={tr('Torna indietro', 'Go back')} tabIndex={open ? 0 : -1}
-          className={`absolute z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-all hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px]' : 'right-4 top-4'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
+          className={`absolute z-30 flex h-9 items-center justify-center rounded-full text-muted ease-smooth transition-all hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px] w-9' : 'left-3 top-3 gap-1 px-3 text-sm font-medium'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}>{flow ? <X size={18} /> : <><ArrowLeft size={16} /> {tr('Indietro', 'Back')}</>}</button>
 
         {!open && <img src="/immo/home/card.webp" alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />}{/* telefono: riga compatta come le altre card */}
         {/* Titolo della card: svanisce e si chiude */}
@@ -467,18 +467,18 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         {/* Campo link: nel browser diventa la barra indirizzi */}
         <form onSubmit={e => { e.preventDefault(); if (ok && !busy) onSubmit(); }}
           className={`${open ? "" : "max-sm:hidden "}flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all ease-smooth focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
-            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]'}`}>
+            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms] max-sm:max-h-40 max-sm:flex-wrap max-sm:gap-3 max-sm:rounded-none max-sm:bg-transparent max-sm:p-0 max-sm:ring-0 max-sm:focus-within:bg-transparent max-sm:focus-within:ring-0'}`}>{/* telefono: Analizza sotto il campo, a tutta larghezza */}
           <span className={`flex shrink-0 gap-1.5 overflow-hidden ease-smooth transition-all ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0'}`}>
             {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
           </span>
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
-            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base'}`} />
+            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base max-sm:h-12 max-sm:basis-full max-sm:rounded-full max-sm:bg-canvas max-sm:px-5 max-sm:py-0 max-sm:focus:bg-white max-sm:focus:ring-1 max-sm:focus:ring-ink/15'}`} />
           {busy ? (
             <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <span className="text-muted">{slow ? tr('ci sta mettendo più del solito', 'taking longer than usual') : tr('circa 1-2 min', 'about 1-2 min')}</span>{slow && <button type="button" onClick={onNew} className="ml-1 font-semibold text-brand">{tr('Annulla', 'Cancel')}</button>}</span>
           ) : phase === 'done' ? (
             <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">{tr('Nuova analisi', 'New analysis')}</button>
           ) : (
-            <button disabled={!ok} tabIndex={open ? 0 : -1} className="h-11 shrink-0 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-30 disabled:active:scale-100">{flow ? tr('Riprova', 'Try again') : tr('Analizza', 'Analyse')}</button>
+            <button disabled={!ok} tabIndex={open ? 0 : -1} className={`h-11 shrink-0 rounded-full bg-brand px-6 ${flow ? '' : 'max-sm:w-full'} text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-30 disabled:active:scale-100`}>{flow ? tr('Riprova', 'Try again') : tr('Analizza', 'Analyse')}</button>
           )}
         </form>
 
