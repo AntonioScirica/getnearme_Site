@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
 import { Anvil, Camera, Building2, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, Tag, Pencil, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X, Drone, SunSnow, Sun, Flower2, Snowflake } from 'lucide-react';
-import { fileToResizedDataUrl } from '@/lib/staging';
+import { downloadImage, fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
 import { authFetch, CARD_SHADOW, portfolioUrl } from './api';
@@ -1573,7 +1573,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           {m.reel && m.url && !!m.reel.redo && (m.reel.redosLeft ?? 0) > 0 && <button type="button" onClick={() => patchV(m.id, { step: 'rdata', url: undefined, reel: { ...m.reel!, editing: true, prevUrl: m.url } })}
                             className="flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-canvas max-sm:flex-1 max-sm:justify-center"><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Pencil size={14} /></span>{tr('Modifica testi', 'Edit texts')}</button>}
                           <ShareVideo url={m.url} labelClass={m.picks.length > 1 ? '' : 'max-sm:hidden'} className={`flex shrink-0 items-center gap-2 rounded-2xl bg-brand py-1.5 pl-1.5 pr-3 max-sm:justify-center ${m.picks.length > 1 ? 'max-sm:flex-1' : 'max-sm:pr-1.5'} text-xs font-medium text-white shadow-sm ring-1 ring-black/5`} />{/* stessa forma e altezza di Scarica */}
-                          <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url} aria-label={tr('Scarica', 'Download')}
+                          <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url} aria-label={tr('Scarica', 'Download')} /* scarica il file, non apre il video in una scheda (link di un altro dominio: download non vale) */ onClick={e => { if (!m.url) return; e.preventDefault(); const u = m.url; downloadImage(u, `video-agenteimmo-${Date.now()}.mp4`).catch(() => window.open(u, '_blank', 'noopener')); }}
                             className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas max-sm:justify-center ${m.picks.length > 1 ? 'max-sm:flex-1' : 'max-sm:pr-1.5'} ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span><span className={m.picks.length > 1 ? '' : 'max-sm:hidden'}>{tr('Scarica', 'Download')}</span></a>
                         </div>
                       </div>
