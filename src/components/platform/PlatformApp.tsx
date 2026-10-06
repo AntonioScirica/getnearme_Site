@@ -407,7 +407,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   }, [open, onClose]);
 
   const width = { closed: 'sm:w-80 delay-[120ms]', input: 'sm:w-[34rem]', browser: 'sm:w-[56rem]', done: 'sm:w-[56rem]' }[phase];
-  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[15rem] p-6 pt-14 delay-[120ms] max-sm:h-[18rem]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
+  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[15rem] p-6 pt-14 delay-[120ms] max-sm:h-[16.5rem]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
     <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s', viewTransitionName: 'ob-card-0' }}>
@@ -472,7 +472,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
             {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
           </span>
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
-            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base max-sm:h-12 max-sm:basis-full max-sm:rounded-full max-sm:bg-canvas max-sm:px-5 max-sm:py-0 max-sm:focus:bg-white max-sm:focus:ring-1 max-sm:focus:ring-ink/15'}`} />
+            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base max-sm:h-12 max-sm:basis-full max-sm:rounded-full max-sm:bg-canvas max-sm:px-5 max-sm:py-0 max-sm:focus:bg-white max-sm:focus:ring-1 max-sm:focus:ring-inset max-sm:focus:ring-ink/15'}`} />
           {busy ? (
             <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? tr('Apro', 'Opening') : tr('Analizzo', 'Analysing')} <span className="text-muted">{slow ? tr('ci sta mettendo più del solito', 'taking longer than usual') : tr('circa 1-2 min', 'about 1-2 min')}</span>{slow && <button type="button" onClick={onNew} className="ml-1 font-semibold text-brand">{tr('Annulla', 'Cancel')}</button>}</span>
           ) : phase === 'done' ? (
