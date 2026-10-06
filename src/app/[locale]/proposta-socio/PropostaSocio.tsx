@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Clapperboard, Handshake, Link2, MessageSquare, Video } from 'lucide-react'
+import { Clapperboard, Handshake, Menu, X, Link2, MessageSquare, Video } from 'lucide-react'
 
 // Proposta di partnership (socio e volto del brand): revenue share + quote, con simulatore del valore a 5 anni.
 
@@ -16,6 +16,7 @@ const TABS: [Scenario, string][] = [['prudente', 'Prudente'], ['base', 'Base'], 
 const MS: [number, number][] = [[50, 1], [150, 2], [300, 2], [600, 3]]
 const CAP = 10
 const DISC = 0.25
+const SECTIONS = [['progetto', 'Progetto'], ['ruolo', 'Ruolo'], ['offerta', 'Offerta'], ['valore', 'Valore'], ['tutele', 'Tutele'], ['passi', 'Prossimi passi']]
 const DEFAULTS = { arpu: 46, churn: 3, mult: 1, his: 1, tot: 1 }
 type Inputs = typeof DEFAULTS
 
@@ -123,6 +124,7 @@ function Section({ id, n, title, sub, children }: { id: string; n: string; title
 export default function PropostaSocio() {
   const [cur, setCur] = useState<Scenario>('base')
   const [p, setP] = useState<Inputs>(DEFAULTS)
+  const [menu, setMenu] = useState(false) // telefono: sezioni nel menu a tendina
   const rows = useMemo(() => model(cur, p), [cur, p])
   const heroVal = useMemo(() => model('base', p)[4].total, [p]) // l'eroe mostra sempre lo scenario base
   const L = rows[4], y3 = rows[2]
@@ -156,11 +158,19 @@ export default function PropostaSocio() {
         <div className="mx-auto flex h-[60px] max-w-[1080px] items-center justify-between px-6">
           <div className="font-display font-extrabold tracking-tight">agenteimmo.me</div>
           <div className="hidden gap-5 text-sm text-muted md:flex">
-            {[['progetto', 'Progetto'], ['ruolo', 'Ruolo'], ['offerta', 'Offerta'], ['valore', 'Valore'], ['tutele', 'Tutele']].map(([id, l]) => (
+            {SECTIONS.map(([id, l]) => (
               <a key={id} href={`#${id}`} className="hover:text-ink">{l}</a>
             ))}
           </div>
+          <button type="button" onClick={() => setMenu(o => !o)} aria-expanded={menu} aria-label={menu ? 'Chiudi il menu' : 'Apri il menu'} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-black/5 md:hidden">{menu ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
+        {menu && (
+          <div className="border-t border-line md:hidden">
+            {SECTIONS.map(([id, l]) => (
+              <a key={id} href={`#${id}`} onClick={() => setMenu(false)} className="block border-b border-line px-6 py-3.5 font-medium last:border-0 hover:bg-black/[.03]">{l}</a>
+            ))}
+          </div>
+        )}
       </nav>
 
       <header className="py-[90px] pb-[70px]">
@@ -206,7 +216,7 @@ export default function PropostaSocio() {
         <div className={`${card} mt-4`}>
           <div className={pill}>Impegni minimi indicativi · da concordare insieme</div>
           <div className="mt-3.5 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {[['4', 'video al mese per i canali di agenteimmo.me'], ['2', 'post o storie a settimana sui tuoi canali'], ['1', 'evento, webinar o incontro con agenzie al mese']].map(([v, d]) => (
+            {[['X', 'video al mese per i canali di agenteimmo.me'], ['X', 'post o storie a settimana sui tuoi canali'], ['X', 'eventi, webinar o incontri con agenzie al mese']].map(([v, d]) => (
               <div key={d}><div className="my-1.5 font-display text-[26px] font-extrabold">{v}</div><span className="text-muted">{d}</span></div>
             ))}
             <div><div className="my-1.5 flex h-[39px] items-center"><Link2 size={24} /></div><span className="text-muted">link personale tracciato in tutte le attività</span></div>
