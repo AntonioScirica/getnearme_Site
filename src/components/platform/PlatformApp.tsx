@@ -5,7 +5,8 @@ import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { ArrowLeft, ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Upload, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
+import { Smartphone, ArrowLeft, ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Upload, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
+import { INSTALL_EVENT, isStandalone } from './InstallPrompt';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -690,6 +691,13 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         {profile?.slug && <a href="#/portfolio" className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-brand hover:underline md:mt-4 md:min-h-0">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
       </div>
       <BrandCard />
+      {/* Agente Immo sul telefono: apre il popup della web app (InstallPrompt), non se e' gia' installata */}
+      {!isStandalone() && (
+        <button type="button" onClick={() => window.dispatchEvent(new Event(INSTALL_EVENT))} className={`mt-4 flex w-full items-center gap-3 rounded-[28px] bg-white p-6 text-left ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
+          <Smartphone size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">{tr('Agente Immo sul telefono', 'Agente Immo on your phone')}</span><span className="block text-sm text-muted">{tr('Mettila sulla Home come un’app', 'Add it to your Home screen like an app')}</span></span>
+          <ChevronRight size={18} className="text-muted" />
+        </button>
+      )}
       {/* Costi AI: solo per gli amministratori, qui invece che nel menu */}
       {admin && (<>
         <a href="#/costi" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>

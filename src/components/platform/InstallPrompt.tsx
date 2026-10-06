@@ -107,6 +107,11 @@ const STEPS: Record<Variant, Step[]> = {
 };
 const FORCED: Record<string, Variant> = { 'android-event': 'android', 'desktop-event': 'desktop' };
 
+// il profilo apre il popup con window.dispatchEvent(new Event(INSTALL_EVENT))
+export const INSTALL_EVENT = 'agenteimmo:install';
+/** true se l'app e' gia' aperta come web app installata (allora nel profilo non si propone) */
+export const isStandalone = () => typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || !!(navigator as { standalone?: boolean }).standalone);
+
 export default function InstallPrompt() {
   const [ev, setEv] = useState<BIP | null>(null);
   const [variant, setVariant] = useState<Variant | null>(null);
@@ -119,8 +124,7 @@ export default function InstallPrompt() {
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('install');
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone;
-    const later = Number(localStorage.getItem(KEY) || 0);
-    if (!q && (standalone || localStorage.getItem(INSTALLED) || Date.now() - later < DAYS * 86_400_000)) return;
+    if (standalone && !q) return; // gia' installata: niente popup, ne' automatico ne' dal profilo
     const uaData = (navigator as { userAgentData?: { platform?: string } }).userAgentData;
     const forced = q && q !== '1' ? (FORCED[q] ?? (q in STEPS ? (q as Variant) : null)) : null;
     const v = forced ?? detect(navigator.userAgent, navigator.maxTouchPoints, uaData?.platform);
@@ -131,12 +135,16 @@ export default function InstallPrompt() {
     }
     const onPrompt = (e: Event) => { e.preventDefault(); setEv(e as BIP); };
     const onInstalled = () => { localStorage.setItem(INSTALLED, '1'); setOpen(false); };
+    const onAsk = () => setOpen(true); // dal profilo: "Agente Immo sul telefono", sempre, anche se chiuso prima
     if (!forced) window.addEventListener('beforeinstallprompt', onPrompt); // variante forzata: niente evento vero, si vedono le istruzioni
     window.addEventListener('appinstalled', onInstalled);
-    // dopo 20 s di uso (subito con ?install): su Chrome/Edge a quel punto l'evento di solito e' gia' arrivato,
-    // altrimenti si mostrano le istruzioni dal menu
-    const t = setTimeout(() => setOpen(true), q ? 0 : 20_000);
-    return () => { window.removeEventListener('beforeinstallprompt', onPrompt); window.removeEventListener('appinstalled', onInstalled); clearTimeout(t); };
+    window.addEventListener(INSTALL_EVENT, onAsk);
+    // da solo dopo 20 s di uso (subito con ?install), se non e' gia' installata o rimandata da meno di 30 giorni;
+    // su Chrome/Edge a quel punto l'evento di solito e' gia' arrivato, altrimenti si mostrano le istruzioni dal menu
+    const later = Number(localStorage.getItem(KEY) || 0);
+    const auto = !!q || (!localStorage.getItem(INSTALLED) && Date.now() - later >= DAYS * 86_400_000);
+    const t = auto ? setTimeout(() => setOpen(true), q ? 0 : 20_000) : undefined;
+    return () => { window.removeEventListener('beforeinstallprompt', onPrompt); window.removeEventListener('appinstalled', onInstalled); window.removeEventListener(INSTALL_EVENT, onAsk); clearTimeout(t); };
   }, []);
 
   // entrata: monta, poi al frame dopo accende la transizione; focus nel pannello, poi lo restituisce
