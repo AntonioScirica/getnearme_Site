@@ -21,6 +21,7 @@ export type AgenteImmoUser = {
   createdAt: string
   method: string
   isTest: boolean
+  kind: 'agente' | 'privato' // privato = si e' iscritto dall'estensione per cercare casa (account_type private, niente piattaforma)
   isAdmin: boolean
   plan: string
   planActive: boolean
@@ -254,6 +255,7 @@ async function build(since: string): Promise<AgenteImmoResponse> {
       createdAt: u.created_at,
       method: providers.join(', ') || 'email',
       isTest: isTestEmail(u.email),
+      kind: md.account_type === 'private' && !c ? 'privato' as const : 'agente' as const,
       isAdmin: isAdminEmail(u.email),
       plan,
       planActive,

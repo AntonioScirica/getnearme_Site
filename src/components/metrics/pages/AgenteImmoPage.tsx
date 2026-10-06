@@ -86,6 +86,7 @@ function csv(users: AgenteImmoUser[]) {
 export default function AgenteImmoPage({ authKey }: { authKey: string }) {
   const [since, setSince] = useState(DEFAULT_SINCE);
   const [hideTest, setHideTest] = useState(true);
+  const [who, setWho] = useState<'agente' | 'privato' | 'tutti'>('agente'); // agenti (piattaforma) o privati (estensione)
   const [data, setData] = useState<AgenteImmoResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +111,8 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
 
   useEffect(() => { load(since); }, [since, load]);
 
-  const visible = useMemo(() => (data?.users ?? []).filter(u => !hideTest || (!u.isTest && !u.isAdmin)), [data, hideTest]);
+  const visible = useMemo(() => (data?.users ?? []).filter(u => (!hideTest || (!u.isTest && !u.isAdmin)) && (who === 'tutti' || (u.kind ?? 'agente') === who)), [data, hideTest, who]);
+  const kindCount = (k: 'agente' | 'privato') => (data?.users ?? []).filter(u => (!hideTest || (!u.isTest && !u.isAdmin)) && (u.kind ?? 'agente') === k).length;
 
   const s = useMemo(() => {
     const n = visible.length;
@@ -185,6 +187,13 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
             <input type="date" value={since} max={new Date().toISOString().slice(0, 10)} onChange={e => e.target.value && setSince(e.target.value)}
               className="bg-[#161920] border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-gray-200 [color-scheme:dark]" />
           </label>
+          <div className={`${MONO} flex rounded-lg border border-white/10 bg-[#161920] p-0.5 text-xs`}>
+            {([['agente', 'Agenti'], ['privato', 'Privati'], ['tutti', 'Tutti']] as const).map(([k, l]) => (
+              <button key={k} onClick={() => setWho(k)} className={`rounded-md px-2.5 py-1.5 ${who === k ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-400 hover:text-gray-100'}`}>
+                {l}{k !== 'tutti' && data ? ` ${kindCount(k)}` : ''}
+              </button>
+            ))}
+          </div>
           <label className={`${MONO} flex items-center gap-2 text-xs text-gray-400 cursor-pointer`}>
             <input type="checkbox" checked={hideTest} onChange={e => setHideTest(e.target.checked)} className="accent-indigo-500" />
             Nascondi test
@@ -204,7 +213,7 @@ export default function AgenteImmoPage({ authKey }: { authKey: string }) {
         <>
           {/* riepilogo */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Card label={`Iscritti dal ${sinceLabel}`} value={fmt(s.n)} sub={hideTest ? "senza admin e account di test" : "tutti, anche test e admin"} />
+            <Card label={`Iscritti dal ${sinceLabel}`} value={fmt(s.n)} sub={`${who === "agente" ? "agenti dalla piattaforma" : who === "privato" ? "privati dall'estensione" : "agenti e privati"}${hideTest ? ", senza test" : ""}`} />
             <Card label="Paganti (Stripe)" value={fmt(s.paying)} sub={`con piano attivo: ${fmt(s.activePlan)}`} accent="text-emerald-400" />
             <Card label="In prova o gratis" value={fmt(s.n - s.paying)} sub={`conversione ${s.n ? pct((s.paying / s.n) * 100) : "-"}`} />
             <Card label="MRR attuale" value={euro(data.mrr.eur)} sub={`${fmt(data.mrr.customers)} clienti, fonte ${data.mrr.source}; da questi iscritti ${euro(s.mrrSignups)}`} accent="text-indigo-400" />
