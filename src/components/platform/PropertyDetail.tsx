@@ -197,7 +197,7 @@ function VideoCard({ project, photos, count: n }: { project: ProjectData; photos
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Wand2 size={18} /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{tr('Modifica foto e video', 'Edit photos and videos')}</span>
-          <span className="block text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, scegli una foto e continua in chat`, `${n} videos made, pick a photo and continue in chat`) : tr('Arreda, migliora o crea un video da una foto', 'Furnish, improve or make a video from a photo')}</span>
+          <span className="block truncate text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, continua in chat`, `${n} videos made, continue in chat`) : tr('Arreda, migliora o crea un video', 'Furnish, improve or make a video')}</span>
         </span>
       </div>
       <button type="button" onClick={() => setPick(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-50">

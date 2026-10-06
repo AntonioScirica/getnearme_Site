@@ -47,7 +47,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{tr('Casa 3D', '3D home')}</span>
-          <span className="block text-xs text-muted">{flow && !casa ? tr('In creazione', 'Being created') : casa ? `${tr('Pronta', 'Ready')}${casa.floors.length > 1 ? `, ${casa.floors.length} ${tr('piani', 'floors')}` : ''}` : tr('Dalla planimetria, navigabile sul tuo sito', 'From the floor plan, explorable on your site')}</span>
+          <span className="block truncate text-xs text-muted">{flow && !casa ? tr('In creazione', 'Being created') : casa ? `${tr('Pronta', 'Ready')}${casa.floors.length > 1 ? `, ${casa.floors.length} ${tr('piani', 'floors')}` : ''}` : tr('Dalla planimetria, navigabile sul tuo sito', 'From the floor plan, explorable on your site')}</span>
         </span>
         {casa && (
           <span className="relative shrink-0">
