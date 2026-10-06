@@ -5,7 +5,6 @@ import { propertyCard } from '@/lib/ogRender'
 import { agentInfo } from '../../agentInfo'
 
 // Anteprima del link di un immobile del sito di un agente
-export const runtime = 'nodejs'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string; id: string }> }) {
   const { slug, id } = await params

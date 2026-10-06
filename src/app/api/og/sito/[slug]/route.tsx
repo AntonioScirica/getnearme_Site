@@ -5,7 +5,6 @@ import { siteCard } from '@/lib/ogRender'
 import { agentInfo } from '../agentInfo'
 
 // Anteprima del link del sito di un agente (card automatica: la copertina caricata dall'agente va diretta, vedi siteOgImage)
-export const runtime = 'nodejs'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

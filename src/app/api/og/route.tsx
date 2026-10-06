@@ -4,7 +4,6 @@ import { ogSign } from '@/lib/ogMeta'
 import { immoCard } from '@/lib/ogRender'
 
 // Anteprima dei link delle pagine di Agente Immo: /api/og?t=<titolo>&s=<sottotitolo>&k=<firma> (indirizzi da immoOgImage)
-export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams

@@ -1,9 +1,8 @@
 /* eslint-disable @next/next/no-img-element -- next/og disegna <img>, non next/image */
 import { ImageResponse } from 'next/og'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 import sharp from 'sharp'
 import { OG_H, OG_W } from './ogMeta'
+import { JAKARTA_500, JAKARTA_800, LOGO_PNG, STAGING_AFTER, STAGING_BEFORE } from './ogAssets'
 
 // Disegno delle anteprime dei link (1200x630 PNG) con next/og. Le immagini passano tutte da sharp -> JPEG/PNG in data URL:
 // next/og non legge webp/avif (le foto su R2 e quelle della home sono webp).
@@ -11,11 +10,11 @@ import { OG_H, OG_W } from './ogMeta'
 const BRAND = '#537EEC'
 const INK = '#0B1020'
 
-// Plus Jakarta Sans (il carattere dei titoli del sito), istanze statiche in TTF: next/og non legge woff2 ne' font variabili
-let fontsP: Promise<{ name: string; data: Buffer; weight: 500 | 800; style: 'normal' }[]> | null = null
-const fonts = () => (fontsP ??= Promise.all(([500, 800] as const).map(async weight => ({
-  name: 'Jakarta', weight, style: 'normal' as const, data: await readFile(join(process.cwd(), `src/fonts/og/PlusJakartaSans-${weight}.ttf`)),
-}))))
+// Plus Jakarta Sans (il carattere dei titoli del sito), istanze statiche in TTF dentro ogAssets
+const FONTS = [
+  { name: 'Jakarta', weight: 500 as const, style: 'normal' as const, data: Buffer.from(JAKARTA_500, 'base64') },
+  { name: 'Jakarta', weight: 800 as const, style: 'normal' as const, data: Buffer.from(JAKARTA_800, 'base64') },
+]
 
 type Fit = { w: number; h: number; fit: 'cover' | 'inside'; png?: boolean }
 const toData = async (input: Buffer, { w, h, fit, png }: Fit) => {
@@ -24,14 +23,6 @@ const toData = async (input: Buffer, { w, h, fit, png }: Fit) => {
   return { src: `data:image/${png ? 'png' : 'jpeg'};base64,${data.toString('base64')}`, width: info.width, height: info.height }
 }
 type Img = Awaited<ReturnType<typeof toData>>
-
-// file della cartella public, convertiti una volta sola per processo
-const local = new Map<string, Promise<Img>>()
-const localImg = (path: string, f: Fit) => {
-  const k = `${path}|${f.w}x${f.h}`
-  if (!local.has(k)) local.set(k, readFile(join(process.cwd(), 'public', path)).then(b => toData(b, f)))
-  return local.get(k)!
-}
 
 // immagine remota (R2, Supabase): solo https, 8 s e 15 MB al massimo; se non si legge si disegna senza
 async function remoteImg(url: string | null | undefined, f: Fit): Promise<Img | null> {
@@ -45,7 +36,7 @@ async function remoteImg(url: string | null | undefined, f: Fit): Promise<Img | 
 }
 
 const render = async (el: React.ReactElement, maxAge: number) => new ImageResponse(el, {
-  width: OG_W, height: OG_H, fonts: await fonts(),
+  width: OG_W, height: OG_H, fonts: FONTS,
   headers: { 'Cache-Control': `public, max-age=${maxAge}, s-maxage=31536000, stale-while-revalidate=604800` },
 })
 
@@ -62,19 +53,14 @@ const sizeFor = (s: string, steps: [number, number][]) => steps.find(([len]) => 
 
 // ---------- Agente Immo: titolo della pagina + foto prima/dopo dell'home staging ----------
 export async function immoCard(title: string, subtitle: string) {
-  const PW = 500, PH = 550
-  const [logo, before, after] = await Promise.all([
-    localImg('immo/logo-mark.svg', { w: 120, h: 120, fit: 'inside', png: true }),
-    localImg('immo/home/staging-before.webp', { w: PW, h: PH, fit: 'cover' }),
-    localImg('immo/home/staging-after.webp', { w: PW, h: PH, fit: 'cover' }),
-  ])
+  const PW = 500, PH = 550 // come le foto in ogAssets
   const t = cut(title, 90), s = cut(subtitle, 120)
   const pill = { display: 'flex', position: 'absolute' as const, top: 20, padding: '8px 18px', borderRadius: 999, background: 'rgba(255,255,255,.92)', color: INK, fontSize: 22, fontWeight: 800 }
   return render(
     <div style={{ width: OG_W, height: OG_H, display: 'flex', background: '#F4F6FC', fontFamily: 'Jakarta', color: INK }}>
       <div style={{ display: 'flex', flexDirection: 'column', width: 660, padding: '56px 48px 56px 64px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <img src={logo.src} width={60} height={58} style={{ objectFit: 'contain' }} alt="" />
+          <img src={LOGO_PNG} width={60} height={58} style={{ objectFit: 'contain' }} alt="" />
           <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: -0.5 }}>Agente Immo</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
@@ -87,9 +73,9 @@ export async function immoCard(title: string, subtitle: string) {
       </div>
       {/* prima/dopo: la stessa stanza, a sinistra vuota e a destra arredata, con la maniglia dello slider in mezzo */}
       <div style={{ display: 'flex', position: 'relative', width: PW, height: PH, marginTop: 40, borderRadius: 32, overflow: 'hidden' }}>
-        <img src={after.src} width={PW} height={PH} style={{ position: 'absolute', left: 0, top: 0 }} alt="" />
+        <img src={STAGING_AFTER} width={PW} height={PH} style={{ position: 'absolute', left: 0, top: 0 }} alt="" />
         <div style={{ display: 'flex', position: 'absolute', left: 0, top: 0, width: PW / 2, height: PH, overflow: 'hidden' }}>
-          <img src={before.src} width={PW} height={PH} alt="" />
+          <img src={STAGING_BEFORE} width={PW} height={PH} alt="" />
         </div>
         <div style={{ display: 'flex', position: 'absolute', left: PW / 2 - 3, top: 0, width: 6, height: PH, background: '#fff' }} />
         <div style={{ display: 'flex', position: 'absolute', left: PW / 2 - 28, top: PH / 2 - 28, width: 56, height: 56, borderRadius: 999, background: '#fff', alignItems: 'center', justifyContent: 'center', color: BRAND, fontSize: 26, fontWeight: 800 }}>‹ ›</div>
