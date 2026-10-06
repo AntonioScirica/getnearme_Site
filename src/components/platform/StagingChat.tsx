@@ -9,7 +9,7 @@ import { VIDEO_POSTERS, VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
-import { Anvil, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, Tag, Pencil, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X, Drone, SunSnow, Sun, Flower2, Snowflake } from 'lucide-react';
+import { Anvil, Building2, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, Tag, Pencil, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X, Drone, SunSnow, Sun, Flower2, Snowflake } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -403,6 +403,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [saved] = useState(loadSaved);
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
   const [project, setProject] = useState<string | null>(saved?.project ?? null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
+  // nome dell'immobile della foto (chat aperta dalla scheda): divisore in cima alla conversazione
+  const [projTitle, setProjTitle] = useState<string | null>(null);
+  useEffect(() => {
+    if (!project) { setProjTitle(null); return; }
+    let alive = true;
+    void fetchProjects().then(ps => { const p = ps?.find(x => x.id === project); if (alive) setProjTitle(p ? (p.titolo || p.nome || '').replace(/\s+[–—|-]\s+.*$|\s*[|,].*$/, '').trim() || null : null); });
+    return () => { alive = false; };
+  }, [project]);
   const [origin, setOrigin] = useState<string | null>(saved?.origin ?? null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
   // quantita' di arredo (Essenziale / Normale / Ricco), ricordata tra una foto e l'altra
   const [density, setDensityState] = useState<'poco' | 'normale' | 'ricco'>(() => { try { const d = localStorage.getItem('gnm-density'); return d === 'poco' || d === 'ricco' ? d : 'normale'; } catch { return 'normale'; } });
@@ -1222,6 +1230,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           )}
 
           {/* Conversazione: le foto sono messaggi, quelle di AgenteImmo a sinistra e piu' piccole */}
+          {project && projTitle && (
+            <a href={`#/immobile/${project}`} className="blur-in group flex items-center gap-3 py-1 text-xs text-muted" title={tr('Apri la scheda dell’immobile', 'Open the property')}>
+              <span className="h-px flex-1 bg-black/10" aria-hidden />
+              <span className="flex max-w-[70%] items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-medium shadow-sm ring-1 ring-black/5 group-hover:text-ink"><Building2 size={13} className="shrink-0 text-brand" /><span className="truncate">{projTitle}</span></span>
+              <span className="h-px flex-1 bg-black/10" aria-hidden />
+            </a>
+          )}
           {msgs.map((m, i) => i === zoneOwner && m.role === 'user' ? (
             // il messaggio con la foto su cui si lavora diventa lui stesso la selezione della zona (niente messaggio nuovo)
             <div key={m.id} className="flex justify-start">{zonePicker()}</div>
