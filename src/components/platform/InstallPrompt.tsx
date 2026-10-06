@@ -201,14 +201,17 @@ export default function InstallPrompt() {
         className={`relative w-full rounded-t-[32px] outline-none bg-white px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-6 shadow-[0_24px_60px_-20px_rgba(0,0,0,.35)] md:max-w-[440px] md:rounded-[32px] md:pb-6 ${T} ${
           vis ? 'translate-y-0 opacity-100 md:scale-100' : 'translate-y-full opacity-0 md:translate-y-6 md:scale-[.97]'}`}>
         <span aria-hidden className="mx-auto -mt-2 mb-4 block h-1 w-10 rounded-full bg-line md:hidden" />
-        <div className="flex items-start gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-192.png" alt="" className="h-11 w-11 shrink-0 rounded-[12px] ring-1 ring-black/5" />
+        <div className="flex items-center gap-4">
+          {/* riquadro bianco come l'icona sulla Home, il logo piu' piccolo dentro */}
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-white shadow-sm ring-1 ring-black/5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" />
+          </span>
           <div className="min-w-0 flex-1">
             <p id="install-title" className="text-lg font-semibold leading-snug text-ink">{title}</p>
             {sub && <p className="mt-1 text-[15px] leading-snug text-muted">{sub}</p>}
           </div>
-          <button type="button" onClick={close} aria-label="Chiudi" className="-mr-2 -mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={18} /></button>
+          <button type="button" onClick={close} aria-label="Chiudi" className="-mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
 
         {!direct && (
