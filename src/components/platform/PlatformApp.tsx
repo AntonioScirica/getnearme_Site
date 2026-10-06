@@ -202,7 +202,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   const chat = route === '/staging';
 
   return (
-    <div className="relative flex h-dvh flex-col font-body text-ink" style={DOTS}>
+    <div className="fixed inset-0 flex flex-col font-body text-ink" style={DOTS}>{/* fixed: su iPhone il documento non scorre mai, scorre solo il main */}
       <NoCreditsModal />
       {/* il regalo dei crediti dopo il tour (finito o saltato): mai sopra l'onboarding o il tour */}
       {!tour && !tourPending() && <WelcomeModal />}
