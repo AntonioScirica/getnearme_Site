@@ -989,9 +989,21 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           </div>
         ) : !slidesPhotos.length || !nets.length
           ? (
-            <span key={stepIx < S.foto ? 'a' : 'b'} className="blur-in flex flex-col items-center gap-3 px-6 text-center text-sm text-muted">
-              <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-white text-ink/50 shadow-sm ring-1 ring-black/5"><ImageIcon size={24} /></span>
-              {stepIx < S.foto || !nets.length ? tr('Qui vedrai il tuo post', 'Your post will show here') : tr('Scegli una foto', 'Choose a photo')}
+            // scheletro del post nella forma del formato scelto (alta, quadrata, verticale) finche' non c'e' la foto
+            <span className="relative block overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ease-smooth transition-[width,height]"
+              style={{ width: Math.round(fmt.w * Math.min((boxW - 24) / fmt.w, (boxH - 24) / fmt.h)), height: Math.round(fmt.h * Math.min((boxW - 24) / fmt.w, (boxH - 24) / fmt.h)) }}>
+              <span className="absolute inset-0 animate-pulse bg-black/[.06]" />
+              <span className="absolute left-[8%] top-[7%] h-[5%] w-[26%] animate-pulse rounded-full bg-white/80" />
+              <span className="absolute inset-x-[8%] bottom-[8%] flex flex-col gap-[6%]" style={{ height: '30%' }}>
+                <span className="h-[18%] w-4/5 animate-pulse rounded-full bg-white/80" />
+                <span className="h-[18%] w-3/5 animate-pulse rounded-full bg-white/80" />
+                <span className="h-[26%] w-2/5 animate-pulse rounded-full bg-white" />
+              </span>
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span key={stepIx < S.foto ? 'a' : 'b'} className="blur-in rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-muted shadow-sm">
+                  {stepIx < S.foto || !nets.length ? tr('Qui vedrai il tuo post', 'Your post will show here') : tr('Scegli una foto', 'Choose a photo')}
+                </span>
+              </span>
             </span>
           )
           : <MorphPost build={shown} boxW={boxW} boxH={boxH} fw={fmt.w} fh={fmt.h} />}
