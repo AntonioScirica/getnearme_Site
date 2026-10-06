@@ -260,7 +260,7 @@ export default function PropostaSocio() {
 
       <Section id="valore" n="04 · Quanto vale" title="Il valore della proposta nel tempo"
         sub="La revenue share è denaro incassato ogni mese. Le quote sono patrimonio: valgono quanto vale la società e diventano denaro con una cessione, l'ingresso di investitori o la distribuzione di utili.">
-        <div className="mb-5 inline-flex gap-1 rounded-full border border-line bg-white p-1" role="tablist">
+        <div className="sticky top-[68px] z-[5] mb-5 grid w-full grid-cols-3 gap-1 rounded-full border border-line bg-white p-1 shadow-sm sm:static sm:inline-flex sm:w-auto sm:shadow-none" role="tablist">{/* telefono: a tutta larghezza e resta in vista mentre scorri i risultati */}
           {TABS.map(([s, l]) => (
             <button key={s} type="button" role="tab" aria-selected={cur === s} onClick={() => setCur(s)}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${cur === s ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
