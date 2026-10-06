@@ -45,19 +45,28 @@ export async function createViewer(container, opts = {}) {
   const house = buildHouse(plan, M)
   scene.add(house.group)
 
-  // cielo: sfera con le due foto HDRI (giorno/notte) mescolate, piu' il fondo neutro della vista dall'alto
+  // cielo: sfera con le due foto HDRI (giorno/notte) mescolate (camminata), piu' il fondo della vista dall'alto
+  // ("studio"): di giorno sfumatura verticale sullo schermo, azzurro tenue in alto e bianco caldo in basso; di notte
+  // blu profondo con poche stelle tenui ferme. Tutto nello shader, niente immagini in piu'.
   const texL = new THREE.TextureLoader()
   const bgDay = texL.load(`${o.assetsBase}/hdri/castel_st_angelo_roof_bg.webp`), bgNight = texL.load(`${o.assetsBase}/hdri/rooftop_night_bg.webp`)
   for (const t of [bgDay, bgNight]) t.colorSpace = THREE.SRGBColorSpace
-  const skyU = { day: { value: bgDay }, night: { value: bgNight }, mixN: { value: 0 }, studio: { value: 0 }, bright: { value: 1 }, rotY: { value: 0.9 } }
+  const skyU = { day: { value: bgDay }, night: { value: bgNight }, mixN: { value: 0 }, studio: { value: 0 }, bright: { value: 1 }, rotY: { value: 0.9 }, vpH: { value: 1 }, pr: { value: 1 } }
   const sky = new THREE.Mesh(new THREE.SphereGeometry(70, 48, 24), new THREE.ShaderMaterial({
     uniforms: skyU, side: THREE.BackSide, depthWrite: false, toneMapped: false,
     vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: `uniform sampler2D day; uniform sampler2D night; uniform float mixN; uniform float studio; uniform float bright; uniform float rotY; varying vec3 vDir;
+    fragmentShader: `uniform sampler2D day; uniform sampler2D night; uniform float mixN; uniform float studio; uniform float bright; uniform float rotY; uniform float vpH; uniform float pr; varying vec3 vDir;
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
       void main(){ vec3 d = normalize(vDir); float u = fract(atan(d.z, d.x) / 6.2831853 + 0.5 + rotY); float v = asin(clamp(d.y,-1.,1.)) / 3.1415926 + 0.5;
         vec3 c = mix(texture2D(day, vec2(u, v)).rgb, texture2D(night, vec2(u, v)).rgb * 0.75, mixN) * bright;
-        vec3 s = mix(vec3(0.93,0.92,0.90), vec3(0.80,0.79,0.77), clamp(0.5 - d.y, 0., 1.));
-        s = mix(s, vec3(0.10,0.11,0.14), mixN);
+        float t = clamp(gl_FragCoord.y / vpH, 0., 1.);
+        vec3 sd = mix(vec3(1.0, 0.93, 0.83), vec3(0.42, 0.64, 0.93), smoothstep(0.0, 1.0, t));
+        vec3 sn = mix(vec3(0.030, 0.045, 0.110), vec3(0.008, 0.014, 0.045), smoothstep(0.0, 1.0, t));
+        float cs = 34.0 * pr; vec2 cell = floor(gl_FragCoord.xy / cs);
+        float h = hash(cell), on = step(0.86, h);
+        vec2 sp = (cell + 0.5 + (vec2(hash(cell + 7.1), hash(cell + 3.7)) - 0.5) * 0.7) * cs;
+        float star = on * smoothstep(1.3 * pr, 0.0, length(gl_FragCoord.xy - sp)) * (0.25 + 0.55 * hash(cell + 1.3)) * smoothstep(0.15, 0.6, t);
+        vec3 s = mix(sd, sn + vec3(0.85, 0.88, 1.0) * star, mixN);
         gl_FragColor = vec4(mix(c, s, studio), 1.0);
         #include <colorspace_fragment>
       }`,
@@ -83,6 +92,31 @@ export async function createViewer(container, opts = {}) {
   Object.assign(sun.shadow.camera, { left: -R, right: R, top: R, bottom: -R, near: 1, far: 2 * SD })
   sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.012; sun.shadow.radius = 3
   scene.add(sun, sun.target)
+
+  // plastico: base morbida poco piu' grande della casa (verde prato se ci sono esterni, se no sabbia calda) con il
+  // bordo sfumato, e ombra di contatto cotta dalla pianta (stanze e muri). Due piani e due canvas piccoli: si vedono
+  // solo nella vista dall'alto, in camminata restano il cielo HDRI e le sue luci.
+  const garden = plan.garden ?? plan.rooms.some(r => ['balcone', 'terrazzo'].includes(r.type))
+  const PAD = Math.max(1.6, 0.14 * 2 * R), BW = B.x1 - B.x0 + 2 * PAD, BD = B.z1 - B.z0 + 2 * PAD
+  const bake = (draw, blur) => {
+    const S = lowEnd ? 256 : 512, k = S / Math.max(BW, BD), cv = document.createElement('canvas'); cv.width = Math.ceil(BW * k); cv.height = Math.ceil(BD * k)
+    const g = cv.getContext('2d'), toC = p => [(p[0] - B.x0 + PAD) * k, (p[1] - B.z0 + PAD) * k]
+    // sfocatura con shadowBlur (ovunque, anche Safari vecchi): la forma si disegna fuori dal canvas, entra solo l'ombra
+    g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height) // la mappa alfa legge il verde: fondo nero opaco, non trasparente
+    g.shadowColor = '#fff'; g.shadowBlur = blur * k; g.shadowOffsetX = cv.width * 2; g.fillStyle = '#fff'
+    g.translate(-cv.width * 2, 0); g.beginPath(); draw(g, toC, k); g.fill() // draw puo' anche riempire da se'
+    const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.NoColorSpace; return t
+  }
+  const baseTex = bake((g, toC, k) => { const r = 0.32 * Math.min(BW, BD) * k, x0 = 0.35 * PAD * k, z0 = 0.35 * PAD * k, w = (BW - 0.7 * PAD) * k, h = (BD - 0.7 * PAD) * k; if (g.roundRect) g.roundRect(x0, z0, w, h, r); else g.rect(x0, z0, w, h) }, 0.45 * PAD)
+  const foot = [...plan.rooms.map(r => r.poly), ...plan.walls.map(w => w.outer)]
+  const shadowTex = bake((g, toC) => { for (const P of foot) { g.beginPath(); P.forEach((p, i) => { const [x, z] = toC(p); i ? g.lineTo(x, z) : g.moveTo(x, z) }); g.fill() } }, 0.5)
+  const baseGeo = new THREE.PlaneGeometry(BW, BD).rotateX(-Math.PI / 2)
+  const BASE_DAY = new THREE.Color(garden ? 0x9fc27f : 0xd8c39c), BASE_NIGHT = new THREE.Color(garden ? 0x0f1a1c : 0x15172a)
+  const baseMat = new THREE.MeshStandardMaterial({ color: BASE_DAY.clone(), roughness: 1, metalness: 0, alphaMap: baseTex, transparent: true, depthWrite: false })
+  const base = new THREE.Mesh(baseGeo, baseMat); base.position.set(B.x0 - PAD + BW / 2, -0.275, B.z0 - PAD + BD / 2); base.receiveShadow = true; base.renderOrder = -0.5
+  const contact = new THREE.Mesh(baseGeo, new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: shadowTex, transparent: true, depthWrite: false, opacity: 0.35 }))
+  contact.position.copy(base.position); contact.position.y += 0.004; contact.renderOrder = -0.4
+  scene.add(base, contact)
 
   const winLights = [] // provate le RectAreaLight alle finestre: artefatti sulle tende e costo alto, tolte
 
@@ -155,6 +189,9 @@ export async function createViewer(container, opts = {}) {
     gtao.updateGtaoMaterial({ radius: 0.45, distanceExponent: 1.5, thickness: 1.5, scale: 1.0, samples: 16 })
     gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 })
     gtao.blendIntensity = 0.85
+    // la base del plastico e' trasparente: fuori dal passaggio normali/profondita' dell'occlusione (se no bordi a gradini)
+    const ov = gtao._overrideVisibility.bind(gtao)
+    gtao._overrideVisibility = () => { ov(); for (const m of [base, contact]) if (m.visible) { m.visible = false; gtao._visibilityCache.push(m) } }
     composer.addPass(gtao)
   }
   composer.addPass(new OutputPass())
@@ -239,6 +276,8 @@ export async function createViewer(container, opts = {}) {
     }
     M.shade.emissiveIntensity = on * 1.2; M.bulb.emissiveIntensity = on * 4; M.glass.opacity = lerp(0.1, 0.35, n)
     skyU.mixN.value = n; skyU.studio.value = tStudio; skyU.bright.value = lerp(1.0, 0.3, n)
+    baseMat.color.lerpColors(BASE_DAY, BASE_NIGHT, n); baseMat.emissive.copy(BASE_NIGHT).multiplyScalar(n); baseMat.opacity = tStudio; contact.material.opacity = tStudio * lerp(0.35, 0.55, n)
+    base.visible = contact.visible = tStudio > 0.01
     renderer.toneMappingExposure = lerp(top ? 1.0 : 1.2, top ? 1.0 : 0.82, n)
     if (gtao) gtao.blendIntensity = lerp(0.85, 0.7, n)
   }
@@ -338,6 +377,7 @@ export async function createViewer(container, opts = {}) {
     const w = container.clientWidth, h = container.clientHeight
     camera.aspect = w / h; camera.fov = w < h ? 72 : (state.view === 'walk' ? 68 : 50); camera.updateProjectionMatrix()
     renderer.setSize(w, h); composer.setSize(w, h)
+    skyU.vpH.value = h * renderer.getPixelRatio(); skyU.pr.value = renderer.getPixelRatio()
   }
   const ro = new ResizeObserver(resize); ro.observe(container)
 
@@ -386,7 +426,7 @@ export async function createViewer(container, opts = {}) {
     setView, setTime, setFurnished,
     enterRoom: id => setView('walk', id),
     get state() { return { view: state.view, night: state.nightTarget === 1, furnished: state.furnished, mode: state.mode, hasDrawn, fps: Math.round(fps.value) } },
-    plan, renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit },
+    plan, renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit, base, contact },
     stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, geometries: renderer.info.memory.geometries }),
     // fotogramma della vista attuale (poster): si rende e si legge subito, senza tenere il buffer
     snapshot(type = 'image/jpeg', q = 0.86) { composer.render(); return renderer.domElement.toDataURL(type, q) },

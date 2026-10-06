@@ -68,6 +68,7 @@ export type ViewerPlan = {
   // metri -> pixel della planimetria originale (per la miniatura che gira con la vista)
   image?: { toImage: number[]; w: number; h: number }
   name?: string
+  garden?: boolean // ha esterni (resede, giardino, terrazzo): base del plastico verde nel visore
 }
 
 // Un piano della casa salvato su R2 (raw = modificabile, plan = per il visore)
