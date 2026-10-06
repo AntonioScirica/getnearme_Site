@@ -4,6 +4,7 @@ import { generateJson, overDailyCap } from '@/lib/ai'
 import { geminiFreeJson } from '@/lib/geminiFree'
 import { deepProfanity } from '@/lib/profanity'
 import { fitCaption, ruleOf, SOCIAL_RULES, type SocialId } from '@/lib/socialRules'
+import { isPlatformAdmin } from '@/lib/platformAdmins'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export const maxDuration = 60
@@ -34,6 +35,7 @@ Rispondi SOLO con un oggetto JSON con la chiave "testo".
 - Italiano, tono da agente di zona: cordiale, concreto, credibile, niente superlativi da pubblicità.
 - Struttura: una riga d'apertura forte con tipologia, zona e il punto di forza principale; una riga con prezzo, metri quadri e locali; 3 o 4 punti forti presi SOLO dai dati e dalla descrizione (uno per riga, ognuno con una emoji sobria all'inizio, ad esempio 🏡 📐 🛏️ 🛁 🌿 ☀️ 🚗 📍); una riga d'invito a scrivere o chiamare per una visita; una riga vuota; gli hashtag in minuscolo con la città, la zona e la tipologia (esempio #casamilano #navigli #trilocale).
 - Non inventare nulla che non sia nei dati. Se c'e' il telefono, mettilo nell'invito.
+- Se stato e' "Venduto" o "Affittato" il post NON e' un annuncio ma il lavoro fatto: apertura con "Venduto!" (o "Affittato!"), tipologia e zona, e se c'e' giorni "in N giorni" (esempio "Trilocale a Torrevecchia, venduto in 23 giorni"); una riga di ringraziamento ai proprietari e a chi ha comprato o preso in affitto, senza nomi; NIENTE prezzo, niente elenco dei punti forti, niente invito a visitare la casa; poi l'invito "Hai una casa da vendere? Chiamami" (o "Hai una casa da affittare? Chiamami") con il telefono se c'e'; hashtag con #venduto (o #affittato), la citta' e la zona.
 - Se arredata e' vera, aggiungi prima degli hashtag la riga "Alcune immagini sono arredate virtualmente."
 - Niente em dash e niente trattini a meta' frase, usa virgole. Prezzi sempre scritti cosi': € 260.000. Niente link.
 - In fondo ai dati c'e' il social con le sue regole (lunghezza, righe visibili, emoji, numero di hashtag): valgono sopra quelle qui sopra e vanno rispettate alla lettera.`
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
   try { b = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const text = JSON.stringify(b.fields ?? null)
   if (!b.fields || typeof b.fields !== 'object' || text.length > 12000) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
-  if (await overDailyCap(data.user.id, ['social_caption'], Number(process.env.SOCIAL_CAPTION_DAILY_LIMIT) || 40)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
+  if (!isPlatformAdmin(data.user.email) && await overDailyCap(data.user.id, ['social_caption'], Number(process.env.SOCIAL_CAPTION_DAILY_LIMIT) || 40)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
 
   const social: SocialId = typeof b.social === 'string' && b.social in SOCIAL_RULES ? b.social as SocialId : 'instagram'
   const video = b.video === true // TikTok: 2.200 caratteri se il post e' il video, 4.000 per le foto
