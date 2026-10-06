@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { immoMeta } from "@/lib/ogMeta";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { SiteFooter } from "@/components/landing/AgenteImmoLanding";
@@ -33,13 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: `${BASE_URL}/${locale}/blog`,
       languages: { it: `${BASE_URL}/it/blog`, "x-default": `${BASE_URL}/it/blog` },
     },
-    openGraph: {
-      title: TITLE,
-      description:
-        DESCRIPTION,
-      type: "website",
-      url: `${BASE_URL}/it/blog`,
-    },
+    ...immoMeta({ title: TITLE, description: DESCRIPTION, url: `${BASE_URL}/it/blog`, card: { title: "Il blog di Agente Immo", subtitle: "Articoli pratici per agenti immobiliari: home staging, video, social e strumenti AI." } }),
   };
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { loadSite, siteUrl } from '@/lib/portfolio';
+import { propertyOgImage, siteMeta } from '@/lib/ogMeta';
 import { casa3dOf } from '@/lib/casa3d/types';
 import { CASA3D_ON } from '@/lib/casa3d/flag';
 import ViewBeacon from '@/components/site/ViewBeacon';
@@ -14,11 +15,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug, id } = await params;
   const s = await loadSite(locale, slug);
   const p = s?.properties.find(x => x.id === id);
-  const c = p ? casa3dOf(p) : null;
   return {
     title: p ? { absolute: `Casa 3D, ${p.titolo} | ${s!.name}` } : 'Casa 3D',
     robots: { index: false, follow: true }, alternates: { canonical: siteUrl(slug, `/${id}`) },
-    ...(c?.poster ? { openGraph: { images: [c.poster] } } : {}),
+    // anteprima dei link: la stessa card della scheda dell'immobile
+    ...(p && s ? siteMeta({ name: s.name, title: `Casa 3D, ${p.titolo}`, description: `Guarda ${p.titolo} in 3D, dall'alto o dentro le stanze.`, url: siteUrl(slug, `/${id}/3d`), image: propertyOgImage(slug, s, p, s.cfg.showPrices) }) : {}),
   };
 }
 

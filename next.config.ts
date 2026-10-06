@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const OG_FILES = ["./src/fonts/og/**", "./public/immo/logo-mark.svg", "./public/immo/home/staging-before.webp", "./public/immo/home/staging-after.webp"];
+
 const nextConfig: NextConfig = {
   // solo sviluppo: aprire il dev server dal telefono sulla stessa rete (IP del Mac)
   allowedDevOrigins: ["192.168.1.*"],
@@ -15,6 +17,9 @@ const nextConfig: NextConfig = {
     "/api/platform/video": ["./node_modules/ffmpeg-static/ffmpeg"],
     // Video dell'annuncio e Venduto: solo montaggio (le lettere sono in src/lib/reel/glyphs.json, importato)
     "/api/platform/video-reel": ["./node_modules/ffmpeg-static/ffmpeg"],
+    // anteprime dei link (next/og): caratteri e immagini letti da disco a runtime
+    "/api/og": OG_FILES,
+    "/api/og/**": OG_FILES,
   },
   // login con un indirizzo da login (la pagina e' quella del checkout, che senza piano scelto fa solo l'accesso)
   async rewrites() {

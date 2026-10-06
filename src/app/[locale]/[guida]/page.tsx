@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { immoMeta } from '@/lib/ogMeta';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: { absolute: g.title },
     description: g.description,
     alternates: { canonical: url, languages: { it: url, 'x-default': url } },
-    openGraph: { type: 'article', url, siteName: 'Agente Immo', locale: 'it_IT', title: g.title, description: g.description, images: ['/immo/home/staging-after.webp'] },
+    ...immoMeta({ title: g.title, description: g.description, url, type: 'article', card: { title: g.title, subtitle: 'Guida gratuita di Agente Immo' } }),
   };
 }
 

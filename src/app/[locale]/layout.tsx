@@ -13,6 +13,7 @@ import {
   seoDescriptions
 } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
+import { immoMeta } from "@/lib/ogMeta";
 import "../globals.css";
 
 type Props = {
@@ -57,32 +58,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     creator: "Agente Immo",
     publisher: "Agente Immo",
     // niente canonical e hreflang qui: ogni pagina dichiara i suoi (ereditati dal layout puntavano tutti alla home)
-    openGraph: {
-      type: "website",
-      locale: ogLocaleMap[locale as Locale],
-      alternateLocale: locales
-        .filter((l) => l !== locale)
-        .map((l) => ogLocaleMap[l]),
-      url: `${baseUrl}/${locale}`,
-      siteName: "Agente Immo",
-      title: seoTitles[locale as Locale],
-      description: seoDescriptions[locale as Locale],
-      images: [
-        {
-          url: `${baseUrl}/assets/png/immobile.png`,
-          width: 1200,
-          height: 630,
-          alt: seoTitles[locale as Locale],
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: seoTitles[locale as Locale],
-      description: seoDescriptions[locale as Locale],
-      images: [`${baseUrl}/assets/png/immobile.png`],
-      creator: "@getnearme",
-    },
+    // anteprima dei link: card di Agente Immo (le pagine che non dichiarano la loro ereditano questa)
+    ...(() => {
+      const it = locale === "it";
+      const m = immoMeta({
+        title: seoTitles[locale as Locale], description: seoDescriptions[locale as Locale], url: `${baseUrl}/${locale}`, locale,
+        // testo della card: in italiano o inglese (il carattere della card non ha il cirillico)
+        card: it
+          ? { title: "Il software per agenti immobiliari", subtitle: "Foto arredate con l'AI, video per i social e il tuo sito. Più incarichi, case vendute prima." }
+          : { title: "The software for real estate agents", subtitle: "AI-staged photos, social videos and your own website. Win more listings." },
+      });
+      return { ...m, openGraph: { ...m.openGraph, locale: ogLocaleMap[locale as Locale], alternateLocale: locales.filter((l) => l !== locale).map((l) => ogLocaleMap[l]) } };
+    })(),
     robots: {
       index: true,
       follow: true,

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { immoMeta } from '@/lib/ogMeta';
 import Link from 'next/link';
 import { permanentRedirect } from 'next/navigation';
 import { Check } from 'lucide-react';
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: URL, languages: { it: URL, 'x-default': URL } },
-  openGraph: { type: 'website', url: URL, siteName: 'Agente Immo', locale: 'it_IT', title: TITLE, description: DESCRIPTION, images: ['/immo/home/staging-after.webp'] },
+  ...immoMeta({ title: TITLE, description: DESCRIPTION, url: URL, card: { title: 'Quanto vale la tua casa?', subtitle: 'Valutazione online gratuita dalle quotazioni OMI. Il risultato ti arriva per email.' } }),
 };
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {

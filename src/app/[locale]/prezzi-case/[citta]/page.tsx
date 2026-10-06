@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { immoMeta } from '@/lib/ogMeta';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { locales } from '@/lib/i18n';
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: { absolute: title },
     description,
     alternates: { canonical: url, languages: { it: url, 'x-default': url } },
-    openGraph: { type: 'website', url, siteName: 'Agente Immo', locale: 'it_IT', title, description, images: ['/immo/home/staging-after.webp'] },
+    ...immoMeta({ title, description, url, card: { title: `Prezzo delle case ${aCity(c)} al m²`, subtitle: `Quotazioni OMI zona per zona, ${OMI_SEMESTRE}. Scopri quanto vale la tua casa.` } }),
   };
 }
 

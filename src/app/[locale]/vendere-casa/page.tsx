@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { immoMeta } from '@/lib/ogMeta';
 import Link from 'next/link';
 import { permanentRedirect } from 'next/navigation';
 import { locales } from '@/lib/i18n';
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: URL, languages: { it: URL, 'x-default': URL } },
-  openGraph: { type: 'website', url: URL, siteName: 'Agente Immo', locale: 'it_IT', title: TITLE, description: DESCRIPTION, images: ['/immo/home/staging-after.webp'] },
+  ...immoMeta({ title: TITLE, description: DESCRIPTION, url: URL, card: { title: 'Vendere casa, passo passo', subtitle: 'Quanto vale, quanto costa, documenti, tasse e tempi. Con la valutazione gratis.' } }),
 };
 
 // guide in ordine di percorso (prima il valore, poi costi e carte, poi come e quando vendere): in related.ts

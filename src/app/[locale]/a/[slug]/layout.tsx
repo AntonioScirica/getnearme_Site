@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { loadSite, siteUrl } from '@/lib/portfolio';
+import { siteMeta, siteOgImage } from '@/lib/ogMeta';
 
 // Metadati di base del sito di un agente: sostituiscono quelli di Agente Immo ereditati dal layout della lingua
 // (nome del sito, anteprima social, autore). Le pagine aggiungono titolo, descrizione e canonical.
@@ -9,7 +10,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const s = await loadSite(locale, slug);
   if (!s) return {};
-  const image = s.cfg.heroImage || s.properties[0]?.cover;
   const description = s.cfg.heroSubtitle || `${s.cfg.agentRole}${s.cfg.city ? ` a ${s.cfg.city}` : ''}`;
   return {
     title: { default: s.name, template: `%s | ${s.name}` },
@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description, keywords: [], authors: [{ name: s.name }], creator: s.name, publisher: s.name,
     alternates: { canonical: siteUrl(slug) },
     ...(s.test ? { robots: { index: false, follow: false } } : {}), // account di prova: fuori da Google
-    openGraph: { type: 'website', locale: 'it_IT', siteName: s.name, url: siteUrl(slug), title: s.name, description, images: image ? [image] : [] },
-    twitter: { card: 'summary_large_image', title: s.name, description, images: image ? [image] : [] },
+    // anteprima dei link: copertina caricata dall'agente o card col suo marchio (vale per tutte le pagine del sito)
+    ...siteMeta({ name: s.name, title: s.name, description, url: siteUrl(slug), image: siteOgImage(slug, s) }),
   };
 }
 

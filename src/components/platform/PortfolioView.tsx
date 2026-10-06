@@ -15,7 +15,7 @@ import { useCredits } from './PlanView';
 import { SITE_PERKS } from '@/components/PlanParts';
 import dynamic from 'next/dynamic';
 const TemplateShowcase = dynamic(() => import('@/components/landing/TemplateShowcase'), { ssr: false, loading: () => <div className="aspect-[4/3] rounded-[24px] bg-canvas" /> });
-import { uploadDataUrl } from '@/lib/imageUpload';
+import { createImage, uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, go, portfolioUrl, setPublic } from './api';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
 import ImmoLoader from '@/components/ui/ImmoLoader';
@@ -254,7 +254,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         )}
         <div data-tour="site-editor" className={`blur-in grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)] ${dirty || saved !== 'idle' ? 'max-md:pb-16' : ''}`} style={{ animationDelay: '.1s' }}>
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
-          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} siteName={site.name} />
+          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} siteName={site.name} slug={site.slug} />
 
           {/* Anteprima dal vivo */}
           <Preview zone={zoneSlug(withPlaceholders(cfg, projects ?? []).zones[0]?.name ?? '')} wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
@@ -268,8 +268,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 }
 
 // Colonna dell'editor: scheda Pagina (sezioni della pagina aperta, nello stesso ordine del sito) e Generale
-function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected, getUsed, siteName = '' }: {
-  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void; getUsed: () => Set<string>; siteName?: string;
+function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected, getUsed, siteName = '', slug = null }: {
+  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void; getUsed: () => Set<string>; siteName?: string; slug?: string | null;
 }) {
   const [tab, setTab] = useState<'pagina' | 'generale'>('pagina');
   const fromSide = useRef(false); // sezione aperta dalla colonna: niente scorrimento (il clic dopo finiva sul campo sbagliato)
@@ -370,6 +370,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
             </Group>
             <Group title={tr('Carattere dei titoli', 'Heading font')}><FontPicker cfg={cfg} set={set} /></Group>
             <Group title={tr('Logo in alto', 'Top logo')}><LogoField cfg={cfg} set={set} /></Group>
+            <Group title={tr('Anteprima quando condividi il link', 'Preview when you share the link')}><ShareField cfg={cfg} set={set} slug={slug} siteName={cfg.agencyName || siteName} /></Group>
             <Group title={tr('Recapiti', 'Contact details')}>{(['ctaLabel', 'phone', 'whatsapp', 'email', 'address'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
             <Group title={tr('Social e dati legali', 'Social and legal info')}>{(['instagram', 'facebook', 'legal'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
             <Group title={tr('In tutte le pagine', 'On every page')}>{(['topBar', 'whatsappButton', 'showPrices', 'showStats'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
@@ -442,6 +443,68 @@ function LogoField({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>
           <input type="range" min={20} max={96} step={2} value={cfg.logoSize} onChange={e => set({ logoSize: Number(e.target.value) })} className="mt-2 w-full accent-[#2563eb]" />
         </label>
       )}
+    </div>
+  );
+}
+
+// Anteprima del link del sito (WhatsApp, Facebook, LinkedIn, iMessage): automatica (card col marchio, /api/og/sito/<slug>)
+// oppure un'immagine dell'agente, ritagliata qui a 1200x630 e caricata su R2 come le altre foto del sito.
+async function cropShare(f: File): Promise<string> {
+  const src = await new Promise<string>((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result as string); r.onerror = ko; r.readAsDataURL(f); });
+  const img = await createImage(src);
+  const W = 1200, H = 630, k = Math.max(W / img.width, H / img.height); // copre tutto, taglia al centro
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(img, (W - img.width * k) / 2, (H - img.height * k) / 2, img.width * k, img.height * k);
+  return c.toDataURL('image/jpeg', 0.86);
+}
+
+function ShareField({ cfg, set, slug, siteName }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; slug: string | null; siteName: string }) {
+  const [busy, setBusy] = useState(false);
+  const [autoOk, setAutoOk] = useState(true); // la card automatica c'e' solo col sito pubblicato
+  const upload = async (f?: File) => {
+    if (!f?.type.startsWith('image/')) return;
+    setBusy(true);
+    const url = await uploadDataUrl(await cropShare(f).catch(() => ''), 'vetrina').catch(() => '');
+    setBusy(false);
+    if (url) set({ ogImage: url }); else alert(tr('Caricamento non riuscito, riprova.', 'Upload failed, please try again.'));
+  };
+  const [t0] = useState(() => Date.now()); // la card automatica e' in cache: all'apertura dell'editor quella aggiornata
+  const auto = slug ? `/api/og/sito/${encodeURIComponent(slug)}?e=${t0}` : '';
+  const img = cfg.ogImage || (autoOk ? auto : '');
+  const host = slug ? portfolioUrl(slug).replace(/^https?:\/\//, '').split('/')[0] : 'agenteimmo.me';
+  return (
+    <div className="rounded-2xl bg-canvas p-2">
+      {/* come appare su WhatsApp: fumetto verde, immagine larga, nome del sito, descrizione e dominio */}
+      <div className="rounded-xl bg-[#e7ddd3] p-3">
+        <div className="ml-auto max-w-[300px] rounded-[10px] bg-[#d9fdd3] p-1 shadow-sm">
+          <div className="overflow-hidden rounded-[8px] bg-[#f0f2f5]">
+            <div className="aspect-[1200/630] w-full bg-line/60">
+              {img ? <img src={img} alt="" onError={() => !cfg.ogImage && setAutoOk(false)} className="h-full w-full object-cover" />
+                : <div className="flex h-full items-center justify-center px-4 text-center text-[11px] text-muted">{tr('Pubblica il sito per vedere l’anteprima automatica', 'Publish the site to see the automatic preview')}</div>}
+            </div>
+            <div className="px-2.5 py-2">
+              <div className="truncate text-[13px] font-semibold text-ink">{siteName || tr('Il tuo sito', 'Your website')}</div>
+              {cfg.heroSubtitle && <div className="line-clamp-2 text-[12px] leading-snug text-ink/60">{cfg.heroSubtitle}</div>}
+              <div className="pt-0.5 text-[11px] text-ink/45">{host}</div>
+            </div>
+          </div>
+          <div className="px-1.5 pb-0.5 pt-1 text-[12px] text-[#027eb5]">{slug ? portfolioUrl(slug).replace(/^https?:\/\//, '') : host}</div>
+        </div>
+      </div>
+      <p className="px-1 pt-2 text-xs text-muted">
+        {cfg.ogImage
+          ? tr('Stai usando la tua immagine. Si vede così su WhatsApp, Facebook, LinkedIn e iMessage dopo che pubblichi.', 'You are using your own image. This is how it shows on WhatsApp, Facebook, LinkedIn and iMessage after you publish.')
+          : tr('Automatica: logo, nome, colore e foto di copertina del sito. Puoi caricare una tua immagine (la tagliamo a 1200×630).', 'Automatic: your site logo, name, colour and cover photo. You can upload your own image (we crop it to 1200×630).')}
+      </p>
+      <div className="flex flex-wrap items-center gap-2 px-1 pt-2">
+        <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-medium ring-1 ring-black/5 hover:bg-line/40">
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {cfg.ogImage ? tr('Cambia immagine', 'Change image') : tr('Carica immagine', 'Upload image')}
+          <input type="file" accept="image/*" className="hidden" onChange={e => { upload(e.target.files?.[0]); e.target.value = ''; }} />
+        </label>
+        {cfg.ogImage && <button type="button" onClick={() => set({ ogImage: '' })} className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted hover:bg-white hover:text-ink"><RotateCcw size={14} /> {tr('Usa quella automatica', 'Use the automatic one')}</button>}
+      </div>
     </div>
   );
 }

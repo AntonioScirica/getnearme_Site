@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { immoMeta } from "@/lib/ogMeta";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -68,14 +69,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         "x-default": `${BASE_URL}/it/blog/${slug}`,
       },
     },
-    openGraph: {
-      title: post.seo_title,
-      description: post.seo_description,
-      type: "article",
-      publishedTime: post.published_at,
-      modifiedTime: post.updated_at,
-      images: [{ url: getCoverImage(post.pillar, post.slug), width: 1200, height: 675 }],
-    },
+    ...immoMeta({
+      title: post.seo_title, description: post.seo_description, url: `${BASE_URL}/${locale}/blog/${slug}`, type: "article",
+      card: { title: post.title, subtitle: "Dal blog di Agente Immo" },
+      extra: { publishedTime: post.published_at, modifiedTime: post.updated_at },
+    }),
   };
 }
 

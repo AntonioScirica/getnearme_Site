@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="190 210 645 620" width="2048" height="1969">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#F6F6F8"/>
+      <stop offset="0.55" stop-color="#EEF1FA"/>
+      <stop offset="1" stop-color="#B9C8F2"/>
+    </radialGradient>
+  </defs>
+  <!-- camino dietro il tetto -->
+  <rect x="667" y="270" width="83" height="130" rx="10" fill="#537EEC"/>
+  <!-- casa: tetto a punta con angoli arrotondati -->
+  <path d="M478 242 Q512 220 546 242 L782 392 Q816 414 816 455 L816 742 Q816 812 746 812 L278 812 Q208 812 208 742 L208 455 Q208 414 242 392 Z"
+        fill="url(#g)" stroke="#537EEC" stroke-width="22" stroke-linejoin="round"/>
+  <!-- finestre: rettangolo arrotondato diviso da una croce -->
+  <mask id="cross"><rect x="190" y="210" width="645" height="620" fill="#fff"/>
+    <rect x="391" y="480" width="12" height="180" fill="#000"/><rect x="320" y="564" width="160" height="12" fill="#000"/>
+    <rect x="620" y="480" width="12" height="180" fill="#000"/><rect x="550" y="564" width="160" height="12" fill="#000"/></mask>
+  <g fill="#537EEC" mask="url(#cross)">
+    <rect x="332" y="494" width="130" height="152" rx="26"/>
+    <rect x="561" y="494" width="130" height="152" rx="26"/>
+  </g>
+  <!-- sorriso -->
+  <path d="M463 693 L561 693 Q556 733 512 733 Q468 733 463 693 Z" fill="#111"/>
+</svg>

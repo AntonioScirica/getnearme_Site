@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { immoMeta } from '@/lib/ogMeta';
 import Link from 'next/link';
 import { permanentRedirect } from 'next/navigation';
 import { locales } from '@/lib/i18n';
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: URL, languages: { it: URL, 'x-default': URL } },
-  openGraph: { type: 'website', url: URL, siteName: 'Agente Immo', locale: 'it_IT', title: TITLE, description: DESCRIPTION, images: ['/immo/home/staging-after.webp'] },
+  ...immoMeta({ title: TITLE, description: DESCRIPTION, url: URL, card: { title: 'Prezzi delle case al m² nelle città italiane', subtitle: `Quotazioni OMI ${OMI_ANNO}, zona per zona. Confronta e calcola gratis il valore.` } }),
 };
 
 const avg = (c: (typeof CITIES)[number]) => (c.s.avgMin + c.s.avgMax) / 2;

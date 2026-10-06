@@ -17,6 +17,7 @@ export type SiteConfig = {
   heroTitle: string
   heroSubtitle: string
   heroImage: string
+  ogImage: string // anteprima quando si condivide il link (1200x630, caricata dall'agente); vuoto = card automatica
   aboutTitle: string
   aboutText: string
   aboutImage: string
@@ -192,7 +193,7 @@ export function defaultSite(name: string, email = ''): SiteConfig {
     template: 'prato', primary: '#1d5b3c', font: 'sans', headingFont: '', logo: '', logoSize: 36,
     heroTitle: 'Trova la casa giusta per te',
     heroSubtitle: 'Immobili selezionati e un agente che ti segue dalla prima visita al rogito.',
-    heroImage: '', aboutTitle: 'Chi sono',
+    heroImage: '', ogImage: '', aboutTitle: 'Chi sono',
     aboutText: '', // vuoto: nell'editor l'esempio e' in grigio, sul sito esce ABOUT_DEFAULT
     aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '', agencyName: '',
     showPrices: true, showStats: true, showAbout: true, showContact: true,
@@ -226,6 +227,7 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     heroTitle: str(r.heroTitle, 90, d.heroTitle),
     heroSubtitle: str(r.heroSubtitle, 200, d.heroSubtitle),
     heroImage: img(r.heroImage),
+    ogImage: img(r.ogImage),
     aboutTitle: str(r.aboutTitle, 60, d.aboutTitle),
     aboutText: (x => (x === ABOUT_DEFAULT ? '' : x))(str(r.aboutText, 900, '')), // il vecchio testo d'esempio salvato = vuoto
     aboutImage: img(r.aboutImage),

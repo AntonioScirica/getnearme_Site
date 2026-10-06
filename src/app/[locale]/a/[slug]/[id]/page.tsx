@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { closedPriceHidden, isClosed, statusOf, zoneOnly } from '@/lib/siteTemplates';
 import { notFound } from 'next/navigation';
 import { getOfflineBrand, loadSite, siteUrl } from '@/lib/portfolio';
+import { propertyOgImage, siteMeta } from '@/lib/ogMeta';
 import { SitePage } from '@/components/site/pages';
 import SiteOffline from '@/components/site/SiteOffline';
 import ViewBeacon from '@/components/site/ViewBeacon';
@@ -15,7 +16,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = s?.properties.find(x => x.id === id);
   if (!s || !p) return { title: 'Immobile non trovato' };
   const description = p.descrizione?.slice(0, 160);
-  return { title: { absolute: `${p.titolo} | ${s.name}` }, description, alternates: { canonical: siteUrl(slug, `/${id}`) }, openGraph: { title: p.titolo, description, images: p.cover ? [p.cover] : [] } };
+  // anteprima dei link: foto dell'immobile con titolo, prezzo e marchio dell'agenzia
+  return { title: { absolute: `${p.titolo} | ${s.name}` }, description, alternates: { canonical: siteUrl(slug, `/${id}`) },
+    ...siteMeta({ name: s.name, title: p.titolo, description: description || s.name, url: siteUrl(slug, `/${id}`), image: propertyOgImage(slug, s, p, s.cfg.showPrices) }) };
 }
 
 // Scheda immobile (solo immobili pubblici dell'agente)

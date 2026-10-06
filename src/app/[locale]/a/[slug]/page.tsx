@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const s = await loadSite(locale, slug);
   if (!s) return { title: 'Sito non disponibile', robots: { index: false } };
-  return { title: { absolute: `${s.name}, ${(s.cfg.agentRole || 'Agente immobiliare').toLowerCase()}${s.cfg.city ? ` a ${s.cfg.city}` : ''} | Immobili in vendita e affitto` }, description: s.cfg.heroSubtitle, alternates: { canonical: siteUrl(slug) }, openGraph: { images: s.cfg.heroImage || s.properties[0]?.cover ? [s.cfg.heroImage || s.properties[0].cover] : [] } };
+  return { title: { absolute: `${s.name}, ${(s.cfg.agentRole || 'Agente immobiliare').toLowerCase()}${s.cfg.city ? ` a ${s.cfg.city}` : ''} | Immobili in vendita e affitto` }, description: s.cfg.heroSubtitle, alternates: { canonical: siteUrl(slug) } }; // anteprima dei link: quella del layout
 }
 
 // Sito vetrina dell'agente: home

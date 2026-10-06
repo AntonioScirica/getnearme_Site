@@ -6,6 +6,7 @@ import { FAQ, FAQ_EN } from '@/lib/landingFaq';
 import { PRICING } from '@/lib/pricing';
 import AgenteImmoLanding from '@/components/landing/AgenteImmoLanding';
 import { ORGANIZATION, ORG_ID, WEBSITE } from '@/lib/seo';
+import { immoMeta } from '@/lib/ogMeta';
 
 // Home di agenteimmo.me: landing di Agente Immo in italiano (/it) e inglese (/en). Le altre lingue rimandano a /en
 // (niente pagine duplicate con hreflang falsi). La piattaforma dietro, per ora, e' solo in italiano.
@@ -13,8 +14,8 @@ import { ORGANIZATION, ORG_ID, WEBSITE } from '@/lib/seo';
 const IT_URL = 'https://agenteimmo.me/it';
 const EN_URL = 'https://agenteimmo.me/en';
 const COPY = {
-  it: { url: IT_URL, og: 'it_IT', title: 'Software per agenti immobiliari: più incarichi | Agente Immo', share: 'Agente Immo, il software per agenti immobiliari', short: 'Più incarichi, case vendute prima. Senza spendere di più.', desc: 'Il software per agenti immobiliari che ti fa vincere più incarichi: foto arredate con l\'AI, video per i social e il tuo sito, senza fotografo né web agency.', faq: FAQ, lang: 'it-IT', features: ['Home staging virtuale con AI', 'Video immobiliari per i social', 'Sito personale per agente immobiliare', 'Annunci e report per ogni immobile'], audience: 'Agenti immobiliari e agenzie immobiliari', offer: 'Prezzo mensile: Starter mensile, Pro annuale o trimestrale' },
-  en: { url: EN_URL, og: 'en_US', title: 'Real estate agent software: win more listings | Agente Immo', share: 'Agente Immo, the software for real estate agents', short: 'Win more listings, sell homes faster. Without spending more.', desc: 'The real estate agent software that helps you win more listings: AI-staged photos, social media videos and your own website, no photographer or web agency.', faq: FAQ_EN, lang: 'en', features: ['AI virtual staging', 'Real estate videos for social media', 'Personal website for real estate agents', 'Listings and reports for every property'], audience: 'Real estate agents and agencies', offer: 'Monthly price: Starter monthly, Pro yearly or quarterly' },
+  it: { url: IT_URL, og: 'it_IT', title: 'Software per agenti immobiliari: più incarichi | Agente Immo', share: 'Agente Immo, il software per agenti immobiliari', short: 'Più incarichi, case vendute prima. Senza spendere di più.', desc: 'Il software per agenti immobiliari che ti fa vincere più incarichi: foto arredate con l\'AI, video per i social e il tuo sito, senza fotografo né web agency.', faq: FAQ, lang: 'it-IT', features: ['Home staging virtuale con AI', 'Video immobiliari per i social', 'Sito personale per agente immobiliare', 'Annunci e report per ogni immobile'], audience: 'Agenti immobiliari e agenzie immobiliari', offer: 'Prezzo mensile: Starter mensile, Pro annuale o trimestrale', card: { title: 'Il software per agenti immobiliari', subtitle: 'Foto arredate con l\'AI, video per i social e il tuo sito. Più incarichi, case vendute prima.' } },
+  en: { url: EN_URL, og: 'en_US', title: 'Real estate agent software: win more listings | Agente Immo', share: 'Agente Immo, the software for real estate agents', short: 'Win more listings, sell homes faster. Without spending more.', desc: 'The real estate agent software that helps you win more listings: AI-staged photos, social media videos and your own website, no photographer or web agency.', faq: FAQ_EN, lang: 'en', features: ['AI virtual staging', 'Real estate videos for social media', 'Personal website for real estate agents', 'Listings and reports for every property'], audience: 'Real estate agents and agencies', offer: 'Monthly price: Starter monthly, Pro yearly or quarterly', card: { title: 'The software for real estate agents', subtitle: 'AI-staged photos, social videos and your own website. Win more listings, sell homes faster.' } },
 } as const;
 const langOf = (locale: string) => (locale === 'en' ? 'en' : 'it') as keyof typeof COPY;
 
@@ -24,8 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: { absolute: c.title },
     description: c.desc,
     alternates: { canonical: c.url, languages: { it: IT_URL, en: EN_URL, 'x-default': IT_URL } },
-    openGraph: { type: 'website', url: c.url, siteName: 'Agente Immo', locale: c.og, title: c.share, description: c.short, images: ['/immo/home/staging-after.webp'] },
-    twitter: { card: 'summary_large_image', title: c.share, description: c.desc, images: ['/immo/home/staging-after.webp'] },
+    ...immoMeta({ title: c.share, description: c.short, url: c.url, locale: langOf((await params).locale), card: c.card }),
   };
 }
 
