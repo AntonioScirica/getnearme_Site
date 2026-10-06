@@ -188,7 +188,7 @@ export default function InstallPrompt() {
   const direct = !!ev && (variant === 'android' || variant === 'desktop');
   const title = inapp ? 'Apri Agente Immo nel browser' : computer ? 'Agente Immo sul computer' : variant === 'ipad' ? 'Agente Immo sul tablet' : 'Agente Immo sul telefono';
   const sub = inapp ? 'Da qui dentro non si può installare. Aprila nel browser del telefono, ci vuole un attimo.'
-    : ''; // solo il titolo: i passi sotto bastano
+    : computer ? 'Si apre come un’app.' : 'Si apre come un’app, senza App Store.';
   const steps = STEPS[variant];
   const T = 'transition-[opacity,transform] duration-[var(--gnm-dur)] ease-[var(--gnm-ease)]';
 
@@ -209,7 +209,7 @@ export default function InstallPrompt() {
           </span>
           <div className="min-w-0 flex-1">
             <p id="install-title" className="text-lg font-semibold leading-snug text-ink">{title}</p>
-            {sub && <p className="mt-1 text-[15px] leading-snug text-muted">{sub}</p>}
+            {sub && <p className="mt-0.5 text-sm leading-snug text-muted">{sub}</p>}
           </div>
           <button type="button" onClick={close} aria-label="Chiudi" className="-mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
