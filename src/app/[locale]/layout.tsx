@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import Trackers from "@/components/Trackers";
 import CookieBanner from "@/components/CookieBanner";
+import FeedbackWidget from "@/components/FeedbackWidget";
 import ProfanityGuard from "@/components/ProfanityGuard";
 import { notFound } from "next/navigation";
 import {
@@ -139,6 +140,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         {children}
         <CookieBanner />
+        <FeedbackWidget />
         <ProfanityGuard />
         {/* Analytics + embed deferiti (lazyOnload): non competono col primo paint. */}
         <Trackers kind="stats">
