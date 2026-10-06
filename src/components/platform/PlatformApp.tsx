@@ -593,7 +593,7 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
 
   return (
     // pb-24: lo spazio delle pill fisse in basso (Profilo, Importa), cosi' titolo e box stanno al centro della parte libera
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center pb-36 pt-6 sm:justify-center sm:pb-24 sm:pt-10">
+    <div className="flex flex-col items-center pb-6 pt-6 sm:min-h-[calc(100vh-5rem)] sm:justify-center sm:pb-24 sm:pt-10">
       <h1 className={`text-center font-display text-[28px] font-bold leading-[1.2] tracking-tight ease-smooth transition-all sm:text-4xl md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
         {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${d0 + i * 0.05}s` }}>{w}&nbsp;</span>)}
         <span key={subtitle} className="blur-in inline text-muted/70 sm:block" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
