@@ -2,6 +2,7 @@
 
 import PlanCamera, { CamMark } from './PlanCamera';
 import { uid as uuid } from '@/lib/uid';
+import { shot } from '@/lib/chatHandoff';
 import { CASA3D_ON } from '@/lib/casa3d/flag';
 import Casa3DFlow from './Casa3DFlow';
 import Casa3DViewer from './Casa3DViewer';
@@ -1118,6 +1119,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // ricarica della scheda: la foto dell'indirizzo e' gia' nella chat salvata, non si rimette. Se la chat salvata e' un'altra,
   // la foto dell'immobile apre una chat nuova (prima veniva ignorata e sembrava che il clic non facesse niente)
   const started = useRef(!!saved && !!initial?.photo && JSON.stringify(saved.msgs).includes(JSON.stringify(initial.photo)));
+  // foto scattata dalla scheda dell'immobile (Scatta una foto): entra come un caricamento, collegata all'immobile
+  useEffect(() => {
+    const f = shot.file; if (!f) return;
+    shot.file = null;
+    if (msgs.length) window.dispatchEvent(new Event('agenteimmo:new-chat'));
+    queueMicrotask(() => void upload([f], initial?.project ?? null));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (started.current || !initial?.photo) return;
     started.current = true;

@@ -385,7 +385,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className="relative isolate h-[max(560px,72vh)] overflow-hidden">
+    <div className="relative isolate h-[max(420px,55dvh)] overflow-hidden sm:h-[max(560px,72vh)]">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
       {/* sfumatura in alto: la navbar resta leggibile sopra la mappa */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[450] h-44" style={{ background: 'linear-gradient(to bottom, #fff 0%, rgba(255,255,255,.92) 35%, rgba(255,255,255,.55) 65%, transparent)' }} />

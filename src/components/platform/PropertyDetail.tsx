@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { shot } from '@/lib/chatHandoff';
+import { ArrowLeft, Camera, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { isClosed, statusOf, STATUS_KEYS, STATUS_LABELS, STATUSES, TEMPLATES, type PropertyStatus, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -191,6 +192,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
 function VideoCard({ project, photos, count: n }: { project: ProjectData; photos: string[]; count: number }) {
   const [pick, setPick] = useState(false);
   const go = (src: string) => { setPick(false); window.location.assign(`#/staging?photo=${encodeURIComponent(src)}&project=${project.id}`); };
+  // telefono: Scatta una foto, il file passa alla chat in memoria (lib/chatHandoff)
+  const snap = (f?: File) => { if (!f) return; shot.file = f; setPick(false); window.location.assign(`#/staging?shot=${Date.now()}&project=${project.id}`); };
   return (
     <section className="rounded-2xl bg-canvas p-3">
       <div className="flex items-center gap-3">
@@ -215,6 +218,10 @@ function VideoCard({ project, photos, count: n }: { project: ProjectData; photos
               <button type="button" onClick={() => setPick(false)} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
             </div>
             <div className="mt-5 grid min-h-0 auto-rows-max content-start grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-4">
+              <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[20px] bg-brand/10 text-sm font-semibold text-brand ring-1 ring-brand/20 sm:hidden">
+                <Camera size={22} /> {tr('Scatta una foto', 'Take a photo')}
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={e => snap(e.target.files?.[0])} />
+              </label>
               {photos.map(src => (
                 <button key={src} type="button" onClick={() => go(src)} className="group relative aspect-[4/3] overflow-hidden rounded-[20px] bg-canvas ring-1 ring-black/5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
