@@ -376,7 +376,6 @@ const BUSY_HINTS = pageLang() === 'en' ? [
   'Sto sistemando tutto, intanto scrivi cosa ti piacerebbe',
   'Qualche istante e ci siamo, pensa al prossimo ritocco',
 ];
-const AFTER = pageLang() === 'en' ? ['green cushions on the sofa', 'remove the painting', 'light oak flooring', 'more natural light', 'white linen curtains', 'a plant by the window'] : ['cuscini verdi sul divano', 'togli il quadro', 'pavimento in rovere chiaro', 'più luce naturale', 'tende di lino bianche', 'una pianta vicino alla finestra'];
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
 
@@ -1105,16 +1104,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // telefono: suggerimento corto nel campo (quello lungo finiva tagliato)
   const [narrow, setNarrow] = useState(false);
   useEffect(() => { const m = matchMedia('(max-width: 639px)'); const f = () => setNarrow(m.matches); f(); m.addEventListener('change', f); return () => m.removeEventListener('change', f); }, []);
-  // telefono: il campo cresce con il testo fino a 5 righe (poi scorre); da sm resta alto 40 come prima
+  // il campo cresce con il testo fino a 4 righe (poi scorre), su telefono e computer: prima da sm restava alto 40 e la
+  // seconda riga si vedeva tagliata a meta'
   const field = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = field.current; if (!el) return;
     el.style.height = '';
-    if (narrow && text) el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
+    if (text) el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
   }, [text, narrow]);
   // Suggerimento nel campo: segue quello che sta succedendo (foto, stanza riconosciuta, lavoro in corso, esito)
   const lastAi = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai');
-  const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
   const hint = !base ? tr('Prima carica una foto, poi scrivi qui cosa cambiare', 'Upload a photo first, then write here what to change')
     : busy && lastAi ? BUSY_HINTS[[...lastAi.id].reduce((h, c) => h + c.charCodeAt(0), 0) % BUSY_HINTS.length]
     : lastAi?.err === NO_CREDITS ? (credits && credits.plan !== 'none' ? tr('Per continuare ricarica i crediti', 'Top up credits to continue') : tr('Per continuare scegli un piano', 'Pick a plan to continue'))
@@ -1122,8 +1121,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     : roomState === 'vuota' ? `${tr('La stanza è vuota: arredala? Es.', 'The room is empty: furnish it? E.g.')} ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || tr('arreda in stile moderno', 'furnish in modern style')}`
     : roomState === 'disordinata' ? tr('Es. togli il disordine e gli oggetti personali, lascia i mobili', 'E.g. remove the clutter and personal items, keep the furniture')
     : roomState === 'datata' ? tr('Es. rinnova pavimento, pareti e mobili in stile moderno', 'E.g. renew floor, walls and furniture in modern style')
-    : done ? `${tr('Ritocca un dettaglio, es.', 'Tweak a detail, e.g.')} ${AFTER[(done - 1) % AFTER.length]}`
-    : `${tr('Cosa vuoi cambiare? Es.', 'What do you want to change? E.g.')} ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || tr('togli il divano e metti un tavolo da pranzo', 'remove the sofa and add a dining table')}`;
+    // esempio corto (06/10): una o due cose alla volta vengono piu' precise
+    : tr('Es. pareti bianche e divano grigio', 'E.g. white walls and grey sofa');
   // arrivo da un immobile (#/staging?photo=...&project=...): la foto entra subito in chat
   // ricarica della scheda: la foto dell'indirizzo e' gia' nella chat salvata, non si rimette. Se la chat salvata e' un'altra,
   // la foto dell'immobile apre una chat nuova (prima veniva ignorata e sembrava che il clic non facesse niente)
@@ -1744,16 +1743,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 </button>
               </Tooltip>
             </div>
-            <textarea ref={field} rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
+            <textarea ref={field} rows={1} value={text} maxLength={500} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!narrow ? hint : !base ? tr('Carica una foto', 'Upload a photo') : /^(Es\.|E\.g\.)/.test(hint) ? tr('Cosa cambio?', 'What to change?') : hint.split(/ (?:Es\.|E\.g\.) /)[0]}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className={`block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed ${text ? '' : 'overflow-hidden text-ellipsis whitespace-nowrap'}`} />{/* una riga centrata come Telegram, cresce scrivendo; vuoto: il suggerimento resta su una riga (andava a capo e il campo scorreva) */}
             {/* scrivendo: quanto costa la richiesta (arredo 3 crediti; le prime 3 modifiche di una foto gratis, poi 1) */}
             {text.trim() && base && !busy && credits && (credits.unlimited || credits.plan !== 'none' || credits.balance > 0) && (() => {
               const n = creditsOf({ prompt: text.trim(), scene }, editsDone);
-              // telefono: sul bordo del campo, in alto a destra, cosi' il testo ha tutta la riga
+              // telefono: sul bordo del campo, in alto a destra, cosi' il testo ha tutta la riga; da sm centrata sull'ultima riga
+              // del testo come microfono e invio (campo allineato in basso, come iMessage: pill alta 24 in una riga da 40)
               if (!n) return null; // gratis: niente pill (prima "Gratis, ancora N")
-              return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-muted max-sm:absolute max-sm:-top-3 max-sm:right-4 max-sm:py-0.5 max-sm:ring-1 max-sm:ring-line">{n ? <span className="inline-flex items-center gap-1"><Coins size={12} />{n} {n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</span> : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
+              return <span key={n} className="blur-in shrink-0 whitespace-nowrap rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold leading-4 text-muted sm:mb-2 max-sm:absolute max-sm:-top-3 max-sm:right-4 max-sm:py-0.5 max-sm:ring-1 max-sm:ring-line">{n ? <span className="inline-flex items-center gap-1"><Coins size={12} />{n} {n === 1 ? tr('credito', 'credit') : tr('crediti', 'credits')}</span> : tr(`Gratis, ancora ${FREE_EDITS - editsDone}`, `Free, ${FREE_EDITS - editsDone} left`)}</span>;
             })()}
             {canDictate && <button type="button" onClick={dictate} disabled={!base || busy} aria-label={listening ? tr('Ferma la dettatura', 'Stop dictation') : tr('Detta a voce', 'Dictate')} title={listening ? tr('Ferma la dettatura', 'Stop dictation') : tr('Detta a voce', 'Dictate')}
               className={`${text && !listening ? 'max-sm:hidden' : ''} flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors disabled:opacity-40 ${listening ? 'animate-pulse bg-rose-500 text-white' : 'text-muted enabled:hover:bg-canvas enabled:hover:text-ink'}`}><Mic size={19} /></button>}
@@ -1762,6 +1762,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
             </button>
           </div>
+          {/* testo lungo: consiglio gentile (tetto rigido 500 caratteri sul campo) */}
+          {text.length > 150 && <p className="blur-in mt-1.5 text-center text-xs text-muted">{tr('Meglio una o due cose alla volta: il risultato viene più preciso', 'One or two things at a time works best: the result is more accurate')}</p>}
         </div>
       </div>
     </div>
