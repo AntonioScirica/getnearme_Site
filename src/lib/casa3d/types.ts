@@ -12,7 +12,9 @@ export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: 
 // scala esterna (nel resede o fuori dalla casa: rampa all'aperto, niente muri ne' soffitto). {} = guardata, niente trovato
 export type StairHint = { axis?: 'x' | 'z'; tread?: number; outdoor?: boolean
   // rampa e pianerottolo disegnati (rettangoli [x0, z0, x1, z1] in metri sulla pianta), gradini contati, verso di salita lungo axis
-  flight?: [number, number, number, number]; treads?: number; landing?: [number, number, number, number]; up?: 1 | -1; seen?: boolean }
+  flight?: [number, number, number, number]; treads?: number; landing?: [number, number, number, number]; up?: 1 | -1; seen?: boolean
+  // dalla lettura dell'originale: verso scritto (freccia, "su"/"giu'"), stanze collegate e piano di arrivo non disegnato
+  goes?: 'su' | 'giu'; from?: string; to?: string; to_missing?: boolean; arrow?: 1 | -1 }
 // Materiali e colori veri dalle foto dell'immobile (una chiamata di visione per casa), per tipo di stanza
 export const FLOOR_KINDS = ['parquet_chiaro', 'parquet_medio', 'parquet_scuro', 'gres_chiaro', 'gres_scuro', 'marmo', 'cotto', 'graniglia'] as const
 export type FloorKind = (typeof FLOOR_KINDS)[number]
@@ -37,7 +39,27 @@ export type RawSource = {
 }
 export type RawPlan = { version: 3; units: 'm'; height: number; source: RawSource; walls: RawWall[]; openings: RawOpening[]; rooms: RawRoom[]; furniture?: DrawnItem[]; materials?: Materials
   // scritte terrazzo/balcone lette fuori dalle stanze riconosciute (posizione 0-1 sull'originale): per ritrovare le zone esterne
-  outside_labels?: { text: string; type: string; x: number; y: number; mq?: number }[] }
+  outside_labels?: { text: string; type: string; x: number; y: number; mq?: number }[]
+  // lettura semantica dell'originale (src/lib/casa3d/read.ts), dubbi da confermare con un si'/no e controlli senza AI
+  read?: PlanReadInfo; doubts?: Doubt[]; checks?: PlanChecks }
+
+// Lettura semantica della planimetria ORIGINALE (Gemini Flash, una chiamata): stanze con nome scritto, collegamenti tra
+// stanze, finestre, scale con verso, esterni, dubbi. Coordinate 0-1000 sull'immagine ritagliata (x da sinistra, y dall'alto).
+// La geometria esatta resta quella della pipeline: la lettura da' nomi, tipi, unioni, porte e scale.
+export type ReadRoom = { id: string; name: string; type: string; poly: Pt[]; mq: number | null; h: number | null; conf: number }
+export type ReadLink = { x: number; y: number; w: number | null; between: [string, string]; kind: 'ingresso' | 'porta' | 'varco' | 'portafinestra'; conf: number }
+export type ReadStair = { poly: Pt[]; inside: boolean; arrow: number | null; goes: 'su' | 'giu' | null; from: string | null; to: string | null; missing_floor: boolean; conf: number }
+export type ReadOutdoor = { label: string; type: string; poly: Pt[]; shared: boolean | null; ours: boolean | null }
+export type PlanRead = {
+  kind: string; floor: string | null; rooms: ReadRoom[]; links: ReadLink[]; windows: { x: number; y: number; room: string; conf: number }[]
+  stairs: ReadStair[]; outdoor: ReadOutdoor[]; doubts: { q: string; x: number; y: number }[]
+}
+// cosa ha fatto la lettura sulla pianta (numeri per i controlli e per la schermata di correzione)
+export type PlanReadInfo = { model: string; ms: number; usd: number; rooms: number; matched: number; merged: number; typed: number; reopened: number; retyped: number; windows: number; stairs: number; outdoor: number }
+// dubbio da far confermare all'agente con un si'/no (x, y: posizione 0-1 sull'originale; answer quando ha risposto)
+export type Doubt = { q: string; x: number; y: number; from: 'lettura' | 'controlli'; kind?: string; answer?: boolean }
+// controlli automatici senza AI: punteggio 0-100 e voci (scala dai minimi del DM 5/7/1975, mq, porte, scale)
+export type PlanChecks = { score: number; items: { id: string; ok: boolean; msg: string; weight: number }[]; scale_hint?: number }
 
 // Correzioni (dal controllo di Claude): stesso schema del prototipo in Python
 export type Fix = {

@@ -19,7 +19,7 @@ export const inPoly = (x: number, z: number, pts: Pt[]) => {
 }
 export const clone = (p: RawPlan): RawPlan => JSON.parse(JSON.stringify(p))
 
-const frame = (a: Pt, b: Pt) => {
+export const frame = (a: Pt, b: Pt) => {
   const L = Math.hypot(b[0] - a[0], b[1] - a[1]), d: Pt = [(b[0] - a[0]) / (L || 1e-6), (b[1] - a[1]) / (L || 1e-6)]
   return { L, d, n: [-d[1], d[0]] as Pt }
 }
@@ -199,6 +199,7 @@ export function buildViewerPlan(raw: RawPlan, name?: string, opt: { lawn?: boole
       const a_ = rs[0], b_ = rs[1] ?? 0
       let swing = ent ? a_ : (['ingresso', 'corridoio'].includes(typeOf.get(a_) ?? '') && b_ ? b_ : a_)
       if (outdoor.has(swing) && b_ && indoor(a_ === swing ? b_ : a_)) swing = a_ === swing ? b_ : a_ // porta del terrazzo: si apre verso casa
+      if (typeOf.get(swing) === 'scala' && b_) swing = a_ === swing ? b_ : a_ // porta sulla scala: l'anta mai sopra i gradini
       doors.push({ axis: ax, rooms: [a_, b_], rect, swing, ...(ent ? { entrance: true } : {}), ...(o.type === 'varco' ? { varco: true } : {}) })
     }
   }
@@ -339,25 +340,30 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
     else if (l.type !== 'altro' && l.type !== 'esterno') { r.type = l.type; r.label = l.text.slice(0, 40) }
     if (l.mq > 0.5 && l.mq < 300) r.written_mq = l.mq
   }
-  // scala dai mq scritti
-  const ratios = p.rooms.filter(r => r.written_mq && r.area > 0.5).map(r => r.written_mq! / r.area).sort((u, v) => u - v)
-  if (ratios.length) {
-    // gruppo piu' numeroso di rapporti coerenti (entro il 25%): una cifra letta male (15,19 letto 5,19) non rovina la scala
-    const groups = ratios.map(q => ratios.filter(x => Math.abs(x / q - 1) < 0.25))
-    const grp = groups.reduce((m, g) => (g.length > m.length ? g : m), [] as number[])
-    const med = grp[Math.floor(grp.length / 2)]
-    const coherent = grp.length >= Math.max(1, Math.ceil(ratios.length / 2))
-    if (coherent && (grp.length >= 2 || p.source.scale_warn) && Math.abs(med - 1) > 0.12 && med > 0.25 && med < 4) {
-      p = rescaleTo(p, totalArea(p) * med)
-      p.source = { ...p.source, scale_from: 'scritte', scale_note: `scala dai mq scritti sulla planimetria (${grp.length} stanze su ${ratios.length}, fattore area ${med.toFixed(2)})` }
-    }
-  }
+  p = scaleFromWritten(p)
   if (hs.length) { hs.sort((u, v) => u - v); p.height = Math.round(hs[Math.floor(hs.length / 2)] * 100) / 100 }
   return p
 }
 
+// scala dai mq scritti per le stanze (written_mq): gruppo piu' numeroso di rapporti coerenti (entro il 25%), cosi' una
+// cifra letta male (15,19 letto 5,19) non rovina la scala; almeno 2 stanze, o 1 con le misure gia' dubbie
+export function scaleFromWritten(raw: RawPlan): RawPlan {
+  let p = raw
+  const ratios = p.rooms.filter(r => r.written_mq && r.area > 0.5).map(r => r.written_mq! / r.area).sort((u, v) => u - v)
+  if (!ratios.length) return p
+  const groups = ratios.map(q => ratios.filter(x => Math.abs(x / q - 1) < 0.25))
+  const grp = groups.reduce((m, g) => (g.length > m.length ? g : m), [] as number[])
+  const med = grp[Math.floor(grp.length / 2)]
+  const coherent = grp.length >= Math.max(1, Math.ceil(ratios.length / 2))
+  if (coherent && (grp.length >= 2 || p.source.scale_warn) && Math.abs(med - 1) > 0.12 && med > 0.25 && med < 4) {
+    p = rescaleTo(p, totalArea(p) * med)
+    p.source = { ...p.source, scale_from: 'scritte', scale_note: `scala dai mq scritti sulla planimetria (${grp.length} stanze su ${ratios.length}, fattore area ${med.toFixed(2)})` }
+  }
+  return p
+}
+
 // distanza di un punto dal contorno di una stanza (0 se dentro)
-function polyDist(q: Pt, poly: Pt[]): number {
+export function polyDist(q: Pt, poly: Pt[]): number {
   if (inPoly(q[0], q[1], poly)) return 0
   let best = Infinity
   for (let i = 0; i < poly.length; i++) {
@@ -442,7 +448,7 @@ export function setFacade(raw: RawPlan, color: string): RawPlan {
 }
 
 // --- dividi e unisci stanze (schermata di correzione) ---
-const shoelace = (P: Pt[]) => { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1] } return a / 2 }
+export const shoelace = (P: Pt[]) => { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1] } return a / 2 }
 const centerOf = (P: Pt[]): Pt => {
   const A = shoelace(P); let cx = 0, cy = 0
   for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length], k = p[0] * q[1] - q[0] * p[1]; cx += (p[0] + q[0]) * k; cy += (p[1] + q[1]) * k }
@@ -517,7 +523,8 @@ export function touchAir(raw: RawPlan, idA: number, idB: number): boolean {
   return best >= 0.5
 }
 // unisce due stanze vicine: via i muri (e le loro aperture) che stanno solo tra le due; contorno nuovo su griglia di 5 cm
-export function mergeRooms(raw: RawPlan, idA: number, idB: number): RawPlan {
+// close: celle (5 cm) di chiusura del contorno; nell'aria di default 5 (chiude il vano fino a 50 cm tra le due)
+export function mergeRooms(raw: RawPlan, idA: number, idB: number, opt: { close?: number } = {}): RawPlan {
   const p = clone(raw), A = p.rooms.find(x => x.id === idA), B = p.rooms.find(x => x.id === idB)
   if (!A || !B || idA === idB) return p
   const at = (x: number, z: number) => (inPoly(x, z, A.poly) ? idA : inPoly(x, z, B.poly) ? idB : 0)
@@ -550,7 +557,7 @@ export function mergeRooms(raw: RawPlan, idA: number, idB: number): RawPlan {
   const toG = (P: Pt[]) => P.map(q => [(q[0] - x0) / C, (q[1] - z0) / C] as [number, number])
   let m: Uint8Array = new Uint8Array(W * H)
   fillPolyMask(m, W, H, toG(A.poly)); fillPolyMask(m, W, H, toG(B.poly)); for (const w of gone) fillPolyMask(m, W, H, toG(quad(w.a, w.b, w.t + 0.02)))
-  m = closeGrid(m, W, H, air ? 5 : 1) // nell'aria si chiude anche il vano (fino a 50 cm) tra le due stanze
+  m = closeGrid(m, W, H, opt.close ?? (air ? 5 : 1)) // nell'aria si chiude anche il vano (fino a 50 cm) tra le due stanze
   const lab = new Int32Array(W * H); for (let i = 0; i < m.length; i++) lab[i] = m[i]
   const ring = simplifyRing(traceContour(lab, 1, W, H).map(([x, y]) => [x + 0.5, y + 0.5] as [number, number]), 1.2)
   const poly = ring.map(([x, y]) => [r3(x0 + x * C), r3(z0 + y * C)] as Pt)
@@ -608,7 +615,7 @@ export function drawOutdoor(raw: RawPlan, pts: Pt[], replace?: number): RawPlan 
 
 // --- esterni: resede e cortili, scale esterne (senza AI, idempotente: pipeline, build e correzione) ---
 // stanze ai due lati di un'apertura, guardate sulla pianta (gli id salvati possono essere di prima di divisioni e unioni)
-function openingSides(p: RawPlan, o: RawOpening): (RawRoom | undefined)[] {
+export function openingSides(p: RawPlan, o: RawOpening): (RawRoom | undefined)[] {
   const { n } = frame(o.a, o.b), m: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2], off = o.t / 2 + 0.25
   return [1, -1].map(sg => p.rooms.find(r => inPoly(m[0] + sg * n[0] * off, m[1] + sg * n[1] * off, r.poly)))
 }

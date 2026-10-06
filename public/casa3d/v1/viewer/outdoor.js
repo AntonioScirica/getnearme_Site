@@ -8,6 +8,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import pc from '../vendor/polygon-clipping.js'
 import { worldUV } from './materials.js'
 import { leafBlob } from './furniture.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { GY, inPoly } from './house.js'
 
 const ring = pts => { const r = pts.map(p => [p[0], p[1]]); r.push([...r[0]]); return r }
@@ -18,9 +20,21 @@ function boxAlong(a, b, t, y0, y1) { // parallelepipedo lungo il segmento a-b, s
   return worldUV(g)
 }
 // numero pseudo-casuale stabile (stessa casa = stesso giardino)
+// arbusto vero (Poly Haven shrub_04, CC0: 12 rametti composti a cupola, ~9k tri, 0,26 MB), caricato una volta e condiviso
+const shrubCache = new Map()
+function loadShrub(base) {
+  const url = `${base}/models/shrub_04_bush.glb`
+  if (!shrubCache.has(url)) shrubCache.set(url, new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(url).then(g => {
+    let mesh = null; g.scene.traverse(o => { if (o.isMesh && !mesh) mesh = o })
+    if (!mesh) throw new Error('shrub vuoto')
+    const mat = mesh.material; mat.alphaTest = 0.5; mat.transparent = false; mat.side = THREE.DoubleSide
+    return { geo: mesh.geometry, mat }
+  }))
+  return shrubCache.get(url)
+}
 const rnd = (i, k = 1) => { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v) }
 
-export function buildOutdoor(plan, house, M, { lowEnd = false } = {}) {
+export function buildOutdoor(plan, house, M, { lowEnd = false, assetsBase = '' } = {}) {
   const group = new THREE.Group(); group.name = 'esterni'
   const grid = house.grid
   const gardens = plan.rooms.filter(r => r.type === 'giardino')
@@ -157,9 +171,10 @@ export function buildOutdoor(plan, house, M, { lowEnd = false } = {}) {
     cands.sort((a, b) => b[2] - a[2])
     for (const c of cands) { if (trees.length >= 2 || trees.some(t => Math.hypot(t[0] - c[0], t[1] - c[1]) < 4)) continue; trees.push(c) }
   }
-  // istanze: arbusti e chiome con la stessa geometria, tono per istanza
-  const blobs = [...bushes.flatMap(([x, z, s], i) => [[0, 0, 0.75], [0.22, 0.12, 0.6], [-0.2, 0.15, 0.55], [0.05, -0.2, 0.58]].map(([dx, dz, k]) => ({ x: x + dx * s, y: GY + 0.3 * s * k / 0.75 + 0.05, z: z + dz * s, s: s * k * (0.9 + 0.2 * rnd(i, dx * 10 + 3)), k: 0 }))), ...trees.flatMap(([x, z], i) => [[0, 2.9, 0, 1.25], [0.55, 2.5, 0.2, 0.95], [-0.4, 2.6, -0.35, 1.0], [0.1, 3.4, -0.1, 0.85]].map(([dx, y, dz, s]) => ({ x: x + dx, y: GY + y, z: z + dz, s: s * (0.9 + 0.2 * rnd(i, 7)), k: 1 })))]
-  if (blobs.length) {
+  // istanze: chiome (e arbusti se il modello non arriva) con la stessa geometria, tono per istanza
+  const bushBlobs = () => bushes.flatMap(([x, z, s], i) => [[0, 0, 0.75], [0.22, 0.12, 0.6], [-0.2, 0.15, 0.55], [0.05, -0.2, 0.58]].map(([dx, dz, k]) => ({ x: x + dx * s, y: GY + 0.3 * s * k / 0.75 + 0.05, z: z + dz * s, s: s * k * (0.9 + 0.2 * rnd(i, dx * 10 + 3)), k: 0 })))
+  const addBlobs = blobs => {
+    if (!blobs.length) return
     const im = new THREE.InstancedMesh(leafBlob(0.5, 3), M.leaf, blobs.length), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color()
     blobs.forEach((b, i) => {
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd(i, 5) * 6.28)
@@ -167,6 +182,22 @@ export function buildOutdoor(plan, house, M, { lowEnd = false } = {}) {
       im.setColorAt(i, col.setRGB(0.85 + 0.25 * rnd(i, 9), 0.9 + 0.2 * rnd(i, 11), 0.8 + 0.2 * rnd(i, 13)))
     })
     im.castShadow = true; im.receiveShadow = true; im.name = 'verde'; group.add(im)
+  }
+  addBlobs(trees.flatMap(([x, z], i) => [[0, 2.9, 0, 1.25], [0.55, 2.5, 0.2, 0.95], [-0.4, 2.6, -0.35, 1.0], [0.1, 3.4, -0.1, 0.85]].map(([dx, y, dz, s]) => ({ x: x + dx, y: GY + y, z: z + dz, s: s * (0.9 + 0.2 * rnd(i, 7)), k: 1 }))))
+  // arbusti: modello alto ~1,2 m e largo ~1,4 m, scalato 0,83-1 con s, altezza e tono variabili; si aggiungono appena caricati
+  if (bushes.length) {
+    const fallback = () => addBlobs(bushBlobs())
+    if (!assetsBase) fallback()
+    else loadShrub(assetsBase).then(({ geo, mat }) => {
+      const im = new THREE.InstancedMesh(geo, mat, bushes.length), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0)
+      bushes.forEach(([x, z, s], i) => {
+        const k = 0.6 + 0.35 * s
+        q.setFromAxisAngle(up, rnd(i, 5) * 6.28)
+        m4.compose(new THREE.Vector3(x, GY, z), q, new THREE.Vector3(k, k * (0.85 + 0.2 * rnd(i, 7)), k)); im.setMatrixAt(i, m4)
+        im.setColorAt(i, col.setRGB(0.72 + 0.18 * rnd(i, 9), 0.8 + 0.15 * rnd(i, 11), 0.62 + 0.16 * rnd(i, 13)))
+      })
+      im.castShadow = true; im.receiveShadow = true; im.name = 'arbusti'; group.add(im)
+    }).catch(fallback)
   }
   if (trees.length) {
     const trunks = trees.map(([x, z]) => { const g = new THREE.CylinderGeometry(0.09, 0.14, 2.6, 10); g.translate(x, GY + 1.3, z); return worldUV(g) })

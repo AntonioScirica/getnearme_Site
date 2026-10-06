@@ -14,6 +14,10 @@ import type { Fix, RawPlan } from './types'
 import { vectorizeImage } from './vectorize'
 import { readMaterials } from './materials'
 import { findOutdoor } from './outdoor'
+import { readPlan } from './read'
+import { applySemantics } from './semantic'
+import { withChecks } from './checks'
+import type { PlanRead } from './types'
 
 // prompt severo del prototipo (tools/redraw.mjs, 04/10): la geometria non si tocca, restano solo muri, porte e finestre
 export const REDRAW_PROMPT = `Redraw this floor plan as a clean architectural CAD wall plan seen from above. Keep exactly the same geometry, proportions, orientation, position and scale as the input: do not rotate, crop, move, mirror or straighten anything.
@@ -26,13 +30,14 @@ Remove everything else: no furniture, no beds, no sofas, no tables, no bathroom 
 Pure white background. Draw only the main dwelling; keep every wall, door and window of the original and do not add any new ones.`
 
 export type RecognizeResult = {
-  raw: RawPlan; crop: Buffer; cad: Buffer; overlay: Buffer; fix: Fix | null
-  ms: { ritaglio: number; ridisegno: number; riconoscimento: number; controllo: number; allineamento: number; materiali: number; totale: number }; usd: number
+  raw: RawPlan; crop: Buffer; cad: Buffer; overlay: Buffer; fix: Fix | null; read: PlanRead | null
+  ms: { ritaglio: number; ridisegno: number; riconoscimento: number; controllo: number; allineamento: number; materiali: number; lettura: number; totale: number }; usd: number
 }
 
-export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean; photos?: string[] }): Promise<RecognizeResult> {
+// read: lettura semantica dell'originale con Gemini (default si'); readCache: lettura gia' fatta (prove, ricostruzioni)
+export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean; photos?: string[]; read?: boolean; readCache?: { read: PlanRead; ms: number; usd: number; model: string } }): Promise<RecognizeResult> {
   const T0 = Date.now()
-  const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, allineamento: 0, materiali: 0, totale: 0 }
+  const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, allineamento: 0, materiali: 0, lettura: 0, totale: 0 }
   let usd = 0
   // 1. solo l'appartamento (catastali con intestazione, timbri, cantina a parte), lato lungo almeno 1536 px
   let crop: Buffer
@@ -46,7 +51,9 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
   const meta = await sharp(crop).metadata()
   const long = Math.max(meta.width ?? 0, meta.height ?? 0)
   if (long && long < 1536) crop = await sharp(crop).resize({ width: Math.round((meta.width ?? 0) * 1536 / long), height: Math.round((meta.height ?? 0) * 1536 / long), kernel: 'lanczos3' }).png().toBuffer()
-  // 2. ridisegno da CAD (GPT Image a qualita' media, ~0,02 $): stessa misura del ritaglio
+  // lettura semantica dell'originale (Gemini, ~30 s) in parallelo al ridisegno: nomi, tipi, porte, scale, esterni, dubbi
+  const readP = o.readCache ? Promise.resolve(o.readCache) : o.read === false ? Promise.resolve(null) : readPlan(crop, o.userId)
+    // 2. ridisegno da CAD (GPT Image a qualita' media, ~0,02 $): stessa misura del ritaglio
   let cad = o.cad
   if (!cad) {
     const t = Date.now()
@@ -64,9 +71,11 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
   // 4. controllo di Claude sulla sovrapposizione nello stesso orientamento dell'originale
   const overlay = await overlayJpeg(v.plan, cad)
   let raw = v.plan, fix: Fix | null = null
+  const rd = await readP
+  if (rd) { ms.lettura = rd.ms; usd += o.readCache ? 0 : rd.usd }
   if (o.check !== false) {
     try {
-      const c = await claudeCheck(crop, overlay, v.plan)
+      const c = await claudeCheck(crop, overlay, v.plan, { labels: !rd }) // scritte: dalla lettura, se c'e'
       ms.controllo = c.ms; usd += c.usage.usd
       await logUsage({ userId: o.userId, kind: 'casa3d_controllo' }, false, c.ms, { input: c.usage.input, output: c.usage.output }, true, 'claude-sonnet-5').catch(() => {})
       fix = c.fix
@@ -91,6 +100,8 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
   }
   // terrazzi e balconi tratteggiati o con la scritta fuori dalle stanze, che il ridisegno ha cancellato
   try { raw = (await findOutdoor(raw, crop)).raw } catch (e) { console.error('casa3d esterni', e) }
+  // la lettura dell'originale vince su tipi e nomi; unisce gli spezzoni, riapre le porte a croce, ritaglia le scale
+  if (rd) try { raw = applySemantics(raw, rd.read, rd) } catch (e) { console.error('casa3d lettura', e) }
   raw = guessRoomTypes(checkRoomTypes(raw)) // bagni senza scritta poco plausibili, poi i tipi mancanti
   raw = normalizeExterior(raw) // resede e cortili, scale esterne senza vani inventati accanto (niente AI)
   try { raw = await readStairs(raw, crop) } catch (e) { console.error('casa3d scale', e) } // verso dei gradini dall'originale
@@ -101,8 +112,9 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
     ms.materiali = Date.now() - tm
     if (m) { raw = { ...raw, materials: m }; usd += 0.015 }
   } // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
+  raw = withChecks(raw, { areaM2: o.areaM2 }) // controlli senza AI: punteggio e dubbi da confermare
   ms.totale = Date.now() - T0
-  return { raw, crop, cad, overlay, fix, ms, usd }
+  return { raw, crop, cad, overlay, fix, read: rd?.read ?? null, ms, usd }
 }
 
 // controlli minimi su una pianta che arriva dal browser (schermata di correzione)

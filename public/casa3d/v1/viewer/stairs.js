@@ -4,6 +4,8 @@
 // Case su piu' piani: la scala dei piani bassi sale, quella dell'ultimo piano scende (si cambia piano camminando).
 // Casa a un piano: la scala sale fino al soffitto e li' e' tagliata come i muri (sezione scura): continua sopra.
 // Scale esterne (nel resede, room.stair.outdoor): rampa all'aperto, niente soffitto ne' muri attorno.
+// Scala verso un piano che non e' nel modello (cut = quota del taglio dei muri): niente pianerottolo in cima; la rampa
+// prosegue oltre i gradini disegnati finche' c'e' spazio e si taglia alla quota dei muri, con la sezione scura.
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { worldUV } from './materials.js'
@@ -17,7 +19,7 @@ const yawOf = (dx, dz) => Math.atan2(dx, -dz) // verso dello sguardo nella cammi
 
 // Disposizione della scala nel rettangolo utile della stanza. dir 'up' | 'down', R dislivello tra i piani, base quota
 // del pavimento (esterni a -10 cm), center = centro della casa (le scale esterne salgono verso la casa)
-export function layoutStair(room, plan, { dir = 'up', R = 2.97, base = 0, center = null } = {}) {
+export function layoutStair(room, plan, { dir = 'up', R = 2.97, base = 0, center = null, cut = null, blocked = null } = {}) {
   const [X0, Z0, X1, Z1] = room.rect
   const byId = new Map(plan.rooms.map(r => [r.id, r]))
   const doors = plan.doors.filter(d => d.rooms.includes(room.id))
@@ -30,7 +32,8 @@ export function layoutStair(room, plan, { dir = 'up', R = 2.97, base = 0, center
   const hint = room.stair?.axis
   // rampa e pianerottolo disegnati sulla planimetria (scale esterne): si fanno dove sono, come sono. La scala arriva
   // sempre a un pianerottolo: quello disegnato, o uno largo quanto la rampa e profondo almeno quanto e' larga
-  const drawn = room.stair?.flight && room.stair?.treads >= 2 && (room.stair.outdoor || dir === 'up') ? fromDrawing(room, { dir, R, base, center }) : null
+  // scala interna che scende (letta sulla planimetria, es. cucina -> cantina): anche lei come disegnata
+  const drawn = room.stair?.flight && room.stair?.treads >= 2 && (room.stair.outdoor || dir === 'up' || room.stair.goes === 'giu') ? fromDrawing(room, { dir, R, base, center, cut, blocked }) : null
   if (drawn) return finish(drawn)
   const cands = []
   for (const axis of ['x', 'z']) {
@@ -56,7 +59,7 @@ export function layoutStair(room, plan, { dir = 'up', R = 2.97, base = 0, center
       // rampa unica, contro uno dei lati lunghi se il vano e' largo (resta un passaggio accanto)
       {
         // scala esterna senza disegno: arriva sempre a un pianerottolo (largo come la rampa, profondo almeno 80 cm)
-        const w = W < 1.9 ? Math.min(W, 1.25) : 1.1, landD = room.stair?.outdoor && dir === 'up' ? Math.max(0.8, Math.min(1.2, w)) : 0
+        const w = W < 1.9 ? Math.min(W, 1.25) : 1.1, landD = room.stair?.outdoor && dir === 'up' && cut === null ? Math.max(0.8, Math.min(1.2, w)) : 0
         const run = L - pad - landD
         if (run >= 2 * TMIN) {
           const T = treads(run, false), r = T.full ? R / T.N : RISE
@@ -124,7 +127,7 @@ export function layoutStair(room, plan, { dir = 'up', R = 2.97, base = 0, center
   }
 }
 
-function fromDrawing(room, { dir, R, base, center }) {
+function fromDrawing(room, { dir, R, base, center, cut = null, blocked = null }) {
   const st = room.stair, axis = st.axis || ((st.flight[2] - st.flight[0]) >= (st.flight[3] - st.flight[1]) ? 'x' : 'z')
   const [fx0, fz0, fx1, fz1] = st.flight
   const a = axis === 'x' ? [fx0, fx1] : [fz0, fz1], p = axis === 'x' ? [fz0, fz1] : [fx0, fx1]
@@ -132,16 +135,31 @@ function fromDrawing(room, { dir, R, base, center }) {
   // verso: verso il pianerottolo disegnato; se manca, verso la casa
   let rs = st.up
   if (!rs) { const mid = (p[0] + p[1]) / 2, [lx, lz] = xz(axis, a[0], mid), [hx, hz] = xz(axis, a[1], mid); rs = center && Math.hypot(hx - center[0], hz - center[1]) > Math.hypot(lx - center[0], lz - center[1]) ? -1 : 1 }
+  if (cut !== null && dir === 'up') {
+    // piano di arrivo non nel modello: dal piede la rampa sale con l'alzata vera finche' arriva al taglio dei muri o trova
+    // un muro (o una stanza della casa); niente pianerottolo. Sotto i gradini disegnati non si scende mai.
+    const tt = Math.max(0.22, Math.min(TMAX, t)), need = Math.max(n, Math.ceil((cut - base) / RISE) - 1), start = rs > 0 ? a[0] : a[1]
+    const free = k => { const am = start + rs * (k + 0.5) * tt; return !blocked || ![0.15, 0.5, 0.85].some(f => { const [x, z] = xz(axis, am, p[0] + (p[1] - p[0]) * f); return blocked(x, z) }) }
+    let m = 0
+    while (m < need && (m < n || free(m))) m++
+    const a2 = rs > 0 ? [start, start + m * tt] : [start - m * tt, start]
+    const parts = [{ kind: 'flight', axis, rs, a: a2, p: [...p], yLow: base, n: m, r: RISE, t: tt }]
+    return { shape: 'disegnata', axis, parts, N: m + 1, full: false, nearLo: rs > 0, s: rs, pad: 0, W: w, P0: -1e9, P1: 1e9, drawn: true, cut: true, cutAt: cut }
+  }
   const N = n + 1, full = N * RISE >= R - 0.05, r = full ? R / N : RISE
-  const yLow = dir === 'up' ? base : base - N * r
+  const down = dir === 'down'
+  const yLow = down ? base - N * r : base
   const parts = [{ kind: 'flight', axis, rs, a: [...a], p: [...p], yLow, n, r, t }]
   const top = yLow + N * r, endA = rs > 0 ? a[1] : a[0]
-  let land
-  if (st.landing) {
-    const [lx0, lz0, lx1, lz1] = st.landing
-    land = { kind: 'landing', axis, a: axis === 'x' ? [lx0, lx1] : [lz0, lz1], p: axis === 'x' ? [Math.min(lz0, p[0]), Math.max(lz1, p[1])] : [Math.min(lx0, p[0]), Math.max(lx1, p[1])], y: top }
-  } else { const d = Math.max(w, 0.9); land = { kind: 'landing', axis, a: rs > 0 ? [endA, endA + d] : [endA - d, endA], p: [...p], y: top } }
-  parts.push(land)
+  // scendendo il piano di partenza e' gia' in cima: niente pianerottolo
+  if (!down) {
+    let land
+    if (st.landing) {
+      const [lx0, lz0, lx1, lz1] = st.landing
+      land = { kind: 'landing', axis, a: axis === 'x' ? [lx0, lx1] : [lz0, lz1], p: axis === 'x' ? [Math.min(lz0, p[0]), Math.max(lz1, p[1])] : [Math.min(lx0, p[0]), Math.max(lx1, p[1])], y: top }
+    } else { const d = Math.max(w, 0.9); land = { kind: 'landing', axis, a: rs > 0 ? [endA, endA + d] : [endA - d, endA], p: [...p], y: top } }
+    parts.push(land)
+  }
   return { shape: 'disegnata', axis, parts, N, full, nearLo: rs > 0, s: rs, pad: 0, W: w, P0: -1e9, P1: 1e9, drawn: true, cut: !full }
 }
 
@@ -203,6 +221,11 @@ export function buildStair(L, M, { clipTop = Infinity, floorBase = 0, cutDepth =
       const f = p.rs > 0 ? lo : hi
       put(p.axis, Math.min(f, f - p.rs * 0.012), Math.max(f, f - p.rs * 0.012), p.p[0] + 0.004, p.p[1] - 0.004, top - p.r, top - TT, 'riser')
     }
+  }
+  // rampa tagliata sotto la quota dei muri (finito lo spazio): sezione scura sull'ultimo gradino, come i muri tagliati
+  if (L.cutAt != null) {
+    const f = L.parts.at(-1), top = f.yLow + f.n * f.r
+    if (top < Math.min(clipTop, L.cutAt) - 0.01) { const lo = f.rs > 0 ? f.a[0] + (f.n - 1) * f.t : f.a[1] - f.n * f.t; put(f.axis, lo, lo + f.t, f.p[0], f.p[1], top, top + 0.004, 'cut') }
   }
   // ringhiere sui lati aperti delle rampe: montanti a ogni gradino, corrimano inclinato a 90 cm
   const R0 = L.P0, R1 = L.P1

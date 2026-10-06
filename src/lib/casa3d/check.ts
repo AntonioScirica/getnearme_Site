@@ -30,7 +30,8 @@ const SCHEMA = {
   },
 }
 
-export async function claudeCheck(original: Buffer, overlay: Buffer, plan: RawPlan): Promise<{ fix: Fix; usage: { input: number; output: number; usd: number }; ms: number }> {
+// labels false: le scritte le ha gia' lette la lettura semantica (read.ts), meno uscita e meno costo
+export async function claudeCheck(original: Buffer, overlay: Buffer, plan: RawPlan, opt: { labels?: boolean } = {}): Promise<{ fix: Fix; usage: { input: number; output: number; usd: number }; ms: number }> {
   const img = async (b: Buffer) => (await sharp(b).flatten({ background: '#ffffff' }).resize(1100, 1100, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64')
   const elems = {
     stanze: plan.rooms.map(r => ({ id: r.id, mq: r.area })),
@@ -49,6 +50,9 @@ Compare with image 1 and list only the corrections needed. Rules:
 - furniture_drawn: true only if image 1 really contains furniture symbols (beds, sofas, tables, kitchen counters, sanitary fixtures); false for plain cadastral or technical plans with only walls, text and dimensions.
 - furniture: ONLY pieces clearly drawn as furniture symbols in image 1 (never guess from the room type: an empty bedroom has no bed); confidence 0-1 that the symbol is really there and of that kind. If image 1 has furniture drawn (beds, sofas, armchairs, tables, desks, wardrobes, kitchen counters, toilets, sinks, showers, bathtubs, TV units), list each piece: x, y = centre as fractions of image 1 width and height; len = its long side and depth = its short side, both as fractions of image 1 WIDTH; back = direction in degrees from the centre to its back side in image 1 (0 = right, 90 = down, 180 = left, 270 = up): headboard for beds, backrest for sofas and armchairs, the wall side for wardrobes, kitchen counters, toilets, sinks and TV units, any long side for tables. Empty list if nothing is drawn.
 Reply only with the JSON object.`
+  const noLabels = opt.labels === false
+  const schema = noLabels ? { ...SCHEMA, required: SCHEMA.required.filter(k => k !== 'labels'), properties: Object.fromEntries(Object.entries(SCHEMA.properties).filter(([k]) => k !== 'labels')) } : SCHEMA
+  const prompt = noLabels ? text.split('\n').filter(l => !l.startsWith('- labels:')).join('\n') : text
   const t0 = Date.now()
   const client = new Anthropic()
   const resp = await client.messages.create({
@@ -56,9 +60,9 @@ Reply only with the JSON object.`
     messages: [{ role: 'user', content: [
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: await img(original) } },
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: await img(overlay) } },
-      { type: 'text', text },
+      { type: 'text', text: prompt },
     ] }],
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
+    output_config: { effort: 'low', format: { type: 'json_schema', schema } },
   })
   const txt = resp.content.map(b => (b.type === 'text' ? b.text : '')).join('')
   const j = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as Omit<Fix, 'room_types'> & { room_types?: { id: number; type: string }[] }

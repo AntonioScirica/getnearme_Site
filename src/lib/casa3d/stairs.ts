@@ -34,10 +34,13 @@ export async function readStairs(raw0: RawPlan, original: Buffer): Promise<RawPl
     const f = findFlight(ink, box, r.poly)
     const hint: StairHint = { ...r.stair, seen: true }
     if (f) {
+      if (hint.arrow && hint.axis && hint.axis !== f.axis) delete hint.arrow
       hint.axis = f.axis; hint.tread = f.tread
       // la rampa disegnata si usa cosi' com'e' solo se e' vicina al vano (scale esterne) o dentro (interne)
       hint.flight = f.flight; hint.treads = f.n
       if (f.landing) { hint.landing = f.landing; hint.up = f.up }
+      // freccia letta sull'originale (salita): vince sul pianerottolo trovato, se e' sullo stesso asse
+      if (hint.arrow && hint.axis === f.axis) hint.up = hint.arrow
     }
     r.stair = hint
   }

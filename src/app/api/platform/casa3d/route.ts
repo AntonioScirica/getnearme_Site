@@ -7,6 +7,7 @@ import { deleteKeys, listKeys, uploadFile } from '@/lib/r2'
 import { getTeamUserIds } from '@/lib/teamScope'
 import { buildViewerPlan, normalizeExterior } from '@/lib/casa3d/build'
 import { readStairs } from '@/lib/casa3d/stairs'
+import { withChecks } from '@/lib/casa3d/checks'
 import { CASA3D_ON } from '@/lib/casa3d/flag'
 import { recognizeFloor, validRaw } from '@/lib/casa3d/pipeline'
 import { pickPhotos } from '@/lib/casa3d/materials'
@@ -98,6 +99,8 @@ export async function POST(req: NextRequest) {
         uploadFile(r.overlay, `${base}/f${floor}-check-${v}.jpg`, 'image/jpeg'),
       ])
       await uploadFile(Buffer.from(JSON.stringify(r.raw)), `${base}/f${floor}-raw-${v}.json`, 'application/json')
+      // lettura semantica dell'originale (per le domande si'/no della correzione e per rifare la pianta senza ripagarla)
+      if (r.read) await uploadFile(Buffer.from(JSON.stringify(r.read)), `${base}/f${floor}-read-${v}.json`, 'application/json').catch(() => null)
       const credits = already ? (await getCredits(userId)).balance : await spendOnce(userId, 'casa3d', key)
       return NextResponse.json({ raw: r.raw, image: crop, cad: cadUrl, overlay, ms: r.ms, usd: Math.round(r.usd * 1000) / 1000, notes: r.fix?.notes ?? null, scaleNote: r.raw.source.scale_note ?? null, credits })
     } catch (e) {
@@ -127,6 +130,7 @@ export async function POST(req: NextRequest) {
         const img = await imageBuffer(f.image)
         if (img) raw = await readStairs(raw, img).catch(() => raw)
       }
+      raw = withChecks(raw, { areaM2: typeof p?.mq === 'number' && floors.length === 1 ? p.mq : undefined }) // controlli senza AI sulla pianta corretta
       const plan = buildViewerPlan(raw, name, { lawn })
       const [rawUrl, planUrl] = await Promise.all([
         uploadFile(Buffer.from(JSON.stringify(raw)), `${base}/f${i}-raw-${v}.json`, 'application/json'),

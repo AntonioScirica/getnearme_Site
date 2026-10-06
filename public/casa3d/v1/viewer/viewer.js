@@ -51,7 +51,7 @@ export async function createViewer(container, opts = {}) {
   M.applyStyle(ST)
   const house = buildHouse(plan, M, { style: ST, level: o.level, name: plan.name })
   scene.add(house.group)
-  scene.add(buildOutdoor(plan, house, M, { lowEnd }))
+  scene.add(buildOutdoor(plan, house, M, { lowEnd, assetsBase: o.assetsBase }))
 
   // cielo: sfera con le due foto HDRI (giorno/notte) mescolate (camminata), piu' il fondo della vista dall'alto
   // ("studio"): di giorno sfumatura verticale sullo schermo, azzurro tenue in alto e bianco caldo in basso; di notte

@@ -144,12 +144,20 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
   const indoorRooms = plan.rooms.filter(r => !isOpenRoom(r))
   const hc = indoorRooms.length ? [indoorRooms.reduce((a, r) => a + r.center[0], 0) / indoorRooms.length, indoorRooms.reduce((a, r) => a + r.center[1], 0) / indoorRooms.length] : null
   const stairs = []
+  // dove una rampa che sale non puo' proseguire: dentro un muro o in una stanza della casa (non la sua)
+  const wallPolys = plan.walls.map(w => w.outer)
+  const blockedFor = r => (x, z) => wallPolys.some(P => inPoly(x, z, P)) || plan.rooms.some(q => q.id !== r.id && !isOpenRoom(q) && inPoly(x, z, q.poly))
   for (const r of plan.rooms.filter(x => x.type === 'scala')) {
     const open = !!r.stair?.outdoor
-    const dir = open ? 'up' : count > 1 ? (idx < count - 1 ? 'up' : 'down') : (upper ? 'down' : 'up')
-    const L = layoutStair(r, plan, { dir, R: H + 0.27, base: open ? GY : 0, center: open ? hc : null })
+    let dir = open ? 'up' : count > 1 ? (idx < count - 1 ? 'up' : 'down') : (upper ? 'down' : 'up')
+    // casa a un piano: il verso letto sulla planimetria (es. dalla cucina si scende in cantina) vince sull'ipotesi
+    if (!open && count === 1 && (r.stair?.goes === 'giu' || r.stair?.goes === 'su')) dir = r.stair.goes === 'giu' ? 'down' : 'up'
+    // nessun piano sopra nel modello: la scala esterna che sale e' tagliata come i muri, senza pianerottolo nel vuoto
+    const cut = open && dir === 'up' && !(count > 1 && idx < count - 1) ? H : null
+    const L = layoutStair(r, plan, { dir, R: H + 0.27, base: open ? GY : 0, center: open ? hc : null, cut, blocked: cut !== null ? blockedFor(r) : null })
     if (!L) continue
     L.open = open; L.linked = count > 1 && !open // si cambia piano camminando
+    L.cutTop = cut
     stairs.push(L)
   }
   const holeRing = L => { const [x0, z0, x1, z1] = L.hole; return [[[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]]] }
@@ -466,11 +474,12 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
   // scale: geometria, quote del calpestio e ringhiere nella griglia della camminata
   for (const L of stairs) {
     const indoor = !L.open
-    const clipTop = indoor && L.dir === 'up' ? H : Infinity
+    const clipTop = (indoor && L.dir === 'up') || L.cutTop != null ? H : Infinity
     const depth = Math.min(L.R - 0.2, Math.max(1.4, L.parts.find(p => p.kind === 'landing') ? -L.parts.find(p => p.kind === 'landing').y + 0.25 : 1.6))
     const st = buildStair(L, M, { clipTop, floorBase: L.dir === 'down' ? -depth : L.base, cutDepth: L.dir === 'down' ? -depth : -Infinity, wallAt: (x, z) => grid.isWall(x, z) && grid.roomAt(x, z) === 0, bodyMat: L.open ? outBody() : null })
     group.add(st.below)
-    if (st.above.children.length) { group.add(st.above); hideInTop.push(st.above) }
+    // la parte sopra il taglio c'e' solo se la scala continua dentro casa (al piano di sopra); quella esterna tagliata no
+    if (st.above.children.length && L.cutTop == null) { group.add(st.above); hideInTop.push(st.above) }
     if (indoor) { const sh = buildShaft(L, M, { H, depth, up: L.dir === 'up' }); group.add(sh); if (L.dir === 'up') hideInTop.push(sh) }
     // quote: celle della scala; nel buco senza rampa (non dovrebbe succedere) non si cammina
     const [hx0, hz0, hx1, hz1] = L.hole
