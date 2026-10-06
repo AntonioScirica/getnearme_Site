@@ -6,7 +6,7 @@
 // una finestra; tocca una porta o una finestra = togli o cambia; superficie totale in mq. Una scheda per piano.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Box, Check, Combine, DoorOpen, Info, Loader2, Minus, Pencil, RotateCcw, ScanText, Scissors, Sofa, Square, Trash2, X } from 'lucide-react';
+import { Box, Check, Combine, DoorOpen, Info, Loader2, Minus, Pencil, Rainbow, RotateCcw, ScanText, Scissors, Sofa, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
 import { addFurniture, addOpening, drawOutdoor, inPoly, mergeRooms, normalizeExterior, removeFurniture, rotateFurniture, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
 import { CASA3D_STYLES, FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, STYLE_LABEL, VIEWER_PATH, WALL_COLORS, glossaryOf, isStyle, type Casa3d, type Casa3dStyle, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
@@ -469,8 +469,12 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi, style, onStyle }: 
           )}
           {selOp && sel?.kind === 'op' && (
             <>
-              <p className="text-sm font-semibold">{OP_LABEL(selOp.type)} <span className="font-normal text-muted">{String(selOp.width).replace('.', ',')} m</span></p>
+              <p className="text-sm font-semibold">{selOp.shape === 'arch' ? tr('Arco', 'Arch') : OP_LABEL(selOp.type)} <span className="font-normal text-muted">{String(selOp.width).replace('.', ',')} m</span></p>
               <div className="mt-3 flex flex-wrap gap-2">
+                {(selOp.type === 'varco' || selOp.type === 'door') && (
+                  // arco si'/no: un arco e' un passaggio senza porta, col muro sopra a semicerchio
+                  <button type="button" aria-pressed={selOp.shape === 'arch'} onClick={() => onEdit(r => ({ ...r, openings: r.openings.map((o, i) => { if (i !== sel.idx) return o; if (o.shape === 'arch') { const { shape: _s, ...rest } = o; void _s; return rest } return { ...o, type: 'varco' as OpType, shape: 'arch' as const, suspect: false } }) }))} className={`${pill(selOp.shape === 'arch')} flex items-center gap-1.5`}><Rainbow size={14} /> {selOp.shape === 'arch' ? tr('Arco: sì', 'Arch: yes') : tr('Arco: no', 'Arch: no')}</button>
+                )}
                 <button type="button" onClick={() => { onEdit(r => removeOpening(r, sel.idx)); setSel(null) }} className={`${pill(false)} flex items-center gap-1.5`}><Trash2 size={14} /> {tr('Togli', 'Remove')}</button>
                 {(['door', 'window', 'entrance', 'varco'] as OpType[]).filter(t => t !== selOp.type).map(t => (
                   <button key={t} type="button" onClick={() => onEdit(r => ({ ...r, openings: r.openings.map((o, i) => (i === sel.idx ? { ...o, type: t, suspect: false } : o)) }))} className={pill(false)}>{OP_LABEL(t)}</button>

@@ -8,6 +8,7 @@ import { planBox } from '@/lib/planCrop'
 import { alignToOriginal, openDoorsFromOriginal, removeFakeWalls, verifyFurniture } from './align'
 import { applyFix, applyFurniture, applyLabels, checkRoomTypes, guessRoomTypes, mergeRooms, normalizeExterior, splitRoom } from './build'
 import { readStairs } from './stairs'
+import { readArches } from './arches'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
@@ -35,7 +36,7 @@ export type RecognizeResult = {
 }
 
 // read: lettura semantica dell'originale con Gemini (default si'); readCache: lettura gia' fatta (prove, ricostruzioni)
-export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean; photos?: string[]; read?: boolean; readCache?: { read: PlanRead; ms: number; usd: number; model: string } }): Promise<RecognizeResult> {
+export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?: number; cad?: Buffer; check?: boolean; photos?: string[]; archPhotos?: string[]; read?: boolean; readCache?: { read: PlanRead; ms: number; usd: number; model: string } }): Promise<RecognizeResult> {
   const T0 = Date.now()
   const ms = { ritaglio: 0, ridisegno: 0, riconoscimento: 0, controllo: 0, allineamento: 0, materiali: 0, lettura: 0, totale: 0 }
   let usd = 0
@@ -111,7 +112,10 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
     const m = await readMaterials(o.userId, o.photos)
     ms.materiali = Date.now() - tm
     if (m) { raw = { ...raw, materials: m }; usd += 0.015 }
-  } // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
+  }
+  // archi tra le stanze dalle foto della zona giorno (una chiamata Gemini, solo col primo piano come i materiali)
+  if (o.archPhotos?.length) { const ta = Date.now(); raw = await readArches(raw, crop, o.archPhotos, o.userId); ms.materiali += Date.now() - ta; usd += raw.arches?.usd ?? 0 }
+  // stanze senza tipo (niente controllo o stanza saltata): tipo ragionevole da confermare
   raw = withChecks(raw, { areaM2: o.areaM2 }) // controlli senza AI: punteggio e dubbi da confermare
   ms.totale = Date.now() - T0
   return { raw, crop, cad, overlay, fix, read: rd?.read ?? null, ms, usd }

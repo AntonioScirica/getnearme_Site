@@ -200,7 +200,7 @@ export function buildViewerPlan(raw: RawPlan, name?: string, opt: { lawn?: boole
       let swing = ent ? a_ : (['ingresso', 'corridoio'].includes(typeOf.get(a_) ?? '') && b_ ? b_ : a_)
       if (outdoor.has(swing) && b_ && indoor(a_ === swing ? b_ : a_)) swing = a_ === swing ? b_ : a_ // porta del terrazzo: si apre verso casa
       if (typeOf.get(swing) === 'scala' && b_) swing = a_ === swing ? b_ : a_ // porta sulla scala: l'anta mai sopra i gradini
-      doors.push({ axis: ax, rooms: [a_, b_], rect, swing, ...(ent ? { entrance: true } : {}), ...(o.type === 'varco' ? { varco: true } : {}) })
+      doors.push({ axis: ax, rooms: [a_, b_], rect, swing, ...(ent ? { entrance: true } : {}), ...(o.type === 'varco' ? { varco: true } : {}), ...(o.shape === 'arch' && !ent ? { arch: true } : {}) })
     }
   }
   // rettangolo utile di ogni stanza (griglia 5 cm, erosa di una cella)

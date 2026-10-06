@@ -115,6 +115,32 @@ const D = (a, b) => (a.length && b.length) ? pc.difference(a, b) : a
 // multipoligono (anelli in [x,z]) -> shape three.js
 const shapesOf = mp => mp.map(P => shapeOf(P[0].slice(0, -1), P.slice(1).map(h => h.slice(0, -1))))
 
+// Arco a tutto sesto (raggio = meta' luce, imposta tra 1,90 e 2,10 m); se la chiave non sta sotto il soffitto (14 cm di
+// margine) arco ribassato: stessa imposta, freccia piu' bassa. top: fin dove si taglia il vano (10 cm sopra la chiave)
+function archOf(d, H) {
+  const ax = d.axis === 'x', w = ax ? d.rect[2] - d.rect[0] : d.rect[3] - d.rect[1], r = w / 2
+  const spring = Math.min(DOOR_H, Math.max(1.9, H - 0.14 - r))
+  let key = spring + r
+  if (key > H - 0.14) key = Math.max(spring + 0.12, H - 0.14)
+  return { w, spring, key, top: Math.min(H - 0.02, key + 0.1) }
+}
+// muro sopra l'intradosso nel vano dell'arco: profilo (lungo il vano, quota) estruso per lo spessore del muro. Due
+// geometrie: le due facce (colorate come i muri) e i fianchi con l'intradosso
+function archMasonry({ d, w, spring, key, top }) {
+  const f = key - spring, R = f >= w / 2 - 1e-6 ? w / 2 : (w * w / 4 + f * f) / (2 * f), cy = key - R
+  const t0 = Math.atan2(spring - cy, w / 2), N = 32
+  const pts = [new THREE.Vector2(0, top), new THREE.Vector2(w, top), new THREE.Vector2(w, spring)]
+  for (let i = 1; i < N; i++) { const t = t0 + (Math.PI - 2 * t0) * i / N; pts.push(new THREE.Vector2(w / 2 + R * Math.cos(t), cy + R * Math.sin(t))) }
+  pts.push(new THREE.Vector2(0, spring))
+  const [x0, z0, x1, z1] = d.rect, ax = d.axis === 'x', th = ax ? z1 - z0 : x1 - x0
+  const g = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: th, bevelEnabled: false, curveSegments: 1 })
+  // (lungo, quota, spessore) -> mondo, senza specchiare (le normali restano fuori)
+  const m = ax ? new THREE.Matrix4().set(1, 0, 0, x0, 0, 1, 0, 0, 0, 0, 1, z0, 0, 0, 0, 1) : new THREE.Matrix4().set(0, 0, 1, x0, 0, 1, 0, 0, -1, 0, 0, z1, 0, 0, 0, 1)
+  g.applyMatrix4(m)
+  const part = grp => { const out = new THREE.BufferGeometry(); for (const k of ['position', 'normal']) { const at = g.attributes[k]; out.setAttribute(k, new THREE.Float32BufferAttribute(at.array.slice(grp.start * 3, (grp.start + grp.count) * 3), 3)) } return worldUV(out) }
+  return [part(g.groups[0]), part(g.groups[1])]
+}
+
 export function buildHouse(plan, M, { style = null, level = null, name = '' } = {}) {
   const H = plan.height || 2.7
   const group = new THREE.Group(); group.name = 'casa'
@@ -138,15 +164,29 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
   }
   const stairCut = stairFoot.length && plan.outline?.length >= 3 ? pc.intersection(U(stairFoot), D([closeRing(plan.outline)], U(grow(plan.outline, 0.35).slice(1)))) : []
   const full = D(U([...wallP, ...openFill]), stairCut)
-  const cutDoors = U(plan.doors.map(o => rectRing(o.rect, o.axis, 0.03)))
+  // archi: il vano si taglia fino a sopra la chiave, poi si riempie col muro sopra l'intradosso (archMasonry)
+  const arches = plan.doors.filter(d => d.arch && !d.entrance).map(d => ({ d, ...archOf(d, H) }))
+  const cutDoors = U(plan.doors.filter(d => !d.arch || d.entrance).map(o => rectRing(o.rect, o.axis, 0.03)))
   const cutWins = U(plan.windows.map(o => rectRing(o.rect, o.axis, 0.03)))
-  const band0 = D(full, cutDoors)
-  const bands = [[0, SILL, band0], [SILL, DOOR_H, D(band0, cutWins)], [DOOR_H, HEAD, D(full, cutWins)], [HEAD, H, full]]
-  for (const [y0, y1, mp] of bands) {
+  // pianta dei muri a terra (porte e archi aperti): pavimenti, griglia della camminata
+  const band0 = D(full, U([cutDoors, ...arches.map(a => rectRing(a.d.rect, a.d.axis, 0.03))].filter(c => c.length)))
+  // fasce di altezza: porte fino all'architrave, finestre tra davanzale e architrave, archi fino alla loro cima
+  const ys = [...new Set([0, SILL, DOOR_H, HEAD, H, ...arches.map(a => a.top)].filter(y => y >= 0 && y <= H))].sort((a, b) => a - b)
+  for (let k = 0; k + 1 < ys.length; k++) {
+    const y0 = ys[k], y1 = ys[k + 1]
+    const cuts = [...(y1 <= DOOR_H + 1e-6 ? [cutDoors] : []), ...(y0 >= SILL - 1e-6 && y1 <= HEAD + 1e-6 ? [cutWins] : []), ...arches.filter(a => y1 <= a.top + 1e-6).map(a => rectRing(a.d.rect, a.d.axis, 0.03))].filter(c => c.length)
+    const mp = cuts.length ? D(full, U(cuts)) : full
     if (!mp.length) continue
     const g = new THREE.ExtrudeGeometry(shapesOf(mp), { depth: y1 - y0, bevelEnabled: false })
     g.rotateX(-Math.PI / 2); g.translate(0, y0, 0)
     const m = mesh(g, M.wall); m.name = `muri-${y0}`; group.add(m)
+  }
+  // muro sopra l'arco: facce col colore delle stanze (come i muri), intradosso intonacato bianco
+  const archFaces = [], archSoffit = []
+  for (const a of arches) { const [f, s2] = archMasonry(a); archFaces.push(f); archSoffit.push(s2) }
+  if (archFaces.length) {
+    const m = mesh(mergeGeometries(archFaces), M.wall); m.name = 'archi'; group.add(m)
+    const sm = mesh(mergeGeometries(archSoffit), M.archPlaster || (M.archPlaster = new THREE.MeshStandardMaterial({ color: 0xf6f3ec, roughness: 0.95 }))); sm.name = 'archi-intradosso'; group.add(sm)
   }
   // SCALE: disposizione prima di soffitti e pavimenti (servono i buchi). Piu' piani: sale fino al penultimo, l'ultimo
   // scende. Un piano solo: sale (scende se il piano e' chiaramente alto: primo, secondo, mansarda)
@@ -341,6 +381,8 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
     const len = ax ? x1 - x0 : z1 - z0, th = ax ? z1 - z0 : x1 - x0
     const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2
     const J = 0.035, C = 0.07, CT = 0.012 // imbotte e coprifili
+    // arco: niente telaio ne' anta (vano intonacato); passaggio senza porta: telaio si', anta no
+    if (d.arch && !d.entrance) { doors.push({ ...d, center: [cx, cz], len, sgn: 1, normal: ax ? [0, 1] : [1, 0] }); continue }
     for (const e of [0, 1]) {
       const a0 = (ax ? x0 : z0) + (e ? len - J : 0)
       frames.push(ax ? boxGeo(a0, 0, z0 - CT, a0 + J, DOOR_H, z1 + CT) : boxGeo(x0 - CT, 0, a0, x1 + CT, DOOR_H, a0 + J))
@@ -361,7 +403,7 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
     if (d.entrance) {
       put(A0, A0 + leafW, C0 - T / 2, C0 + T / 2, 0, DOOR_H - 0.01, entranceLeaf)
       put(A0 + leafW - 0.1, A0 + leafW - 0.06, C0 - 0.07, C0 + 0.07, 0.99, 1.01, handles)
-    } else {
+    } else if (!d.varco) {
       const face = C0 + sgn * th / 2
       const leaves = leafW > 1.05 ? [[A0, 1, leafW / 2], [A0 + leafW, -1, leafW / 2]] : [[A0, 1, leafW]]
       for (const [h, dir, w] of leaves) {

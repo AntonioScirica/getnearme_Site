@@ -11,6 +11,7 @@ import { withChecks } from '@/lib/casa3d/checks'
 import { CASA3D_ON } from '@/lib/casa3d/flag'
 import { recognizeFloor, validRaw } from '@/lib/casa3d/pipeline'
 import { pickPhotos } from '@/lib/casa3d/materials'
+import { archPhotos as archPhotosOf } from '@/lib/casa3d/arches'
 import { isStyle, type Casa3d, type RawPlan } from '@/lib/casa3d/types'
 
 export const runtime = 'nodejs'
@@ -91,7 +92,8 @@ export async function POST(req: NextRequest) {
       const proj = floor === 0 ? await projectOf(userId, b.projectId) : null
       const pd = (proj?.import_data ?? {}) as { photos?: unknown; rooms?: Record<string, { scene?: string; room?: string }> }
       const photos = Array.isArray(pd.photos) ? pickPhotos(pd.photos.filter((x): x is string => typeof x === 'string' && allowedUrl(x)), pd.rooms ?? {}) : []
-      const r = await recognizeFloor({ userId, image, areaM2, cad: cad ?? undefined, photos, check: !(process.env.NODE_ENV === 'development' && process.env.CASA3D_DEV_NOCHECK) }) // prove in locale senza Claude: CASA3D_DEV_NOCHECK=1
+      const archPhotos = Array.isArray(pd.photos) ? archPhotosOf(pd.photos.filter((x): x is string => typeof x === 'string' && allowedUrl(x)), pd.rooms ?? {}) : []
+      const r = await recognizeFloor({ userId, image, areaM2, cad: cad ?? undefined, photos, archPhotos, check: !(process.env.NODE_ENV === 'development' && process.env.CASA3D_DEV_NOCHECK) }) // prove in locale senza Claude: CASA3D_DEV_NOCHECK=1
       const v = Date.now().toString(36)
       const [crop, cadUrl, overlay] = await Promise.all([
         uploadFile(await (await import('sharp')).default(r.crop).jpeg({ quality: 85 }).toBuffer(), `${base}/f${floor}-orig-${v}.jpg`, 'image/jpeg'),

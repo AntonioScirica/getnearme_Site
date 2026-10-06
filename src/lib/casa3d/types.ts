@@ -5,7 +5,8 @@ export type OpType = 'door' | 'entrance' | 'varco' | 'window'
 // Pianta riconosciuta, modificabile: muri come segmenti con spessore, aperture sui muri, stanze. Metri, origine al
 // centro della casa, x a destra e y in basso come nell'immagine raddrizzata.
 export type RawWall = { a: Pt; b: Pt; t: number; label?: string }
-export type RawOpening = { type: OpType; a: Pt; b: Pt; t: number; width: number; rooms: number[]; suspect: boolean; label?: string; added?: boolean }
+// shape 'arch': passaggio ad arco (dalle foto o scelto dall'agente), il visore fa il muro sopra con l'intradosso a semicerchio
+export type RawOpening = { type: OpType; a: Pt; b: Pt; t: number; width: number; rooms: number[]; suspect: boolean; label?: string; added?: boolean; shape?: 'arch' }
 // label: scritta letta dalla planimetria originale (il tipo viene da li'); written_mq: mq scritti per la stanza
 export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: string; label?: string; written_mq?: number; floor?: FloorKind; wall?: string; stair?: StairHint } // floor/wall: scelti dall'agente
 // scala: verso dei gradini letto dall'originale (axis = asse lungo cui si sale, tread = pedata misurata in metri) e
@@ -52,7 +53,9 @@ export type RawPlan = { version: 3; units: 'm'; height: number; source: RawSourc
   // scritte terrazzo/balcone lette fuori dalle stanze riconosciute (posizione 0-1 sull'originale): per ritrovare le zone esterne
   outside_labels?: { text: string; type: string; x: number; y: number; mq?: number }[]
   // lettura semantica dell'originale (src/lib/casa3d/read.ts), dubbi da confermare con un si'/no e controlli senza AI
-  read?: PlanReadInfo; doubts?: Doubt[]; checks?: PlanChecks }
+  read?: PlanReadInfo; doubts?: Doubt[]; checks?: PlanChecks
+  // archi letti dalle foto (src/lib/casa3d/arches.ts): quanti, costo, se messi sui passaggi per regola (non mappati)
+  arches?: { seen: boolean; set: number; guessed: boolean; usd: number } }
 
 // Lettura semantica della planimetria ORIGINALE (Gemini Flash, una chiamata): stanze con nome scritto, collegamenti tra
 // stanze, finestre, scale con verso, esterni, dubbi. Coordinate 0-1000 sull'immagine ritagliata (x da sinistra, y dall'alto).
@@ -100,7 +103,7 @@ export type ViewerPlan = {
   // arredo come nella planimetria (modelli del catalogo del visore); le stanze senza mobili disegnati si arredano da sole
   furniture?: { kind: string; x: number; z: number; rot: number; w: number; d: number; room: number; opts: Record<string, number> }[]
   windows: { rect: [number, number, number, number]; axis: 'x' | 'z'; room: number; in: [number, number] }[]
-  doors: { axis: 'x' | 'z'; rooms: [number, number]; rect: [number, number, number, number]; swing: number; entrance?: boolean; varco?: boolean }[]
+  doors: { axis: 'x' | 'z'; rooms: [number, number]; rect: [number, number, number, number]; swing: number; entrance?: boolean; varco?: boolean; arch?: boolean }[]
   rooms: { id: number; type: string; area: number; center: Pt; poly: Pt[]; rect: [number, number, number, number]; floor?: FloorKind; wall?: string; stair?: StairHint; label?: string }[]
   // confini dei giardini e dei cortili (linee del lotto): siepe o muretto basso nel visore, non muri
   boundaries?: { a: Pt; b: Pt; kind: 'siepe' | 'muretto' }[]
