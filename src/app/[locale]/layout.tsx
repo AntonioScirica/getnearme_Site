@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import Trackers from "@/components/Trackers";
 import CookieBanner from "@/components/CookieBanner";
@@ -23,6 +23,9 @@ type Props = {
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
+
+// viewport-fit=cover: senza, env(safe-area-inset-*) vale 0 e la barra in basso finisce sotto la barra di Safari
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;

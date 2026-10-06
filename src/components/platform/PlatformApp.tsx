@@ -244,8 +244,9 @@ function PlatformInner({ userData }: { userData: UserData }) {
         </div>
       </header>
 
-      {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto) */}
-      {!chat && route === '/' && <div inert={homeOpen} className={`fixed bottom-[84px] left-1/2 z-30 lg:bottom-5 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
+      {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto).
+          Telefono: niente pillola, e' la quarta card della home (HomeView) */}
+      {!chat && route === '/' && <div inert={homeOpen} className={`max-sm:hidden fixed bottom-[84px] left-1/2 z-30 lg:bottom-5 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
         <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <Download size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
         </a>
@@ -302,7 +303,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
       {/* telefono e tablet (sotto lg): le voci del menu in una barra in basso, anche in chat (sta sotto il campo, non lo copre);
           nel percorso Metti in vetrina no, ha il suo fondo */}
       {route !== '/nuovo' && (
-        <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+        <nav aria-label={tr('Menu principale', 'Main menu')} className="flex shrink-0 border-t border-line bg-white/90 pb-[max(8px,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
           {NAV.map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
             return <a key={path} href={`#${path}`} data-tour={path} aria-current={active ? 'page' : undefined} className={`relative flex h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium ease-smooth transition-colors ${active ? 'text-ink' : 'text-muted'}`}>
@@ -321,7 +322,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
 // Card azione: si inclina verso il mouse (--rx/--ry), riflesso di luce (--sx/--sy) e
 // variabili --mx/--my (-1..1) per la parallasse degli elementi del collage (.par-1/2/3).
 
-function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wrapRef, wrapClass = '', wrapStyle, children, thumb }: { thumb?: string; kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; intro?: boolean; wrapRef?: React.Ref<HTMLDivElement>; wrapClass?: string; wrapStyle?: React.CSSProperties; children: React.ReactNode }) {
+function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wrapRef, wrapClass = '', wrapStyle, children, thumb, thumbNode }: { thumb?: string; thumbNode?: React.ReactNode; kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; intro?: boolean; wrapRef?: React.Ref<HTMLDivElement>; wrapClass?: string; wrapStyle?: React.CSSProperties; children: React.ReactNode }) {
   const move = tiltMove;
   const leave = (e: React.MouseEvent<HTMLElement>) => { tiltReset(e.currentTarget); onHover?.(false); };
   // telefono: riga compatta (foto piccola, domanda, freccia); da sm la card grande con l'illustrazione
@@ -330,7 +331,7 @@ function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wra
   const inner = (
     <>
       <span className="sheen pointer-events-none absolute inset-0 z-20" />
-      {thumb && <img src={thumb} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />}
+      {thumbNode ?? (thumb && <img src={thumb} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:hidden" />)}
       {/* titolo in piccolo sopra, la domanda in grande */}
       <span className="flex min-w-0 flex-col max-sm:flex-1">
         <span className="par-1 text-sm text-muted">{title}</span>
@@ -624,6 +625,12 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
             </div>
           </div>
           <span className="par-3 absolute -top-1 right-[14%] z-10"><span className="flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-[11px] font-bold text-white shadow-lg ease-smooth transition-[scale] group-hover:scale-110"><Wand2 size={12} /> AI</span></span>
+        </Tile>
+
+        {/* solo telefono: Importa immobile come quarta card (da sm resta la pillola in basso) */}
+        <Tile index={3} intro={intro} wrapClass={`${others(3)} sm:hidden`} kicker={tr('Hai già tanti annunci?', 'Got many listings already?')} title={tr('Importa immobile', 'Import property')} href="#/importa"
+          thumbNode={<span className="relative h-16 w-16 shrink-0"><img src="/immo/home/fan-1.webp" alt="" className="h-16 w-16 rounded-2xl object-cover" /><span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-md ring-2 ring-white"><Download size={14} /></span></span>}>
+          <></>
         </Tile>
       </div>
 
