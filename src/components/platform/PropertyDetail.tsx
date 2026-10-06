@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, Clapperboard, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { isClosed, statusOf, STATUS_KEYS, STATUS_LABELS, STATUSES, TEMPLATES, type PropertyStatus, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -175,6 +175,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
           <Casa3DCard project={project} photos={photos} onChanged={onChange} />
         </div>
       </section>
+      <span className="mt-8 block h-px bg-black/10" aria-hidden />{/* divisore tra Promuovi e la modifica */}
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-6 lg:sticky lg:top-6 lg:h-[calc(100svh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
@@ -188,18 +189,43 @@ export default function PropertyDetail({ project, loading, onChange }: { project
 
 // Video dell'immobile: si fanno in chat (Video dell'annuncio, Venduto, prima e dopo...), con la copertina e l'immobile gia' collegati
 function VideoCard({ project, photos, count: n }: { project: ProjectData; photos: string[]; count: number }) {
+  const [pick, setPick] = useState(false);
+  const go = (src: string) => { setPick(false); window.location.assign(`#/chat?photo=${encodeURIComponent(src)}&project=${project.id}`); };
   return (
     <section className="rounded-2xl bg-canvas p-3">
       <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Clapperboard size={18} /></span>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Wand2 size={18} /></span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">{tr('Video', 'Videos')}</span>
-          <span className="block text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, altri dalla chat`, `${n} made, more from the chat`) : tr('Annuncio, Venduto, prima e dopo, dalla chat', 'Listing, Sold, before and after, from the chat')}</span>
+          <span className="block text-sm font-semibold">{tr('Modifica foto e video', 'Edit photos and videos')}</span>
+          <span className="block text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, scegli una foto e continua in chat`, `${n} videos made, pick a photo and continue in chat`) : tr('Arreda, migliora o crea un video da una foto', 'Furnish, improve or make a video from a photo')}</span>
         </span>
       </div>
-      <a href={photos[0] ? `#/chat?photo=${encodeURIComponent(photos[0])}&project=${project.id}` : '#/chat'} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white">
-        <Clapperboard size={14} /> {tr('Crea un video', 'Create a video')}
-      </a>
+      <button type="button" onClick={() => setPick(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-50">
+        <Images size={14} /> {photos.length ? tr('Scegli la foto', 'Pick the photo') : tr('Aggiungi prima le foto', 'Add photos first')}
+      </button>
+      {/* si sceglie la foto dell'immobile e si va in chat con la foto e l'immobile gia' collegati */}
+      {pick && createPortal(
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setPick(false)}>
+          <div className="rise flex max-h-[85vh] w-full max-w-3xl flex-col rounded-[32px] bg-white p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-xl font-bold tracking-tight">{tr('Scegli la foto', 'Pick the photo')}</h2>
+                <p className="mt-1 text-sm text-muted">{tr('La apriamo in chat: lì la arredi, la migliori o ne fai un video.', 'We open it in the chat: furnish it, improve it or make a video.')}</p>
+              </div>
+              <button type="button" onClick={() => setPick(false)} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
+            </div>
+            <div className="mt-5 grid min-h-0 auto-rows-max content-start grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-4">
+              {photos.map(src => (
+                <button key={src} type="button" onClick={() => go(src)} className="group relative aspect-[4/3] overflow-hidden rounded-[20px] bg-canvas ring-1 ring-black/5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={/^https:\/\//.test(src) ? `/api/thumb?w=320&u=${encodeURIComponent(src)}` : src} alt="" loading="lazy" className="h-full w-full object-cover ease-smooth transition-transform duration-[600ms] group-hover:scale-[1.04]" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </section>
   );
 }
