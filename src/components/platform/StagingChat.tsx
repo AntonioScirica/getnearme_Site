@@ -1230,12 +1230,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           )}
 
           {/* Conversazione: le foto sono messaggi, quelle di AgenteImmo a sinistra e piu' piccole */}
-          {project && projTitle && (
-            <a href={`#/immobile/${project}`} className="group flex items-center gap-3 py-1 text-xs text-muted" title={tr('Apri la scheda dell’immobile', 'Open the property')}>
-              {/* entra morbido: prima la pillola col nome, poi le due linee che si allungano verso i lati */}
-              <span className="grow-x h-px flex-1 origin-right bg-black/10" style={{ animationDelay: '200ms' }} aria-hidden />
-              <span className="rise flex max-w-[70%] items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-medium shadow-sm ring-1 ring-black/5 group-hover:text-ink"><Building2 size={13} className="shrink-0 text-brand" /><span className="truncate">{projTitle}</span></span>
-              <span className="grow-x h-px flex-1 origin-left bg-black/10" style={{ animationDelay: '200ms' }} aria-hidden />
+          {project && (
+            // spazio fisso da subito (niente salto): finche' non arriva il nome c'e' lo scheletro della pillola,
+            // le due linee crescono dai bordi verso il centro
+            <a href={`#/immobile/${project}`} className="group flex h-9 items-center gap-3 text-xs text-muted" title={tr('Apri la scheda dell’immobile', 'Open the property')}>
+              <span className="grow-x h-px flex-1 origin-left bg-black/10" aria-hidden />
+              {projTitle
+                ? <span key="t" className="blur-in flex max-w-[70%] items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-medium shadow-sm ring-1 ring-black/5 group-hover:text-ink"><Building2 size={13} className="shrink-0 text-brand" /><span className="truncate">{projTitle}</span></span>
+                : <span key="s" className="h-7 w-40 animate-pulse rounded-full bg-black/[0.06]" aria-hidden />}
+              <span className="grow-x h-px flex-1 origin-right bg-black/10" aria-hidden />
             </a>
           )}
           {msgs.map((m, i) => i === zoneOwner && m.role === 'user' ? (
