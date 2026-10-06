@@ -278,7 +278,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           ) : route === '/staging' ? (
             // senza piano: qualsiasi clic, tasto o foto trascinata nella chat apre il popup che porta ai piani
             <div className="h-full" onClickCapture={noPlan ? blockNoPlan : undefined} onKeyDownCapture={noPlan ? blockNoPlan : undefined} onDropCapture={noPlan ? blockNoPlan : undefined} onDragOverCapture={noPlan ? e => e.preventDefault() : undefined}>
-              <StagingView initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
+              <StagingView key={new URLSearchParams(query).get('photo') ?? 'chat'} /* foto nuova dalla scheda: la chat riparte con quella, anche se era gia' aperta */ initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
             </div>
           ) : route === '/richieste' ? (
             <LeadsView />

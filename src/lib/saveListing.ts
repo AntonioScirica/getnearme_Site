@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { isPlanUrl } from '@/lib/planUrl'
+import { sceneFromName } from '@/lib/planUrl'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { rehostImage } from '@/lib/r2'
 
@@ -44,10 +44,10 @@ export async function saveListingProject(userId: string, b: ListingToSave): Prom
   // Foto: copia su R2 a 1600px, a gruppi di PARALLEL, mantenendo l'ordine.
   const sources = (Array.isArray(l.photos) ? l.photos : []).filter(isPublicHttpsUrl).slice(0, MAX_PHOTOS) // foto di qualsiasi sito di annunci, solo https pubblico
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const photos: string[] = [], plans: string[] = [] // plans: le planimetrie gia' su R2 (segnate in rooms, per la Casa 3D)
+  const photos: string[] = [], named: Record<string, object> = {} // foto riconosciute dal nome (planimetrie, esterni, giardino): niente AI dopo
   for (let i = 0; i < sources.length; i += PARALLEL) {
     const batch = await Promise.all(sources.slice(i, i + PARALLEL).map((u, j) => rehostImage(u, `properties/${userId}/${stamp}-${i + j}.jpg`, 1600, 82)))
-    batch.forEach((u, j) => { if (u) { photos.push(u); if (isPlanUrl(sources[i + j])) plans.push(u) } })
+    batch.forEach((u, j) => { if (u) { photos.push(u); const h = sceneFromName(sources[i + j]); if (h) named[u] = { ...h, v: 2, da: 'nome' } } })
   }
   const thumb = sources[0] ? await rehostImage(sources[0], `covers/${userId}/${stamp}-thumb.jpg`, 100, 80) : null
 
@@ -71,7 +71,7 @@ export async function saveListingProject(userId: string, b: ListingToSave): Prom
       source: b.source ?? 'portal',
       url: str(l.url, 500),
       photos,
-      ...(plans.length ? { rooms: Object.fromEntries(plans.map(u => [u, { scene: 'planimetria' }])) } : {}),
+      ...(Object.keys(named).length ? { rooms: named } : {}),
       score: typeof b.score === 'number' ? b.score : null,
       suggerimenti: Array.isArray(b.suggerimenti) ? b.suggerimenti.slice(0, 20).map(s => str(s, 1000)) : [],
       piano: str(info.floor, 50),
