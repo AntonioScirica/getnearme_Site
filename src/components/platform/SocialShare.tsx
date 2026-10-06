@@ -1522,13 +1522,14 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
               {!canNext && <span id="social-missing" className="sr-only">{missing}</span>}
             </div>
           ) : (
-            <div className="flex min-w-0 flex-1 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              {canPublish && <button type="button" onClick={() => void share()} disabled={!allReady || !!busy || !!animRun} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>}
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row-reverse sm:justify-start">{/* in ordine: Salva (o Crea il post animato), Pubblica, Ho finito */}
               {animFirst ? (
                 <button type="button" onClick={() => void makeAnim()} disabled={!ready || !allReady || !!animRun || !!busy} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>{animRun ? <Loader2 size={16} className="animate-spin" /> : <Clapperboard size={16} />} <span className="truncate tabular-nums">{animRun ? tr(`Creo il post animato ${Math.round(animRun.p * 100)}%`, `Making the animated post ${Math.round(animRun.p * 100)}%`) : tr('Crea il post animato', 'Make the animated post')}</span></button>
               ) : (
                 <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} <span className="truncate">{saveLabel}</span></button>
               )}
+              {canPublish && <button type="button" onClick={() => void share()} disabled={!allReady || !!busy || !!animRun} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>}
+              <button type="button" onClick={onClose} className={`${btn} min-w-0 px-5 text-muted hover:bg-canvas hover:text-ink`}>{tr('Ho finito', 'Done')}</button>
             </div>
           )}
         </div>
