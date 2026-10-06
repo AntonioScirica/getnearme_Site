@@ -479,6 +479,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
   const show = (n: NetId) => { setActive(n); setSlideIx(0); };
   const goStep = (i: number) => { setStepIx(i); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
+  // passi a scelta singola (Cosa, Foto con una foto sola, Grafica): scelto, si va avanti da soli dopo un attimo
+  const autoNext = () => { const from = stepIx; setTimeout(() => goStep(from + 1), 450); };
   // grafica: nessuna finche' non la tocca (tplId: quella di riserva per i conti interni)
   const [tpl, setTpl] = useState<string | null>(null);
   const tplChosen = tpl !== null;
@@ -559,7 +561,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const photosSettled = scanned >= upto || (scanned >= Math.min(anyMulti ? 5 : 3, upto) && (anyMulti ? sel : sel.slice(0, 1)).every(seen));
   // formato a una foto: la foto toccata diventa la prima (la scelta del carosello resta, in ordine)
   const tap = (src: string) => {
-    if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
+    if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); if (!anyMulti) autoNext(); return; }
     setSel(s => (s.includes(src) ? s.filter(x => x !== src) : s.length >= MAX_PHOTOS ? s : [...s, src]));
   };
   const needBlur = [...new Set(nets.flatMap(n => photosFor(fmtOf(n))))];
@@ -1048,7 +1050,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     <div className="space-y-4">
       <h3 className="font-display text-lg font-semibold">{tr('Cosa pubblichi?', 'What are you posting?')}</h3>
       <div role="radiogroup" aria-label={tr('Cosa pubblichi', 'What you post')} className="grid grid-cols-2 gap-3">
-        {bigChoice(soldPick === false, House, tr('Casa in vendita o in affitto', 'Home for sale or rent'), tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), () => setSold(false))}
+        {bigChoice(soldPick === false, House, tr('Casa in vendita o in affitto', 'Home for sale or rent'), tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), () => { setSold(false); autoNext(); })}
         {bigChoice(soldOn, BadgeCheck, tr('Casa venduta o affittata', 'Home sold or rented'), tr('Per far vedere il lavoro fatto', 'To show your work'), () => setSold(true), isClosed(status0) ? tr('Consigliato', 'Suggested') : undefined)}
       </div>
       {soldOn && (
@@ -1165,7 +1167,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   );
 
   // passo 4: la grafica. Toccandone una sul telefono l'anteprima grande torna in vista
-  const pickTpl = (id: string) => { setTpl(id); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+  const pickTpl = (id: string) => { setTpl(id); autoNext(); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
   const stepGrafica = (
     <div className="space-y-4">
       <div>
