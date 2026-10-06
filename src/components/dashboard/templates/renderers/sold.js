@@ -53,7 +53,7 @@ export function renderSoldStamp(data, photoUrl, opts = {}) {
   const stamp = div({ transform: 'rotate(-8deg)', background: 'rgba(255,255,255,.94)', border: `8px solid ${RED}`, borderRadius: '28px', padding: '10px', boxShadow: '0 24px 60px -20px rgba(0,0,0,.5)' });
   const inner = div({ border: `3px solid ${RED}`, borderRadius: '18px', padding: '22px 52px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' });
   if (data.agencyName) inner.appendChild(text(data.agencyName.toUpperCase().slice(0, 32), { fontSize: '26px', fontWeight: '600', letterSpacing: '6px', lineHeight: '30px', color: RED, whiteSpace: 'nowrap', maxWidth: '760px', overflow: 'hidden', textOverflow: 'ellipsis' }, 'tpl-address'));
-  inner.appendChild(text(label, { fontSize: label.length > 7 ? '120px' : '150px', fontWeight: '700', lineHeight: '1', letterSpacing: '4px', color: RED, whiteSpace: 'nowrap' }));
+  inner.appendChild(text(label, { fontSize: label.length > 8 ? '108px' : label.length > 7 ? '120px' : '150px', fontWeight: '700', lineHeight: '1', letterSpacing: '4px', color: RED, whiteSpace: 'nowrap' }));
   stamp.appendChild(inner);
   mid.appendChild(stamp);
   const info = div({ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', maxWidth: '100%' });
@@ -63,7 +63,7 @@ export function renderSoldStamp(data, photoUrl, opts = {}) {
     row.appendChild(text(data.soldPlace, { fontSize: '46px', fontWeight: '600', lineHeight: '56px', textShadow: '0 2px 16px rgba(0,0,0,.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, 'tpl-address'));
     info.appendChild(row);
   }
-  if (data.soldDays) info.appendChild(text(data.soldDays, { fontSize: '36px', fontWeight: '600', lineHeight: '36px', color: RED, background: '#fff', padding: '16px 34px', borderRadius: '999px', whiteSpace: 'nowrap' }, 'tpl-badge'));
+  if (data.soldDays) info.appendChild(text(data.soldDays, { fontSize: '36px', fontWeight: '600', lineHeight: '36px', color: RED, background: '#fff', padding: '16px 34px', borderRadius: '999px', whiteSpace: 'nowrap', alignSelf: 'center' }, 'tpl-badge'));
   if (info.children.length) mid.appendChild(info);
   col.appendChild(mid);
   col.appendChild(cta(data, false));
