@@ -1347,7 +1347,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           {!last ? (
             <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
               <button type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'} className={`${btn} min-w-[160px] bg-ink text-base text-white enabled:hover:bg-brand disabled:opacity-40`}>{tr('Avanti', 'Next')} <ArrowRight size={18} /></button>
-              {!canNext && <span id="social-missing" key={missing} className="blur-in text-sm text-muted">{missing}</span>}
+              {!canNext && <span id="social-missing" className="sr-only">{missing}</span>}
             </div>
           ) : (
             <div className="flex min-w-0 flex-1 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
