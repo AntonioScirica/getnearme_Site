@@ -203,7 +203,7 @@ export default function InstallPrompt() {
         <span aria-hidden className="mx-auto -mt-2 mb-4 block h-1 w-10 rounded-full bg-line md:hidden" />
         <div className="flex items-start gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon-192.png" alt="" className="h-14 w-14 shrink-0 rounded-[16px] ring-1 ring-black/5" />
+          <img src="/icon-192.png" alt="" className="h-11 w-11 shrink-0 rounded-[12px] ring-1 ring-black/5" />
           <div className="min-w-0 flex-1">
             <p id="install-title" className="text-lg font-semibold leading-snug text-ink">{title}</p>
             {sub && <p className="mt-1 text-[15px] leading-snug text-muted">{sub}</p>}
