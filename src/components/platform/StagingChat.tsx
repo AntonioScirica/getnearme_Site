@@ -10,7 +10,7 @@ import { VIDEO_POSTERS, VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { createPortal } from 'react-dom';
-import { Anvil, Building2, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, Tag, Pencil, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X, Drone, SunSnow, Sun, Flower2, Snowflake } from 'lucide-react';
+import { Anvil, Camera, Building2, Mic, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, Tag, Pencil, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, RotateCcw, SquareDashed, SquareDashedMousePointer, X, Drone, SunSnow, Sun, Flower2, Snowflake } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -482,6 +482,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // foto di riferimento per lo stile: scelta (Unsplash o dal computer) = richiesta inviata subito
   const [inspo, setInspo] = useState(false); // pannello "Cerca ispirazione" (Unsplash)
   const styleInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null); // telefono: foto scattata subito con la fotocamera
   const [picked, setPicked] = useState<Suggestion | null>(null);
   const [scene, setScene] = useState<Scene>(saved?.scene ?? 'interno');
   const [kind, setKind] = useState<string | null>(saved?.kind ?? null); // es. "room:cucina", "scene:giardino": decide i suggerimenti
@@ -1136,6 +1137,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const closeSave = useCallback(() => setSaveOpen(null), []);
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
+  const camera = <input ref={cameraInput} type="file" accept="image/*" capture="environment" className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
   // modifiche scritte gia' fatte sulla foto di partenza (le prime 3 gratis per foto: lo conta il server, qui solo per le pill)
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out && !!x.req && x.req.angle !== 'day' && creditsOf(x.req, 0) === CREDIT_COST.modifica && (x.req.reference ?? x.req.imageUrl ?? x.req.imageBase64) === sourcePhoto).length;
@@ -1224,9 +1226,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 <span className="mt-1 flex flex-wrap items-center justify-center gap-2 max-sm:w-full max-sm:flex-col max-sm:[&>*]:w-full max-sm:[&>*]:justify-center">{/* telefono: due pulsanti uguali a tutta larghezza */}
                   <span className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><ImagePlus size={16} /> {tr('Carica foto/video', 'Upload photo/video')}</span>{/* principale: caricare (Dalla tua vetrina e' vuota per chi e' nuovo) */}
                   {/* dentro la label: senza preventDefault aprirebbe anche la scelta file */}
+                  {/* solo telefono: scatta con la fotocamera (capture), senza passare dalla galleria */}
+                  <button type="button" onClick={e => { e.preventDefault(); cameraInput.current?.click(); }} className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line sm:hidden"><Camera size={16} /> {tr('Scatta una foto', 'Take a photo')}</button>
                   <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><LayoutGrid size={16} /> {tr('Dalla tua vetrina', 'From your showcase')}</button>
                 </span>
               </label>
+              {camera}
             </div>
           )}
 

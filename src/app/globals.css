@@ -587,9 +587,6 @@ body.gnm-hide-feedback #writhink-widget-root { display: none !important; }
 @keyframes gnm-kenburns { from { transform: scale(1); } to { transform: scale(1.12); } }
 @media (prefers-reduced-motion: reduce) { .kenburns { animation: none; } }
 
-/* iPhone/iPad in Safari (non web app): spazio per la barra degli indirizzi galleggiante.
-   ponytail: 8px misurati a occhio su iOS 26, da ritoccare se Apple cambia la barra */
-.ios-browser nav[aria-label="Menu principale"] { padding-bottom: calc(max(8px, env(safe-area-inset-bottom)) + 8px); }
 
 /* telefono e tablet: con la tastiera aperta (un campo in focus) la barra in basso sparisce, non sale con il campo */
 @media (max-width: 1023px) { body:has(textarea:focus, input:not([type=checkbox]):not([type=radio]):focus) nav[aria-label="Menu principale"] { display: none; } }

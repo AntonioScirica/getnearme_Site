@@ -245,12 +245,12 @@ export default function MediaView() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-4 border-b border-line pb-6">
+      <div className="flex items-end justify-between gap-4 border-b border-line pb-6 max-sm:flex-col max-sm:items-stretch">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Galleria', 'Gallery')}</h1>
           <p className="pt-1 text-sm text-muted"><span className="sm:hidden">{tr("Foto e video creati con l'AI. Aprili per tutti i passaggi.", 'Photos and videos made with AI. Open one for every step.')}</span><span className="max-sm:hidden">{tr("Le foto create con l'AI, all'ultima versione. Passa sopra per vedere com'era, aprila per tutti i passaggi.", 'Your AI photos, latest version. Hover to see the original, open one to see every step.')}</span></p>{/* telefono: niente "passa sopra" */}
         </div>
-        <a href="#/staging" onClick={() => { try { sessionStorage.removeItem('gnm-staging-chat'); } catch { /* niente */ } }} className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> {tr('Nuova foto', 'New photo')}</a>
+        <a href="#/staging" onClick={() => { try { sessionStorage.removeItem('gnm-staging-chat'); } catch { /* niente */ } }} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 sm:h-10"><Wand2 size={15} /> {tr('Nuova foto', 'New photo')}</a>
       </div>
 
       {demo && (
@@ -263,7 +263,7 @@ export default function MediaView() {
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 pt-6">
-        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 max-sm:order-1 max-sm:basis-[calc(100%-7.5rem)] rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
+        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 max-sm:order-1 max-sm:basis-full rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
           <Search size={16} className="shrink-0 text-muted" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca per stanza, casa o richiesta', 'Search by room, property or request')} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
         </label>
@@ -271,7 +271,7 @@ export default function MediaView() {
         <Dropdown value={casa} options={casaOptions} onChange={setCasa} className={pill} />
         <Dropdown value={period} options={PERIODS.map(p => ({ value: p.value, label: p.label }))} onChange={setPeriod} className={pill} />
         {items && <span className="ml-auto text-sm text-muted max-sm:hidden">{total} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span>}
-        {!!items && !empty && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 shrink-0 rounded-full px-4 max-sm:order-2 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
+        {!!items && !empty && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 shrink-0 rounded-full px-4 max-sm:order-3 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
       </div>
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
