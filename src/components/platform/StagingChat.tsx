@@ -1763,7 +1763,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             </button>
           </div>
           {/* testo lungo: consiglio gentile (tetto rigido 500 caratteri sul campo) */}
-          {text.length > 150 && <p className="blur-in mt-1.5 text-center text-xs text-muted">{tr('Meglio una o due cose alla volta: il risultato viene più preciso', 'One or two things at a time works best: the result is more accurate')}</p>}
+          {/* prezzo sempre uguale: oltre 300 caratteri il consiglio si fa piu' deciso */}
+          {text.length > 150 && <p key={text.length > 300 ? 'l' : 's'} className={`blur-in mt-1.5 text-center text-xs ${text.length > 300 ? 'font-medium text-amber-700' : 'text-muted'}`}>{text.length > 300 ? tr('Messaggio lungo: meglio dividerlo in due richieste', 'Long message: better split it into two requests') : tr('Meglio una o due cose alla volta: il risultato viene più preciso', 'One or two things at a time works best: the result is more accurate')}</p>}
         </div>
       </div>
     </div>

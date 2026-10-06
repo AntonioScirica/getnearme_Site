@@ -15,13 +15,14 @@
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, Facebook, GalleryHorizontalEnd, House, Image as ImageIcon, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, RectangleVertical, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, Facebook, GalleryHorizontalEnd, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, RectangleVertical, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
 import { ANIMATION_STYLES, exportStaticToVideo, exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
 import { isClosed, statusOf, STATUS_LABELS, zoneOnly } from '@/lib/siteTemplates';
 import type { ProjectData } from '@/lib/projects';
 import { countChars, ruleOf } from '@/lib/socialRules';
+import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { authFetch, portfolioUrl } from './api';
 import { pageLang, tr } from './i18n';
 
@@ -496,7 +497,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
   const show = (n: NetId) => { setActive(n); setSlideIx(0); };
-  const goStep = (i: number) => { setStepIx(i); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
+  // entrando in Foto, Grafica, Testo e Video si parte sempre dal primo social scelto (ordine della lista), non dall'ultimo toccato
+  const goStep = (i: number) => { if (i >= S.foto && i !== stepIx) { const first = NETS.find(n => nets.includes(n.id)); if (first) setActive(first.id); } setStepIx(i); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
   // passo Cosa (scelta singola): scelto, si va avanti da soli dopo un attimo. Foto e Grafica no: si sceglie per ogni social
   const autoNext = () => { const from = stepIx; setTimeout(() => goStep(from + 1), 450); };
   // grafica per social, come le foto (06/10/2026): nessuna finche' non la tocca. tplShared vale per i social non ancora
@@ -1081,25 +1083,119 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   );
 
-  // scelta grande (passi Cosa e Video): icona, titolo, una riga sotto; una sola evidenziata
-  // due colonne uguali, contenuto centrato: icona sopra, titolo, una riga sotto
-  // badge: piccola etichetta in alto (Consigliato), non e' una scelta fatta
-  const bigChoice = (on: boolean, Icon: typeof Crop, title: string, sub: string, onClick: () => void, badge?: string) => (
-    <button type="button" role="radio" aria-checked={on} onClick={onClick} className={`relative flex h-full min-h-[168px] w-full flex-col items-center justify-center gap-2 rounded-[24px] p-4 text-center ${chip(on)}`}>
-      {badge && <span className="absolute right-3 top-3 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand">{badge}</span>}
-      <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] ease-smooth transition-colors ${on ? 'bg-brand text-white' : 'bg-canvas text-ink/70'}`}><Icon size={24} /></span>
-      <span className="block text-base font-semibold leading-snug">{title}</span>
-      <span className="block text-sm leading-snug text-muted">{sub}</span>
-    </button>
+  // scelta grande (passi Cosa e Video) fatta come le card grandi della home su computer (Tile e ImproveTile in PlatformApp,
+  // 06/10/2026): card bianca alta, occhiello piccolo e titolo grande in alto, sotto una mini scena animata con le foto della
+  // home (/immo/home, mai la copertina dell'immobile: spesso ha banner e scritte). Ingresso a cascata (rise), inclinazione col
+  // mouse con riflesso (tilt + sheen, ui/tilt) e parallasse su tre piani (par-1/2/3); al tocco solo lo scale.
+  // Telefono come la home: riga compatta, miniatura 64 a sinistra, freccia (o spunta) a destra. Scelta: anello brand e spunta.
+  // badge: piccola etichetta (Consigliato), non e' una scelta fatta
+  const tiltOn = (e: React.PointerEvent<HTMLElement>) => { if (e.pointerType === 'mouse') tiltMove(e); };
+  const bigChoice = (i: number, on: boolean, thumb: React.ReactNode, scene: React.ReactNode, kicker: string, title: string, onClick: () => void, badge?: string, h = 'sm:h-[22rem]', small = false, loading = false) => (
+    <div className="rise" style={{ animationDelay: `${0.12 + i * 0.08}s` }}>
+      <button type="button" role="radio" aria-checked={on} onClick={onClick} onPointerMove={tiltOn} onPointerLeave={e => tiltReset(e.currentTarget)}
+        className={`tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left outline-none focus-visible:ring-2 focus-visible:ring-brand/50 active:scale-[0.985] max-sm:flex-row max-sm:items-center max-sm:gap-4 max-sm:p-4 ${h} ${on ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_16px_32px_-16px_rgba(0,0,0,.18)] ring-2 ring-brand' : 'shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'}`}>
+        <span className="sheen pointer-events-none absolute inset-0 z-20" />
+        <span className="relative h-16 w-16 shrink-0 sm:hidden">{thumb}</span>
+        <span className="flex w-full min-w-0 flex-col items-start max-sm:flex-1 sm:pr-10">
+          <span className="par-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-sm text-muted">{kicker}</span>
+            {badge && <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand">{badge}</span>}
+          </span>
+          <span className="par-1 mt-1 block max-w-full truncate whitespace-nowrap text-2xl font-bold leading-tight tracking-tight max-sm:text-lg">{title}</span>
+        </span>
+        {on
+          ? <span key="on" className="pop z-30 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white sm:absolute sm:right-5 sm:top-5">{loading ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} strokeWidth={3} />}</span>
+          : <ChevronRight key="off" size={20} className="shrink-0 text-muted sm:hidden" />}
+        <span className="relative block min-h-0 w-full flex-1 pt-4 max-sm:hidden"><span className={`relative block h-full w-full ${small ? 'origin-center scale-[0.72]' : ''}`}>{scene}</span>{/* small: scena piu' piccola nel box (passo Video, accanto all'anteprima) */}</span>
+      </button>
+    </div>
+  );
+  const H = '/immo/home/';
+  // mini post 4:5 con la foto, nel piano di mezzo; al passaggio del mouse si inclina un poco
+  const miniPost = (src: string, children: React.ReactNode) => (
+    <span className="par-2 absolute inset-y-1 left-1/2 block -translate-x-1/2">
+      <span className="relative block aspect-[4/5] h-full overflow-hidden rounded-2xl bg-white p-2 shadow-md ease-smooth transition-[rotate,scale] group-hover:-rotate-2 group-hover:scale-[1.03]">
+        <span className="relative block h-full w-full overflow-hidden rounded-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" decoding="async" className="h-full w-full object-cover" />
+          <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15" />
+          {children}
+        </span>
+      </span>
+    </span>
+  );
+  const soldWord = soldKind === 'affittato' ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold');
+  const thumbImg = (src: string, extra?: React.ReactNode) => (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" className="h-16 w-16 rounded-2xl object-cover" />
+      {extra}
+    </>
+  );
+  const corner = (cls: string, node: React.ReactNode) => <span className={`absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full text-white shadow-md ring-2 ring-white ${cls}`}>{node}</span>;
+  // Cosa: annuncio (pill e prezzo che entrano, badge Nuovo) e venduto (timbro rosso che si posa, "in 23 giorni")
+  const sceneSale = (
+    <>
+      {miniPost(`${H}card.webp`, (
+        <>
+          <span className="ss-enter absolute left-3 top-3 rounded-md bg-brand px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white" style={{ animationDelay: '.1s' }}>{tr('In vendita', 'For sale')}</span>
+          <span className="ss-enter absolute bottom-3 left-3 text-xl font-bold text-white" style={{ animationDelay: '.35s' }}>€ 260.000</span>
+        </>
+      ))}
+      <span className="par-3 absolute right-[14%] top-0 z-10"><span className="flex rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg ease-smooth transition-[scale] group-hover:scale-110">{tr('Nuovo', 'New')}</span></span>
+    </>
+  );
+  const sceneSold = (
+    <>
+      {miniPost(`${H}fan-3.webp`, (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <span className="-rotate-12"><span className="ss-stamp block rounded-lg border-[3px] border-red-600 bg-white/90 px-3 py-1.5 text-xl font-extrabold uppercase leading-none tracking-wider text-red-600 shadow-sm">{soldWord}</span></span>
+        </span>
+      ))}
+      <span className="par-3 absolute bottom-0 left-1/2 z-10 -translate-x-1/2"><span className="flex whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-md ring-1 ring-black/5">{tr('in 23 giorni', 'in 23 days')}</span></span>
+    </>
+  );
+  // Video: post con le scritte che entrano a turno e il tasto play; foto a ventaglio col tasto Scarica (come "Mettilo in vetrina")
+  const sceneAnim = (
+    <>
+      {miniPost(`${H}fan-1.webp`, (
+        <>
+          <span className="ss-enter absolute left-3 top-3 rounded-md bg-white px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-ink" style={{ animationDelay: '.1s' }}>{tr('In vendita', 'For sale')}</span>
+          <span className="absolute inset-x-3 bottom-5 flex flex-col gap-1.5">
+            <span className="ss-enter block h-2 w-4/5 rounded bg-white/90" style={{ animationDelay: '.3s' }} />
+            <span className="ss-enter block h-2 w-3/5 rounded bg-white/90" style={{ animationDelay: '.5s' }} />
+            <span className="ss-enter block text-lg font-bold text-white" style={{ animationDelay: '.7s' }}>€ 260.000</span>
+          </span>
+          <span className="absolute inset-x-3 bottom-2.5 block h-1 overflow-hidden rounded bg-white/30"><span className="ss-progress block h-full w-full bg-white" /></span>
+        </>
+      ))}
+      <span className="par-3 absolute bottom-0 right-[18%] z-20">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-white shadow-lg ease-smooth transition-transform group-hover:scale-110"><Play size={18} className="translate-x-px" fill="currentColor" /></span>
+      </span>
+    </>
+  );
+  const sceneSave = (
+    <>
+      {[`${H}fan-1.webp`, `${H}fan-2.webp`, `${H}fan-3.webp`].map((src, i) => (
+        <span key={src} className={`absolute left-1/2 block ${i === 1 ? 'top-1' : 'top-5'} ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt="" decoding="async" className={`${i === 1 ? 'h-44' : 'h-40'} w-32 -translate-x-1/2 rounded-2xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
+            ['-translate-x-[90%] -rotate-12 group-hover:-translate-x-[118%] group-hover:-rotate-[18deg]', 'group-hover:-translate-y-3 group-hover:scale-105', '-translate-x-[10%] rotate-12 group-hover:translate-x-[18%] group-hover:rotate-[18deg]'][i]}`} />
+        </span>
+      ))}
+      <span className="par-3 absolute bottom-0 left-1/2 z-20 -translate-x-1/2">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-white shadow-lg ease-smooth transition-transform group-hover:translate-y-0.5 group-hover:scale-110"><Download size={18} /></span>
+      </span>
+    </>
   );
 
   // passo 1: cosa pubblichi, chiesto una volta (vale per grafiche, testi e video)
   const stepCosa = (
-    <div className="space-y-4">
-      <h3 className="font-display text-lg font-semibold">{tr('Cosa pubblichi?', 'What are you posting?')}</h3>
-      <div role="radiogroup" aria-label={tr('Cosa pubblichi', 'What you post')} className="grid grid-cols-2 gap-3">
-        {bigChoice(soldPick === false, House, tr('Casa in vendita o in affitto', 'Home for sale or rent'), tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), () => { setSold(false); autoNext(); })}
-        {bigChoice(soldOn, BadgeCheck, tr('Casa venduta o affittata', 'Home sold or rented'), tr('Per far vedere il lavoro fatto', 'To show your work'), () => setSold(true), isClosed(status0) ? tr('Consigliato', 'Suggested') : undefined)}
+    <div className="space-y-4 sm:space-y-6">
+      <h3 className="text-center font-display text-lg font-semibold sm:text-xl">{tr('Cosa pubblichi?', 'What are you posting?')}</h3>
+      <div role="radiogroup" aria-label={tr('Cosa pubblichi', 'What you post')} className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+        {bigChoice(0, soldPick === false, thumbImg(`${H}card.webp`), sceneSale, tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), tr('Casa in vendita', 'Home for sale'), () => { setSold(false); autoNext(); })}
+        {bigChoice(1, soldOn, thumbImg(`${H}fan-3.webp`, corner('bg-red-600', <BadgeCheck size={14} />)), sceneSold, tr('Venduta o affittata, il lavoro fatto', 'Sold or rented, your work'), tr('Casa venduta', 'Home sold'), () => setSold(true), isClosed(status0) ? tr('Consigliato', 'Suggested') : undefined)}
       </div>
       {soldOn && (
         <div className="blur-in space-y-4 rounded-[24px] bg-canvas p-4">
@@ -1342,10 +1438,12 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const sayNo = () => { setWantAnim(false); setSaidNo(true); if (ready && !busy && !animRun) void downloadAll(); };
   const stepVideo = (
     <div className="space-y-5">
-      <h3 className="font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
-      <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-2 gap-3">
-        {animOk && bigChoice(wantAnim, Clapperboard, tr('Post animato', 'Animated post'), tr('Gratis, la tua grafica si muove', 'Free, your design moves'), sayAnim)}
-        {bigChoice(!wantAnim && saidNo, ImageIcon, tr('No, salva le foto', 'No, save the photos'), tr('Le scarichi subito', 'Download them now'), sayNo)}
+      <div className="space-y-4">
+        <h3 className="text-center font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
+        <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
+          {animOk && bigChoice(0, wantAnim, thumbImg(`${H}fan-1.webp`, corner('bg-brand', <Play size={12} fill="currentColor" />)), sceneAnim, tr('Gratis, la tua grafica si muove', 'Free, your design moves'), tr('Post animato', 'Animated post'), sayAnim, undefined, 'sm:h-[20rem]', true)}
+          {bigChoice(animOk ? 1 : 0, !wantAnim && saidNo, thumbImg(`${H}fan-2.webp`, corner('bg-ink', <Download size={14} />)), sceneSave, tr('No video, le scarichi subito', 'No video, download them now'), tr('Solo foto', 'Photos only'), sayNo, undefined, 'sm:h-[20rem]', true, busy === 'all')}
+        </div>
       </div>
       {wantAnim && stepAnim}
       <p className="min-h-5 text-sm text-muted" aria-live="polite">{note}</p>
@@ -1354,6 +1452,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
 
   // piede dell'ultimo passo: un solo bottone scuro. "Crea il post animato" finche' (voluto) manca per qualche social, poi "Salva tutto"
   const last = stepIx === S.video;
+  const withPreview = stepIx >= S.foto; // anteprima del post solo dal passo Foto in poi
   const animFirst = last && wantAnim && (!!animRun || nets.some(n => !animOf(n)));
   const shareLabel = tr(`Pubblica su ${net.label}`, `Post on ${net.label}`);
 
@@ -1388,11 +1487,17 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           )}
         </div>
 
-        {/* corpo: anteprima (sempre della stessa grandezza) e passo */}
+        {/* corpo: anteprima (sempre della stessa grandezza) e passo. Nei passi Cosa e Dove niente anteprima (06/10/2026): il passo
+            prende tutta la larghezza (al centro, max-w-2xl); dal passo Foto la colonna dell'anteprima si apre in 600ms
+            (computer: larghezza, telefono: altezza con grid-rows), il contenuto dentro ha misura fissa e non si ridispone */}
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto lg:flex lg:overflow-hidden">
-          <div className="flex shrink-0 justify-center px-4 pb-1 pt-4 [contain:paint] [transform:translateZ(0)] lg:w-[464px] lg:items-start lg:overflow-y-auto lg:px-8 lg:py-6">{preview}</div>
-          <div ref={stepRef} className="min-w-0 flex-1 px-4 pb-6 pt-3 sm:px-6 lg:overflow-y-auto lg:py-6 lg:pl-2 lg:pr-8">
-            <div key={stepIx} className="blur-in">{[stepCosa, stepDove, stepFoto, stepGrafica, stepTesto, stepVideo][stepIx]}</div>
+          <div aria-hidden={!withPreview} inert={!withPreview} className={`grid shrink-0 ease-smooth transition-[grid-template-rows,width,opacity] motion-reduce:transition-none lg:block lg:overflow-hidden ${withPreview ? 'grid-rows-[1fr] opacity-100 lg:w-[464px]' : 'grid-rows-[0fr] opacity-0 lg:w-0'}`}>
+            <div className="min-h-0 overflow-hidden lg:h-full lg:w-[464px] lg:overflow-y-auto">
+              <div className="flex justify-center px-4 pb-1 pt-4 [contain:paint] [transform:translateZ(0)] lg:items-start lg:px-8 lg:py-6">{preview}</div>
+            </div>
+          </div>
+          <div ref={stepRef} className={`flex min-w-0 flex-1 flex-col px-4 pb-6 pt-3 ease-smooth transition-[padding] motion-reduce:transition-none sm:px-6 lg:overflow-y-auto lg:py-6 lg:pr-8 ${withPreview ? 'lg:pl-2' : 'min-h-full pt-4 lg:pl-8'}`}>
+            <div key={stepIx} className={`blur-in mx-auto w-full ${stepIx === S.cosa ? 'my-auto' : ''} ${withPreview ? 'max-lg:max-w-none lg:max-w-2xl' : 'max-w-2xl'}`}>{[stepCosa, stepDove, stepFoto, stepGrafica, stepTesto, stepVideo][stepIx]}</div>
           </div>
         </div>
 
