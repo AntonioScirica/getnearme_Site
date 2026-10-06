@@ -579,3 +579,10 @@ html.lite::view-transition-group(*), html.lite::view-transition-old(*), html.lit
 
 /* Tailwind 4 non mette piu' la manina sui pulsanti: tutto cio' che si clicca la ha (link, pulsanti, interruttori, scelte) */
 a[href], button:not(:disabled), [role="button"], [role="switch"], [role="tab"], label:has(input[type="file"]), label:has(input[type="checkbox"]), select, summary { cursor: pointer; }
+
+/* bottone Feedback (Writhink, components/FeedbackWidget) nascosto sotto i popup che lo coprirebbero (Condividi sui social) */
+body.gnm-hide-feedback #writhink-widget-root { display: none !important; }
+/* foto che si muove piano (anteprima del video in Condividi sui social) */
+.kenburns { animation: gnm-kenburns 9s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+@keyframes gnm-kenburns { from { transform: scale(1); } to { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .kenburns { animation: none; } }

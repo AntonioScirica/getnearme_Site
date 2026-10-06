@@ -1,41 +1,48 @@
 'use client';
 
-// Scheda immobile, "Condividi sui social" (05/10/2026, a passi dal 06/10): 1 i social (anche piu' d'uno insieme) e il
-// formato di ognuno, 2 le foto (una, o piu' per il carosello), 3 la grafica (la stessa per tutti, adattata a ogni formato),
-// 4 i testi di tutti i social in colonna (entro i limiti di ognuno, lib/socialRules) e, se si vuole, il video dell'annuncio
-// (api/platform/video-reel, gli stessi stili della chat), poi Scarica tutto o Condividi (il social che si guarda). Anteprima a sinistra in un riquadro
-// fisso, il post ci sta dentro in ogni formato. Le grafiche sono quelle dei post della vecchia dashboard GetNearMe
+// Scheda immobile, "Condividi sui social" (05/10/2026; rifatto "facilissimo" il 06/10/2026 per agenti 55-70 anni): sei passi,
+// 1 Cosa pubblichi (casa in vendita/affitto o venduta/affittata, chiesto una volta: vale per grafiche, testi e video),
+// 2 Dove (uno o piu' social, per ognuno il tipo di post in un segmentato gia' su "Una foto"), 3 Foto (toccate nell'ordine,
+// "Sistema la foto" sotto l'anteprima), 4 Grafica (la stessa per tutti, adattata a ogni formato), 5 Testo (gia' scritto per ogni
+// social, lib/socialRules), 6 Video facoltativo (api/platform/video-reel, stili della chat), poi Pubblica su ... o Salva.
+// Niente misure ne' parole tecniche a schermo. Anteprima a sinistra in un riquadro fisso, il post ci sta dentro in ogni formato.
+// Le grafiche sono quelle dei post della vecchia dashboard GetNearMe
 // (components/dashboard/templates: renderTemplate + exporter) con i dati veri dell'immobile, il logo e il colore
 // dell'agenzia (gli stessi di BrandCard, api/platform/site); il testo lo scrive l'AI per ogni social (api/platform/social-caption).
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Coins, Copy, Crop, Download, Facebook, Film, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, Plus, RotateCcw, Share2, Sparkles, TriangleAlert, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Copy, Crop, Download, Facebook, Film, GalleryHorizontal, House, Image as ImageIcon, Instagram, Linkedin, Loader2, MapPin, MessageCircle, Maximize2, Minimize2, Music2, Play, Plus, RotateCcw, Share2, Smartphone, Sparkles, Square, TriangleAlert, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
 import { exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
 import { isClosed, statusOf, STATUS_LABELS, zoneOnly } from '@/lib/siteTemplates';
 import type { ProjectData } from '@/lib/projects';
 import { CREDIT_COST } from '@/lib/pricing';
-import { countChars, countTags, ruleOf } from '@/lib/socialRules';
-import { MAX_REEL_PHOTOS, reelStyleLabel, StylePick, type ReelStyle, type ReelTpl } from './ReelSteps';
+import { countChars, ruleOf } from '@/lib/socialRules';
+import { MAX_REEL_PHOTOS, StylePick, type ReelStyle, type ReelTpl } from './ReelSteps';
 import { authFetch, portfolioUrl } from './api';
 import { pageLang, tr } from './i18n';
 
 type Safe = { top: number; bottom: number; left: number; right: number };
 type Size = { w: number; h: number; safe: Safe };
-type Fmt = { id: string; label: string; ratio: string; w: number; h: number; safe: Safe; multi?: boolean; pdf?: boolean };
+// kind: come lo vede l'agente, senza misure: una foto, piu' foto da sfogliare, verticale (storie e stati)
+type Fmt = { id: string; label: string; kind: 'one' | 'many' | 'tall'; ratio: string; w: number; h: number; safe: Safe; multi?: boolean; pdf?: boolean };
 type NetId = 'instagram' | 'facebook' | 'whatsapp' | 'tiktok' | 'linkedin';
 const M60: Safe = { top: 60, bottom: 60, left: 60, right: 60 };
-const f45 = (id: string, label: string, x: Partial<Fmt> = {}): Fmt => ({ id, label, ratio: '4:5', w: 1080, h: 1350, safe: M60, ...x });
-const f11 = (id: string, label: string, x: Partial<Fmt> = {}): Fmt => ({ id, label, ratio: '1:1', w: 1080, h: 1080, safe: M60, ...x });
-const f916 = (id: string, label: string, top: number, bottom: number, x: Partial<Fmt> = {}): Fmt => ({ id, label, ratio: '9:16', w: 1080, h: 1920, safe: { top, bottom, left: 0, right: 0 }, ...x });
-// formati e misure di ogni social; nei 9:16 la safe area lascia libere le scritte del social (nome in alto, risposta in basso)
+const kindOf = (x: Partial<Fmt>, tall: boolean): Fmt['kind'] => (x.multi ? 'many' : tall ? 'tall' : 'one');
+const f45 = (id: string, label: string, x: Partial<Fmt> = {}): Fmt => ({ id, label, kind: kindOf(x, false), ratio: '4:5', w: 1080, h: 1350, safe: M60, ...x });
+const f11 = (id: string, label: string, x: Partial<Fmt> = {}): Fmt => ({ id, label, kind: kindOf(x, false), ratio: '1:1', w: 1080, h: 1080, safe: M60, ...x });
+const f916 = (id: string, label: string, top: number, bottom: number, x: Partial<Fmt> = {}): Fmt => ({ id, label, kind: kindOf(x, true), ratio: '9:16', w: 1080, h: 1920, safe: { top, bottom, left: 0, right: 0 }, ...x });
+// formati e misure di ogni social; nei 9:16 la safe area lascia libere le scritte del social (nome in alto, risposta in basso).
+// Il primo di ogni social e' "Una foto", gia' scelto; gli altri tipi si scelgono dal segmentato del passo Dove, sempre in vista.
+// Ordine (06/10/2026, panel agenti 55-70): prima i social che usano di piu'
 const NETS: { id: NetId; label: string; fmts: Fmt[] }[] = [
-  { id: 'instagram', label: 'Instagram', fmts: [f45('post', 'Post'), f916('story', 'Storia o Reel', 200, 300), f45('carousel', 'Carosello', { multi: true })] },
-  { id: 'facebook', label: 'Facebook', fmts: [f45('post', 'Post'), f916('story', 'Storia', 225, 275), f11('carousel', 'Carosello', { multi: true })] },
-  { id: 'whatsapp', label: 'WhatsApp', fmts: [f916('status', 'Stato', 250, 250)] },
-  { id: 'tiktok', label: 'TikTok', fmts: [f916('photo', 'Foto', 200, 340), f916('carousel', 'Carosello', 200, 340, { multi: true })] },
+  { id: 'facebook', label: 'Facebook', fmts: [f45('post', 'Post'), f11('square', 'Quadrata'), f11('carousel', 'Carosello', { multi: true }), f916('story', 'Storia', 225, 275)] },
+  { id: 'whatsapp', label: 'WhatsApp', fmts: [f45('foto', 'Foto'), f916('status', 'Stato', 250, 250)] },
+  { id: 'instagram', label: 'Instagram', fmts: [f45('post', 'Post'), f11('square', 'Quadrata'), f45('carousel', 'Carosello', { multi: true }), f916('story', 'Storia o Reel', 200, 300)] },
+  // TikTok e' tutto verticale: la sua "una foto" e' gia' 9:16
+  { id: 'tiktok', label: 'TikTok', fmts: [f916('photo', 'Foto', 200, 340, { kind: 'one' }), f916('carousel', 'Carosello', 200, 340, { multi: true })] },
   { id: 'linkedin', label: 'LinkedIn', fmts: [f11('post', 'Post'), f45('doc', 'Carosello', { multi: true, pdf: true })] },
 ];
 const MAX_PHOTOS = 9; // + la slide dei contatti = 10, il massimo dei caroselli
@@ -44,14 +51,8 @@ const NO_COVER = ['arch', 'split', 'frame', 'spotlight', 'before-after', 'galler
 // grafiche che in un formato non reggono (testo o foto tagliati): si nascondono invece di deformarle
 // (provate il 06/10/2026 con titoli lunghi: Fascia e Fascia Alt nel quadrato coprono il titolo, nel 9:16 restano mezze vuote)
 const NO_FIT: Record<string, string[]> = { '1:1': ['topbar', 'topbar-alt'], '9:16': ['topbar', 'topbar-alt'] };
-// tono delle grafiche, per i filtri del passo Grafica: chiare, scure, col colore dell'agenzia
-type Tone = 'all' | 'sold' | 'light' | 'dark' | 'brand';
-const TONE: Record<string, Exclude<Tone, 'all'>> = {
-  'sold-stamp': 'sold', 'sold-elegant': 'sold', 'sold-classic': 'sold',
-  arch: 'light', card: 'light', topbar: 'light',
-  gradient: 'dark', centered: 'dark', elegant: 'dark', 'topbar-alt': 'dark', magazine: 'dark', clean: 'dark',
-  blue: 'brand', diagonal: 'brand', fade: 'brand', spotlight: 'brand', split: 'brand', gallery: 'brand',
-};
+// nomi delle grafiche Venduto/Affittato detti come si vedono (06/10/2026)
+const TPL_NAME: Record<string, [string, string]> = { 'sold-stamp': ['Timbro rosso', 'Red stamp'], 'sold-elegant': ['Scritta elegante', 'Elegant script'], 'sold-classic': ['Scritta semplice', 'Simple lettering'] };
 // famiglie di grafiche simili: se la scelta non regge il formato di un social, si usa la piu' vicina della stessa famiglia
 const SIMILAR = [['sold-stamp', 'sold-classic', 'sold-elegant'], ['topbar-alt', 'centered', 'gradient', 'elegant', 'magazine', 'clean'], ['topbar', 'card', 'arch'], ['blue', 'diagonal', 'fade', 'spotlight', 'split', 'gallery', 'before-after']];
 const STAGED_TEXT = 'Immagine arredata virtualmente';
@@ -294,6 +295,109 @@ function MorphPost({ build, boxW, boxH, fw, fh }: { build: Slide | null; boxW: n
   );
 }
 
+// riga di linguette con l'indicatore bianco che scorre sotto quella attiva (misurata dopo il disegno)
+function TabRow({ ids, on, deps, children }: { ids: string[]; on: string; deps: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLSpanElement>(null);
+  // l'indicatore si sposta sul DOM (niente stato): la prima volta senza animazione, poi scorre e si allarga
+  useLayoutEffect(() => {
+    const el = ref.current?.querySelector<HTMLElement>(`[data-tab="${on}"]`), b = bar.current;
+    if (!el || !b) return;
+    const first = b.style.opacity !== '1';
+    if (first) b.style.transition = 'none';
+    b.style.width = `${el.offsetWidth}px`; b.style.transform = `translateX(${el.offsetLeft}px)`; b.style.opacity = '1';
+    if (first) requestAnimationFrame(() => { b.style.transition = ''; });
+  }, [on, ids.join(','), deps]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div ref={ref} className="relative flex max-w-full flex-nowrap items-center gap-0.5 self-center rounded-full bg-canvas p-1" role="tablist">
+      <span ref={bar} aria-hidden className="absolute bottom-1 left-0 top-1 rounded-full bg-white opacity-0 shadow-sm ease-smooth transition-[transform,width] motion-reduce:transition-none" />
+      {children}
+    </div>
+  );
+}
+
+// anteprima del video prima di crearlo: la foto di QUESTA casa che si muove piano, con sopra il disegno dello stile
+// (come nelle clip di public/staging/reel-styles); le scritte appaiono dopo il riquadro. Niente rete, niente crediti
+function VideoMock({ w, h, photo, style, kind, title, place, days, agency, contract, accent, overlay }: {
+  w: number; h: number; photo?: string; style: ReelStyle; kind: 'reel' | 'venduto' | 'affittato'; title: string; place: string; days: string;
+  agency: string; contract: string; accent: string; overlay?: React.ReactNode;
+}) {
+  const k = w / 360, px = (n: number) => `${Math.round(n * k * 10) / 10}px`;
+  const RED = '#d93025', SERIF = '"Playfair Display", Georgia, serif';
+  const word = kind === 'affittato' ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold');
+  const pad = px(24);
+  const pin = place ? <span className="flex items-center justify-center gap-1" style={{ fontSize: px(13), fontWeight: 500 }}><MapPin size={Math.round(13 * k)} className="shrink-0" /> {place}</span> : null;
+  const frame = <div className="absolute rounded-[2px] border border-white/70" style={{ inset: px(14) }} />;
+  const top = (bars: boolean) => (
+    <div className="absolute inset-x-0 flex items-center justify-between" style={{ top: px(bars ? 28 : 30), left: pad, right: pad, fontSize: px(8), letterSpacing: '.18em', fontWeight: 600 }}>
+      {bars && <div className="absolute flex gap-1" style={{ top: px(-12), left: 0, right: 0 }}>{[0, 1, 2].map(i => <span key={i} className="h-[2px] flex-1 rounded-full bg-white/40"><span className={`block h-full rounded-full bg-white ${i ? 'w-0' : 'w-2/3'}`} /></span>)}</div>}
+      <span className="truncate uppercase">{agency}</span><span>01 / 03</span>
+    </div>
+  );
+  let body: React.ReactNode;
+  if (kind === 'reel') {
+    const titleEl = (s: React.CSSProperties) => <div style={{ fontSize: px(21), fontWeight: 600, lineHeight: 1.2, ...s }} className="line-clamp-3">{title}</div>;
+    const pill = <span className="self-start rounded-[4px] uppercase" style={{ background: accent, fontSize: px(8), fontWeight: 700, letterSpacing: '.12em', padding: `${px(4)} ${px(8)}` }}>{contract}</span>;
+    body = style === 'elegante' ? (
+      <>{frame}{top(false)}
+        <div className="absolute flex flex-col" style={{ left: px(30), right: px(30), bottom: px(70), gap: px(6) }}>
+          <span className="uppercase" style={{ fontSize: px(8), letterSpacing: '.2em' }}>{contract}</span>
+          {titleEl({ fontFamily: SERIF, fontWeight: 400, fontSize: px(22) })}
+          {place && <><span className="mt-2 uppercase" style={{ fontSize: px(7), letterSpacing: '.2em' }}>{tr('Zona', 'Area')}</span><span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: px(14) }}>{place}</span></>}
+        </div></>
+    ) : style === 'classico' ? (
+      <div className="absolute flex flex-col" style={{ left: pad, right: pad, bottom: px(70), gap: px(6) }}>
+        <span className="uppercase" style={{ fontSize: px(8), letterSpacing: '.2em', fontWeight: 600 }}>{contract}</span>
+        {titleEl({})}
+        <span className="bg-white" style={{ width: px(28), height: px(2), margin: `${px(4)} 0` }} />
+        <span style={{ fontSize: px(11) }}>{place}</span>
+      </div>
+    ) : (
+      <>{style === 'vivace' && top(true)}
+        <div className="absolute flex flex-col" style={{ left: pad, right: pad, bottom: px(style === 'vivace' ? 90 : 70), gap: px(8) }}>
+          {pill}{titleEl({})}<div className="flex">{pin}</div>
+        </div></>
+    );
+  } else {
+    const daysEl = (s: React.CSSProperties) => (days ? <span className="rounded-full" style={{ fontSize: px(11), fontWeight: 600, padding: `${px(4)} ${px(12)}`, ...s }}>{days}</span> : null);
+    const stamp = (withAgency: boolean) => (
+      <div className="pop flex flex-col items-center bg-white/95" style={{ border: `${px(3)} solid ${RED}`, borderRadius: px(8), padding: `${px(8)} ${px(18)}`, transform: 'rotate(-6deg)', color: RED, boxShadow: '0 8px 24px rgba(0,0,0,.25)' }}>
+        {withAgency && agency && <span className="max-w-[90%] truncate uppercase" style={{ fontSize: px(7), fontWeight: 700, letterSpacing: '.2em' }}>{agency}</span>}
+        <span className="uppercase" style={{ fontSize: px(34), fontWeight: 800, letterSpacing: '.04em', lineHeight: 1.05 }}>{word}</span>
+      </div>
+    );
+    body = style === 'semplice' || style === 'vivace' ? (
+      <div className="absolute inset-x-0 flex flex-col items-center text-center" style={{ top: '30%', gap: px(14), padding: `0 ${pad}` }}>
+        {stamp(style === 'vivace')}
+        <div className="flex flex-col items-center" style={{ gap: px(8), marginTop: px(style === 'semplice' ? 60 : 16) }}>{pin}{daysEl(style === 'semplice' ? { background: RED, color: '#fff' } : { background: '#fff', color: RED })}</div>
+      </div>
+    ) : style === 'elegante' ? (
+      <>{frame}
+        <div className="absolute inset-x-0 flex flex-col items-center text-center" style={{ top: '28%', gap: px(8), padding: `0 ${pad}` }}>
+          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: px(52), lineHeight: 1 }}>{word}</span>
+          <span className="uppercase" style={{ fontSize: px(10), letterSpacing: '.24em' }}>{place}</span>
+          {days && <span className="uppercase" style={{ fontSize: px(8), letterSpacing: '.24em' }}>{days}</span>}
+        </div></>
+    ) : (
+      <div className="absolute inset-x-0 flex flex-col items-center text-center" style={{ top: '34%', gap: px(8), padding: `0 ${pad}` }}>
+        <span className="bg-white" style={{ width: px(70), height: px(2) }} />
+        <span className="uppercase" style={{ fontSize: px(32), fontWeight: 500, letterSpacing: '.18em' }}>{word}</span>
+        <span style={{ fontSize: px(11), marginTop: px(10) }}>{place}</span>
+        {days && <span style={{ fontSize: px(9), opacity: 0.85 }}>{days}</span>}
+      </div>
+    );
+  }
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-black shadow-md ring-1 ring-black/5" style={{ width: w, height: h, fontFamily: FONT }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {photo && <img src={photo} alt="" className="kenburns absolute inset-0 h-full w-full object-cover" />}
+      <div className="absolute inset-0" style={{ background: kind === 'reel' ? 'linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 22%, rgba(0,0,0,0) 45%, rgba(0,0,0,.72))' : 'rgba(0,0,0,.28)' }} />
+      <div key={`${kind}-${style}`} className="blur-in absolute inset-0 text-white [text-shadow:0_1px_8px_rgba(0,0,0,.35)]">{body}</div>
+      {overlay}
+    </div>
+  );
+}
+
 // icone dei social (lucide; WhatsApp e TikTok non ci sono: fumetto e nota musicale)
 const NET_ICON = { instagram: Instagram, facebook: Facebook, whatsapp: MessageCircle, tiktok: Music2, linkedin: Linkedin } as const;
 function NetIcon({ id, size = 20 }: { id: NetId; size?: number }) {
@@ -310,7 +414,7 @@ export default function SocialCard({ project, photos }: { project: ProjectData; 
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Share2 size={18} /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{tr('Condividi sui social', 'Share on social media')}</span>
-          <span className="block text-xs text-muted">{tr('Post, storie e caroselli con foto, dati e il tuo logo', 'Posts, stories and carousels with photos, details and your logo')}</span>
+          <span className="block text-xs text-muted">{tr('Foto pronte per Facebook, WhatsApp e Instagram, col tuo logo', 'Ready photos for Facebook, WhatsApp and Instagram, with your logo')}</span>
         </span>
       </div>
       <button type="button" onClick={() => setOpen(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">
@@ -332,15 +436,16 @@ function savedChoice(): Saved {
     const c = JSON.parse(localStorage.getItem(CHOICE_KEY) ?? 'null') as (Partial<Saved> & { net?: NetId; fmt?: string }) | null;
     const nets = (c?.nets ?? (c?.net ? [c.net] : [])).filter(id => NETS.some(n => n.id === id));
     if (nets.length) {
-      const fmts: Partial<Record<NetId, string>> = { ...(c?.fmts ?? {}), ...(c?.net && c.fmt ? { [c.net]: c.fmt } : {}) };
-      for (const n of NETS) if (fmts[n.id] && !n.fmts.some(f => f.id === fmts[n.id])) delete fmts[n.id];
-      return { nets, fmts, step: Math.max(0, Math.min(4, Number(c?.step) || 0)), tpl: typeof c?.tpl === 'string' && POST_TEMPLATES.some(t => t.id === c.tpl) ? c.tpl : 'gradient' };
+      // il tipo di post riparte sempre da "Una foto" (06/10/2026)
+      return { nets, fmts: {}, step: Math.max(0, Math.min(STEPS.length - 1, Number(c?.step) || 0)), tpl: typeof c?.tpl === 'string' && POST_TEMPLATES.some(t => t.id === c.tpl) ? c.tpl : 'gradient' };
     }
   } catch { /* niente storage */ }
-  return { nets: ['instagram'], fmts: {}, step: 0, tpl: 'gradient' };
+  return { nets: ['facebook'], fmts: {}, step: 0, tpl: 'gradient' };
 }
 const store = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* niente storage */ } };
-const STEPS: [string, string][] = [['Social', 'Network'], ['Foto', 'Photos'], ['Grafica', 'Design'], ['Testo', 'Text'], ['Video', 'Video']]; // il video e' facoltativo
+// 06/10/2026 (panel agenti 55-70): Cosa pubblichi (annuncio o venduto, una volta sola), Dove, Foto, Grafica, Testo, Video (facoltativo)
+const STEPS: [string, string][] = [['Cosa', 'What'], ['Dove', 'Where'], ['Foto', 'Photos'], ['Grafica', 'Design'], ['Testo', 'Text'], ['Video', 'Video']];
+const S = { cosa: 0, dove: 1, foto: 2, grafica: 3, testo: 4, video: 5 } as const;
 const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
 
 // larghezza di un elemento (la griglia delle grafiche)
@@ -356,26 +461,27 @@ function useWidth<T extends HTMLElement>() {
   return [ref, w] as const;
 }
 
-// riquadro del formato (la forma del 4:5, 9:16, 1:1) accanto al nome
-function RatioGlyph({ w, h, on }: { w: number; h: number; on: boolean }) {
-  const k = 16 / Math.max(w, h);
-  return (
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-      <span className={`block rounded-[3px] border-2 ease-smooth transition-colors ${on ? 'border-brand' : 'border-ink/35'}`} style={{ width: Math.round(w * k), height: Math.round(h * k) }} />
-    </span>
-  );
-}
+// tipo di post detto semplice, con la sua icona (niente misure)
+const KIND_ICON = { one: ImageIcon, many: GalleryHorizontal, tall: Smartphone } as const;
+const fmtIcon = (f: Fmt) => (f.kind === 'one' && f.ratio === '1:1' ? Square : KIND_ICON[f.kind]);
+const kindShort = (k: Fmt['kind']) => (k === 'one' ? tr('Una foto', 'One photo') : k === 'many' ? tr('Più foto', 'More photos') : tr('Verticale', 'Vertical'));
+// spiegazione breve, solo sotto la scelta fatta
+const kindHint = (k: Fmt['kind']) => (k === 'many' ? tr('Da sfogliare col dito', 'To swipe through') : k === 'tall' ? tr('Per Storie e Stati', 'For Stories and Status') : '');
+// due foto singole nello stesso social (4:5 e 1:1): si chiamano per forma, "Alta" e "Quadrata"
+const fmtShort = (fs: Fmt[], f: Fmt) => (f.kind === 'one' && fs.filter(x => x.kind === 'one').length > 1 ? (f.ratio === '1:1' ? tr('Quadrata', 'Square') : tr('Alta', 'Tall')) : kindShort(f.kind));
+const fmtHint = (fs: Fmt[], f: Fmt) => (f.kind === 'one' && fs.filter(x => x.kind === 'one').length > 1 ? (f.ratio === '1:1' ? tr('Per la bacheca', 'For the feed') : tr('Per la bacheca, prende più spazio', 'For the feed, takes more room')) : kindHint(f.kind));
 
 function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData; photos: string[]; onClose: () => void }) {
   const d = (project.import_data ?? {}) as { details?: Record<string, unknown>; prima?: Record<string, string>; rooms?: Record<string, { scene?: string }> };
   const det = d.details ?? {};
   const prima = d.prima ?? {};
-  // Venduto o affittato: dalla scheda (details.stato_annuncio) o dall'interruttore del popup (per immobile, sul dispositivo).
-  // Acceso: grafiche e video Venduto/Affittato, testo che racconta il lavoro fatto. Giorni: facoltativi, proposti dalla data del cambio di stato
+  // Venduto o affittato: chiesto una volta al passo "Cosa pubblichi?" (per immobile, sul dispositivo); se la scheda e' venduta
+  // o affittata parte gia' su "Casa venduta o affittata". Acceso: grafiche e video Venduto/Affittato, testo che racconta il
+  // lavoro fatto. Giorni: facoltativi, proposti dalla data del cambio di stato
   const status0 = statusOf({ details: det });
   const soldKey = `agenteimmo:social-sold:${project.id}`;
   const [soldSaved] = useState(() => { try { return JSON.parse(localStorage.getItem(soldKey) ?? 'null') as { on?: boolean; kind?: string; days?: string } | null; } catch { return null; } });
-  const [soldOn, setSoldOn] = useState(() => (typeof soldSaved?.on === 'boolean' ? soldSaved.on : isClosed(status0)));
+  const [soldOn, setSoldOn] = useState(() => isClosed(status0) || soldSaved?.on === true);
   const [soldKind, setSoldKind] = useState<'venduto' | 'affittato'>(() => (soldSaved?.kind === 'affittato' || soldSaved?.kind === 'venduto' ? soldSaved.kind
     : status0 === 'affittato' || (status0 !== 'venduto' && (det.contratto === 'Affitto' || /affitt/i.test(`${project.titolo ?? ''} ${project.tipologia ?? ''}`))) ? 'affittato' : 'venduto'));
   const [soldDays, setSoldDays] = useState(() => {
@@ -421,17 +527,16 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
   const show = (n: NetId) => { setActive(n); setSlideIx(0); setView('post'); };
-  const goStep = (i: number) => { setStepIx(i); setView(i === 4 ? 'video' : 'post'); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
+  const goStep = (i: number) => { setStepIx(i); setView(i === S.video && wantVideo ? 'video' : 'post'); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
   const [tpl, setTpl] = useState(() => (soldOn && !first.tpl.startsWith('sold-') ? 'sold-stamp' : first.tpl));
-  // interruttore Venduto: le grafiche Venduto davanti (e la prima scelta), il video Venduto; spento, si torna all'annuncio
+  // "Casa venduta o affittata": le grafiche Venduto davanti (e la prima scelta), il video Venduto; altrimenti l'annuncio
   const setSold = (on: boolean) => {
     setSoldOn(on);
     setTpl(t => (on ? (t.startsWith('sold-') ? t : 'sold-stamp') : t.startsWith('sold-') ? 'gradient' : t));
-    setTone('all');
     setVid(v => (v.status === 'idle' || v.status === 'error' ? { ...v, tpl: on ? 'venduto' : 'reel', status: 'idle' } : v));
   };
   useEffect(() => { store(CHOICE_KEY, { nets, fmts: fmtIds, step: reached, tpl }); }, [nets, fmtIds, reached, tpl]);
-  const [tone, setTone] = useState<Tone>('all');
+  const [fixOpen, setFixOpen] = useState(false); // "Sistema la foto": Riempi/Intera, zoom, trascinare
   const [blurs, setBlurs] = useState<Record<string, string>>({});
   const [label, setLabel] = useState(true); // scritta "arredata virtualmente" sulle foto AI
   const [busy, setBusy] = useState<'all' | 'share' | null>(null);
@@ -455,7 +560,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', k);
     const o = document.body.style.overflow; document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('resize', on); window.removeEventListener('keydown', k); document.body.style.overflow = o; };
+    // il bottone Feedback (Writhink) copre i bottoni del popup sul telefono: nascosto finche' il popup e' aperto (globals.css)
+    document.body.classList.add('gnm-hide-feedback');
+    return () => { window.removeEventListener('resize', on); window.removeEventListener('keydown', k); document.body.style.overflow = o; document.body.classList.remove('gnm-hide-feedback'); };
   }, [onClose]);
   useEffect(() => { void loadFonts().then(() => setFonts(true)); }, []);
   // marchio dell'agenzia: logo (in data URL, l'esportazione non si sporca), colore, nome, telefono, sito
@@ -505,7 +612,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     if (!anyMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
     setSel(s => (s.includes(src) ? s.filter(x => x !== src) : s.length >= MAX_PHOTOS ? s : [...s, src]));
   };
-  const move = (i: number, by: number) => setSel(s => { const a = s.filter(x => photos.some(p => p.src === x)).slice(0, MAX_PHOTOS); const j = i + by; if (j < 0 || j >= a.length) return s; [a[i], a[j]] = [a[j], a[i]]; return a; });
   const needBlur = [...new Set(nets.flatMap(n => photosFor(fmtOf(n))))];
   useEffect(() => {
     for (const p of [photo?.small, ...needBlur.map(x => x.full)]) if (p && !blurs[p]) void blurred(p).then(b => setBlurs(o => ({ ...o, [p]: b })));
@@ -554,10 +660,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     if (fits(tpl, f)) return tpl;
     return (SIMILAR.find(g => g.includes(tpl)) ?? []).find(id => fits(id, f)) ?? tplsFor(f)[0]?.id ?? 'gradient';
   };
-  const tplLabel = (id: string) => POST_TEMPLATES.find(t => t.id === id)?.label ?? id;
+  const tplLabel = (id: string) => (TPL_NAME[id] ? tr(...TPL_NAME[id]) : POST_TEMPLATES.find(t => t.id === id)?.label ?? id);
   const swaps = nets.filter(n => tplFor(n) !== tpl).map(n => ({ n, f: fmtOf(n), to: tplFor(n) }));
   const all = tplsFor(fmt);
-  const list = all.filter(t => tone === 'all' || TONE[t.id] === tone);
   const cur = tplFor(active);
   const ready = fonts && !!logo && !!brand && photosSettled && !(anyMulti && sel.length <= 1 && photos.length > 1); // carosello: prima la scelta automatica delle foto
   // copertina: la grafica (Prima e Dopo: la prima foto e' l'originale, la seconda quella arredata)
@@ -620,9 +725,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   // si scrivono quando servono: dalla grafica in poi (cosi' al passo Testo sono pronti), una volta per social
   useEffect(() => {
-    if (!brand || stepIx < 2) return;
+    if (!brand || stepIx < S.grafica) return;
     for (const n of nets) if (texts[tk(n)] === undefined && !textBusy[tk(n)] && !textErr[tk(n)]) void writeText(n);
-  }, [brand, nets.join(','), stepIx >= 2, soldOn, soldKind]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [brand, nets.join(','), stepIx >= S.grafica, soldOn, soldKind]); // eslint-disable-line react-hooks/exhaustive-deps
   const text = texts[tk(active)] ?? '';
   const copy = async (n: NetId) => { try { await navigator.clipboard.writeText(texts[tk(n)] ?? ''); setCopied(n); setTimeout(() => setCopied(c => (c === n ? null : c)), 2400); } catch { /* niente appunti */ } };
 
@@ -635,6 +740,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     return { tpl: soldOn ? 'venduto' : 'reel', style: 'vivace', status: 'idle' };
   });
   const withVideo = vid.status !== 'idle' && vid.status !== 'error';
+  // "Vuoi anche un video?": si' (gli stili compaiono), no, o non ancora risposto. Un video gia' fatto o in corso vale si'
+  const [wantVideo, setWantVideo] = useState<boolean | null>(() => (vid.url || vid.job ? true : null));
   const vWorking = vid.status === 'working' || vid.status === 'queued';
   useEffect(() => { store(vKey, vid.url || vid.job ? { tpl: vid.tpl, style: vid.style, url: vid.url, job: vid.job, at: vid.at } : null); }, [vid.url, vid.job, vid.style, vid.tpl]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef(true);
@@ -650,10 +757,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   useEffect(() => { if (vSel) store(vSelKey, vSel); }, [vSel, vSelKey]);
   const vCandidates = photos.filter(p => !p.plan).sort((a, b) => (a === photos[0] ? 0 : a.staged ? 1 : 2) - (b === photos[0] ? 0 : b.staged ? 1 : 2));
   const vSuggest = () => { const base = chosen.filter(p => !p.plan).slice(0, MAX_REEL_PHOTOS); return [...base, ...vCandidates.filter(p => !base.includes(p))].slice(0, Math.max(base.length, 5)).map(p => p.src); };
-  useEffect(() => { if (stepIx === 4 && photosSettled && !vSel?.length) setVSel(vSuggest()); }, [stepIx, photosSettled]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (stepIx === S.video && photosSettled && !vSel?.length) setVSel(vSuggest()); }, [stepIx, photosSettled]); // eslint-disable-line react-hooks/exhaustive-deps
   const vList = (vSel ?? []).map(s => photos.find(p => p.src === s)).filter((p): p is Photo => !!p).slice(0, MAX_REEL_PHOTOS);
   const vSoldPhoto = photos.find(p => p.src === vOne) ?? chosen.find(p => !p.plan) ?? vCandidates[0];
-  const vTpl: ReelTpl = vid.status === 'idle' || vid.status === 'error' ? (soldOn && vid.tpl === 'venduto' ? 'venduto' : 'reel') : vid.tpl;
+  // il tipo di video viene dal passo "Cosa pubblichi?"; un video gia' fatto resta com'e'
+  const vTpl: ReelTpl = vid.status === 'idle' || vid.status === 'error' ? (soldOn ? 'venduto' : 'reel') : vid.tpl;
   const vPhotos = vTpl === 'venduto' ? (vSoldPhoto ? [vSoldPhoto] : []) : vList;
   const vMin = vTpl === 'venduto' ? 1 : 3;
   const vCost = vTpl === 'venduto' ? CREDIT_COST.video_venduto : CREDIT_COST.video_reel;
@@ -715,7 +823,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   const lambdaStyle = vid.style === 'vivace' || vid.style === 'elegante';
   const vSec = lambdaStyle ? 50 + 6 * vPhotos.length : 8 + 3 * vPhotos.length;
-  const vSample = `/staging/reel-styles/${vTpl === 'venduto' ? (soldRent ? 'affittato' : 'venduto') : 'annuncio'}-${vid.style}`; // clip d'esempio dello stile
   const vEta = vSec < 55 ? tr(`di solito circa ${Math.round(vSec / 10) * 10} secondi`, `usually about ${Math.round(vSec / 10) * 10} seconds`) : vSec < 80 ? tr('di solito circa un minuto', 'usually about a minute') : tr('di solito 1-2 minuti', 'usually 1-2 minutes');
   const vElapsed = vid.at ? Math.max(0, Math.round((Date.now() - vid.at) / 1000)) : 0;
 
@@ -773,7 +880,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const allReady = big.length > 0 && big.every(Boolean);
   // al passo Testo si prepara in sottofondo il social che si sta guardando
   useEffect(() => {
-    if (stepIx < 3 || !allReady || busy) return;
+    if (stepIx < S.testo || !allReady || busy) return;
     const t = setTimeout(() => { void getFiles(active).catch(() => null); }, 500);
     return () => clearTimeout(t);
   }, [stepIx, allReady, key]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -786,14 +893,14 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
       try {
         const f = await vFile();
         if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f] }); } catch (e) { if ((e as Error).name !== 'AbortError') throw e; } }
-        else { save(f, f.name); setNote(tr('Video scaricato.', 'Video downloaded.')); }
+        else { save(f, f.name); setNote(tr('Video salvato.', 'Video saved.')); }
       } catch (e) { console.error('social video share', e); setNote(tr('Non sono riuscito a prendere il video, riprova.', 'I could not get the video, please try again.')); }
       setBusy(null); return;
     }
     const n = active;
     // il testo si copia subito, prima di ogni attesa (gli appunti vogliono il tocco)
     if (text) void navigator.clipboard?.writeText(text).catch(() => null);
-    setBusy('share'); setNote(nSlides > 1 ? tr(`Preparo ${nSlides} immagini`, `Making ${nSlides} images`) : '');
+    setBusy('share'); setNote(nSlides > 1 ? tr(`Preparo ${nSlides} foto`, `Making ${nSlides} photos`) : '');
     try {
       const files = await getFiles(n);
       if (navigator.canShare?.({ files })) {
@@ -804,7 +911,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         if (files.length === 1) save(files[0], files[0].name);
         else await zipSave(files.map(f => ({ path: f.name, f })), `${title}-${nameOf(n)}.zip`);
         setDone(o => [...new Set([...o, n])]);
-        setNote(tr(`Scaricato per ${net.label}${text ? ', e il testo è copiato' : ''}. Caricalo da ${net.label}.`, `Downloaded for ${net.label}${text ? ', and the text is copied' : ''}. Upload it from ${net.label}.`));
+        setNote(text ? tr(`Salvato e testo copiato. Ora apri ${net.label}, carica la foto e incolla il testo.`, `Saved and text copied. Now open ${net.label}, upload the photo and paste the text.`) : tr(`Salvato. Ora apri ${net.label} e carica la foto.`, `Saved. Now open ${net.label} and upload the photo.`));
       }
     } catch (e) {
       console.error('social share', e);
@@ -838,11 +945,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         if (f) items.push({ path: `video-${vid.style}.mp4`, f }); else vMissed = true;
       }
       console.info('[social] scarica tutto', nets.join(','), items.length, `${Math.round(items.reduce((a, x) => a + x.f.size, 0) / 1024)} KB`, `${Math.round(performance.now() - t0)} ms`);
-      if (items.length === 1) { save(items[0].f, `${title}-${items[0].path}`); setNote(fmt.pdf ? tr('Documento PDF scaricato, caricalo su LinkedIn come documento.', 'PDF document downloaded, upload it to LinkedIn as a document.') : tr('Immagine scaricata.', 'Image downloaded.')); }
+      if (items.length === 1) { save(items[0].f, `${title}-${items[0].path}`); setNote(fmt.pdf ? tr('Salvato. Su LinkedIn caricalo come documento.', 'Saved. On LinkedIn upload it as a document.') : tr('Salvato.', 'Saved.')); }
       else {
         await zipSave(items, `${title}-social.zip`);
-        const what = [...nets.map(n => nameOf(n)), ...(vid.url && !vMissed ? [tr('video', 'video')] : [])].join(', ');
-        setNote(tr(`Scaricato un file .zip: ${what}.`, `Downloaded a .zip file: ${what}.`) + (vMissed ? ' ' + tr('Il video non è entrato, scaricalo a parte.', 'The video is missing, download it separately.') : ''));
+        const what = [...nets.map(n => netOf(n).label), ...(vid.url && !vMissed ? [tr('il video', 'the video')] : [])].join(', ');
+        setNote(tr(`Salvato tutto in un file .zip: ${what}.`, `Everything saved in a .zip file: ${what}.`) + (vMissed ? ' ' + tr('Il video non è entrato, salvalo a parte.', 'The video is missing, save it separately.') : ''));
       }
     } catch (e) {
       console.error('social export', e);
@@ -852,68 +959,75 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   // misure: il riquadro dell'anteprima ha sempre la stessa grandezza, il post ci sta dentro (contain) in ogni formato
   const wide = vp.w >= 1024;
+  const phoneUi = vp.w < 640; // telefono: testata "Passo 2 di 6", bottoni finali uno sotto l'altro
   const modalH = Math.min(vp.h * 0.94, 880);
   const boxW = wide ? 400 : Math.min(vp.w - 32, 420);
   const boxH = wide ? Math.max(320, Math.min(560, modalH - 330)) : Math.min(Math.round(vp.h * 0.36), 320);
   const cellW = gridW ? Math.floor((gridW - ((vp.w < 640 ? 2 : 3) - 1) * 12) / (vp.w < 640 ? 2 : 3)) : 0;
-  const btn = 'flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-sm font-semibold ease-smooth transition-colors disabled:opacity-50';
-  const chip = (on: boolean) => `ease-smooth transition-[background-color,box-shadow,color] ring-1 ${on ? 'bg-brand/10 text-ink ring-brand' : 'bg-white text-ink ring-black/10 hover:ring-black/25'}`;
-  const canNext = stepIx !== 1 || (!anyMulti || chosen.length > 0);
+  const btn = 'flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-sm font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 disabled:opacity-50';
+  // una sola evidenziazione per scelta: l'anello col colore del marchio
+  const chip = (on: boolean) => `bg-white text-ink outline-none ease-smooth transition-[box-shadow] focus-visible:ring-2 focus-visible:ring-brand/50 ${on ? 'shadow-sm ring-2 ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`;
+  const canNext = stepIx !== S.foto || (!anyMulti || chosen.length > 0);
   const shown = big[six] ?? null;
-  const toneOf = (t: Tone) => all.filter(x => t === 'all' || TONE[x.id] === t).length;
-  const dlAll = nets.length > 1 || vid.url ? tr('Scarica tutto', 'Download all') : fmt.pdf ? tr('Scarica PDF', 'Download PDF') : fmt.multi ? tr('Scarica tutte', 'Download all') : tr('Scarica', 'Download');
+  // telefono o computer, per dire "Salva sul telefono" solo dove e' vero
+  const onPhone = vp.w < 1024 || (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
+  const many = nets.length > 1 || !!vid.url;
+  const saveLabel = many ? (onPhone ? tr('Salva tutto sul telefono', 'Save all to phone') : tr('Salva tutto sul computer', 'Save all to computer')) : onPhone ? tr('Salva sul telefono', 'Save to phone') : tr('Salva sul computer', 'Save to computer');
 
-  const tabs = (
-    <div className="flex h-10 max-w-full items-center gap-1 overflow-x-auto rounded-full bg-canvas p-1" role="tablist" aria-label={tr('Social scelti', 'Chosen networks')}>
-      {nets.map(n => (
-        <button key={n} type="button" role="tab" aria-selected={view === 'post' && n === active} onClick={() => show(n)} className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-[background-color,color,box-shadow] ${view === 'post' && n === active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>
-          <NetIcon id={n} size={15} />
-          <span className={nets.length + (withVideo ? 1 : 0) > 3 && (n !== active || view !== 'post') ? 'hidden sm:inline' : ''}>{netOf(n).label}</span>
-          {done.includes(n) && <Check size={13} className="text-brand" strokeWidth={3} />}
-        </button>
-      ))}
-      {(withVideo || stepIx === 4) && (
-        <button type="button" role="tab" aria-selected={view === 'video'} onClick={() => setView('video')} className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-[background-color,color,box-shadow] ${view === 'video' ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>
-          {vWorking ? <Loader2 size={15} className="animate-spin" /> : <Film size={15} />} {tr('Video', 'Video')}
-        </button>
-      )}
-    </div>
-  );
+  // linguette dei social sopra l'anteprima: SEMPRE una riga. Se i nomi non entrano, le non attive solo icona (nome in title e
+  // aria-label); l'indicatore bianco scorre e si allarga sotto quella attiva (600ms)
+  const hasVidTab = withVideo || (stepIx === S.video && !!wantVideo);
+  const tabIds: string[] = [...nets, ...(hasVidTab ? ['video'] : [])];
+  const tabName = (id: string) => (id === 'video' ? tr('Video', 'Video') : netOf(id as NetId).label);
+  const onTab = view === 'video' ? 'video' : active;
+  // stima della larghezza coi nomi (14px semibold ~8px a lettera, + icona, spazi e margini)
+  const fullW = tabIds.reduce((a, id) => a + 16 + 6 + 24 + tabName(id).length * 8.2 + 4, 8);
+  const compact = fullW > boxW;
+  const tabs = tabIds.length > 1 ? (
+    <TabRow ids={tabIds} on={onTab} deps={`${compact}|${boxW}`}>
+      {tabIds.map(id => {
+        const on = id === onTab, label = tabName(id), showName = !compact || on;
+        return (
+          <button key={id} data-tab={id} type="button" role="tab" aria-selected={on} aria-label={label} title={label} onClick={() => (id === 'video' ? setView('video') : show(id as NetId))}
+            className={`relative z-[1] flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 ${on ? 'text-ink' : 'text-muted hover:text-ink'}`}>
+            {id === 'video' ? (vWorking ? <Loader2 size={16} className="animate-spin" /> : <Film size={16} />) : <NetIcon id={id as NetId} size={16} />}
+            {showName && <span key={`${id}-${compact}`} className={compact ? 'blur-in' : ''}>{label}</span>}
+            {id !== 'video' && done.includes(id as NetId) && <Check size={14} className="text-brand" strokeWidth={3} />}
+          </button>
+        );
+      })}
+    </TabRow>
+  ) : null;
 
-  // video nell'anteprima: 9:16 dentro il riquadro; mentre si crea, il fotogramma dello stile con l'avanzamento
+  // video nell'anteprima: 9:16 dentro il riquadro. Prima di crearlo: la PRIMA foto di questa casa col disegno dello stile
+  // (niente clip d'esempio di un'altra casa); mentre si crea, la stessa foto con l'avanzamento
   const vk = Math.min((boxW - 24) / 1080, (boxH - 24) / 1920), vw = Math.round(1080 * vk), vh = Math.round(1920 * vk);
-  const showVid = view === 'video' && (withVideo || stepIx === 4);
-  const videoPreview = (
+  const showVid = view === 'video' && (withVideo || (stepIx === S.video && !!wantVideo));
+  const mockPhoto = vPhotos[0]?.full ?? photo?.full;
+  const videoPreview = vid.status === 'done' && vid.url ? (
     <div className="relative overflow-hidden rounded-2xl bg-black shadow-md ring-1 ring-black/5" style={{ width: vw, height: vh }}>
-      {vid.status === 'done' && vid.url
-        ? <video key={vid.url} src={vid.url} controls autoPlay muted loop playsInline className="h-full w-full object-cover" />
-        : !vWorking
-          // nessun video ancora: la clip d'esempio dello stile scelto
-          ? <video key={vSample} src={`${vSample}.mp4`} poster={`${vSample}.webp`} autoPlay muted loop playsInline className="h-full w-full object-cover" />
-          : (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${vSample}.webp`} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40 blur-[2px]" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center text-white">
-              {(
-                <>
-                  <Loader2 size={22} className="animate-spin" />
-                  <span className="text-sm font-semibold">{vid.status === 'queued' ? tr('In coda', 'Queued') : tr('Creo il video', 'Making the video')}</span>
-                  <span className="text-[11px] tabular-nums text-white/80">{vid.status === 'queued' ? tr('Parte appena si libera un posto', 'Starts as soon as a slot is free') : `${vElapsed} s, ${vEta}`}</span>
-                  {typeof vid.progress === 'number' && <span className="mt-1 block h-1.5 w-24 overflow-hidden rounded-full bg-white/25"><span className="block h-full rounded-full bg-white ease-smooth transition-[width]" style={{ width: `${Math.max(4, vid.progress)}%` }} /></span>}
-                </>
-              )}
-            </div>
-          </>
-        )}
+      <video key={vid.url} src={vid.url} controls autoPlay muted loop playsInline className="h-full w-full object-cover" />
     </div>
+  ) : (
+    <VideoMock w={vw} h={vh} photo={mockPhoto} style={vid.style} kind={vTpl === 'venduto' ? soldKind : 'reel'} accent={accent} agency={brand?.agencyName ?? ''}
+      title={(titolo || tipologia || cleanText(project.nome)).split(' | ')[0]} place={vTpl === 'venduto' ? soldPlace || city : city} days={soldDaysText}
+      contract={rent ? tr('In affitto', 'For rent') : tr('In vendita', 'For sale')}
+      overlay={vWorking ? (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/55 px-4 text-center text-white">
+          <Loader2 size={22} className="animate-spin" />
+          <span className="text-sm font-semibold">{vid.status === 'queued' ? tr('In coda', 'Queued') : tr('Creo il video', 'Making the video')}</span>
+          <span className="text-xs tabular-nums text-white/80">{vid.status === 'queued' ? tr('Parte appena si libera un posto', 'Starts as soon as a slot is free') : `${vElapsed} s, ${vEta}`}</span>
+          {typeof vid.progress === 'number' && <span className="mt-1 block h-1.5 w-24 overflow-hidden rounded-full bg-white/25"><span className="block h-full rounded-full bg-white ease-smooth transition-[width]" style={{ width: `${Math.max(4, vid.progress)}%` }} /></span>}
+        </div>
+      ) : null} />
   );
 
-  // ---- inquadratura della foto che si guarda (passi Foto e Grafica): a tutto schermo o intera, zoom, trascinando ----
+  // ---- inquadratura della foto che si guarda (passo Foto, dietro "Sistema la foto"): a tutto schermo o intera, zoom, trascinando ----
   // mentre si trascina o si muove lo zoom si cambia solo la foto gia' disegnata; il post si ridisegna una volta, a gesto finito
   const curPhoto: Photo | undefined = fmt.multi ? slidesPhotos[six] : slidesPhotos[0];
   const curFrame = shown ? frameOf(shown) : null;
-  const framable = !!curPhoto && !!curFrame && (stepIx === 1 || stepIx === 2) && !showVid;
+  const canFix = !!curPhoto && !!curFrame && stepIx === S.foto && !showVid;
+  const framable = fixOpen && canFix;
   const previewRef = useRef<HTMLDivElement>(null);
   const live2 = useRef<{ src: string; f: Frame; t?: number } | null>(null);
   const liveFg = () => { const l = previewRef.current?.querySelectorAll<HTMLElement>('.tpl-cover-fg'); return l?.[l.length - 1]; };
@@ -945,31 +1059,46 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
 
   const fr = curFrame ?? FRAME0;
   const changed = !!curPhoto && !!frames[curPhoto.src] && JSON.stringify(frames[curPhoto.src]) !== JSON.stringify(FRAME0);
-  // inquadratura: barra compatta dentro l'anteprima (solo nel passo Foto), come negli editor delle app social
-  const frameBar = framable && stepIx === 1 ? (() => {
-    const z = live2.current?.src === curPhoto!.src ? live2.current.f.z : fr.z;
-    const setZ = (v: number) => setFrame(curPhoto!.src, { z: Math.min(3, Math.max(1, Math.round(v * 100) / 100)) });
-    const seg = (on: boolean, fit: 'cover' | 'contain', Icon: typeof Crop, label: string) => (
-      <button type="button" role="radio" aria-checked={on} onClick={() => setFrame(curPhoto!.src, { fit })} title={label}
-        className={`flex h-8 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-xs font-semibold ease-smooth transition-colors ${on ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}><Icon size={13} /> {label}</button>
-    );
-    return (
-      <div className="blur-in flex flex-nowrap items-center gap-0.5 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/10">
-        <div role="radiogroup" aria-label={tr('Come mostrare la foto', 'How to show the photo')} className="flex">
-          {seg(curFit, 'cover', Maximize2, tr('Riempi', 'Fill'))}
-          {seg(!curFit, 'contain', Minimize2, tr('Intera', 'Whole'))}
-        </div>
-        <span className="mx-1 h-5 w-px bg-black/10" aria-hidden />
-        <button type="button" onClick={() => setZ(z - 0.1)} disabled={z <= 1} aria-label={tr('Meno zoom', 'Zoom out')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomOut size={15} /></button>
-        <input type="range" min={1} max={3} step={0.01} defaultValue={fr.z} key={`${curPhoto!.src}-${fr.z}`} aria-label={tr('Zoom', 'Zoom')}
-          onChange={e => frameLive(curPhoto!.src, { ...(live2.current?.src === curPhoto!.src ? live2.current.f : fr), z: Number(e.target.value) }, curFit)}
-          onPointerUp={commitFrame} onKeyUp={commitFrame} className="h-8 w-16 accent-[#537eec] sm:w-20" />
-        <button type="button" onClick={() => setZ(z + 0.1)} disabled={z >= 3} aria-label={tr('Più zoom', 'Zoom in')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomIn size={15} /></button>
-        {changed && <button type="button" onClick={() => setFrames(o => { const c = { ...o }; delete c[curPhoto!.src]; return c; })} aria-label={tr('Ripristina', 'Reset')} title={tr('Ripristina', 'Reset')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink"><RotateCcw size={14} /></button>}
-      </div>
-    );
-  })() : null;
+  // "Sistema la foto": il bottone si allarga nel riquadro dei comandi (Riempi/Intera, zoom, a tutte), poi i comandi appaiono
+  const fixer = canFix ? (
+    <div className={`overflow-hidden bg-white shadow-sm ring-1 ring-black/10 ease-smooth transition-[border-radius] ${fixOpen ? 'w-full max-w-[400px] rounded-[24px] p-2' : 'rounded-full p-0'}`}>
+      {!fixOpen ? (
+        <button type="button" onClick={() => setFixOpen(true)} className="flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-ink hover:bg-canvas"><Crop size={16} /> {tr('Sistema la foto', 'Adjust the photo')}</button>
+      ) : (() => {
+        const z = live2.current?.src === curPhoto!.src ? live2.current.f.z : fr.z;
+        const setZ = (v: number) => setFrame(curPhoto!.src, { z: Math.min(3, Math.max(1, Math.round(v * 100) / 100)) });
+        const seg = (on: boolean, fit: 'cover' | 'contain', Icon: typeof Crop, label: string) => (
+          <button type="button" role="radio" aria-checked={on} onClick={() => setFrame(curPhoto!.src, { fit })}
+            className={`flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-sm font-semibold ease-smooth transition-colors ${on ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}><Icon size={15} /> {label}</button>
+        );
+        return (
+          <div className="blur-in space-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-1">
+              <div role="radiogroup" aria-label={tr('Come mostrare la foto', 'How to show the photo')} className="flex rounded-full bg-canvas p-1">
+                {seg(curFit, 'cover', Maximize2, tr('Riempi', 'Fill'))}
+                {seg(!curFit, 'contain', Minimize2, tr('Intera', 'Whole'))}
+              </div>
+              <button type="button" onClick={() => { commitFrame(); setFixOpen(false); }} className="flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-brand hover:bg-brand/10"><Check size={16} /> {tr('Fatto', 'Done')}</button>
+            </div>
+            <div className="flex items-center gap-1">
+              <button type="button" onClick={() => setZ(z - 0.1)} disabled={z <= 1} aria-label={tr('Meno zoom', 'Zoom out')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomOut size={16} /></button>
+              <input type="range" min={1} max={3} step={0.01} defaultValue={fr.z} key={`${curPhoto!.src}-${fr.z}`} aria-label={tr('Zoom', 'Zoom')}
+                onChange={e => frameLive(curPhoto!.src, { ...(live2.current?.src === curPhoto!.src ? live2.current.f : fr), z: Number(e.target.value) }, curFit)}
+                onPointerUp={commitFrame} onKeyUp={commitFrame} className="h-10 min-w-0 flex-1 accent-[#537eec]" />
+              <button type="button" onClick={() => setZ(z + 0.1)} disabled={z >= 3} aria-label={tr('Più zoom', 'Zoom in')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomIn size={16} /></button>
+              {changed && <button type="button" onClick={() => setFrames(o => { const c = { ...o }; delete c[curPhoto!.src]; return c; })} aria-label={tr('Ripristina', 'Reset')} title={tr('Ripristina', 'Reset')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink/70 hover:text-ink"><RotateCcw size={15} /></button>}
+            </div>
+            <p className="px-2 pb-1 text-xs text-muted">{tr('Trascina la foto per spostarla.', 'Drag the photo to move it.')}</p>
+            {slidesPhotos.length > 1 && <button type="button" onClick={() => setFrames(o => ({ ...o, ...Object.fromEntries(slidesPhotos.map(p => [p.src, { ...fr }])) }))} className="h-10 w-full rounded-full text-sm font-semibold text-brand hover:bg-brand/10">{tr('Fai lo stesso su tutte le foto', 'Do the same on every photo')}</button>}
+          </div>
+        );
+      })()}
+    </div>
+  ) : null;
 
+  const caption = showVid
+    ? (withVideo ? (vid.status === 'done' ? tr('Il tuo video', 'Your video') : '') : tr('Così sarà il tuo video', 'This is how your video will look'))
+    : `${net.label}, ${fmtShort(net.fmts, fmt).toLowerCase()}`;
   const preview = (
     <div className="flex flex-col items-center gap-3">
       {tabs}
@@ -980,229 +1109,205 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         {framable && <div onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-hidden className="absolute inset-3 cursor-grab touch-none active:cursor-grabbing" />}
         {!showVid && nSlides > 1 && (
           <>
-            <button type="button" onClick={() => setSlideIx(Math.max(0, six - 1))} disabled={!six} aria-label={tr('Slide precedente', 'Previous slide')} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronLeft size={18} /></button>
-            <button type="button" onClick={() => setSlideIx(Math.min(nSlides - 1, six + 1))} disabled={six >= nSlides - 1} aria-label={tr('Slide successiva', 'Next slide')} className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronRight size={18} /></button>
+            <button type="button" onClick={() => setSlideIx(Math.max(0, six - 1))} disabled={!six} aria-label={tr('Foto prima', 'Previous photo')} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronLeft size={18} /></button>
+            <button type="button" onClick={() => setSlideIx(Math.min(nSlides - 1, six + 1))} disabled={six >= nSlides - 1} aria-label={tr('Foto dopo', 'Next photo')} className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronRight size={18} /></button>
           </>
         )}
       </div>
-      <div className="flex min-h-8 items-center gap-1.5">
-        {showVid ? <span className="text-xs text-muted">{withVideo ? tr('Video', 'Video') : tr('Esempio dello stile', 'Style sample')} {reelStyleLabel(vid.style)}, 9:16, 1080×1920</span> : nSlides > 1 ? (
+      <div className="flex min-h-8 flex-wrap items-center justify-center gap-1.5">
+        {!showVid && nSlides > 1 ? (
           <>
             {Array.from({ length: nSlides }, (_, i) => (
-              <button key={i} type="button" onClick={() => setSlideIx(i)} aria-label={`${tr('Slide', 'Slide')} ${i + 1}`} className="flex h-8 items-center px-0.5">
+              <button key={i} type="button" onClick={() => setSlideIx(i)} aria-label={`${tr('Foto', 'Photo')} ${i + 1}`} className="flex h-8 items-center px-0.5">
                 <span className={`block h-2 rounded-full ease-smooth transition-[width,background-color] ${i === six ? 'w-6 bg-ink' : 'w-2 bg-ink/20'}`} />
               </button>
             ))}
-            <span className="ml-2 w-12 text-xs tabular-nums text-muted">{six + 1} / {nSlides}</span>
+            <span className="ml-2 w-12 text-sm tabular-nums text-muted">{six + 1} / {nSlides}</span>
           </>
-        ) : frameBar ?? <span className="text-xs text-muted">{net.label}, {fmt.label} {fmt.ratio}, {fmt.w}×{fmt.h}</span>}
+        ) : caption ? <span className="text-sm text-muted">{caption}</span> : null}
       </div>
-      {!showVid && nSlides > 1 && frameBar}
+      {fixer}
     </div>
   );
 
-  const stepSocial = (
-    <div className="space-y-6">
-      <section>
-        <h3 className="text-sm font-semibold">{tr('Dove lo pubblichi?', 'Where will you post it?')}</h3>
-        <p className="mt-0.5 text-xs text-muted">{tr('Puoi sceglierne più di uno, preparo tutto insieme.', 'You can pick more than one, I prepare them all together.')}</p>
-        <div className="mt-3 grid grid-cols-5 gap-2">
-          {NETS.map(n => {
-            const on = nets.includes(n.id);
-            return (
-              <button key={n.id} type="button" onClick={() => toggleNet(n.id)} aria-pressed={on} className={`relative flex h-[72px] flex-col items-center justify-center gap-1.5 rounded-2xl ${chip(on)}`}>
-                <span className={`absolute right-1.5 top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full ease-smooth transition-colors ${on ? 'bg-brand text-white' : 'ring-1 ring-inset ring-black/15'}`}>{on && <Check size={11} strokeWidth={3} />}</span>
-                <span className={on ? 'text-brand' : 'text-ink/70'}><NetIcon id={n.id} size={22} /></span>
-                <span className="text-[11px] font-semibold sm:text-xs">{n.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-      <section>
-        <h3 className="text-sm font-semibold">{nets.length > 1 ? tr('Formato per ogni social', 'Format for each network') : tr('Formato', 'Format')}</h3>
-        {nets.map(id => {
-          const N = netOf(id), cf = fmtOf(id);
-          return (
-            <div key={id} className="mt-3 first:mt-1 [&+&]:mt-7">
-              {/* divisore col nome del social a inizio linea, poi la linea fino a destra */}
-              <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted">
-                <span>{N.label}</span>
-                <span className="h-px flex-1 bg-black/10" aria-hidden />
-              </div>
-              <div role="radiogroup" aria-label={N.label} className="grid gap-2 sm:grid-cols-2">
-                {N.fmts.map(f => {
-                  const on = cf.id === f.id;
-                  return (
-                    <button key={f.id} type="button" role="radio" aria-checked={on} onClick={() => pickFmt(id, f.id)} className={`flex h-12 items-center gap-3 rounded-2xl px-4 text-left ${chip(on)}`}>
-                      <RatioGlyph w={f.w} h={f.h} on={on} />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{f.label}</span>
-                      <span className="shrink-0 text-xs tabular-nums text-muted">{f.ratio}, {f.w}×{f.h}{f.pdf ? ', PDF' : ''}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-        {anyMulti && <p className="mt-4 text-xs text-muted">{nets.some(n => fmtOf(n).pdf)
-          ? tr(`Carosello: fino a ${MAX_PHOTOS} foto più una slide con i tuoi contatti. Su LinkedIn diventa un documento PDF, una slide per pagina.`, `Carousel: up to ${MAX_PHOTOS} photos plus a slide with your contacts. On LinkedIn it becomes a PDF document, one slide per page.`)
-          : tr(`Carosello: fino a ${MAX_PHOTOS} foto più una slide con i tuoi contatti.`, `Carousel: up to ${MAX_PHOTOS} photos plus a slide with your contacts.`)}</p>}
-      </section>
-    </div>
+  // scelta grande (passi Cosa e Video): icona, titolo, una riga sotto; una sola evidenziata
+  // due colonne uguali, contenuto centrato: icona sopra, titolo, una riga sotto
+  const bigChoice = (on: boolean, Icon: typeof Crop, title: string, sub: string, onClick: () => void) => (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick} className={`flex h-full min-h-[168px] w-full flex-col items-center justify-center gap-2 rounded-[24px] p-4 text-center ${chip(on)}`}>
+      <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] ease-smooth transition-colors ${on ? 'bg-brand text-white' : 'bg-canvas text-ink/70'}`}><Icon size={24} /></span>
+      <span className="block text-base font-semibold leading-snug">{title}</span>
+      <span className="block text-sm leading-snug text-muted">{sub}</span>
+    </button>
   );
 
-  const stepFoto = (
+  // passo 1: cosa pubblichi, chiesto una volta (vale per grafiche, testi e video)
+  const stepCosa = (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold">{anyMulti ? tr('Scegli le foto', 'Choose the photos') : tr('Scegli la foto', 'Choose the photo')}</h3>
-          <p className="mt-0.5 text-xs text-muted">{anyMulti
-            ? tr(`Il numero è l’ordine delle slide, la 1 è la copertina${nets.length > 1 ? ' e la foto dei post singoli' : ''}. Fino a ${MAX_PHOTOS}, ne hai scelte ${chosen.length}.`, `The number is the slide order, 1 is the cover${nets.length > 1 ? ' and the photo of single posts' : ''}. Up to ${MAX_PHOTOS}, you chose ${chosen.length}.`)
-            : tr('Una foto, la stessa per ogni social scelto.', 'One photo, the same for every chosen network.')}</p>
-        </div>
-        {anyMulti && (
-          <div className="flex gap-1">
-            <button type="button" onClick={() => setSel(photos.slice(0, MAX_PHOTOS).map(p => p.src))} className="h-9 rounded-full px-3 text-xs font-semibold text-brand ease-smooth transition-colors hover:bg-brand/10">{tr('Seleziona tutte', 'Select all')}</button>
-            {framable && slidesPhotos.length > 1 && <button type="button" onClick={() => setFrames(o => ({ ...o, ...Object.fromEntries(slidesPhotos.map(p => [p.src, { ...fr }])) }))} title={tr('Stessa inquadratura su tutte le foto', 'Same framing on every photo')} className="h-9 rounded-full px-3 text-xs font-semibold text-brand ease-smooth transition-colors hover:bg-brand/10">{tr('Inquadratura a tutte', 'Framing to all')}</button>}
-            <button type="button" onClick={() => setSel([])} disabled={!sel.length} className="h-9 rounded-full px-3 text-xs font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink disabled:opacity-40">{tr('Togli tutte', 'Clear all')}</button>
-          </div>
-        )}
+      <h3 className="font-display text-lg font-semibold">{tr('Cosa pubblichi?', 'What are you posting?')}</h3>
+      <div role="radiogroup" aria-label={tr('Cosa pubblichi', 'What you post')} className="grid grid-cols-2 gap-3">
+        {bigChoice(!soldOn, House, tr('Casa in vendita o in affitto', 'Home for sale or rent'), tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), () => setSold(false))}
+        {bigChoice(soldOn, BadgeCheck, tr('Casa venduta o affittata', 'Home sold or rented'), tr('Per far vedere il lavoro fatto', 'To show your work'), () => setSold(true))}
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {photos.map(p => {
-          const i = gridSel.indexOf(p);
-          return (
-            <button key={p.src} type="button" onClick={() => tap(p.src)} aria-pressed={i >= 0} className={`relative aspect-[4/3] overflow-hidden rounded-2xl ring-2 ring-offset-2 ease-smooth transition-shadow ${i >= 0 ? 'ring-brand' : 'ring-transparent hover:ring-black/15'}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.small} alt="" className="h-full w-full object-cover" />
-              {p.staged && <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-ink">{tr('Arredata AI', 'AI staged')}</span>}
-              <span className={`absolute right-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-xs font-bold ease-smooth transition-colors ${i >= 0 ? 'bg-brand text-white' : 'bg-black/25 ring-2 ring-inset ring-white/90'}`}>{i >= 0 ? (anyMulti ? i + 1 : <Check size={14} />) : ''}</span>
-            </button>
-          );
-        })}
-        {photos.length < Math.min(srcs.length, 24) && <span className="aspect-[4/3] animate-pulse rounded-2xl bg-canvas" />}
-      </div>
-      {anyMulti && gridSel.length > 1 && (
-        <div>
-          <span className="text-xs font-medium text-muted">{tr('Ordine delle slide, sposta con le frecce', 'Slide order, move with the arrows')}</span>
-          <div className="mt-1.5 flex flex-wrap gap-2">
-            {gridSel.map((p, i) => (
-              <span key={p.src} className="flex items-center gap-0.5 rounded-full bg-canvas p-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.small} alt="" className="h-8 w-8 rounded-full object-cover" />
-                <span className="w-5 text-center text-xs font-bold tabular-nums">{i + 1}</span>
-                <button type="button" onClick={() => move(i, -1)} disabled={!i} aria-label={tr('Prima', 'Earlier')} className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-white hover:text-ink disabled:opacity-30"><ArrowLeft size={14} /></button>
-                <button type="button" onClick={() => move(i, 1)} disabled={i === gridSel.length - 1} aria-label={tr('Dopo', 'Later')} className="flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-white hover:text-ink disabled:opacity-30"><ArrowRight size={14} /></button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-      {(anyMulti ? gridSel : photos).some(p => p.staged) && (
-        <label className="flex cursor-pointer items-center gap-2 text-sm">
-          <input type="checkbox" checked={label} onChange={e => setLabel(e.target.checked)} className="h-4 w-4 accent-[var(--color-brand,#537eec)]" />
-          {tr(`Scritta “${STAGED_TEXT}” sulle foto arredate con l’AI`, `Label “${STAGED_TEXT}” on AI staged photos`)}
-        </label>
-      )}
-      {!canNext && <p className="text-sm text-muted">{tr('Scegli almeno una foto per andare avanti.', 'Choose at least one photo to continue.')}</p>}
-    </div>
-  );
-
-  // interruttore "È venduto / affittato" (passi Grafica e Video): acceso, Venduto o Affittato e i giorni (facoltativi)
-  const soldBox = (
-    <div className="rounded-[24px] bg-canvas p-3">
-      <label className="flex cursor-pointer items-center gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-black/5 ease-smooth transition-colors ${soldOn ? 'text-brand' : 'text-ink/50'}`}><BadgeCheck size={18} /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">{tr('È venduto / affittato', 'It is sold / rented')}</span>
-          <span className="block text-xs text-muted">{isClosed(status0) ? tr(`Nella scheda risulta ${STATUS_LABELS[status0][0].toLowerCase()}.`, `The listing says ${STATUS_LABELS[status0][1].toLowerCase()}.`) : tr('Grafiche e video col timbro, per far vedere il lavoro fatto.', 'Designs and videos with the stamp, to show your work.')}</span>
-        </span>
-        <input type="checkbox" checked={soldOn} onChange={e => setSold(e.target.checked)} className="peer sr-only" />
-        <span className="relative h-6 w-10 shrink-0 rounded-full bg-black/15 ease-smooth transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:ease-smooth after:transition-transform peer-checked:bg-brand peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-brand/50" />
-      </label>
       {soldOn && (
-        <div className="blur-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-black/5 pt-3">
-          <div role="radiogroup" aria-label={tr('Venduto o affittato', 'Sold or rented')} className="inline-flex rounded-full bg-white p-1 ring-1 ring-black/5">
-            {([['venduto', tr('Venduto', 'Sold')], ['affittato', tr('Affittato', 'Rented')]] as const).map(([v, l]) => (
-              <button key={v} type="button" role="radio" aria-checked={soldKind === v} onClick={() => setSoldKind(v)} className={`h-8 rounded-full px-4 text-xs font-semibold ease-smooth transition-colors ${soldKind === v ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
+        <div className="blur-in space-y-4 rounded-[24px] bg-canvas p-4">
+          <div role="radiogroup" aria-label={tr('Venduta o affittata', 'Sold or rented')} className="inline-flex rounded-full bg-white p-1 ring-1 ring-black/5">
+            {([['venduto', tr('Venduta', 'Sold')], ['affittato', tr('Affittata', 'Rented')]] as const).map(([v, l]) => (
+              <button key={v} type="button" role="radio" aria-checked={soldKind === v} onClick={() => setSoldKind(v)} className={`h-10 rounded-full px-5 text-sm font-semibold ease-smooth transition-colors ${soldKind === v ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
             ))}
           </div>
-          <label className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted">
-            {soldRent ? tr('Affittato in', 'Rented in') : tr('Venduto in', 'Sold in')}
-            <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" placeholder="23" aria-label={tr('Giorni', 'Days')} className="h-9 w-16 rounded-full bg-white px-3 text-center text-sm text-ink outline-none ring-1 ring-black/10 focus:ring-brand" />
-            {tr('giorni (facoltativo)', 'days (optional)')}
+          <label className="block">
+            <span className="block text-sm font-semibold">{tr('In quanti giorni?', 'In how many days?')} <span className="font-normal text-muted">{tr('(se vuoi)', '(optional)')}</span></span>
+            <span className="mt-2 flex items-center gap-2">
+              <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" aria-label={tr('Giorni', 'Days')} className="h-12 w-24 rounded-2xl bg-white px-3 text-center text-base text-ink outline-none ring-1 ring-black/10 focus:ring-brand" />
+              <span className="text-sm text-muted">{tr('giorni', 'days')}</span>
+            </span>
           </label>
         </div>
       )}
     </div>
   );
 
-  const TONES: [Tone, string][] = [['all', tr('Tutte', 'All')], ['sold', soldRent ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold')], ['light', tr('Chiare', 'Light')], ['dark', tr('Scure', 'Dark')], ['brand', tr('Col tuo colore', 'Your colour')]];
+  // passo 2: dove. Per ogni social scelto il tipo di post sempre in vista, gia' su "Una foto"
+  const stepDove = (
+    <div className="space-y-6">
+      <section>
+        <h3 className="font-display text-lg font-semibold">{tr('Dove lo pubblichi?', 'Where will you post it?')}</h3>
+        <p className="mt-0.5 text-sm text-muted">{tr('Puoi sceglierne più di uno, preparo tutto insieme.', 'You can pick more than one, I prepare them all together.')}</p>
+        <div className="mt-3 grid grid-cols-5 gap-2">
+          {NETS.map(n => {
+            const on = nets.includes(n.id);
+            return (
+              <button key={n.id} type="button" onClick={() => toggleNet(n.id)} aria-pressed={on} className={`relative flex h-[80px] min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl ${chip(on)}`}>
+                <span className={on ? 'text-brand' : 'text-ink/70'}><NetIcon id={n.id} size={24} /></span>
+                <span className="max-w-full truncate px-0.5 text-[11px] font-semibold sm:text-sm">{n.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      <section>
+        <h3 className="font-display text-lg font-semibold">{tr('Che post preparo?', 'Which post do I make?')}</h3>
+        <div className="mt-1 divide-y divide-line">
+          {nets.map(id => {
+            const N = netOf(id), cf = fmtOf(id), ix = Math.max(0, N.fmts.indexOf(cf)), n = N.fmts.length;
+            return (
+              <div key={id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <span className="flex h-12 min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={id} size={18} /></span>
+                  <span className="truncate text-base font-semibold">{N.label}</span>
+                </span>
+                <div className="flex flex-col gap-1 sm:items-end">
+                  {/* segmentato come nel resto della piattaforma: fondo canvas, la scelta in bianco con ombra che scorre (600ms) */}
+                  <div role="radiogroup" aria-label={tr(`Tipo di post per ${N.label}`, `Post type for ${N.label}`)} className="relative grid w-full rounded-[24px] bg-canvas p-1 sm:w-auto sm:rounded-full" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+                    <span aria-hidden className="absolute bottom-1 left-1 top-1 rounded-[20px] bg-white shadow-sm ease-smooth transition-transform motion-reduce:transition-none sm:rounded-full" style={{ width: `calc((100% - 8px) / ${n})`, transform: `translateX(${ix * 100}%)` }} />
+                    {N.fmts.map(f => {
+                      const on = cf.id === f.id, I = fmtIcon(f);
+                      return (
+                        <button key={f.id} type="button" role="radio" aria-checked={on} onClick={() => pickFmt(id, f.id)} title={fmtShort(N.fmts, f)}
+                          className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-full px-1 text-[13px] font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 sm:h-10 sm:min-w-[112px] sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm ${on ? 'text-ink' : 'text-muted hover:text-ink'}`}>
+                          <I size={16} className="shrink-0" /> <span className="truncate">{fmtShort(N.fmts, f)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span key={cf.id} className="blur-in min-h-5 px-3 text-sm text-muted">{fmtHint(N.fmts, cf)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+
+  // passo 3: le foto. Si toccano nell'ordine voluto, il numero e' l'ordine; "Sistema la foto" sta sotto l'anteprima
+  const stagedShown = (anyMulti ? gridSel : photosFor(fmt)).some(p => p.staged);
+  const stepFoto = (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="font-display text-lg font-semibold">{anyMulti ? tr('Scegli le foto', 'Choose the photos') : tr('Scegli la foto', 'Choose the photo')}</h3>
+          <p className="mt-0.5 text-sm text-muted">{anyMulti
+            ? tr(`Tocca le foto nell’ordine che vuoi, il numero è l’ordine. Fino a ${MAX_PHOTOS} foto.`, `Tap the photos in the order you want, the number is the order. Up to ${MAX_PHOTOS} photos.`)
+            : tr('Tocca la foto che vuoi pubblicare.', 'Tap the photo you want to post.')}</p>
+        </div>
+        {anyMulti && sel.length > 0 && <button type="button" onClick={() => setSel([])} className="h-10 rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{tr('Ricomincia', 'Start over')}</button>}
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {photos.map(p => {
+          const i = gridSel.indexOf(p);
+          return (
+            <button key={p.src} type="button" onClick={() => tap(p.src)} aria-pressed={i >= 0} className={`relative aspect-[4/3] overflow-hidden rounded-2xl ring-offset-2 ease-smooth transition-shadow ${i >= 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.small} alt="" className="h-full w-full object-cover" />
+              {p.staged && <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-ink">{tr('Arredata al computer', 'Virtually staged')}</span>}
+              {i >= 0 && <span className="pop absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-brand px-2 text-sm font-bold text-white">{anyMulti ? i + 1 : <Check size={16} strokeWidth={3} />}</span>}
+            </button>
+          );
+        })}
+        {photos.length < Math.min(srcs.length, 24) && <span className="aspect-[4/3] animate-pulse rounded-2xl bg-canvas" />}
+      </div>
+      {stagedShown && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-[24px] bg-canvas p-4">
+          <input type="checkbox" checked={label} onChange={e => setLabel(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-brand,#537eec)]" />
+          <span>
+            <span className="block text-sm font-semibold">{tr('Scrivi sulla foto che è arredata al computer', 'Write on the photo that it is virtually staged')}</span>
+            <span className="block text-sm text-muted">{tr('Così chi guarda sa che i mobili sono stati aggiunti al computer.', 'So viewers know the furniture was added on the computer.')}</span>
+          </span>
+        </label>
+      )}
+      {!canNext && <p className="text-sm text-muted">{tr('Scegli almeno una foto per andare avanti.', 'Choose at least one photo to continue.')}</p>}
+    </div>
+  );
+
+  // passo 4: la grafica. Toccandone una sul telefono l'anteprima grande torna in vista
+  const pickTpl = (id: string) => { setTpl(id); setView('post'); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
   const stepGrafica = (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold">{tr('Scegli la grafica', 'Choose the design')}</h3>
-        <p className="mt-0.5 text-xs text-muted">{nets.length > 1
-          ? tr(`Una grafica per tutti i social, adattata a ogni formato. Qui vedi ${net.label} ${fmt.ratio}, cambia social sopra l’anteprima.`, `One design for every network, adapted to each format. Here you see ${net.label} ${fmt.ratio}, switch network above the preview.`)
-          : fmt.multi
-            ? tr('Vale per la copertina; le altre slide restano pulite con logo e numero, l’ultima ha i tuoi contatti.', 'It applies to the cover; the other slides stay clean with logo and number, the last has your contacts.')
-            : tr(`Le grafiche adatte al formato ${fmt.ratio}, con il tuo logo e il tuo colore.`, `Designs that fit the ${fmt.ratio} format, with your logo and colour.`)}</p>
+        <h3 className="font-display text-lg font-semibold">{tr('Scegli la grafica', 'Choose the design')}</h3>
+        <p className="mt-0.5 text-sm text-muted">{nets.length > 1
+          ? tr('Con il tuo logo e il tuo colore, la stessa per tutti i social scelti.', 'With your logo and colour, the same for every chosen network.')
+          : tr('Con il tuo logo e il tuo colore.', 'With your logo and colour.')}</p>
       </div>
       {swaps.length > 0 && (
-        <div className="rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
+        <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900 ring-1 ring-amber-200">
           {swaps.map(s => (
-            <span key={s.n} className="block">{tr(`${tplLabel(tpl)} non regge ${netOf(s.n).label} ${s.f.ratio}: lì uso ${tplLabel(s.to)}, la più simile.`, `${tplLabel(tpl)} does not fit ${netOf(s.n).label} ${s.f.ratio}: there I use ${tplLabel(s.to)}, the closest one.`)}</span>
-          ))}
-        </div>
-      )}
-      {soldBox}
-      {toneOf('light') + toneOf('dark') + toneOf('brand') > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {TONES.filter(([t]) => t === 'all' || toneOf(t) > 0).map(([t, l]) => (
-            <button key={t} type="button" onClick={() => setTone(t)} aria-pressed={tone === t} className={`h-9 rounded-full px-4 text-xs font-semibold ${chip(tone === t)}`}>{l}</button>
+            <span key={s.n} className="block">{tr(`Su ${netOf(s.n).label} questa grafica non ci sta bene, lì uso ${tplLabel(s.to)}, la più simile.`, `On ${netOf(s.n).label} this design does not fit well, there I use ${tplLabel(s.to)}, the closest one.`)}</span>
           ))}
         </div>
       )}
       <div ref={gridRef} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {cellW > 0 && list.map(t => (
-          <button key={t.id} type="button" onClick={() => setTpl(t.id)} aria-pressed={cur === t.id} className="group flex flex-col items-center gap-2 text-left">
-            <span className={`block overflow-hidden rounded-2xl ring-2 ring-offset-2 ease-smooth transition-shadow ${cur === t.id ? 'ring-brand' : 'ring-transparent group-hover:ring-black/15'}`}><PostView build={thumbs[t.id] ?? null} width={cellW - 4} /></span>
-            <span className={`flex items-center gap-1 text-xs font-semibold ${cur === t.id ? 'text-ink' : 'text-muted'}`}>{cur === t.id && <Check size={13} className="text-brand" />}{t.label}</span>
+        {cellW > 0 && all.map(t => (
+          <button key={t.id} type="button" onClick={() => pickTpl(t.id)} aria-pressed={cur === t.id} className="group flex flex-col items-center gap-2 text-left">
+            <span className={`block overflow-hidden rounded-2xl ring-offset-2 ease-smooth transition-shadow ${cur === t.id ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/10 group-hover:ring-black/25'}`}><PostView build={thumbs[t.id] ?? null} width={cellW - 4} /></span>
+            <span className={`text-sm ${cur === t.id ? 'font-semibold text-ink' : 'font-medium text-muted'}`}>{tplLabel(t.id)}</span>
           </button>
         ))}
       </div>
     </div>
   );
 
-  // testi di tutti i social scelti, uno sotto l'altro: ognuno con il contatore del suo limite e Copia testo
-  const num = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // 2.200 (toLocaleString it-IT scrive 2200)
+  // passo 5: il testo, gia' scritto per ogni social. Avviso solo se supera il limite del social
   const textCard = (n: NetId) => {
-    const N = netOf(n), k = tk(n), t = texts[k] ?? '', rule = ruleOf(n, n === 'tiktok' && withVideo), len = countChars(t), tags = countTags(t);
-    const ref = rule.ideal ?? rule.max;
-    const tone = len > rule.max ? 'text-red-600' : len > ref * (rule.ideal ? 1 : 0.9) ? 'text-amber-600' : 'text-muted';
-    const tagTone = tags > rule.tags[1] ? 'text-red-600' : 'text-muted';
-    const hint = [
-      rule.visible ? tr(`Le prime ${rule.visible} battute si vedono prima di “altro”.`, `The first ${rule.visible} characters show before “more”.`) : '',
-      rule.ideal ? tr(`Meglio breve, oltre ${num(rule.ideal)} battute il testo si chiude.`, `Keep it short, past ${num(rule.ideal)} characters the text collapses.`) : '',
-      n === 'tiktok' ? (withVideo ? tr('Col video il limite è 2.200.', 'With the video the limit is 2,200.') : tr('Per le foto il limite è 4.000, per i video 2.200.', 'Photos allow 4,000, videos 2,200.')) : '',
-    ].filter(Boolean).join(' ');
+    const N = netOf(n), k = tk(n), t = texts[k] ?? '', rule = ruleOf(n, n === 'tiktok' && withVideo);
+    const long = countChars(t) > rule.max;
     const on = nets.length > 1 && view === 'post' && n === active;
     return (
-      <section key={n} onFocusCapture={() => { if (n !== active || view !== 'post') show(n); }} className={`rounded-[32px] p-4 ring-1 ease-smooth transition-shadow ${on ? 'ring-brand/50' : 'ring-black/10'}`}>
-        <button type="button" onClick={() => show(n)} className="flex min-h-8 items-center gap-2 text-left">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={n} size={16} /></span>
-          <span className="text-sm font-semibold">{N.label}</span>
-          <span className="text-xs text-muted">{fmtOf(n).label}</span>
-          {done.includes(n) && <Check size={14} className="text-brand" strokeWidth={3} />}
-        </button>
-        <div className="relative mt-3">
+      <section key={n} onFocusCapture={() => { if (n !== active || view !== 'post') show(n); }} className={`rounded-[24px] p-4 ease-smooth transition-shadow ${on ? 'ring-2 ring-brand' : 'ring-1 ring-black/10'}`}>
+        {nets.length > 1 && (
+          <button type="button" onClick={() => show(n)} className="mb-3 flex min-h-8 items-center gap-2 text-left">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={n} size={16} /></span>
+            <span className="text-sm font-semibold">{N.label}</span>
+            {done.includes(n) && <Check size={14} className="text-brand" strokeWidth={3} />}
+          </button>
+        )}
+        <div className="relative">
           <textarea value={t} onChange={e => putText(n, e.target.value)} rows={nets.length > 1 ? (wide ? 8 : 7) : wide ? 12 : 9} aria-label={tr(`Testo per ${N.label}`, `Text for ${N.label}`)}
-            aria-describedby={`count-${n}`}
-            className="block w-full resize-y rounded-2xl bg-canvas px-4 py-3 text-sm leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
+            className="block w-full resize-y rounded-[16px] bg-canvas px-4 py-3 text-base leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
           {(textBusy[k] || (textErr[k] && !t)) && (
-            <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-canvas px-4 text-center text-sm text-muted">
-              {textBusy[k] ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {tr(`Scrivo il testo per ${N.label}`, `Writing the text for ${N.label}`)}</span> : (
+            <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-[16px] bg-canvas px-4 text-center text-sm text-muted">
+              {textBusy[k] ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {tr('Scrivo il testo', 'Writing the text')}</span> : (
                 <>
                   <span>{textErr[k]}</span>
                   <button type="button" onClick={() => void writeText(n, true)} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink shadow-sm ring-1 ring-black/5 hover:bg-line"><RotateCcw size={15} /> {tr('Riprova', 'Try again')}</button>
@@ -1211,36 +1316,33 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             </span>
           )}
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span id={`count-${n}`} className="flex flex-wrap items-center gap-x-3 text-xs font-semibold tabular-nums">
-            <span className={`ease-smooth transition-colors ${tone}`}>{num(len)} / {num(ref)}{rule.ideal ? ` ${tr('consigliati', 'suggested')}` : ''}</span>
-            {rule.tags[1] > 0
-              ? <span className={`ease-smooth transition-colors ${tagTone}`}>{tags} / {rule.tags[1]} hashtag</span>
-              : tags > 0 && <span className="text-red-600">{tr(`Niente hashtag su ${N.label}`, `No hashtags on ${N.label}`)}</span>}
-          </span>
-          <button type="button" onClick={() => void copy(n)} disabled={!t || !!textBusy[k]} className="ml-auto flex h-10 items-center gap-2 rounded-full bg-canvas px-4 text-sm font-semibold ease-smooth transition-colors hover:bg-line disabled:opacity-50">{copied === n ? <Check size={15} /> : <Copy size={15} />} <span className="w-[84px] text-left">{copied === n ? tr('Copiato', 'Copied') : tr('Copia testo', 'Copy text')}</span></button>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          {long && <span className="text-sm font-semibold text-red-600">{tr(`Testo troppo lungo per ${N.label}`, `Text too long for ${N.label}`)}</span>}
+          <button type="button" onClick={() => void copy(n)} disabled={!t || !!textBusy[k]} className="ml-auto flex h-11 items-center gap-2 rounded-full bg-canvas px-5 text-sm font-semibold ease-smooth transition-colors hover:bg-line disabled:opacity-50">{copied === n ? <Check size={16} /> : <Copy size={16} />} <span className="w-[88px] text-left">{copied === n ? tr('Copiato', 'Copied') : tr('Copia testo', 'Copy text')}</span></button>
         </div>
-        {(hint || len > rule.max) && <p className="mt-1 text-xs text-muted">{len > rule.max ? <span className="font-medium text-red-600">{tr(`Troppo lungo per ${N.label}, togli ${num(len - rule.max)} battute. `, `Too long for ${N.label}, remove ${num(len - rule.max)} characters. `)}</span> : null}{hint}</p>}
       </section>
     );
   };
+  const stepTesto = (
+    <div className="space-y-4">
+      <div>
+        <h3 className="font-display text-lg font-semibold">{nets.length > 1 ? tr('I testi dei post', 'The post texts') : tr(`Il testo per ${net.label}`, `The text for ${net.label}`)}</h3>
+        <p className="mt-0.5 text-sm text-muted">{tr('Abbiamo scritto il testo per te. Puoi cambiarlo.', 'We wrote the text for you. You can change it.')}</p>
+      </div>
+      {nets.map(textCard)}
+      <p className="min-h-5 text-sm text-muted" aria-live="polite">{note}</p>
+    </div>
+  );
 
-  // passo 5, facoltativo: il video dell'annuncio (o del Venduto) con gli stessi stili della chat; si puo' finire anche senza
+  // passo 6, facoltativo: il video. Prima si', no; gli stili solo dopo il si'
   const pickable = vid.status === 'idle' || vid.status === 'error';
   const vOthers = vCandidates.filter(p => !vList.includes(p));
-  const tileBtn = 'flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white disabled:opacity-0';
+  const tileBtn = 'flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white disabled:opacity-0';
   // foto del video: striscia compatta (numero = ordine, la 1 apre il video), sotto le altre da aggiungere
   const vPhotoPick = vTpl === 'venduto' ? (
     <section>
-      <label className="mb-4 flex flex-wrap items-center gap-2 text-sm font-medium">
-        {soldRent ? tr('Affittato in', 'Rented in') : tr('Venduto in', 'Sold in')}
-        <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" placeholder="23" aria-label={tr('Giorni', 'Days')} className="h-10 w-20 rounded-full bg-canvas px-3 text-center text-sm outline-none ring-1 ring-transparent focus:bg-white focus:ring-brand" />
-        <span>{tr('giorni', 'days')} <span className="text-xs font-normal text-muted">{tr('(facoltativo)', '(optional)')}</span></span>
-      </label>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h4 className="text-sm font-semibold">{tr('Foto del video', 'Video photo')}</h4>
-        <span className="text-xs text-muted">{tr('Una foto, quella col timbro', 'One photo, the one with the stamp')}</span>
-      </div>
+      <h4 className="text-base font-semibold">{tr('Foto del video', 'Video photo')}</h4>
+      <p className="text-sm text-muted">{tr('Una foto, quella col timbro.', 'One photo, the one with the stamp.')}</p>
       <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
         {vCandidates.map(p => {
           const on = p === vSoldPhoto;
@@ -1248,7 +1350,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             <button key={p.src} type="button" onClick={() => setVOne(p.src)} aria-pressed={on} className={`relative h-[96px] w-[72px] shrink-0 overflow-hidden rounded-2xl ease-smooth transition-shadow ${on ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.small} alt="" className="h-full w-full object-cover" />
-              {on && <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-brand text-white"><Check size={13} strokeWidth={3} /></span>}
             </button>
           );
         })}
@@ -1256,28 +1357,26 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </section>
   ) : (
     <section>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h4 className="text-sm font-semibold">{tr('Foto del video', 'Video photos')}</h4>
-        <span className="text-xs tabular-nums text-muted">{tr(`${vList.length} di ${MAX_REEL_PHOTOS}, la 1 apre il video`, `${vList.length} of ${MAX_REEL_PHOTOS}, number 1 opens the video`)}</span>
-      </div>
+      <h4 className="text-base font-semibold">{tr('Foto del video', 'Video photos')}</h4>
+      <p className="text-sm text-muted">{tr('Il numero è l’ordine, la 1 apre il video.', 'The number is the order, number 1 opens the video.')}</p>
       <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
         {vList.map((p, i) => (
           <div key={p.src} className="relative h-[112px] w-[84px] shrink-0 overflow-hidden rounded-2xl bg-canvas ring-1 ring-black/5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.small} alt="" className="h-full w-full object-cover" />
             <span className={`absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold shadow-sm ${i === 0 ? 'bg-brand text-white' : 'bg-white/95 text-ink'}`}>{i + 1}</span>
-            <button type="button" onClick={() => vDel(p.src)} aria-label={tr('Togli', 'Remove')} className={`${tileBtn} absolute right-1 top-1`}><X size={13} /></button>
+            <button type="button" onClick={() => vDel(p.src)} aria-label={tr('Togli', 'Remove')} className={`${tileBtn} absolute right-1 top-1`}><X size={14} /></button>
             <div className="absolute inset-x-1 bottom-1 flex justify-between">
-              <button type="button" onClick={() => vMove(i, -1)} disabled={!i} aria-label={tr('Sposta prima', 'Move earlier')} className={tileBtn}><ChevronLeft size={14} /></button>
-              <button type="button" onClick={() => vMove(i, 1)} disabled={i === vList.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className={tileBtn}><ChevronRight size={14} /></button>
+              <button type="button" onClick={() => vMove(i, -1)} disabled={!i} aria-label={tr('Sposta prima', 'Move earlier')} className={tileBtn}><ChevronLeft size={15} /></button>
+              <button type="button" onClick={() => vMove(i, 1)} disabled={i === vList.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className={tileBtn}><ChevronRight size={15} /></button>
             </div>
           </div>
         ))}
-        {!vList.length && <span className="flex h-[112px] items-center px-2 text-xs text-muted">{photosSettled ? tr('Nessuna foto, aggiungile qui sotto.', 'No photos, add them below.') : <Loader2 size={16} className="animate-spin" />}</span>}
+        {!vList.length && <span className="flex h-[112px] items-center px-2 text-sm text-muted">{photosSettled ? tr('Nessuna foto, aggiungile qui sotto.', 'No photos, add them below.') : <Loader2 size={16} className="animate-spin" />}</span>}
       </div>
       {vOthers.length > 0 && vList.length < MAX_REEL_PHOTOS && (
         <div className="mt-2">
-          <span className="text-xs font-medium text-muted">{tr('Tocca per aggiungere', 'Tap to add')}</span>
+          <span className="text-sm font-medium text-muted">{tr('Tocca per aggiungere', 'Tap to add')}</span>
           <div className="-mx-1 mt-1 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
             {vOthers.map(p => (
               <button key={p.src} type="button" onClick={() => vAdd(p.src)} aria-label={tr('Aggiungi al video', 'Add to the video')} className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl ring-1 ring-black/10 ease-smooth transition-shadow hover:ring-brand">
@@ -1290,75 +1389,55 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         </div>
       )}
       {vList.length < 3 && photosSettled && (
-        <p className="mt-2 flex items-start gap-2 rounded-2xl bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
-          <TriangleAlert size={15} className="mt-px shrink-0" />
+        <p className="mt-2 flex items-start gap-2 rounded-2xl bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-900 ring-1 ring-amber-200">
+          <TriangleAlert size={16} className="mt-0.5 shrink-0" />
           {vCandidates.length < 3
-            ? tr(`Il video annuncio vuole almeno 3 foto e l’immobile ne ha ${vCandidates.length}. Aggiungi foto alla scheda o scegli Video Venduto o Affittato, che ne usa una.`, `The listing video needs at least 3 photos and the property has ${vCandidates.length}. Add photos to the listing or choose the Sold or Rented video, which uses one.`)
-            : tr(`Il video annuncio vuole almeno 3 foto: aggiungine ${3 - vList.length}, o scegli Video Venduto o Affittato, che ne usa una.`, `The listing video needs at least 3 photos: add ${3 - vList.length} more, or choose the Sold or Rented video, which uses one.`)}
+            ? tr(`Per il video servono almeno 3 foto e questa casa ne ha ${vCandidates.length}. Aggiungi foto alla scheda.`, `The video needs at least 3 photos and this home has ${vCandidates.length}. Add photos to the listing.`)
+            : tr(`Per il video servono almeno 3 foto, aggiungine ${3 - vList.length}.`, `The video needs at least 3 photos, add ${3 - vList.length} more.`)}
         </p>
       )}
     </section>
   );
-  const soldWord = soldRent ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold');
-  // scelta del video: annuncio, Venduto o Affittato. Venduto/Affittato accendono anche il Venduto di grafiche e testi
-  // (soldOn); tornare all'annuncio cambia solo il video
-  const vKind: 'reel' | 'venduto' | 'affittato' = vTpl === 'venduto' ? soldKind : 'reel';
-  const pickKind = (k: 'reel' | 'venduto' | 'affittato') => {
-    if (k !== 'reel') { if (!soldOn) setSold(true); setSoldKind(k); }
-    setVid(o => ({ ...o, tpl: k === 'reel' ? 'reel' : 'venduto', status: o.status === 'error' ? 'idle' : o.status })); setView('video');
-  };
-  const KINDS = [['reel', tr('Video annuncio', 'Listing video')], ['venduto', tr('Video Venduto', 'Sold video')], ['affittato', tr('Video Affittato', 'Rented video')]] as const;
+  const sayYes = () => { setWantVideo(true); setView('video'); };
+  const sayNo = () => { setWantVideo(false); setView('post'); };
   const stepVideo = (
     <div className="space-y-5">
       {pickable && (
-        <div role="radiogroup" aria-label={tr('Che video', 'Which video')} className="relative grid grid-cols-3 gap-1 rounded-full bg-canvas p-1">
-          {/* un solo evidenziato che scivola sotto la scelta (600 ms) */}
-          <span aria-hidden className="absolute bottom-1 left-1 top-1 rounded-full bg-white shadow-sm ease-smooth transition-transform duration-[600ms] motion-reduce:transition-none" style={{ width: 'calc((100% - 16px) / 3)', transform: `translateX(calc(${KINDS.findIndex(k => k[0] === vKind)} * (100% + 4px)))` }} />
-          {KINDS.map(([v, l]) => (
-            <button key={v} type="button" role="radio" aria-checked={vKind === v} onClick={() => pickKind(v)} className={`relative h-9 min-w-0 truncate rounded-full px-2 text-xs font-semibold ease-smooth transition-colors duration-[600ms] sm:text-sm ${vKind === v ? 'text-ink' : 'text-muted hover:text-ink'}`}>{l}</button>
-          ))}
-        </div>
-      )}
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 flex-1 basis-60">
-          <h3 className="text-sm font-semibold">{tr('Vuoi anche il video?', 'Do you want the video too?')}</h3>
-          <p className="mt-0.5 text-xs text-muted">{vTpl === 'venduto'
-            ? tr(`Facoltativo. Il timbro ${soldWord} sulla foto, la zona${nDays ? ' e i giorni' : ''} e i tuoi contatti, in 9:16 per Storia, Reel, TikTok e WhatsApp.`, `Optional. The ${soldWord} stamp on the photo, the area${nDays ? ', the days' : ''} and your contacts, in 9:16 for Story, Reel, TikTok and WhatsApp.`)
-            : tr('Facoltativo. Con le foto e i dati dell’immobile, in 9:16 per Storia, Reel, TikTok e WhatsApp. Lo trovi poi in Scarica tutto.', 'Optional. With the photos and the property details, in 9:16 for Story, Reel, TikTok and WhatsApp. It goes in Download all too.')}</p>
-        </div>
-        {pickable && <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className="h-9 shrink-0 rounded-full px-3 text-xs font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50">{tr('Salta, scarica senza video', 'Skip, download without video')}</button>}
-      </div>
-      {pickable && (
         <>
-          {vPhotoPick}
-          <section>
-            <h4 className="mb-2 text-sm font-semibold">{tr('Stile', 'Style')}</h4>
-            <StylePick tpl={vTpl} rent={soldRent} value={vid.style} onChange={st => { setVid(v => ({ ...v, style: st })); setView('video'); }} />
-          </section>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
-            <button type="button" onClick={() => void makeVideo()} disabled={vPhotos.length < vMin} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-2 text-center text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-50 sm:w-auto"><Play size={16} className="shrink-0" /> {vTpl === 'venduto' ? tr(`Crea il video ${soldWord} ${reelStyleLabel(vid.style)}`, `Make the ${reelStyleLabel(vid.style)} ${soldWord} video`) : tr(`Crea il video ${reelStyleLabel(vid.style)}`, `Make the ${reelStyleLabel(vid.style)} video`)}</button>
-            <span className="flex items-start justify-center gap-1.5 text-center text-xs text-muted sm:justify-start sm:text-left"><Coins size={14} className="mt-px shrink-0" /> {tr(`${vCost} crediti, scalati solo a video pronto`, `${vCost} credits, charged only when the video is ready`)}</span>
+          <h3 className="font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
+          <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-2 gap-3">
+            {bigChoice(wantVideo === true, Film, tr('Sì, crea il video', 'Yes, make the video'), tr(`${vCost} crediti, li paghi solo se riesce`, `${vCost} credits, you only pay if it works`), sayYes)}
+            {bigChoice(wantVideo === false, ImageIcon, tr('No, grazie', 'No, thanks'), tr('Salvi solo le foto', 'You only save the photos'), sayNo)}
           </div>
-          {vid.status === 'error' && <p className="text-sm font-medium text-red-600">{vid.err}</p>}
+          {wantVideo && (
+            <div className="blur-in space-y-5">
+              <section>
+                <h4 className="mb-2 text-base font-semibold">{tr('Scegli lo stile', 'Choose the style')}</h4>
+                <StylePick tpl={vTpl} rent={soldRent} value={vid.style} onChange={st => { setVid(v => ({ ...v, style: st })); setView('video'); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+              </section>
+              {vPhotoPick}
+              {vid.status === 'error' && <p className="text-sm font-medium text-red-600">{vid.err}</p>}
+            </div>
+          )}
         </>
       )}
       {vWorking && (
-        <div className="flex items-center gap-3 rounded-[32px] bg-canvas p-4">
-          <Loader2 size={18} className="shrink-0 animate-spin text-brand" />
+        <div className="flex items-center gap-3 rounded-[24px] bg-canvas p-4">
+          <Loader2 size={20} className="shrink-0 animate-spin text-brand" />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">{vid.status === 'queued' ? tr('In coda, parte appena si libera un posto', 'Queued, starts as soon as a slot is free') : tr(`Creo il video ${reelStyleLabel(vid.style)}`, `Making the ${reelStyleLabel(vid.style)} video`)}</span>
-            <span className="block text-xs tabular-nums text-muted">{vElapsed} s, {vEta}. {tr('Intanto puoi scaricare o condividere i post.', 'Meanwhile you can download or share the posts.')}</span>
+            <span className="block text-base font-semibold">{vid.status === 'queued' ? tr('In coda, parte appena si libera un posto', 'Queued, starts as soon as a slot is free') : tr('Creo il video', 'Making the video')}</span>
+            <span className="block text-sm tabular-nums text-muted">{vElapsed} s, {vEta}. {tr('Intanto puoi salvare o pubblicare le foto.', 'Meanwhile you can save or post the photos.')}</span>
             {typeof vid.progress === 'number' && <span className="mt-2 block h-1.5 w-full overflow-hidden rounded-full bg-black/10"><span className="block h-full rounded-full bg-brand ease-smooth transition-[width]" style={{ width: `${Math.max(4, vid.progress)}%` }} /></span>}
           </span>
         </div>
       )}
       {vid.status === 'done' && vid.url && (
-        <div className="rounded-[32px] bg-canvas p-4">
-          <span className="flex items-center gap-1.5 text-sm font-semibold"><Check size={16} className="text-brand" strokeWidth={3} /> {tr(`Video ${reelStyleLabel(vid.style)} pronto, è anche in Scarica tutto`, `${reelStyleLabel(vid.style)} video ready, it is in Download all too`)}</span>
+        <div className="rounded-[24px] bg-canvas p-4">
+          <span className="flex items-center gap-2 text-base font-semibold"><Check size={18} className="text-brand" strokeWidth={3} /> {tr('Il video è pronto, lo salvi insieme alle foto.', 'The video is ready, you save it with the photos.')}</span>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setView('video')} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Play size={15} /> {tr('Guarda', 'Watch')}</button>
-            <button type="button" onClick={() => void vFile().then(f => save(f, f.name)).catch(() => setNote(tr('Non sono riuscito a scaricare il video, riprova.', 'I could not download the video, please try again.')))} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Download size={15} /> {tr('Scarica solo il video', 'Download the video only')}</button>
-            <button type="button" onClick={() => { setVid(v => ({ tpl: v.tpl, style: v.style, status: 'idle' })); setView('video'); }} className="flex h-10 items-center rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-white hover:text-ink">{tr('Un altro stile', 'Another style')}</button>
+            <button type="button" onClick={() => setView('video')} className="flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Play size={15} /> {tr('Guarda', 'Watch')}</button>
+            <button type="button" onClick={() => void vFile().then(f => save(f, f.name)).catch(() => setNote(tr('Non sono riuscito a salvare il video, riprova.', 'I could not save the video, please try again.')))} className="flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Download size={15} /> {tr('Salva solo il video', 'Save the video only')}</button>
+            <button type="button" onClick={() => { setVid(v => ({ tpl: v.tpl, style: v.style, status: 'idle' })); setWantVideo(true); setView('video'); }} className="flex h-11 items-center rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-white hover:text-ink">{tr('Un altro stile', 'Another style')}</button>
           </div>
         </div>
       )}
@@ -1366,67 +1445,67 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   );
 
-  const stepTesto = (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-semibold">{nets.length > 1 ? tr('I testi per ogni social', 'The texts for each network') : tr(`Il testo per ${net.label}`, `The text for ${net.label}`)}</h3>
-        <p className="mt-0.5 text-xs text-muted">{tr('Scritti nei limiti di ogni social, puoi cambiarli. Condividi copia il testo del social che guardi.', 'Written within each network’s limits, you can change them. Share copies the text of the network you are viewing.')}</p>
-      </div>
-      {nets.map(textCard)}
-      {/* il video e' il passo dopo, facoltativo: Scarica tutto e Condividi funzionano gia' da qui */}
-      <button type="button" onClick={() => goStep(4)} className="flex w-full items-center gap-3 rounded-[32px] bg-canvas p-4 text-left ease-smooth transition-colors hover:bg-line">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-brand ring-1 ring-black/5">{vWorking ? <Loader2 size={18} className="animate-spin" /> : <Film size={18} />}</span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">{vid.status === 'done' ? tr('Video pronto', 'Video ready') : vWorking ? tr('Creo il video', 'Making the video') : tr('Vuoi anche il video?', 'Do you want the video too?')}</span>
-          <span className="block text-xs text-muted">{vid.status === 'done' ? tr('È anche in Scarica tutto.', 'It is in Download all too.') : tr(`Facoltativo, ${vCost} crediti. Puoi anche finire qui con Scarica tutto.`, `Optional, ${vCost} credits. You can also finish here with Download all.`)}</span>
-        </span>
-        <ArrowRight size={18} className="shrink-0 text-muted" />
-      </button>
-      <p className="min-h-5 text-sm text-muted" aria-live="polite">{note}</p>
-    </div>
-  );
+  // piede dell'ultimo passo: un solo bottone scuro. "Crea il video" finche' il video (voluto) non c'e', poi "Salva tutto"
+  const last = stepIx === S.video;
+  const makeFirst = last && !!wantVideo && pickable;
+  const shareLabel = shareVideo ? tr('Pubblica il video', 'Post the video') : tr(`Pubblica su ${net.label}`, `Post on ${net.label}`);
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 sm:p-4" onClick={onClose}>
       <div className="flex h-full w-full max-w-[1160px] flex-col overflow-hidden bg-white shadow-2xl sm:rounded-[32px]" style={wide ? { height: modalH } : undefined} onClick={e => e.stopPropagation()}>
-        {/* testata e passi */}
+        {/* testata e passi; sul telefono solo "Passo 2 di 6, Dove" */}
         <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="font-display text-lg font-bold tracking-tight sm:text-xl">{tr('Condividi sui social', 'Share on social media')}</h2>
-            <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
+            <div className="min-w-0">
+              <h2 className="font-display text-lg font-bold tracking-tight sm:text-xl">{tr('Condividi sui social', 'Share on social media')}</h2>
+              {phoneUi && <p className="text-sm font-semibold text-muted">{tr(`Passo ${stepIx + 1} di ${STEPS.length}, ${STEPS[stepIx][0]}`, `Step ${stepIx + 1} of ${STEPS.length}, ${STEPS[stepIx][1]}`)}</p>}
+            </div>
+            <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={18} /></button>
           </div>
-          <nav className="mt-3 grid grid-cols-5 gap-0.5 rounded-full bg-canvas p-1 sm:gap-1" aria-label={tr('Passi', 'Steps')}>
-            {STEPS.map(([i1, e1], i) => {
-              const on = i === stepIx, ok = i !== stepIx && i <= reached;
-              return (
-                <button key={i1} type="button" onClick={() => goStep(i)} aria-current={on ? 'step' : undefined} className={`flex h-10 min-w-0 items-center justify-center gap-1 rounded-full text-[11px] font-semibold ease-smooth transition-[background-color,color,box-shadow] sm:gap-1.5 sm:text-sm ${on ? 'bg-white text-ink shadow-sm' : ok ? 'text-ink hover:bg-white/60' : 'text-muted hover:bg-white/60'}`}>
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ease-smooth transition-colors ${on ? 'bg-brand text-white' : ok ? 'bg-ink text-white' : 'bg-black/10 text-muted'}`}>{ok ? <Check size={11} strokeWidth={3} /> : i + 1}</span>
-                  <span className="truncate">{tr(i1, e1)}</span>
-                </button>
-              );
-            })}
-          </nav>
+          {phoneUi ? (
+            <div className="mt-3 flex gap-1" aria-hidden>
+              {STEPS.map((_, i) => <span key={i} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i <= stepIx ? 'bg-brand' : 'bg-black/10'}`} />)}
+            </div>
+          ) : (
+            <nav className="mt-3 grid grid-cols-6 gap-1 rounded-full bg-canvas p-1" aria-label={tr('Passi', 'Steps')}>
+              {STEPS.map(([i1, e1], i) => {
+                const on = i === stepIx, ok = i !== stepIx && i <= reached;
+                return (
+                  <button key={i1} type="button" onClick={() => goStep(i)} aria-current={on ? 'step' : undefined} className={`flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full text-sm font-semibold ease-smooth transition-[background-color,color,box-shadow] ${on ? 'bg-white text-ink shadow-sm' : ok ? 'text-ink hover:bg-white/60' : 'text-muted hover:bg-white/60'}`}>
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ease-smooth transition-colors ${on ? 'bg-brand text-white' : ok ? 'bg-ink text-white' : 'bg-black/10 text-muted'}`}>{ok ? <Check size={11} strokeWidth={3} /> : i + 1}</span>
+                    <span className="truncate">{tr(i1, e1)}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
         </div>
 
         {/* corpo: anteprima (sempre della stessa grandezza) e passo */}
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto lg:flex lg:overflow-hidden">
           <div className="flex shrink-0 justify-center px-4 pb-1 pt-4 [contain:paint] [transform:translateZ(0)] lg:w-[464px] lg:items-start lg:overflow-y-auto lg:px-8 lg:py-6">{preview}</div>
           <div ref={stepRef} className="min-w-0 flex-1 px-4 pb-6 pt-3 sm:px-6 lg:overflow-y-auto lg:py-6 lg:pl-2 lg:pr-8">
-            <div key={stepIx} className="blur-in">{[stepSocial, stepFoto, stepGrafica, stepTesto, stepVideo][stepIx]}</div>
+            <div key={stepIx} className="blur-in">{[stepCosa, stepDove, stepFoto, stepGrafica, stepTesto, stepVideo][stepIx]}</div>
           </div>
         </div>
 
-        {/* piede: Indietro e Avanti; all'ultimo passo Condividi (il social o il video che si guarda) e Scarica tutto, il principale */}
-        <div className="flex shrink-0 items-center gap-2 border-t border-line px-4 py-3 sm:px-6" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-          <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} px-4 text-ink hover:bg-canvas disabled:invisible`}><ArrowLeft size={16} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
-          <div className={stepIx < 3 ? 'flex-1' : 'hidden flex-1 sm:block'} />
-          {stepIx < 3 ? (
-            <button type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} className={`${btn} min-w-[140px] bg-ink text-white hover:bg-brand`}>{tr('Avanti', 'Next')} <ArrowRight size={16} /></button>
-          ) : (
+        {/* piede: Indietro e Avanti fino al passo Video; li' Pubblica (il social o il video che si guarda) e Salva, o Crea il video */}
+        <div className="flex shrink-0 items-end gap-2 border-t border-line px-4 py-3 sm:items-center sm:px-6" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+          <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} shrink-0 px-4 text-ink hover:bg-canvas disabled:invisible`}><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
+          {!last ? (
             <>
-              <button type="button" onClick={() => void share()} disabled={(shareVideo ? false : !allReady) || !!busy} className={`${btn} flex-1 bg-canvas px-4 text-ink hover:bg-line sm:flex-none sm:px-6`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} {shareVideo ? tr('Condividi video', 'Share video') : <span>{tr('Condividi', 'Share')}<span className="hidden sm:inline"> {tr('su', 'on')} {net.label}</span></span>}</button>
-              <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} flex-1 bg-ink px-4 text-white hover:bg-brand sm:min-w-[180px] sm:flex-none sm:px-6`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} {dlAll}</button>
+              <div className="flex-1" />
+              <button type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} className={`${btn} min-w-[160px] bg-ink text-base text-white hover:bg-brand`}>{tr('Avanti', 'Next')} <ArrowRight size={18} /></button>
             </>
+          ) : (
+            <div className="flex min-w-0 flex-1 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => void share()} disabled={(shareVideo ? false : !allReady) || !!busy} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>
+              {makeFirst ? (
+                <button type="button" onClick={() => void makeVideo()} disabled={vPhotos.length < vMin} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}><Film size={16} /> <span className="truncate">{tr('Crea il video', 'Make the video')}</span></button>
+              ) : (
+                <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} min-w-0 px-5 ${vWorking ? 'bg-canvas text-ink hover:bg-line' : 'bg-ink text-white hover:bg-brand'}`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} <span className="truncate">{saveLabel}</span></button>
+              )}
+            </div>
           )}
         </div>
       </div>

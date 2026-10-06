@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { usePathname } from 'next/navigation';
 
 // Widget di feedback Writhink (commenti con screenshot) sulle pagine di Agente Immo.
+// Si nasconde sotto i popup che coprirebbe (classe gnm-hide-feedback sul body, globals.css).
 // Non sui siti degli agenti (agenteimmo.me/<slug>, riscritti su /<lingua>/a/<slug>): sono i siti dei clienti.
 export default function FeedbackWidget() {
   const path = usePathname() ?? '';
