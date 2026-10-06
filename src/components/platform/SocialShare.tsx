@@ -1411,7 +1411,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         <>
           <h3 className="font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
           <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-2 gap-3">
-            {bigChoice(wantVideo === true, Film, tr('Sì, crea il video', 'Yes, make the video'), tr(`${vCost} crediti, li paghi solo se riesce`, `${vCost} credits, you only pay if it works`), sayYes)}
+            {bigChoice(wantVideo === true, Film, tr('Sì, crea il video', 'Yes, make the video'), tr(`${vCost} crediti`, `${vCost} credits`), sayYes)}
             {bigChoice(wantVideo === false, ImageIcon, tr('No, salva le foto', 'No, save the photos'), tr('Le scarichi subito', 'Download them now'), sayNo)}
           </div>
           {wantVideo && (
