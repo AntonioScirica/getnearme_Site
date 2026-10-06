@@ -24,19 +24,21 @@ export type ReelStyle = 'vivace' | 'elegante' | 'semplice' | 'classico';
 const REEL_STYLES: ReelStyle[] = ['vivace', 'elegante', 'semplice', 'classico'];
 export const reelStyleLabel = (s: ReelStyle) => ({ vivace: tr('Vivace', 'Lively'), elegante: tr('Elegante', 'Elegant'), semplice: tr('Semplice', 'Simple'), classico: tr('Classico', 'Classic') })[s] ?? s;
 // una riga di quattro card con un fotogramma del video in quello stile (public/staging/reel-styles) e il nome sotto
-export function StylePick({ tpl, value, onChange }: { tpl: ReelTpl; value: ReelStyle; onChange: (v: ReelStyle) => void }) {
+// rent: col template venduto mostra le clip Affittato (affittato-*.mp4)
+export function StylePick({ tpl, value, onChange, rent }: { tpl: ReelTpl; value: ReelStyle; onChange: (v: ReelStyle) => void; rent?: boolean }) {
   const still = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   return (
     <div role="radiogroup" aria-label={tr('Stile', 'Style')} className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
       {REEL_STYLES.map(v => {
-        const on = value === v, l = reelStyleLabel(v), base = `/staging/reel-styles/${tpl === 'venduto' ? 'venduto' : 'annuncio'}-${v}`;
+        const on = value === v, l = reelStyleLabel(v), base = `/staging/reel-styles/${tpl === 'venduto' ? (rent ? 'affittato' : 'venduto') : 'annuncio'}-${v}`;
         return (
-          <button key={v} type="button" role="radio" aria-checked={on} onClick={() => onChange(v)} className="group flex min-w-0 flex-col items-center gap-1.5">
-            <span className={`block aspect-[9/16] w-full overflow-hidden rounded-2xl bg-black/5 ease-smooth transition-shadow ${on ? 'outline outline-[3px] outline-offset-2 outline-brand' : 'ring-1 ring-black/10 group-hover:ring-black/25'}`}>
+          // una sola evidenziazione: l'anello sulla card (anche col tasto Tab), niente contorno del browser sul pulsante
+          <button key={v} type="button" role="radio" aria-checked={on} onClick={() => onChange(v)} className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl outline-none">
+            <span className={`block aspect-[9/16] w-full overflow-hidden rounded-2xl bg-black/5 ease-smooth transition-shadow ${on ? 'ring-[3px] ring-brand ring-offset-2' : 'ring-1 ring-black/10 group-hover:ring-black/25 group-focus-visible:ring-2 group-focus-visible:ring-brand/60'}`}>
               {/* clip corta in loop dello stile; con "riduci movimento" resta il fotogramma fermo */}
-              <video key={`${tpl}-${v}`} src={`${base}.mp4`} poster={`${base}.webp`} autoPlay={!still} muted loop playsInline preload="metadata" draggable={false} onError={e => { e.currentTarget.style.visibility = 'hidden'; }} className="h-full w-full object-cover" />
+              <video key={base} src={`${base}.mp4`} poster={`${base}.webp`} autoPlay={!still} muted loop playsInline preload="metadata" draggable={false} onError={e => { e.currentTarget.style.visibility = 'hidden'; }} className="h-full w-full object-cover" />
             </span>
-            <span className={`text-[13px] font-semibold leading-tight ${on ? 'text-ink' : 'text-ink/60 group-hover:text-ink'}`}>{l}</span>
+            <span className={`text-[13px] leading-tight ${on ? 'font-bold text-ink' : 'font-medium text-ink/60 group-hover:text-ink'}`}>{l}</span>
           </button>
         );
       })}
@@ -253,7 +255,7 @@ export function ReelData({ r, cost, onChange, onCreate, onSwapPhoto }: { r: Reel
         )}
       </div>
       <div className="mt-5 grid gap-4 rounded-3xl bg-canvas p-4">
-        <div><Label>{tr('Stile', 'Style')}</Label><div className="mt-3"><StylePick tpl={r.tpl} value={r.style} onChange={v => set({ style: v })} /></div></div>
+        <div><Label>{tr('Stile', 'Style')}</Label><div className="mt-3"><StylePick tpl={r.tpl} rent={rent} value={r.style} onChange={v => set({ style: v })} /></div></div>
         <span className="h-px bg-black/10" aria-hidden />{/* divisore tra gli stili e Migliora la luce */}
         <label className="flex w-fit cursor-pointer items-center gap-2.5 px-1 text-[13px] font-medium">
           <SunMedium size={16} className="text-muted" />{tr('Migliora la luce', 'Improve the light')}

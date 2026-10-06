@@ -19,6 +19,7 @@ import { renderGallery } from './renderers/gallery.js';
 import { renderBeforeAfter } from './renderers/before-after.js';
 import { renderTips } from './renderers/tips.js';
 import { renderArch } from './renderers/arch.js';
+import { renderSoldStamp, renderSoldElegant, renderSoldClassic } from './renderers/sold.js';
 import { createLogoOverlay } from './components.js';
 const i18n = { t: (k) => ({ pwSquare: 'Quadrato', pwProperty: 'Immobile' }[k] || k) };
 
@@ -74,6 +75,10 @@ export const TEMPLATES = [
   { id: 'before-after', label: 'Prima e Dopo', render: renderBeforeAfter, multiPhoto: 2, fields: ['price', 'title', 'address', 'description', 'badge'] },
   { id: 'tips', label: 'Consigli', render: renderTips, multiPhoto: 2, fields: ['title', 'description', 'metrics', 'badge'] },
   { id: 'arch', label: 'Arco', render: renderArch, fields: ['price', 'title', 'address', 'description', 'metrics', 'badge'] },
+  // Venduto / Affittato: solo per gli immobili chiusi (sold: true, il popup Condividi le mostra solo li')
+  { id: 'sold-stamp', label: 'Timbro', render: renderSoldStamp, sold: true, fields: ['badge', 'address', 'cta'] },
+  { id: 'sold-elegant', label: 'Corsivo', render: renderSoldElegant, sold: true, fields: ['badge', 'address', 'cta'] },
+  { id: 'sold-classic', label: 'Sobrio', render: renderSoldClassic, sold: true, fields: ['badge', 'address', 'cta'] },
 ];
 
 /**

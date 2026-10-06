@@ -10,15 +10,15 @@
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Coins, Copy, Crop, Download, Facebook, Film, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, RotateCcw, Share2, Sparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Coins, Copy, Crop, Download, Facebook, Film, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, Plus, RotateCcw, Share2, Sparkles, TriangleAlert, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
 import { exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
-import { closedPriceHidden, statusOf, STATUS_LABELS, zoneOnly } from '@/lib/siteTemplates';
+import { isClosed, statusOf, STATUS_LABELS, zoneOnly } from '@/lib/siteTemplates';
 import type { ProjectData } from '@/lib/projects';
 import { CREDIT_COST } from '@/lib/pricing';
 import { countChars, countTags, ruleOf } from '@/lib/socialRules';
-import { MAX_REEL_PHOTOS, reelStyleLabel, StylePick, type ReelStyle } from './ReelSteps';
+import { MAX_REEL_PHOTOS, reelStyleLabel, StylePick, type ReelStyle, type ReelTpl } from './ReelSteps';
 import { authFetch, portfolioUrl } from './api';
 import { pageLang, tr } from './i18n';
 
@@ -45,17 +45,19 @@ const NO_COVER = ['arch', 'split', 'frame', 'spotlight', 'before-after', 'galler
 // (provate il 06/10/2026 con titoli lunghi: Fascia e Fascia Alt nel quadrato coprono il titolo, nel 9:16 restano mezze vuote)
 const NO_FIT: Record<string, string[]> = { '1:1': ['topbar', 'topbar-alt'], '9:16': ['topbar', 'topbar-alt'] };
 // tono delle grafiche, per i filtri del passo Grafica: chiare, scure, col colore dell'agenzia
-const TONE: Record<string, 'light' | 'dark' | 'brand'> = {
+type Tone = 'all' | 'sold' | 'light' | 'dark' | 'brand';
+const TONE: Record<string, Exclude<Tone, 'all'>> = {
+  'sold-stamp': 'sold', 'sold-elegant': 'sold', 'sold-classic': 'sold',
   arch: 'light', card: 'light', topbar: 'light',
   gradient: 'dark', centered: 'dark', elegant: 'dark', 'topbar-alt': 'dark', magazine: 'dark', clean: 'dark',
   blue: 'brand', diagonal: 'brand', fade: 'brand', spotlight: 'brand', split: 'brand', gallery: 'brand',
 };
 // famiglie di grafiche simili: se la scelta non regge il formato di un social, si usa la piu' vicina della stessa famiglia
-const SIMILAR = [['topbar-alt', 'centered', 'gradient', 'elegant', 'magazine', 'clean'], ['topbar', 'card', 'arch'], ['blue', 'diagonal', 'fade', 'spotlight', 'split', 'gallery', 'before-after']];
+const SIMILAR = [['sold-stamp', 'sold-classic', 'sold-elegant'], ['topbar-alt', 'centered', 'gradient', 'elegant', 'magazine', 'clean'], ['topbar', 'card', 'arch'], ['blue', 'diagonal', 'fade', 'spotlight', 'split', 'gallery', 'before-after']];
 const STAGED_TEXT = 'Immagine arredata virtualmente';
 
 type Brand = { logo: string | null; primary: string; agencyName: string; phone: string; site: string };
-type Photo = { src: string; full: string; small: string; staged: boolean; original?: string; w: number; h: number };
+type Photo = { src: string; full: string; small: string; staged: boolean; original?: string; w: number; h: number; plan: boolean }; // plan: planimetria (fuori dal video)
 // inquadratura di una foto (per immobile e foto): a tutto schermo o intera (se manca, decide il formato), zoom e punto (0..1)
 type Frame = { fit?: 'cover' | 'contain'; z: number; x: number; y: number };
 const FRAME0: Frame = { z: 1, x: 0.5, y: 0.5 };
@@ -79,18 +81,18 @@ function loadFonts() {
   if (!document.getElementById('tpl-fonts')) {
     const l = document.createElement('link');
     l.id = 'tpl-fonts'; l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap';
+    l.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital@1&family=Poppins:wght@300;400;500;600;700&display=swap';
     document.head.appendChild(l);
   }
   fontsP = new Promise<void>(r => setTimeout(r, 50))
-    .then(() => Promise.all([300, 400, 500, 600, 700].map(w => document.fonts.load(`${w} 64px Poppins`).catch(() => null))))
+    .then(() => Promise.all([...[300, 400, 500, 600, 700].map(w => document.fonts.load(`${w} 64px Poppins`).catch(() => null)), document.fonts.load('italic 400 64px "Playfair Display"').catch(() => null)]))
     .then(() => document.fonts.ready).then(() => undefined);
   return fontsP;
 }
 
 // foto in un blob locale: l'esportazione (canvas) non si "sporca" con foto di altri siti. R2 risponde con CORS,
 // le foto dei portali passano dalle miniature del nostro server (960 px).
-const blobCache = new Map<string, Promise<{ full: string; small: string; w: number; h: number } | null>>();
+const blobCache = new Map<string, Promise<{ full: string; small: string; w: number; h: number; plan: boolean } | null>>();
 function localPhoto(src: string) {
   if (!blobCache.has(src)) blobCache.set(src, (async () => {
     const get = async (u: string) => { const r = await fetch(u, { mode: 'cors', cache: 'no-store' }); /* no-store: la copia in cache delle <img> non ha l'intestazione CORS */ if (!r.ok || !(r.headers.get('content-type') ?? '').startsWith('image/')) throw new Error('img'); return r.blob(); };
@@ -99,16 +101,23 @@ function localPhoto(src: string) {
     else blob = await get(src).catch(() => get(`/api/thumb?w=960&u=${encodeURIComponent(src)}`)).catch(() => null);
     if (!blob) return null;
     const full = URL.createObjectURL(blob);
-    let w = 0, h = 0;
+    let w = 0, h = 0, plan = false;
     // copia piccola per le miniature delle grafiche (17 anteprime dal vivo)
     const small = await createImageBitmap(blob).then(bm => {
       w = bm.width; h = bm.height;
+      // planimetria: quasi tutta bianca e senza colore (24x24 punti bastano)
+      const t = document.createElement('canvas'); t.width = t.height = 24;
+      const tx = t.getContext('2d', { willReadFrequently: true })!; tx.drawImage(bm, 0, 0, 24, 24);
+      const px = tx.getImageData(0, 0, 24, 24).data;
+      let white = 0, sat = 0;
+      for (let i = 0; i < px.length; i += 4) { const mx = Math.max(px[i], px[i + 1], px[i + 2]), mn = Math.min(px[i], px[i + 1], px[i + 2]); if (mn > 222) white++; sat += mx ? (mx - mn) / mx : 0; }
+      plan = white / 576 > 0.55 && sat / 576 < 0.12;
       const k = Math.min(1, 540 / bm.width), c = document.createElement('canvas');
       c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
       c.getContext('2d')!.drawImage(bm, 0, 0, c.width, c.height);
       return new Promise<string>(ok => c.toBlob(b => ok(b ? URL.createObjectURL(b) : full), 'image/jpeg', 0.82));
     }).catch(() => full);
-    return { full, small, w, h };
+    return { full, small, w, h, plan };
   })());
   return blobCache.get(src)!;
 }
@@ -358,9 +367,24 @@ function RatioGlyph({ w, h, on }: { w: number; h: number; on: boolean }) {
 }
 
 function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData; photos: string[]; onClose: () => void }) {
-  const d = (project.import_data ?? {}) as { details?: Record<string, unknown>; prima?: Record<string, string> };
+  const d = (project.import_data ?? {}) as { details?: Record<string, unknown>; prima?: Record<string, string>; rooms?: Record<string, { scene?: string }> };
   const det = d.details ?? {};
   const prima = d.prima ?? {};
+  // Venduto o affittato: dalla scheda (details.stato_annuncio) o dall'interruttore del popup (per immobile, sul dispositivo).
+  // Acceso: grafiche e video Venduto/Affittato, testo che racconta il lavoro fatto. Giorni: facoltativi, proposti dalla data del cambio di stato
+  const status0 = statusOf({ details: det });
+  const soldKey = `agenteimmo:social-sold:${project.id}`;
+  const [soldSaved] = useState(() => { try { return JSON.parse(localStorage.getItem(soldKey) ?? 'null') as { on?: boolean; kind?: string; days?: string } | null; } catch { return null; } });
+  const [soldOn, setSoldOn] = useState(() => (typeof soldSaved?.on === 'boolean' ? soldSaved.on : isClosed(status0)));
+  const [soldKind, setSoldKind] = useState<'venduto' | 'affittato'>(() => (soldSaved?.kind === 'affittato' || soldSaved?.kind === 'venduto' ? soldSaved.kind
+    : status0 === 'affittato' || (status0 !== 'venduto' && (det.contratto === 'Affitto' || /affitt/i.test(`${project.titolo ?? ''} ${project.tipologia ?? ''}`))) ? 'affittato' : 'venduto'));
+  const [soldDays, setSoldDays] = useState(() => {
+    if (typeof soldSaved?.days === 'string') return soldSaved.days;
+    const a = Date.parse(String(det.stato_annuncio_data ?? '')), b = Date.parse(project.createdAt ?? '');
+    const n = isClosed(status0) && a && b ? Math.round((a - b) / 86_400_000) : 0;
+    return n >= 1 && n <= 730 ? String(n) : '';
+  });
+  useEffect(() => { store(soldKey, { on: soldOn, kind: soldKind, days: soldDays }); }, [soldOn, soldKind, soldDays, soldKey]);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [logo, setLogo] = useState<{ url: string | null; h: boolean } | null>(null);
   const [fonts, setFonts] = useState(false);
@@ -398,16 +422,24 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
   const show = (n: NetId) => { setActive(n); setSlideIx(0); setView('post'); };
   const goStep = (i: number) => { setStepIx(i); setView(i === 4 ? 'video' : 'post'); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
-  const [tpl, setTpl] = useState(first.tpl);
+  const [tpl, setTpl] = useState(() => (soldOn && !first.tpl.startsWith('sold-') ? 'sold-stamp' : first.tpl));
+  // interruttore Venduto: le grafiche Venduto davanti (e la prima scelta), il video Venduto; spento, si torna all'annuncio
+  const setSold = (on: boolean) => {
+    setSoldOn(on);
+    setTpl(t => (on ? (t.startsWith('sold-') ? t : 'sold-stamp') : t.startsWith('sold-') ? 'gradient' : t));
+    setTone('all');
+    setVid(v => (v.status === 'idle' || v.status === 'error' ? { ...v, tpl: on ? 'venduto' : 'reel', status: 'idle' } : v));
+  };
   useEffect(() => { store(CHOICE_KEY, { nets, fmts: fmtIds, step: reached, tpl }); }, [nets, fmtIds, reached, tpl]);
-  const [tone, setTone] = useState<'all' | 'light' | 'dark' | 'brand'>('all');
+  const [tone, setTone] = useState<Tone>('all');
   const [blurs, setBlurs] = useState<Record<string, string>>({});
   const [label, setLabel] = useState(true); // scritta "arredata virtualmente" sulle foto AI
   const [busy, setBusy] = useState<'all' | 'share' | null>(null);
   const [note, setNote] = useState('');
-  const [texts, setTexts] = useState<Partial<Record<NetId, string>>>({});
-  const [textBusy, setTextBusy] = useState<Partial<Record<NetId, boolean>>>({});
-  const [textErr, setTextErr] = useState<Partial<Record<NetId, string>>>({});
+  // testi per social e per tipo di post (annuncio, venduto, affittato): chiave tk(n)
+  const [texts, setTexts] = useState<Record<string, string>>({});
+  const [textBusy, setTextBusy] = useState<Record<string, boolean>>({});
+  const [textErr, setTextErr] = useState<Record<string, string | undefined>>({});
   const [copied, setCopied] = useState<NetId | null>(null);
   const [done, setDone] = useState<NetId[]>([]); // social gia' condivisi (spunta sulla scheda)
   const [slideIx, setSlideIx] = useState(0);
@@ -444,7 +476,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
       for (const [i, src] of srcs.slice(0, 24).entries()) {
         const l = await localPhoto(src);
         const orig = l && prima[src] ? await localPhoto(prima[src]) : null;
-        if (l) out.push({ src, full: l.full, small: l.small, staged: !!prima[src], original: orig?.full, w: l.w, h: l.h });
+        if (l) out.push({ src, full: l.full, small: l.small, staged: !!prima[src], original: orig?.full, w: l.w, h: l.h, plan: l.plan || d.rooms?.[src]?.scene === 'planimetria' });
         if (!live) return;
         if (l) setPhotos([...out]);
         setScanned(i + 1);
@@ -483,8 +515,15 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const titolo = cleanText(project.titolo), descr = cleanText(project.descrizione), indirizzo = cleanText(project.addr);
   const tipologia = cleanText(project.tipologia);
   const rent = det.contratto === 'Affitto' || /affitt/i.test(`${titolo} ${tipologia}`);
-  const status = statusOf({ details: det });
-  const hidePrice = closedPriceHidden({ details: det });
+  // stato per grafiche e testi: l'interruttore vince sulla scheda (spento su un immobile chiuso = si parla della casa e basta)
+  const status = soldOn ? soldKind : isClosed(status0) ? 'disponibile' : status0;
+  const hidePrice = soldOn && !det.mostra_prezzo_venduto;
+  const soldRent = soldKind === 'affittato';
+  const nDays = Number(soldDays) || 0;
+  // zona del Venduto: dall'indirizzo; se manca, dal titolo quando inizia con un nome di luogo ("Castelfranco di Sotto, Casa...")
+  const head = titolo.split(/,|\s\|\s/)[0].trim();
+  const soldPlace = zoneOnly(indirizzo) || (titolo.includes(',') && head.length <= 32 && head.split(/\s+/).every(w => /^[A-ZÀ-Ý]/.test(w) || /^(di|del|della|dei|delle|in|al|sul|a|e|d'\S+)$/i.test(w)) ? head : '');
+  const soldDaysText = nDays ? (nDays === 1 ? tr('in 1 giorno', 'in 1 day') : tr(`in ${nDays} giorni`, `in ${nDays} days`)) : '';
   const addr = det.mostra_indirizzo ? indirizzo : zoneOnly(indirizzo);
   const it = pageLang() === 'it';
   const price = project.prezzo && !hidePrice ? `€ ${project.prezzo.toLocaleString('it-IT')}${rent ? (it ? ' al mese' : ' / month') : ''}` : '';
@@ -498,12 +537,17 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     ctaText: brand?.phone ? `${tr('Chiama', 'Call')} ${brand.phone}` : tr('Contattaci ora', 'Contact us'),
     energyClass: cleanText(String(det.classe_energetica ?? '')), accentColor: accent,
     _icons: { bedrooms: project.camere ? 'bed' : 'rooms', bathrooms: 'bath', surface: 'area' },
+    // grafiche Venduto / Affittato (renderers/sold.js)
+    soldLabel: soldRent ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold'), soldDays: soldDaysText, soldPlace,
+    soldCta: soldRent ? tr('Hai una casa da affittare?', 'Have a home to rent out?') : tr('Hai una casa da vendere?', 'Have a home to sell?'),
+    soldPhone: brand?.phone ? `${tr('Chiamami', 'Call me')} ${brand.phone}` : '', agencyName: brand?.agencyName ?? '',
   };
   // grafiche per formato. tips: consigli, non un annuncio; frame: nell'esportazione la foto sparisce (doppia passata del vetro)
   const othersFor = (f: Fmt) => (f.multi ? photosFor(f).slice(1) : photos.filter(p => p !== photosFor(f)[0]));
-  const fits = (id: string, f: Fmt) => id !== 'tips' && id !== 'frame' && !(NO_FIT[f.ratio] ?? []).includes(id)
+  const fits = (id: string, f: Fmt) => id !== 'tips' && id !== 'frame' && !(NO_FIT[f.ratio] ?? []).includes(id) && (soldOn || !id.startsWith('sold-'))
     && (id !== 'gallery' || othersFor(f).length >= 2) && (id !== 'before-after' || !!photosFor(f)[0]?.original);
-  const tplsFor = (f: Fmt) => POST_TEMPLATES.filter(t => fits(t.id, f));
+  // acceso Venduto: prima le sue grafiche, poi quelle dell'annuncio
+  const tplsFor = (f: Fmt) => POST_TEMPLATES.filter(t => fits(t.id, f)).sort((a, b) => Number(b.id.startsWith('sold-')) - Number(a.id.startsWith('sold-')));
   // la grafica scelta, o la piu' simile se in quel formato non regge
   const tplFor = (n: NetId) => {
     const f = fmtOf(n);
@@ -539,9 +583,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const last: Slide | null = ready ? { kind: 'contact', size, logo: logo!.url, accent, brand: brand!, lines: facts, n: total, total } : null;
     return [firstSlide, ...rest, last];
   };
-  const keyFor = (n: NetId) => { const f = fmtOf(n), ps = photosFor(f); return JSON.stringify([n, f.id, tplFor(n), ps.map(p => p.src), label, ready, accent, ps.map(p => !!blurs[p.full]), ps.map(p => frames[p.src] ?? null)]); };
+  const keyFor = (n: NetId) => { const f = fmtOf(n), ps = photosFor(f); return JSON.stringify([n, f.id, tplFor(n), ps.map(p => p.src), label, ready, accent, ps.map(p => !!blurs[p.full]), ps.map(p => frames[p.src] ?? null), status, soldDaysText, brand?.phone]); };
   const key = keyFor(active);
-  const keySmall = JSON.stringify([fmt.w, fmt.h, photo?.small, label, ready, accent, !!blurs[photo?.small ?? ''], othersFor(fmt).length, all.length, frames[photo?.src ?? ''] ?? null]);
+  const keySmall = JSON.stringify([fmt.w, fmt.h, photo?.small, label, ready, accent, !!blurs[photo?.small ?? ''], othersFor(fmt).length, all.length, frames[photo?.src ?? ''] ?? null, status, soldDaysText, brand?.phone]);
   const [big, setBig] = useState<(Slide | null)[]>([]);
   const [thumbs, setThumbs] = useState<Record<string, Tpl | null>>({});
   // oggetti stabili: si ridisegna solo quando cambia davvero qualcosa
@@ -551,56 +595,77 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const six = Math.min(slideIx, Math.max(0, nSlides - 1));
 
   // testo del post, diverso per ogni social: uno per immobile e social (resta sul dispositivo), nei limiti del social
-  const tKey = (n: NetId) => `agenteimmo:social-text:${project.id}:${n}`;
-  const putText = (n: NetId, t: string) => { setTexts(o => ({ ...o, [n]: t })); try { localStorage.setItem(tKey(n), t); } catch { /* niente storage */ } };
+  // venduto e affittato hanno il loro testo (il lavoro fatto e l'invito a chi vende), l'annuncio resta com'era
+  const tk = (n: NetId) => (soldOn ? `${n}:${soldKind}` : n);
+  const tKey = (k: string) => `agenteimmo:social-text:${project.id}:${k}`;
+  const putTextK = (k: string, t: string) => { setTexts(o => ({ ...o, [k]: t })); try { localStorage.setItem(tKey(k), t); } catch { /* niente storage */ } };
+  const putText = (n: NetId, t: string) => putTextK(tk(n), t);
   const writeText = async (n: NetId, fresh = false) => {
-    if (!fresh) { const s = localStorage.getItem(tKey(n)); if (s) { setTexts(o => ({ ...o, [n]: s })); return; } }
-    setTextBusy(o => ({ ...o, [n]: true })); setTextErr(o => ({ ...o, [n]: undefined }));
+    const k = tk(n);
+    if (!fresh) { const s = localStorage.getItem(tKey(k)); if (s) { setTexts(o => ({ ...o, [k]: s })); return; } }
+    setTextBusy(o => ({ ...o, [k]: true })); setTextErr(o => ({ ...o, [k]: undefined }));
     const fields = {
       titolo, tipologia, zona: zoneOnly(indirizzo), contratto: rent ? 'Affitto' : 'Vendita',
       prezzo: hidePrice ? undefined : project.prezzo || undefined, mq: project.mq || undefined, locali: project.locali || undefined, camere: project.camere || undefined, bagni: project.bagni || undefined,
       piano: det.piano ? cleanText(String(det.piano)) : undefined, classe_energetica: det.classe_energetica ? cleanText(String(det.classe_energetica)) : undefined, stato: status !== 'disponibile' ? STATUS_LABELS[status][0] : undefined,
       descrizione: descr.slice(0, 2500), telefono: brand?.phone || undefined, agenzia: brand?.agencyName || undefined,
       arredata: srcs.some(s => !!prima[s]),
+      ...(soldOn ? { giorni: nDays || undefined } : {}),
     };
     const r = await authFetch('/api/platform/social-caption', { method: 'POST', body: JSON.stringify({ fields, social: n, video: n === 'tiktok' && withVideo }) }).catch(() => null);
     const j = r?.ok ? await r.json().catch(() => null) : null;
-    setTextBusy(o => ({ ...o, [n]: false }));
-    if (j?.testo) putText(n, j.testo);
-    else setTextErr(o => ({ ...o, [n]: r?.status === 429 ? tr('Hai scritto molti testi oggi, riprova domani.', 'You wrote many texts today, try again tomorrow.') : tr('Non sono riuscito a scrivere il testo.', 'I could not write the text.') }));
+    setTextBusy(o => ({ ...o, [k]: false }));
+    if (j?.testo) putTextK(k, j.testo);
+    else setTextErr(o => ({ ...o, [k]: r?.status === 429 ? tr('Hai scritto molti testi oggi, riprova domani.', 'You wrote many texts today, try again tomorrow.') : tr('Non sono riuscito a scrivere il testo.', 'I could not write the text.') }));
   };
   // si scrivono quando servono: dalla grafica in poi (cosi' al passo Testo sono pronti), una volta per social
   useEffect(() => {
     if (!brand || stepIx < 2) return;
-    for (const n of nets) if (texts[n] === undefined && !textBusy[n] && !textErr[n]) void writeText(n);
-  }, [brand, nets.join(','), stepIx >= 2]); // eslint-disable-line react-hooks/exhaustive-deps
-  const text = texts[active] ?? '';
-  const copy = async (n: NetId) => { try { await navigator.clipboard.writeText(texts[n] ?? ''); setCopied(n); setTimeout(() => setCopied(c => (c === n ? null : c)), 2400); } catch { /* niente appunti */ } };
+    for (const n of nets) if (texts[tk(n)] === undefined && !textBusy[tk(n)] && !textErr[tk(n)]) void writeText(n);
+  }, [brand, nets.join(','), stepIx >= 2, soldOn, soldKind]); // eslint-disable-line react-hooks/exhaustive-deps
+  const text = texts[tk(active)] ?? '';
+  const copy = async (n: NetId) => { try { await navigator.clipboard.writeText(texts[tk(n)] ?? ''); setCopied(n); setTimeout(() => setCopied(c => (c === n ? null : c)), 2400); } catch { /* niente appunti */ } };
 
   // ---- video dell'annuncio (api/platform/video-reel, come nella chat): stesse foto (max 8) e dati, 9:16 ----
   // Vivace ed Elegante su AWS Lambda (si segue il lavoro), Semplice e Classico con FFmpeg in una richiesta. Crediti a video pronto.
-  type Vid = { style: ReelStyle; status: 'idle' | 'working' | 'queued' | 'done' | 'error'; url?: string; job?: string; progress?: number; at?: number; err?: string };
+  type Vid = { tpl: ReelTpl; style: ReelStyle; status: 'idle' | 'working' | 'queued' | 'done' | 'error'; url?: string; job?: string; progress?: number; at?: number; err?: string };
   const vKey = `agenteimmo:social-video:${project.id}`;
   const [vid, setVid] = useState<Vid>(() => {
-    try { const v = JSON.parse(localStorage.getItem(vKey) ?? 'null') as Vid | null; if (v?.url || v?.job) return { ...v, status: v.url ? 'done' : 'working', at: v.at ?? Date.now() }; } catch { /* niente storage */ }
-    return { style: 'vivace', status: 'idle' };
+    try { const v = JSON.parse(localStorage.getItem(vKey) ?? 'null') as Vid | null; if (v?.url || v?.job) return { ...v, tpl: v.tpl === 'venduto' ? 'venduto' : 'reel', status: v.url ? 'done' : 'working', at: v.at ?? Date.now() }; } catch { /* niente storage */ }
+    return { tpl: soldOn ? 'venduto' : 'reel', style: 'vivace', status: 'idle' };
   });
   const withVideo = vid.status !== 'idle' && vid.status !== 'error';
   const vWorking = vid.status === 'working' || vid.status === 'queued';
-  useEffect(() => { store(vKey, vid.url || vid.job ? { style: vid.style, url: vid.url, job: vid.job, at: vid.at } : null); }, [vid.url, vid.job, vid.style]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { store(vKey, vid.url || vid.job ? { tpl: vid.tpl, style: vid.style, url: vid.url, job: vid.job, at: vid.at } : null); }, [vid.url, vid.job, vid.style, vid.tpl]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
   const [, setTick] = useState(0);
   useEffect(() => { if (!vWorking) return; const t = setInterval(() => setTick(x => x + 1), 1000); return () => clearInterval(t); }, [vWorking]);
   const city = indirizzo.split(',').map(x => x.replace(/\d{5}/g, '').trim()).filter(Boolean).pop() ?? '';
-  // foto del video: quelle scelte, nell'ordine; se sono meno di 3 si aggiungono le altre dell'immobile (fino a 5)
-  const vPhotos = (chosen.length >= 3 ? chosen : [...chosen, ...photos.filter(p => !chosen.includes(p))].slice(0, Math.max(chosen.length, 5))).slice(0, MAX_REEL_PHOTOS);
+  // foto del video annuncio (da 3 a 8, per immobile): si parte da quelle scelte al passo Foto e si aggiungono le migliori
+  // altre dell'immobile fino a 5 (prima la copertina, poi le arredate, poi le altre; mai le planimetrie). Il Venduto ne usa una.
+  const vSelKey = `agenteimmo:social-vphotos:${project.id}`;
+  const [vSel, setVSel] = useState<string[] | null>(() => { try { const v = JSON.parse(localStorage.getItem(vSelKey) ?? 'null') as unknown; return Array.isArray(v) ? v.filter(x => typeof x === 'string' && srcs.includes(x)) : null; } catch { return null; } });
+  const [vOne, setVOne] = useState<string | null>(null); // foto del Venduto (se manca, la prima scelta)
+  useEffect(() => { if (vSel) store(vSelKey, vSel); }, [vSel, vSelKey]);
+  const vCandidates = photos.filter(p => !p.plan).sort((a, b) => (a === photos[0] ? 0 : a.staged ? 1 : 2) - (b === photos[0] ? 0 : b.staged ? 1 : 2));
+  const vSuggest = () => { const base = chosen.filter(p => !p.plan).slice(0, MAX_REEL_PHOTOS); return [...base, ...vCandidates.filter(p => !base.includes(p))].slice(0, Math.max(base.length, 5)).map(p => p.src); };
+  useEffect(() => { if (stepIx === 4 && photosSettled && !vSel?.length) setVSel(vSuggest()); }, [stepIx, photosSettled]); // eslint-disable-line react-hooks/exhaustive-deps
+  const vList = (vSel ?? []).map(s => photos.find(p => p.src === s)).filter((p): p is Photo => !!p).slice(0, MAX_REEL_PHOTOS);
+  const vSoldPhoto = photos.find(p => p.src === vOne) ?? chosen.find(p => !p.plan) ?? vCandidates[0];
+  const vTpl: ReelTpl = vid.status === 'idle' || vid.status === 'error' ? (soldOn && vid.tpl === 'venduto' ? 'venduto' : 'reel') : vid.tpl;
+  const vPhotos = vTpl === 'venduto' ? (vSoldPhoto ? [vSoldPhoto] : []) : vList;
+  const vMin = vTpl === 'venduto' ? 1 : 3;
+  const vCost = vTpl === 'venduto' ? CREDIT_COST.video_venduto : CREDIT_COST.video_reel;
+  const vAdd = (src: string) => setVSel(v => (v ?? []).includes(src) || (v ?? []).length >= MAX_REEL_PHOTOS ? v : [...(v ?? []), src]);
+  const vDel = (src: string) => setVSel(v => (v ?? []).filter(x => x !== src));
+  const vMove = (i: number, by: number) => setVSel(v => { const a = [...(v ?? [])]; const j = i + by; if (j < 0 || j >= a.length) return v; [a[i], a[j]] = [a[j], a[i]]; return a; });
   type VReply = { url?: string; error?: string; status?: string; job?: string; progress?: number };
   const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
   const vDone = (d: VReply) => {
     if (!live.current) return;
     if (!d.url) {
-      setVid(v => ({ ...v, status: 'error', job: undefined, err: d.error === 'no_credits' ? tr(`Per il video servono ${CREDIT_COST.video_reel} crediti. Ricarica per continuare.`, `The video needs ${CREDIT_COST.video_reel} credits. Top up to continue.`) : d.error === 'photo_unreadable' ? tr('Una delle foto non si apre, cambia le foto e riprova.', 'One of the photos won\'t open, change the photos and try again.') : tr('Video non riuscito, nessun credito scalato. Riprova.', 'Video failed, no credits used. Please try again.') }));
+      setVid(v => ({ ...v, status: 'error', job: undefined, err: d.error === 'no_credits' ? tr(`Per il video servono ${vCost} crediti. Ricarica per continuare.`, `The video needs ${vCost} credits. Top up to continue.`) : d.error === 'photo_unreadable' ? tr('Una delle foto non si apre, cambia le foto e riprova.', 'One of the photos won\'t open, change the photos and try again.') : tr('Video non riuscito, nessun credito scalato. Riprova.', 'Video failed, no credits used. Please try again.') }));
       return;
     }
     setVid(v => ({ ...v, status: 'done', url: d.url, job: undefined, progress: undefined }));
@@ -620,9 +685,12 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     vDone({}); return 'end' as const;
   };
   const makeVideo = async () => {
-    if (vWorking || !vPhotos.length) return;
-    setVid(v => ({ style: v.style, status: 'working', at: Date.now() })); setView('video');
-    const body = JSON.stringify({
+    if (vWorking || vPhotos.length < vMin) return;
+    setVid(v => ({ tpl: vTpl, style: v.style, status: 'working', at: Date.now() })); setView('video');
+    const body = JSON.stringify(vTpl === 'venduto' ? {
+      template: 'venduto', style: vid.style, enhance: true, contract: soldRent ? 'affitto' : 'vendita', place: soldPlace.slice(0, 60), days: nDays ? String(nDays) : '',
+      photos: vPhotos.map(p => ({ src: p.src, staged: p.staged })), projectId: project.id,
+    } : {
       template: 'reel', style: vid.style, enhance: true, contract: rent ? 'affitto' : 'vendita',
       title: (titolo || tipologia || cleanText(project.nome)).split(' | ')[0].slice(0, 80), place: city.slice(0, 60),
       price: !hidePrice && project.prezzo ? String(project.prezzo) : '', mq: project.mq ? String(project.mq) : '', rooms: project.locali ? String(project.locali) : '',
@@ -647,6 +715,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   const lambdaStyle = vid.style === 'vivace' || vid.style === 'elegante';
   const vSec = lambdaStyle ? 50 + 6 * vPhotos.length : 8 + 3 * vPhotos.length;
+  const vSample = `/staging/reel-styles/${vTpl === 'venduto' ? (soldRent ? 'affittato' : 'venduto') : 'annuncio'}-${vid.style}`; // clip d'esempio dello stile
   const vEta = vSec < 55 ? tr(`di solito circa ${Math.round(vSec / 10) * 10} secondi`, `usually about ${Math.round(vSec / 10) * 10} seconds`) : vSec < 80 ? tr('di solito circa un minuto', 'usually about a minute') : tr('di solito 1-2 minuti', 'usually 1-2 minutes');
   const vElapsed = vid.at ? Math.max(0, Math.round((Date.now() - vid.at) / 1000)) : 0;
 
@@ -791,7 +860,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const chip = (on: boolean) => `ease-smooth transition-[background-color,box-shadow,color] ring-1 ${on ? 'bg-brand/10 text-ink ring-brand' : 'bg-white text-ink ring-black/10 hover:ring-black/25'}`;
   const canNext = stepIx !== 1 || (!anyMulti || chosen.length > 0);
   const shown = big[six] ?? null;
-  const toneOf = (t: 'all' | 'light' | 'dark' | 'brand') => all.filter(x => t === 'all' || TONE[x.id] === t).length;
+  const toneOf = (t: Tone) => all.filter(x => t === 'all' || TONE[x.id] === t).length;
   const dlAll = nets.length > 1 || vid.url ? tr('Scarica tutto', 'Download all') : fmt.pdf ? tr('Scarica PDF', 'Download PDF') : fmt.multi ? tr('Scarica tutte', 'Download all') : tr('Scarica', 'Download');
 
   const tabs = (
@@ -820,11 +889,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         ? <video key={vid.url} src={vid.url} controls autoPlay muted loop playsInline className="h-full w-full object-cover" />
         : !vWorking
           // nessun video ancora: la clip d'esempio dello stile scelto
-          ? <video key={vid.style} src={`/staging/reel-styles/annuncio-${vid.style}.mp4`} poster={`/staging/reel-styles/annuncio-${vid.style}.webp`} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+          ? <video key={vSample} src={`${vSample}.mp4`} poster={`${vSample}.webp`} autoPlay muted loop playsInline className="h-full w-full object-cover" />
           : (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/staging/reel-styles/annuncio-${vid.style}.webp`} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40 blur-[2px]" />
+            <img src={`${vSample}.webp`} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40 blur-[2px]" />
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center text-white">
               {(
                 <>
@@ -951,13 +1020,16 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         </div>
       </section>
       <section>
-        <h3 className="mb-3 text-sm font-semibold">{nets.length > 1 ? tr('Formato per ogni social', 'Format for each network') : tr('Formato', 'Format')}</h3>
-        {nets.map((id, ix) => {
+        <h3 className="text-sm font-semibold">{nets.length > 1 ? tr('Formato per ogni social', 'Format for each network') : tr('Formato', 'Format')}</h3>
+        {nets.map(id => {
           const N = netOf(id), cf = fmtOf(id);
           return (
-            <div key={id}>
-              {ix > 0 && <div className="my-4 h-px bg-black/10" />}
-              {nets.length > 1 && <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-muted"><NetIcon id={id} size={14} /> {N.label}</span>}
+            <div key={id} className="mt-3 first:mt-1 [&+&]:mt-7">
+              {/* divisore col nome del social a inizio linea, poi la linea fino a destra */}
+              <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted">
+                <span>{N.label}</span>
+                <span className="h-px flex-1 bg-black/10" aria-hidden />
+              </div>
               <div role="radiogroup" aria-label={N.label} className="grid gap-2 sm:grid-cols-2">
                 {N.fmts.map(f => {
                   const on = cf.id === f.id;
@@ -1037,7 +1109,36 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   );
 
-  const TONES: ['all' | 'light' | 'dark' | 'brand', string][] = [['all', tr('Tutte', 'All')], ['light', tr('Chiare', 'Light')], ['dark', tr('Scure', 'Dark')], ['brand', tr('Col tuo colore', 'Your colour')]];
+  // interruttore "È venduto / affittato" (passi Grafica e Video): acceso, Venduto o Affittato e i giorni (facoltativi)
+  const soldBox = (
+    <div className="rounded-[24px] bg-canvas p-3">
+      <label className="flex cursor-pointer items-center gap-3">
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-black/5 ease-smooth transition-colors ${soldOn ? 'text-brand' : 'text-ink/50'}`}><BadgeCheck size={18} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{tr('È venduto / affittato', 'It is sold / rented')}</span>
+          <span className="block text-xs text-muted">{isClosed(status0) ? tr(`Nella scheda risulta ${STATUS_LABELS[status0][0].toLowerCase()}.`, `The listing says ${STATUS_LABELS[status0][1].toLowerCase()}.`) : tr('Grafiche e video col timbro, per far vedere il lavoro fatto.', 'Designs and videos with the stamp, to show your work.')}</span>
+        </span>
+        <input type="checkbox" checked={soldOn} onChange={e => setSold(e.target.checked)} className="peer sr-only" />
+        <span className="relative h-6 w-10 shrink-0 rounded-full bg-black/15 ease-smooth transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:ease-smooth after:transition-transform peer-checked:bg-brand peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-brand/50" />
+      </label>
+      {soldOn && (
+        <div className="blur-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-black/5 pt-3">
+          <div role="radiogroup" aria-label={tr('Venduto o affittato', 'Sold or rented')} className="inline-flex rounded-full bg-white p-1 ring-1 ring-black/5">
+            {([['venduto', tr('Venduto', 'Sold')], ['affittato', tr('Affittato', 'Rented')]] as const).map(([v, l]) => (
+              <button key={v} type="button" role="radio" aria-checked={soldKind === v} onClick={() => setSoldKind(v)} className={`h-8 rounded-full px-4 text-xs font-semibold ease-smooth transition-colors ${soldKind === v ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
+            ))}
+          </div>
+          <label className="flex min-w-0 items-center gap-2 text-xs font-medium text-muted">
+            {soldRent ? tr('Affittato in', 'Rented in') : tr('Venduto in', 'Sold in')}
+            <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" placeholder="23" aria-label={tr('Giorni', 'Days')} className="h-9 w-16 rounded-full bg-white px-3 text-center text-sm text-ink outline-none ring-1 ring-black/10 focus:ring-brand" />
+            {tr('giorni (facoltativo)', 'days (optional)')}
+          </label>
+        </div>
+      )}
+    </div>
+  );
+
+  const TONES: [Tone, string][] = [['all', tr('Tutte', 'All')], ['sold', soldRent ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold')], ['light', tr('Chiare', 'Light')], ['dark', tr('Scure', 'Dark')], ['brand', tr('Col tuo colore', 'Your colour')]];
   const stepGrafica = (
     <div className="space-y-4">
       <div>
@@ -1055,6 +1156,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           ))}
         </div>
       )}
+      {soldBox}
       {toneOf('light') + toneOf('dark') + toneOf('brand') > 0 && (
         <div className="flex flex-wrap gap-2">
           {TONES.filter(([t]) => t === 'all' || toneOf(t) > 0).map(([t, l]) => (
@@ -1076,7 +1178,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   // testi di tutti i social scelti, uno sotto l'altro: ognuno con il contatore del suo limite e Copia testo
   const num = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // 2.200 (toLocaleString it-IT scrive 2200)
   const textCard = (n: NetId) => {
-    const N = netOf(n), t = texts[n] ?? '', rule = ruleOf(n, n === 'tiktok' && withVideo), len = countChars(t), tags = countTags(t);
+    const N = netOf(n), k = tk(n), t = texts[k] ?? '', rule = ruleOf(n, n === 'tiktok' && withVideo), len = countChars(t), tags = countTags(t);
     const ref = rule.ideal ?? rule.max;
     const tone = len > rule.max ? 'text-red-600' : len > ref * (rule.ideal ? 1 : 0.9) ? 'text-amber-600' : 'text-muted';
     const tagTone = tags > rule.tags[1] ? 'text-red-600' : 'text-muted';
@@ -1098,11 +1200,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           <textarea value={t} onChange={e => putText(n, e.target.value)} rows={nets.length > 1 ? (wide ? 8 : 7) : wide ? 12 : 9} aria-label={tr(`Testo per ${N.label}`, `Text for ${N.label}`)}
             aria-describedby={`count-${n}`}
             className="block w-full resize-y rounded-2xl bg-canvas px-4 py-3 text-sm leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
-          {(textBusy[n] || (textErr[n] && !t)) && (
+          {(textBusy[k] || (textErr[k] && !t)) && (
             <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-canvas px-4 text-center text-sm text-muted">
-              {textBusy[n] ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {tr(`Scrivo il testo per ${N.label}`, `Writing the text for ${N.label}`)}</span> : (
+              {textBusy[k] ? <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {tr(`Scrivo il testo per ${N.label}`, `Writing the text for ${N.label}`)}</span> : (
                 <>
-                  <span>{textErr[n]}</span>
+                  <span>{textErr[k]}</span>
                   <button type="button" onClick={() => void writeText(n, true)} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-ink shadow-sm ring-1 ring-black/5 hover:bg-line"><RotateCcw size={15} /> {tr('Riprova', 'Try again')}</button>
                 </>
               )}
@@ -1116,30 +1218,126 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
               ? <span className={`ease-smooth transition-colors ${tagTone}`}>{tags} / {rule.tags[1]} hashtag</span>
               : tags > 0 && <span className="text-red-600">{tr(`Niente hashtag su ${N.label}`, `No hashtags on ${N.label}`)}</span>}
           </span>
-          <button type="button" onClick={() => void copy(n)} disabled={!t || !!textBusy[n]} className="ml-auto flex h-10 items-center gap-2 rounded-full bg-canvas px-4 text-sm font-semibold ease-smooth transition-colors hover:bg-line disabled:opacity-50">{copied === n ? <Check size={15} /> : <Copy size={15} />} <span className="w-[84px] text-left">{copied === n ? tr('Copiato', 'Copied') : tr('Copia testo', 'Copy text')}</span></button>
+          <button type="button" onClick={() => void copy(n)} disabled={!t || !!textBusy[k]} className="ml-auto flex h-10 items-center gap-2 rounded-full bg-canvas px-4 text-sm font-semibold ease-smooth transition-colors hover:bg-line disabled:opacity-50">{copied === n ? <Check size={15} /> : <Copy size={15} />} <span className="w-[84px] text-left">{copied === n ? tr('Copiato', 'Copied') : tr('Copia testo', 'Copy text')}</span></button>
         </div>
         {(hint || len > rule.max) && <p className="mt-1 text-xs text-muted">{len > rule.max ? <span className="font-medium text-red-600">{tr(`Troppo lungo per ${N.label}, togli ${num(len - rule.max)} battute. `, `Too long for ${N.label}, remove ${num(len - rule.max)} characters. `)}</span> : null}{hint}</p>}
       </section>
     );
   };
 
-  // passo 5, facoltativo: il video dell'annuncio con gli stessi stili della chat; si puo' finire anche senza
+  // passo 5, facoltativo: il video dell'annuncio (o del Venduto) con gli stessi stili della chat; si puo' finire anche senza
   const pickable = vid.status === 'idle' || vid.status === 'error';
+  const vOthers = vCandidates.filter(p => !vList.includes(p));
+  const tileBtn = 'flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white disabled:opacity-0';
+  // foto del video: striscia compatta (numero = ordine, la 1 apre il video), sotto le altre da aggiungere
+  const vPhotoPick = vTpl === 'venduto' ? (
+    <section>
+      <label className="mb-4 flex flex-wrap items-center gap-2 text-sm font-medium">
+        {soldRent ? tr('Affittato in', 'Rented in') : tr('Venduto in', 'Sold in')}
+        <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" placeholder="23" aria-label={tr('Giorni', 'Days')} className="h-10 w-20 rounded-full bg-canvas px-3 text-center text-sm outline-none ring-1 ring-transparent focus:bg-white focus:ring-brand" />
+        <span>{tr('giorni', 'days')} <span className="text-xs font-normal text-muted">{tr('(facoltativo)', '(optional)')}</span></span>
+      </label>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <h4 className="text-sm font-semibold">{tr('Foto del video', 'Video photo')}</h4>
+        <span className="text-xs text-muted">{tr('Una foto, quella col timbro', 'One photo, the one with the stamp')}</span>
+      </div>
+      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
+        {vCandidates.map(p => {
+          const on = p === vSoldPhoto;
+          return (
+            <button key={p.src} type="button" onClick={() => setVOne(p.src)} aria-pressed={on} className={`relative h-[96px] w-[72px] shrink-0 overflow-hidden rounded-2xl ease-smooth transition-shadow ${on ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.small} alt="" className="h-full w-full object-cover" />
+              {on && <span className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-brand text-white"><Check size={13} strokeWidth={3} /></span>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  ) : (
+    <section>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <h4 className="text-sm font-semibold">{tr('Foto del video', 'Video photos')}</h4>
+        <span className="text-xs tabular-nums text-muted">{tr(`${vList.length} di ${MAX_REEL_PHOTOS}, la 1 apre il video`, `${vList.length} of ${MAX_REEL_PHOTOS}, number 1 opens the video`)}</span>
+      </div>
+      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
+        {vList.map((p, i) => (
+          <div key={p.src} className="relative h-[112px] w-[84px] shrink-0 overflow-hidden rounded-2xl bg-canvas ring-1 ring-black/5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={p.small} alt="" className="h-full w-full object-cover" />
+            <span className={`absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold shadow-sm ${i === 0 ? 'bg-brand text-white' : 'bg-white/95 text-ink'}`}>{i + 1}</span>
+            <button type="button" onClick={() => vDel(p.src)} aria-label={tr('Togli', 'Remove')} className={`${tileBtn} absolute right-1 top-1`}><X size={13} /></button>
+            <div className="absolute inset-x-1 bottom-1 flex justify-between">
+              <button type="button" onClick={() => vMove(i, -1)} disabled={!i} aria-label={tr('Sposta prima', 'Move earlier')} className={tileBtn}><ChevronLeft size={14} /></button>
+              <button type="button" onClick={() => vMove(i, 1)} disabled={i === vList.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className={tileBtn}><ChevronRight size={14} /></button>
+            </div>
+          </div>
+        ))}
+        {!vList.length && <span className="flex h-[112px] items-center px-2 text-xs text-muted">{photosSettled ? tr('Nessuna foto, aggiungile qui sotto.', 'No photos, add them below.') : <Loader2 size={16} className="animate-spin" />}</span>}
+      </div>
+      {vOthers.length > 0 && vList.length < MAX_REEL_PHOTOS && (
+        <div className="mt-2">
+          <span className="text-xs font-medium text-muted">{tr('Tocca per aggiungere', 'Tap to add')}</span>
+          <div className="-mx-1 mt-1 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
+            {vOthers.map(p => (
+              <button key={p.src} type="button" onClick={() => vAdd(p.src)} aria-label={tr('Aggiungi al video', 'Add to the video')} className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl ring-1 ring-black/10 ease-smooth transition-shadow hover:ring-brand">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.small} alt="" className="h-full w-full object-cover" />
+                <span className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm"><Plus size={12} /></span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {vList.length < 3 && photosSettled && (
+        <p className="mt-2 flex items-start gap-2 rounded-2xl bg-amber-50 px-3 py-2.5 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
+          <TriangleAlert size={15} className="mt-px shrink-0" />
+          {vCandidates.length < 3
+            ? tr(`Il video annuncio vuole almeno 3 foto e l’immobile ne ha ${vCandidates.length}. Aggiungi foto alla scheda o scegli Video Venduto o Affittato, che ne usa una.`, `The listing video needs at least 3 photos and the property has ${vCandidates.length}. Add photos to the listing or choose the Sold or Rented video, which uses one.`)
+            : tr(`Il video annuncio vuole almeno 3 foto: aggiungine ${3 - vList.length}, o scegli Video Venduto o Affittato, che ne usa una.`, `The listing video needs at least 3 photos: add ${3 - vList.length} more, or choose the Sold or Rented video, which uses one.`)}
+        </p>
+      )}
+    </section>
+  );
+  const soldWord = soldRent ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold');
+  // scelta del video: annuncio, Venduto o Affittato. Venduto/Affittato accendono anche il Venduto di grafiche e testi
+  // (soldOn); tornare all'annuncio cambia solo il video
+  const vKind: 'reel' | 'venduto' | 'affittato' = vTpl === 'venduto' ? soldKind : 'reel';
+  const pickKind = (k: 'reel' | 'venduto' | 'affittato') => {
+    if (k !== 'reel') { if (!soldOn) setSold(true); setSoldKind(k); }
+    setVid(o => ({ ...o, tpl: k === 'reel' ? 'reel' : 'venduto', status: o.status === 'error' ? 'idle' : o.status })); setView('video');
+  };
+  const KINDS = [['reel', tr('Video annuncio', 'Listing video')], ['venduto', tr('Video Venduto', 'Sold video')], ['affittato', tr('Video Affittato', 'Rented video')]] as const;
   const stepVideo = (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {pickable && (
+        <div role="radiogroup" aria-label={tr('Che video', 'Which video')} className="relative grid grid-cols-3 gap-1 rounded-full bg-canvas p-1">
+          {/* un solo evidenziato che scivola sotto la scelta (600 ms) */}
+          <span aria-hidden className="absolute bottom-1 left-1 top-1 rounded-full bg-white shadow-sm ease-smooth transition-transform duration-[600ms] motion-reduce:transition-none" style={{ width: 'calc((100% - 16px) / 3)', transform: `translateX(calc(${KINDS.findIndex(k => k[0] === vKind)} * (100% + 4px)))` }} />
+          {KINDS.map(([v, l]) => (
+            <button key={v} type="button" role="radio" aria-checked={vKind === v} onClick={() => pickKind(v)} className={`relative h-9 min-w-0 truncate rounded-full px-2 text-xs font-semibold ease-smooth transition-colors duration-[600ms] sm:text-sm ${vKind === v ? 'text-ink' : 'text-muted hover:text-ink'}`}>{l}</button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-60">
           <h3 className="text-sm font-semibold">{tr('Vuoi anche il video?', 'Do you want the video too?')}</h3>
-          <p className="mt-0.5 text-xs text-muted">{tr(`Facoltativo. Con ${vPhotos.length} foto e i dati dell’immobile, in 9:16 per Storia, Reel, TikTok e WhatsApp. Lo trovi poi in Scarica tutto.`, `Optional. With ${vPhotos.length} photos and the property details, in 9:16 for Story, Reel, TikTok and WhatsApp. It goes in Download all too.`)}</p>
+          <p className="mt-0.5 text-xs text-muted">{vTpl === 'venduto'
+            ? tr(`Facoltativo. Il timbro ${soldWord} sulla foto, la zona${nDays ? ' e i giorni' : ''} e i tuoi contatti, in 9:16 per Storia, Reel, TikTok e WhatsApp.`, `Optional. The ${soldWord} stamp on the photo, the area${nDays ? ', the days' : ''} and your contacts, in 9:16 for Story, Reel, TikTok and WhatsApp.`)
+            : tr('Facoltativo. Con le foto e i dati dell’immobile, in 9:16 per Storia, Reel, TikTok e WhatsApp. Lo trovi poi in Scarica tutto.', 'Optional. With the photos and the property details, in 9:16 for Story, Reel, TikTok and WhatsApp. It goes in Download all too.')}</p>
         </div>
         {pickable && <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className="h-9 shrink-0 rounded-full px-3 text-xs font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink disabled:opacity-50">{tr('Salta, scarica senza video', 'Skip, download without video')}</button>}
       </div>
       {pickable && (
         <>
-          <StylePick tpl="reel" value={vid.style} onChange={st => { setVid(v => ({ ...v, style: st })); setView('video'); }} />
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <button type="button" onClick={() => void makeVideo()} disabled={!vPhotos.length} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-50"><Play size={16} /> {tr(`Crea il video ${reelStyleLabel(vid.style)}`, `Make the ${reelStyleLabel(vid.style)} video`)}</button>
-            <span className="flex items-center gap-1.5 text-xs text-muted"><Coins size={14} /> {tr(`${CREDIT_COST.video_reel} crediti, scalati solo a video pronto`, `${CREDIT_COST.video_reel} credits, charged only when the video is ready`)}</span>
+          {vPhotoPick}
+          <section>
+            <h4 className="mb-2 text-sm font-semibold">{tr('Stile', 'Style')}</h4>
+            <StylePick tpl={vTpl} rent={soldRent} value={vid.style} onChange={st => { setVid(v => ({ ...v, style: st })); setView('video'); }} />
+          </section>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+            <button type="button" onClick={() => void makeVideo()} disabled={vPhotos.length < vMin} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-2 text-center text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-50 sm:w-auto"><Play size={16} className="shrink-0" /> {vTpl === 'venduto' ? tr(`Crea il video ${soldWord} ${reelStyleLabel(vid.style)}`, `Make the ${reelStyleLabel(vid.style)} ${soldWord} video`) : tr(`Crea il video ${reelStyleLabel(vid.style)}`, `Make the ${reelStyleLabel(vid.style)} video`)}</button>
+            <span className="flex items-start justify-center gap-1.5 text-center text-xs text-muted sm:justify-start sm:text-left"><Coins size={14} className="mt-px shrink-0" /> {tr(`${vCost} crediti, scalati solo a video pronto`, `${vCost} credits, charged only when the video is ready`)}</span>
           </div>
           {vid.status === 'error' && <p className="text-sm font-medium text-red-600">{vid.err}</p>}
         </>
@@ -1160,7 +1358,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => setView('video')} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Play size={15} /> {tr('Guarda', 'Watch')}</button>
             <button type="button" onClick={() => void vFile().then(f => save(f, f.name)).catch(() => setNote(tr('Non sono riuscito a scaricare il video, riprova.', 'I could not download the video, please try again.')))} className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Download size={15} /> {tr('Scarica solo il video', 'Download the video only')}</button>
-            <button type="button" onClick={() => { setVid(v => ({ style: v.style, status: 'idle' })); setView('video'); }} className="flex h-10 items-center rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-white hover:text-ink">{tr('Un altro stile', 'Another style')}</button>
+            <button type="button" onClick={() => { setVid(v => ({ tpl: v.tpl, style: v.style, status: 'idle' })); setView('video'); }} className="flex h-10 items-center rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-white hover:text-ink">{tr('Un altro stile', 'Another style')}</button>
           </div>
         </div>
       )}
@@ -1180,7 +1378,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-brand ring-1 ring-black/5">{vWorking ? <Loader2 size={18} className="animate-spin" /> : <Film size={18} />}</span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{vid.status === 'done' ? tr('Video pronto', 'Video ready') : vWorking ? tr('Creo il video', 'Making the video') : tr('Vuoi anche il video?', 'Do you want the video too?')}</span>
-          <span className="block text-xs text-muted">{vid.status === 'done' ? tr('È anche in Scarica tutto.', 'It is in Download all too.') : tr(`Facoltativo, ${CREDIT_COST.video_reel} crediti. Puoi anche finire qui con Scarica tutto.`, `Optional, ${CREDIT_COST.video_reel} credits. You can also finish here with Download all.`)}</span>
+          <span className="block text-xs text-muted">{vid.status === 'done' ? tr('È anche in Scarica tutto.', 'It is in Download all too.') : tr(`Facoltativo, ${vCost} crediti. Puoi anche finire qui con Scarica tutto.`, `Optional, ${vCost} credits. You can also finish here with Download all.`)}</span>
         </span>
         <ArrowRight size={18} className="shrink-0 text-muted" />
       </button>
@@ -1189,7 +1387,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   );
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 backdrop-blur-sm sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 sm:p-4" onClick={onClose}>
       <div className="flex h-full w-full max-w-[1160px] flex-col overflow-hidden bg-white shadow-2xl sm:rounded-[32px]" style={wide ? { height: modalH } : undefined} onClick={e => e.stopPropagation()}>
         {/* testata e passi */}
         <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
@@ -1212,7 +1410,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
 
         {/* corpo: anteprima (sempre della stessa grandezza) e passo */}
         <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto lg:flex lg:overflow-hidden">
-          <div className="flex shrink-0 justify-center px-4 pb-1 pt-4 lg:w-[464px] lg:items-start lg:overflow-y-auto lg:px-8 lg:py-6">{preview}</div>
+          <div className="flex shrink-0 justify-center px-4 pb-1 pt-4 [contain:paint] [transform:translateZ(0)] lg:w-[464px] lg:items-start lg:overflow-y-auto lg:px-8 lg:py-6">{preview}</div>
           <div ref={stepRef} className="min-w-0 flex-1 px-4 pb-6 pt-3 sm:px-6 lg:overflow-y-auto lg:py-6 lg:pl-2 lg:pr-8">
             <div key={stepIx} className="blur-in">{[stepSocial, stepFoto, stepGrafica, stepTesto, stepVideo][stepIx]}</div>
           </div>
