@@ -973,6 +973,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const shown = big[six] ?? null;
   // telefono o computer, per dire "Salva sul telefono" solo dove e' vero
   const onPhone = vp.w < 1024 || (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
+  // "Pubblica su" solo su telefono e tablet (condivisione del sistema coi file); al computer si salva e si carica a mano
+  const canPublish = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && typeof navigator.share === 'function';
   const many = nets.length > 1 || !!vid.url;
   const saveLabel = many ? (onPhone ? tr('Salva tutto sul telefono', 'Save all to phone') : tr('Salva tutto sul computer', 'Save all to computer')) : onPhone ? tr('Salva sul telefono', 'Save to phone') : tr('Salva sul computer', 'Save to computer');
 
@@ -1502,7 +1504,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             </>
           ) : (
             <div className="flex min-w-0 flex-1 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <button type="button" onClick={() => void share()} disabled={(shareVideo ? false : !allReady) || !!busy} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>
+              {canPublish && <button type="button" onClick={() => void share()} disabled={(shareVideo ? false : !allReady) || !!busy} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>}
               {makeFirst ? (
                 <button type="button" onClick={() => void makeVideo()} disabled={vPhotos.length < vMin} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}><Film size={16} /> <span className="truncate">{tr('Crea il video', 'Make the video')}</span></button>
               ) : (
