@@ -104,7 +104,7 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
   if (rd) try { raw = applySemantics(raw, rd.read, rd) } catch (e) { console.error('casa3d lettura', e) }
   raw = guessRoomTypes(checkRoomTypes(raw)) // bagni senza scritta poco plausibili, poi i tipi mancanti
   raw = normalizeExterior(raw) // resede e cortili, scale esterne senza vani inventati accanto (niente AI)
-  try { raw = await readStairs(raw, crop) } catch (e) { console.error('casa3d scale', e) } // verso dei gradini dall'originale
+  try { raw = await readStairs(raw, crop, { drop: !!rd }) } catch (e) { console.error('casa3d scale', e) } // verso dei gradini dall'originale
   // materiali e colori dalle foto dell'immobile (una sola chiamata per casa: il chiamante passa le foto solo al primo piano)
   if (o.photos?.length) {
     const tm = Date.now()

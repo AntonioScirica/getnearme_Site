@@ -14,7 +14,18 @@ export type StairHint = { axis?: 'x' | 'z'; tread?: number; outdoor?: boolean
   // rampa e pianerottolo disegnati (rettangoli [x0, z0, x1, z1] in metri sulla pianta), gradini contati, verso di salita lungo axis
   flight?: [number, number, number, number]; treads?: number; landing?: [number, number, number, number]; up?: 1 | -1; seen?: boolean
   // dalla lettura dell'originale: verso scritto (freccia, "su"/"giu'"), stanze collegate e piano di arrivo non disegnato
-  goes?: 'su' | 'giu'; from?: string; to?: string; to_missing?: boolean; arrow?: 1 | -1 }
+  goes?: 'su' | 'giu'; from?: string; to?: string; to_missing?: boolean; arrow?: 1 | -1
+  // riquadro della scala letto da Gemini (metri sulla pianta) e scala come disegnata, pezzo per pezzo dall'ingresso
+  // (il capo al piano della pianta) verso l'altro capo: rampe dritte, gradini a ventaglio, pianerottoli. guess = gradini
+  // non trovati nel disegno, messi nel riquadro letto
+  box?: [number, number, number, number]; path?: StairPiece[]; guess?: boolean }
+// pezzo di scala disegnata (metri). run: rampa dritta nel rettangolo box, si avanza lungo axis nel verso dir, n gradini.
+// fan: gradini a ventaglio o della svolta, uno spicchio (poligono) per gradino, nell'ordine di salita dall'ingresso.
+// land: pianerottolo piano
+export type StairPiece =
+  | { k: 'run'; box: [number, number, number, number]; axis: 'x' | 'z'; dir: 1 | -1; n: number }
+  | { k: 'fan'; n: number; box: [number, number, number, number]; wedges: Pt[][] }
+  | { k: 'land'; box: [number, number, number, number] }
 // Materiali e colori veri dalle foto dell'immobile (una chiamata di visione per casa), per tipo di stanza
 export const FLOOR_KINDS = ['parquet_chiaro', 'parquet_medio', 'parquet_scuro', 'gres_chiaro', 'gres_scuro', 'marmo', 'cotto', 'graniglia'] as const
 export type FloorKind = (typeof FLOOR_KINDS)[number]

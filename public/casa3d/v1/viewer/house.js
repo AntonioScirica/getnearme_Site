@@ -126,7 +126,18 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
   // (architrave delle porte, finestre aperte), 2,25-2,70 (tutto pieno). Fasce che si toccano senza sovrapporsi.
   const wallP = plan.walls.map(w => [closeRing(w.outer), ...w.holes.map(closeRing)])
   const openFill = [...plan.doors, ...plan.windows].map(o => rectRing(o.rect, o.axis))
-  const full = U([...wallP, ...openFill])
+  // scale disegnate dentro casa: i tramezzi che attraversano i gradini (inventati dal ridisegno) si tagliano; i muri
+  // esterni (fascia di 35 cm lungo il contorno) e quelli che toccano solo il bordo della scala restano
+  const stairFoot = []
+  for (const r of plan.rooms) {
+    if (r.type !== 'scala' || r.stair?.outdoor || !r.stair?.path) continue
+    for (const q of r.stair.path) {
+      if (q.k === 'fan') for (const w of q.wedges) { const cx = w.reduce((t, v) => t + v[0], 0) / w.length, cz = w.reduce((t, v) => t + v[1], 0) / w.length; stairFoot.push([closeRing(w.map(([x, z]) => [cx + (x - cx) * 0.94, cz + (z - cz) * 0.94]))]) }
+      else { const [x0, z0, x1, z1] = q.box; stairFoot.push(rectRing([x0 + 0.05, z0 + 0.05, x1 - 0.05, z1 - 0.05])) }
+    }
+  }
+  const stairCut = stairFoot.length && plan.outline?.length >= 3 ? pc.intersection(U(stairFoot), D([closeRing(plan.outline)], U(grow(plan.outline, 0.35).slice(1)))) : []
+  const full = D(U([...wallP, ...openFill]), stairCut)
   const cutDoors = U(plan.doors.map(o => rectRing(o.rect, o.axis, 0.03)))
   const cutWins = U(plan.windows.map(o => rectRing(o.rect, o.axis, 0.03)))
   const band0 = D(full, cutDoors)
@@ -154,14 +165,18 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
     if (!open && count === 1 && (r.stair?.goes === 'giu' || r.stair?.goes === 'su')) dir = r.stair.goes === 'giu' ? 'down' : 'up'
     // nessun piano sopra nel modello: la scala esterna che sale e' tagliata come i muri, senza pianerottolo nel vuoto
     const cut = open && dir === 'up' && !(count > 1 && idx < count - 1) ? H : null
-    const L = layoutStair(r, plan, { dir, R: H + 0.27, base: open ? GY : 0, center: open ? hc : null, cut, blocked: cut !== null ? blockedFor(r) : null })
+    const linked = count > 1 && !open && !(dir === 'up' && idx === count - 1)
+    const L = layoutStair(r, plan, { dir, R: H + 0.27, base: open ? GY : 0, center: open ? hc : null, cut, blocked: cut !== null ? blockedFor(r) : null, linked })
     if (!L) continue
     L.open = open; L.linked = count > 1 && !open // si cambia piano camminando
-    L.cutTop = cut
+    // scala disegnata verso un piano che non e' nel modello: i gradini disegnati e basta, tagliati ai muri se arrivano
+    // piu' su; niente buco nel soffitto se non ci arrivano
+    L.cutTop = L.path && !L.linked ? H : cut
+    L.noHole = !!L.path && !L.linked && L.dir === 'up' && L.top < H - 0.05
     stairs.push(L)
   }
   const holeRing = L => { const [x0, z0, x1, z1] = L.hole; return [[[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]]] }
-  const upHoles = stairs.filter(L => !L.open && L.dir === 'up').map(holeRing), downHoles = stairs.filter(L => !L.open && L.dir === 'down').map(holeRing)
+  const upHoles = stairs.filter(L => !L.open && L.dir === 'up' && !L.noHole).map(holeRing), downHoles = stairs.filter(L => !L.open && L.dir === 'down').map(holeRing)
   // sezione scura del muro vista dall'alto: un solo tappo 3 mm sopra la cima dei muri
   const capG = new THREE.ShapeGeometry(shapesOf(full)); capG.rotateX(-Math.PI / 2); capG.translate(0, H + 0.003, 0)
   group.add(mesh(capG, M.wallCut, { cast: false, receive: false }))
@@ -475,12 +490,13 @@ export function buildHouse(plan, M, { style = null, level = null, name = '' } = 
   for (const L of stairs) {
     const indoor = !L.open
     const clipTop = (indoor && L.dir === 'up') || L.cutTop != null ? H : Infinity
-    const depth = Math.min(L.R - 0.2, Math.max(1.4, L.parts.find(p => p.kind === 'landing') ? -L.parts.find(p => p.kind === 'landing').y + 0.25 : 1.6))
+    // scala disegnata che scende: il fondo del buco e' il piano di sotto, all'ultima alzata
+    const depth = L.path && L.dir === 'down' ? Math.max(0.45, L.base - L.pathBottom + L.r) : Math.min(L.R - 0.2, Math.max(1.4, L.parts.find(p => p.kind === 'landing') ? -L.parts.find(p => p.kind === 'landing').y + 0.25 : 1.6))
     const st = buildStair(L, M, { clipTop, floorBase: L.dir === 'down' ? -depth : L.base, cutDepth: L.dir === 'down' ? -depth : -Infinity, wallAt: (x, z) => grid.isWall(x, z) && grid.roomAt(x, z) === 0, bodyMat: L.open ? outBody() : null })
     group.add(st.below)
     // la parte sopra il taglio c'e' solo se la scala continua dentro casa (al piano di sopra); quella esterna tagliata no
     if (st.above.children.length && L.cutTop == null) { group.add(st.above); hideInTop.push(st.above) }
-    if (indoor) { const sh = buildShaft(L, M, { H, depth, up: L.dir === 'up' }); group.add(sh); if (L.dir === 'up') hideInTop.push(sh) }
+    if (indoor && !L.noHole) { const sh = buildShaft(L, M, { H, depth, up: L.dir === 'up', floorMat: L.path ? M.stairTread : null }); group.add(sh); if (L.dir === 'up') hideInTop.push(sh) }
     // quote: celle della scala; nel buco senza rampa (non dovrebbe succedere) non si cammina
     const [hx0, hz0, hx1, hz1] = L.hole
     for (let z = hz0 + grid.cell / 2; z < hz1; z += grid.cell) for (let x = hx0 + grid.cell / 2; x < hx1; x += grid.cell) {

@@ -114,6 +114,8 @@ export function applySemantics(raw0: RawPlan, read: PlanRead, meta: { model: str
     if (s.to) hint.to = nameOf(read, s.to)
     hint.to_missing = s.missing_floor
     if (!s.inside) hint.outdoor = true
+    // riquadro letto: li' si cercano i gradini disegnati sull'originale (stairs.ts)
+    hint.box = sb.map(r3) as [number, number, number, number]
     // freccia della salita: verso nei metri della pianta (asse e segno)
     if (s.arrow !== null) {
       const vx = Math.cos(s.arrow * Math.PI / 180), vy = Math.sin(s.arrow * Math.PI / 180), mx = (d * vx - c * vy) / det, mz = (-b * vx + a * vy) / det

@@ -114,6 +114,9 @@ export async function createViewer(container, opts = {}) {
     g.fillStyle = '#000'; g.fillRect(0, 0, cv.width, cv.height) // la mappa alfa legge il verde: fondo nero opaco, non trasparente
     g.shadowColor = '#fff'; g.shadowBlur = blur * k; g.shadowOffsetX = cv.width * 2; g.fillStyle = '#fff'
     g.translate(-cv.width * 2, 0); g.beginPath(); draw(g, toC, k); g.fill() // draw puo' anche riempire da se'
+    // buchi delle scale che scendono sotto il pavimento: li' la base (trasparente, disegnata dopo) coprirebbe i gradini
+    g.setTransform(1, 0, 0, 1, 0, 0); g.shadowColor = 'transparent'; g.shadowBlur = 0; g.shadowOffsetX = 0; g.fillStyle = '#000'
+    for (const L of house.stairs.filter(L => L.dir === 'down' && !L.open)) { const [a, b] = toC([L.hole[0] - 0.05, L.hole[1] - 0.05]), [c, d] = toC([L.hole[2] + 0.05, L.hole[3] + 0.05]); g.fillRect(a, b, c - a, d - b) }
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.NoColorSpace; return t
   }
   // con giardini o cortili la base segue la forma del lotto (stanze ed esterni allargati), se no un rettangolo morbido
