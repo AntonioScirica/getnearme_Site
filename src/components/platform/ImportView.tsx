@@ -152,9 +152,9 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
             <>
               <textarea value={text} onChange={e => setText(e.target.value)} rows={6} placeholder={'https://www.immobiliare.it/annunci/...\nhttps://www.idealista.it/immobile/...\n' + tr('Un link per riga, anche 50 alla volta.', 'One link per line, up to 50 at a time.')}
                 className="w-full resize-none rounded-2xl bg-white p-4 text-sm leading-relaxed outline-none ring-1 ring-line focus:ring-ink/20" />
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-3">
                 <span className="text-xs text-muted">{urls.length ? tr(`${urls.length} link trovati`, `${urls.length} links found`) : tr('Immobiliare, Idealista, Casa.it e gli altri portali.', 'Immobiliare, Idealista, Casa.it and other portals.')} {tr('Ogni annuncio richiede da 30 secondi a 2 minuti.', 'Each listing takes 30 seconds to 2 minutes.')}</span>
-                <button onClick={runLinks} disabled={!urls.length} className="btn-ink rounded-xl px-6 py-2.5 text-sm font-semibold disabled:opacity-50">{tr('Importa', 'Import')} {urls.length || ''} {urls.length === 1 ? tr('annuncio', 'listing') : tr('annunci', 'listings')}</button>
+                <button onClick={runLinks} disabled={!urls.length} className="btn-ink h-12 w-full rounded-full px-6 text-sm font-semibold disabled:opacity-50">{tr('Importa', 'Import')} {urls.length || ''} {urls.length === 1 ? tr('annuncio', 'listing') : tr('annunci', 'listings')}</button>
               </div>
             </>
           ) : (
