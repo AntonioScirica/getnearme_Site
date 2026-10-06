@@ -31,3 +31,24 @@ export function getCoverImage(pillar: string, slug: string): string {
   if (COVER_SLUGS.has(slug)) return `${R2}/${slug}.jpg`;
   return `${R2}/pillar-${PILLARS.has(pillar) ? pillar : 'ai-staging'}.jpg`;
 }
+
+// Copertine solo grafiche (testo, icone, grafici): nessuna foto generata o modificata con l'AI.
+// Tutte le altre contengono foto prodotte con l'AI (stanze arredate, reel, avatar) e mostrano
+// la didascalia di trasparenza sotto l'immagine (AI Act, Reg. UE 2024/1689, art. 50).
+const GRAPHIC_ONLY_COVERS = new Set([
+  'costo-video-immobiliare-ai',
+  'report-analisi-zona-immobiliare-automatici',
+  'analisi-mercato-immobiliare-2026-dati-zona',
+  'strumenti-ai-agenzia-immobiliare-team-collaborazione',
+  'tempo-perde-agenzia-senza-ai-produttivita',
+  'onboarding-agenti-immobiliari-standardizzare-contenuti-report',
+  'migliori-strumenti-ai-agenzie-immobiliari-2026',
+  'agente-immo-vs-canva-strumenti-agenti-immobiliari',
+  'pillar-comparison-geo',
+]);
+
+/** true se la copertina contiene immagini generate o modificate con l'AI (serve la didascalia). */
+export function coverHasAiImagery(pillar: string, slug: string): boolean {
+  if (COVER_SLUGS.has(slug)) return !GRAPHIC_ONLY_COVERS.has(slug);
+  return !GRAPHIC_ONLY_COVERS.has(`pillar-${PILLARS.has(pillar) ? pillar : 'ai-staging'}`);
+}

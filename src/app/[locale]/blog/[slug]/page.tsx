@@ -11,7 +11,7 @@ import { type Locale } from "@/lib/i18n";
 import { getAdjacentPosts, getPostBySlug, getRelatedPosts } from "@/lib/blog";
 import { guidesForPost } from "@/lib/blogGuides";
 import { breadcrumbs, ORG_ID, SITE_ID } from "@/lib/seo";
-import { getCoverImage } from "@/lib/blog-images";
+import { coverHasAiImagery, getCoverImage } from "@/lib/blog-images";
 import FaqAccordion from "../components/FaqAccordion";
 import EndCta from "../components/EndCta";
 import BlogPostCard from "../components/BlogPostCard";
@@ -89,6 +89,7 @@ export default async function BlogPostPage({ params }: Props) {
   const guides = guidesForPost(post);
   const url = `${BASE_URL}/${locale}/blog/${slug}`;
   const cover = getCoverImage(post.pillar, post.slug);
+  const coverIsAi = coverHasAiImagery(post.pillar, post.slug);
 
   const articleJsonLd = {
     "@context": "https://schema.org",
@@ -152,6 +153,11 @@ export default async function BlogPostPage({ params }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={cover} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
+        {coverIsAi && (
+          <p style={{ fontSize: 12, color: "#71717a", margin: "0 0 7px" }}>
+            Immagine generata o modificata con l&apos;intelligenza artificiale, a scopo illustrativo.
+          </p>
+        )}
       </section>
 
       <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 22px 14px" }}>
