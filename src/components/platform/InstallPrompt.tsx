@@ -214,9 +214,9 @@ export default function InstallPrompt() {
         {!direct && (
           <ol className="mt-5 space-y-3 rounded-[24px] bg-canvas p-4 text-[15px] leading-snug text-ink">
             {steps.map((s, i) => (
-              <li key={i} className="flex items-start gap-3">
+              <li key={i} className="flex items-center gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold">{i + 1}</span>
-                <span className="min-w-0 flex-1 pt-[3px]">{s.text}</span>
+                <span className="min-w-0 flex-1">{s.text}</span>
                 {s.icon && <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-white text-brand ring-1 ring-black/5"><s.icon size={18} /></span>}
               </li>
             ))}
