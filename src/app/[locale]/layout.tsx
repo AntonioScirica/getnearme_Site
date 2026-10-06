@@ -126,7 +126,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         {/* icona grande per i risultati di Google (preferisce 48 px o multipli; la .ico arriva a 48) */}
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <meta name="theme-color" content="#3B82F6" />
+        <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
