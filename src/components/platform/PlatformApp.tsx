@@ -5,7 +5,7 @@ import ConsentGate from './ConsentGate';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Download, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
+import { ChevronRight, History, Home, MessageSquare, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, Upload, BookOpen, ChevronDown, Gift, Lock, Inbox, LineChart } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -127,6 +127,16 @@ function PlatformInner({ userData }: { userData: UserData }) {
   const blockNoPlan = (e: React.SyntheticEvent) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new Event('agenteimmo:no-credits')); };
   useDemoTrack();
   useHeartbeat(); // tempo sulla piattaforma per /metrics
+  // Safari su iPhone fuori dalla web app: la barra degli indirizzi galleggia sopra il fondo della pagina e non da' la
+  // safe area; la classe alza la barra in basso (globals.css). Nella web app installata (standalone) non serve.
+  useEffect(() => {
+    const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone;
+    document.documentElement.classList.toggle('ios-browser', ios && !standalone);
+    // la pagina non scorre mai: scorre solo il centro (main), le barre sopra e sotto restano ferme
+    document.documentElement.classList.add('app-lock');
+    return () => document.documentElement.classList.remove('app-lock');
+  }, []);
   const [route, query = ''] = useHashRoute().split('?');
   const news = useGalleryNews(userData.id, route === '/galleria');
     useEffect(() => identify(userData.id), [userData.id]); // eventi GA4 legati all'account
@@ -192,7 +202,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
   const chat = route === '/staging';
 
   return (
-    <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
+    <div className="relative flex h-dvh flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
       {/* il regalo dei crediti dopo il tour (finito o saltato): mai sopra l'onboarding o il tour */}
       {!tour && !tourPending() && <WelcomeModal />}
@@ -248,11 +258,11 @@ function PlatformInner({ userData }: { userData: UserData }) {
           Telefono: niente pillola, e' la quarta card della home (HomeView) */}
       {!chat && route === '/' && <div inert={homeOpen} className={`max-sm:hidden fixed bottom-[84px] left-1/2 z-30 lg:bottom-5 flex -translate-x-1/2 items-center gap-2 ease-smooth transition-[opacity,translate] duration-[600ms] ${homeOpen ? 'pointer-events-none translate-y-4 opacity-0' : ''}`}>
         <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
-          <Download size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
+          <Upload size={16} className="text-muted" /> {tr('Importa immobile', 'Import property')}
         </a>
       </div>}
 
-      <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <main className={`min-h-0 flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
         {/* piano scaduto: si dice in home, con la data e come riattivarlo */}
         {route === '/' && credits?.lapsed && !credits.unlimited && (
@@ -584,13 +594,13 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
   return (
     // pb-24: lo spazio delle pill fisse in basso (Profilo, Importa), cosi' titolo e box stanno al centro della parte libera
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center pb-36 pt-6 sm:justify-center sm:pb-24 sm:pt-10">
-      <h1 className={`text-center font-display text-4xl font-bold leading-[1.2] tracking-tight ease-smooth transition-all md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
+      <h1 className={`text-center font-display text-[28px] font-bold leading-[1.2] tracking-tight ease-smooth transition-all sm:text-4xl md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
         {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${d0 + i * 0.05}s` }}>{w}&nbsp;</span>)}
-        <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
+        <span key={subtitle} className="blur-in inline text-muted/70 sm:block" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
       </h1>
 
       {/* tessere in fila solo da lg (a 768 tre da 320 uscivano dai lati), sotto in colonna */}
-      <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 lg:flex-row lg:gap-0">
+      <div className="mt-8 flex w-full flex-col items-center justify-center gap-5 sm:mt-14 lg:flex-row lg:gap-0">
         <ImproveTile phase={phase} stage={imp.stage} onOpen={openLink} onClose={close} onSubmit={() => imp.start(url)} onNew={restart}
           hover={hover} setHover={setHover} intro={intro} url={url} setUrl={setUrl}>
           {/* Il contenuto segue il titolo: sfuma, cambia a meta' tempo, rientra (niente salti tra scansione e verdetto) */}
@@ -628,8 +638,8 @@ export function HomeView({ name, slug, initialUrl = '', onSaved, morph }: { name
         </Tile>
 
         {/* solo telefono: Importa immobile come quarta card (da sm resta la pillola in basso) */}
-        <Tile index={3} intro={intro} wrapClass={`${others(3)} sm:hidden`} kicker={tr('Hai già tanti annunci?', 'Got many listings already?')} title={tr('Importa immobile', 'Import property')} href="#/importa"
-          thumbNode={<span className="relative h-16 w-16 shrink-0"><img src="/immo/home/fan-1.webp" alt="" className="h-16 w-16 rounded-2xl object-cover" /><span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-md ring-2 ring-white"><Download size={14} /></span></span>}>
+        <Tile index={3} intro={intro} wrapClass={`${others(3)} sm:hidden`} kicker={tr('Importa immobile', 'Import property')} title={tr('Hai già tanti annunci?', 'Got many listings already?')} href="#/importa"
+          thumbNode={<span className="relative h-16 w-16 shrink-0"><img src="/immo/home/fan-1.webp" alt="" className="h-16 w-16 rounded-2xl object-cover" /><span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shadow-md ring-2 ring-white"><Upload size={14} /></span></span>}>
           <></>
         </Tile>
       </div>
