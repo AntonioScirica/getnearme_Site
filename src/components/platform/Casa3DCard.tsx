@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { CASA3D_ON } from '@/lib/casa3d/flag';
 import { createPortal } from 'react-dom';
-import { Box, Check, ExternalLink, ImagePlus, Loader2, Pencil, RotateCcw, Trash2, X } from 'lucide-react';
+import { Box, Check, ExternalLink, ImagePlus, Loader2, MoreHorizontal, Pencil, RotateCcw, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
 import type { Casa3d } from '@/lib/casa3d/types';
 import type { ProjectData } from '@/lib/projects';
@@ -23,6 +23,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
   const [picking, setPicking] = useState(false)
   const [flow, setFlow] = useState<{ plans: PlanSource[]; existing?: Casa3d | null; reuseKey?: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [more, setMore] = useState(false) // menu con Rifai ed Elimina: sotto restano due pulsanti
   const plans = photos.filter(p => d.rooms?.[p]?.scene === 'planimetria')
 
   // niente planimetria tra le foto e nessuna casa gia' fatta: la sezione non c'e' (la Casa 3D nasce solo dalla planimetria vera)
@@ -46,13 +47,23 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
           <span className="block text-sm font-semibold">{tr('Casa 3D', '3D home')}</span>
           <span className="block text-xs text-muted">{flow && !casa ? tr('In creazione', 'Being created') : casa ? `${tr('Pronta', 'Ready')}${casa.floors.length > 1 ? `, ${casa.floors.length} ${tr('piani', 'floors')}` : ''}` : tr('Dalla planimetria, navigabile sul tuo sito', 'From the floor plan, explorable on your site')}</span>
         </span>
+        {casa && (
+          <span className="relative shrink-0">
+            <button type="button" onClick={() => setMore(m => !m)} aria-label={tr('Altre azioni', 'More actions')} aria-expanded={more} className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-white hover:text-ink"><MoreHorizontal size={18} /></button>
+            {more && <>
+              <span className="fixed inset-0 z-20" onClick={() => setMore(false)} aria-hidden />
+              <span className="blur-in absolute right-0 top-10 z-30 w-56 rounded-2xl bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(0,0,0,.25)] ring-1 ring-black/5">
+                <button type="button" onClick={() => { setMore(false); setFlow({ plans: casa.floors.filter(f => f.image).map(f => ({ src: f.image, name: f.name })), existing: null, reuseKey: casa.key }) }} className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium hover:bg-canvas"><RotateCcw size={14} /> {tr('Rifai dalle planimetrie, gratis', 'Redo from the plans, free')}</button>
+                <button type="button" onClick={() => { setMore(false); void remove() }} disabled={busy} className="flex h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">{busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} {tr('Elimina', 'Delete')}</button>
+              </span>
+            </>}
+          </span>
+        )}
       </div>
       {casa ? (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <a href={viewerUrl(casa.manifest)} target="_blank" rel="noreferrer" className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><ExternalLink size={14} /> {tr('Apri', 'Open')}</a>
           <button type="button" onClick={() => setFlow({ plans: casa.floors.map(f => ({ src: f.image, name: f.name })), existing: casa })} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Pencil size={14} /> {tr('Correggi', 'Fix')}</button>
-          <button type="button" onClick={() => setFlow({ plans: casa.floors.filter(f => f.image).map(f => ({ src: f.image, name: f.name })), existing: null, reuseKey: casa.key })} title={tr('Rifà il riconoscimento delle stesse planimetrie, gratis', 'Recognizes the same floor plans again, free')} className="flex h-10 items-center justify-center gap-1.5 rounded-full text-sm font-medium text-muted hover:bg-white hover:text-ink"><RotateCcw size={14} /> {tr('Rifai', 'Redo')}</button>
-          <button type="button" onClick={() => void remove()} disabled={busy} className="flex h-10 items-center justify-center gap-1.5 rounded-full text-sm font-medium text-muted hover:bg-white hover:text-ink disabled:opacity-50">{busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />} {tr('Elimina', 'Delete')}</button>
         </div>
       ) : (
         <button type="button" onClick={() => setPicking(true)} disabled={!!flow} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">
