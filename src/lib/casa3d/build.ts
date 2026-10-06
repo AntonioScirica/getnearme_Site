@@ -80,9 +80,22 @@ export function applyFix(raw: RawPlan, fix: Fix): RawPlan {
 
 // --- modifiche dell'agente (schermata di correzione) ---
 export function setRoomType(raw: RawPlan, id: number, type: string): RawPlan { const p = clone(raw); const r = p.rooms.find(x => x.id === id); if (r) { r.type = type; delete r.label } return p } // scelta dell'agente: non e' piu' quella letta
+// passaggio "ponte": il vettorizzatore unisce due muri allineati scavalcando un corridoio, e il passaggio va da un muro
+// di traverso all'altro senza muro proprio ai lati. Non separa niente: toglierlo unisce gli spazi, non fa un muro.
+export function isBridge(raw: RawPlan, o: { a: Pt; b: Pt; t: number }): boolean {
+  const { d } = frame(o.a, o.b)
+  const segDist = (q: Pt, a: Pt, b: Pt) => { const f = frame(a, b), s = (q[0] - a[0]) * f.d[0] + (q[1] - a[1]) * f.d[1], c = Math.max(0, Math.min(f.L, s)); return { dist: Math.hypot(q[0] - a[0] - f.d[0] * c, q[1] - a[1] - f.d[1] * c), over: Math.max(0, -s, s - f.L) } }
+  const crossAt = (q: Pt) => [...raw.walls, ...raw.openings].some(x => {
+    if (x === o || /^parapetto-/.test(x.label ?? '')) return false
+    const f = frame(x.a, x.b); if (Math.abs(f.d[0] * d[0] + f.d[1] * d[1]) > 0.3) return false
+    const { dist, over } = segDist(q, x.a, x.b); return over <= 0.15 && dist <= x.t / 2 + 0.12
+  })
+  return crossAt(o.a) && crossAt(o.b)
+}
 export function removeOpening(raw: RawPlan, idx: number): RawPlan {
   const p = clone(raw), o = p.openings[idx]
   if (!o) return p
+  if (o.type === 'varco' && o.rooms[0] > 0 && o.rooms[1] > 0 && o.rooms[0] !== o.rooms[1] && isBridge(p, o)) { p.openings.splice(idx, 1); return mergeRooms(p, o.rooms[0], o.rooms[1]) }
   p.walls.push({ a: o.a, b: o.b, t: o.t, label: `chiusa-${o.label ?? idx}` })
   p.openings.splice(idx, 1)
   return p
@@ -386,7 +399,7 @@ function clipHalf(P: Pt[], o: Pt, d: Pt, keepLeft: boolean): Pt[] {
   return out
 }
 // p1, p2: punti toccati; la linea si raddrizza se e' quasi orizzontale o verticale
-export function splitRoom(raw: RawPlan, id: number, p1: Pt, p2: Pt, mode: 'muro' | 'porta' | 'passaggio'): RawPlan {
+export function splitRoom(raw: RawPlan, id: number, p1: Pt, p2: Pt, mode: 'muro' | 'porta' | 'passaggio', minArea = 0.5): RawPlan {
   const p = clone(raw), r = p.rooms.find(x => x.id === id)
   if (!r) return p
   let d: Pt = [p2[0] - p1[0], p2[1] - p1[1]]
@@ -396,7 +409,7 @@ export function splitRoom(raw: RawPlan, id: number, p1: Pt, p2: Pt, mode: 'muro'
   if (Math.abs(d[1]) < 0.17) d = [Math.sign(d[0]) || 1, 0]; else if (Math.abs(d[0]) < 0.17) d = [0, Math.sign(d[1]) || 1]
   const A = clipHalf(r.poly, o, d, true), B = clipHalf(r.poly, o, d, false)
   const aA = Math.abs(shoelace(A)), aB = Math.abs(shoelace(B))
-  if (A.length < 3 || B.length < 3 || aA < 0.5 || aB < 0.5) return p
+  if (A.length < 3 || B.length < 3 || aA < minArea || aB < minArea) return p
   // corda: intersezioni della retta col contorno, le piu' vicine al punto di mezzo da una parte e dall'altra
   const ts: number[] = []
   for (let i = 0; i < r.poly.length; i++) {
@@ -416,6 +429,29 @@ export function splitRoom(raw: RawPlan, id: number, p1: Pt, p2: Pt, mode: 'muro'
     if (w > 0.5) p.openings.push({ type: 'door', a: [r3(ca[0] + d[0] * m), r3(ca[1] + d[1] * m)], b: [r3(ca[0] + d[0] * (m + w)), r3(ca[1] + d[1] * (m + w))], t: 0.1, width: r3(w), rooms: [id, nid], suspect: false, label: `D${nid}`, added: true })
   }
   return p
+}
+// due stanze che si toccano "nell'aria": almeno 50 cm continui di contorno di A a meno di 40 cm da B, senza muri ne' aperture
+// in mezzo (resti di passaggi finti o di vani lasciati aperti dal ridisegno)
+export function touchAir(raw: RawPlan, idA: number, idB: number): boolean {
+  const A = raw.rooms.find(x => x.id === idA), B = raw.rooms.find(x => x.id === idB)
+  if (!A || !B) return false
+  const blocked = [...raw.walls, ...raw.openings].map(w => quad(w.a, w.b, w.t + 0.02))
+  const free = (q: Pt) => !blocked.some(P => inPoly(q[0], q[1], P))
+  // tratto continuo di almeno 50 cm: i buchi tra stipite e muro (pochi cm) non contano
+  let best = 0
+  for (let i = 0; i < A.poly.length; i++) {
+    const a = A.poly[i], b = A.poly[(i + 1) % A.poly.length], { L, d } = frame(a, b)
+    let run = 0
+    for (let s = 0.025; s < L; s += 0.05) {
+      const q: Pt = [a[0] + d[0] * s, a[1] + d[1] * s]
+      const ok = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => {
+        for (let k = 0; k <= 0.4001; k += 0.02) { if (!free([q[0] + dx * k, q[1] + dz * k])) return false; if (k > 0 && inPoly(q[0] + dx * k, q[1] + dz * k, B.poly)) return true }
+        return false
+      })
+      run = ok ? run + 0.05 : 0; best = Math.max(best, run)
+    }
+  }
+  return best >= 0.5
 }
 // unisce due stanze vicine: via i muri (e le loro aperture) che stanno solo tra le due; contorno nuovo su griglia di 5 cm
 export function mergeRooms(raw: RawPlan, idA: number, idB: number): RawPlan {
@@ -439,18 +475,19 @@ export function mergeRooms(raw: RawPlan, idA: number, idB: number): RawPlan {
     if (c0 > 0.15) keepW.push({ ...w, b: P(c0) })
     if (L - c1 > 0.15) keepW.push({ ...w, a: P(c1) })
   }
-  if (!gone.length) return p // non sono vicine
+  const air = !gone.length
+  if (air && !touchAir(raw, idA, idB)) return p // non sono vicine
   const onGone = (o: RawOpening) => gone.some(w => { const m: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2]; return inPoly(m[0], m[1], quad(w.a, w.b, w.t + 0.04)) })
   p.openings = p.openings.filter(o => !onGone(o))
   p.walls = keepW
   // contorno: stanze + muri tolti su una griglia, chiusura di una cella, contorno esterno
   const C = 0.05, all = [...A.poly, ...B.poly, ...gone.flatMap(w => quad(w.a, w.b, w.t))]
-  const x0 = Math.min(...all.map(q => q[0])) - 0.2, z0 = Math.min(...all.map(q => q[1])) - 0.2
-  const W = Math.ceil((Math.max(...all.map(q => q[0])) + 0.2 - x0) / C), H = Math.ceil((Math.max(...all.map(q => q[1])) + 0.2 - z0) / C)
+  const x0 = Math.min(...all.map(q => q[0])) - 0.4, z0 = Math.min(...all.map(q => q[1])) - 0.4
+  const W = Math.ceil((Math.max(...all.map(q => q[0])) + 0.4 - x0) / C), H = Math.ceil((Math.max(...all.map(q => q[1])) + 0.4 - z0) / C)
   const toG = (P: Pt[]) => P.map(q => [(q[0] - x0) / C, (q[1] - z0) / C] as [number, number])
-  let m = new Uint8Array(W * H)
+  let m: Uint8Array = new Uint8Array(W * H)
   fillPolyMask(m, W, H, toG(A.poly)); fillPolyMask(m, W, H, toG(B.poly)); for (const w of gone) fillPolyMask(m, W, H, toG(quad(w.a, w.b, w.t + 0.02)))
-  m = closeGrid(m, W, H)
+  m = closeGrid(m, W, H, air ? 5 : 1) // nell'aria si chiude anche il vano (fino a 50 cm) tra le due stanze
   const lab = new Int32Array(W * H); for (let i = 0; i < m.length; i++) lab[i] = m[i]
   const ring = simplifyRing(traceContour(lab, 1, W, H).map(([x, y]) => [x + 0.5, y + 0.5] as [number, number]), 1.2)
   const poly = ring.map(([x, y]) => [r3(x0 + x * C), r3(z0 + y * C)] as Pt)
@@ -459,12 +496,14 @@ export function mergeRooms(raw: RawPlan, idA: number, idB: number): RawPlan {
   return p
 }
 function fillPolyMask(m: Uint8Array, w: number, h: number, poly: [number, number][]) { fillPoly(m, w, h, poly) }
-function closeGrid(m: Uint8Array, w: number, h: number) {
-  const d = new Uint8Array(m.length)
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = 0; for (let dy = -1; dy <= 1 && !v; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && m[yy * w + xx]) { v = 1; break } } d[y * w + x] = v }
-  const e = new Uint8Array(m.length)
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = 1; for (let dy = -1; dy <= 1 && v; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h || !d[yy * w + xx]) { v = 0; break } } e[y * w + x] = v }
-  return e
+function closeGrid(m0: Uint8Array, w: number, h: number, r = 1): Uint8Array {
+  if (r > 1) { let m = m0; for (let i = 0; i < r; i++) m = morph(m, w, h, 1); for (let i = 0; i < r; i++) m = morph(m, w, h, 0); return m }
+  return morph(morph(m0, w, h, 1), w, h, 0)
+}
+function morph(m: Uint8Array, w: number, h: number, grow: number) { // grow 1: dilatazione 3x3, 0: erosione 3x3
+  const o = new Uint8Array(m.length)
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = grow ? 0 : 1; for (let dy = -1; dy <= 1 && v !== grow; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy, on = xx >= 0 && yy >= 0 && xx < w && yy < h && m[yy * w + xx]; if (grow ? on : !on) { v = grow; break } } o[y * w + x] = v }
+  return o
 }
 
 // --- mobili nella correzione: togli, ruota, aggiungi (pill semplici) ---

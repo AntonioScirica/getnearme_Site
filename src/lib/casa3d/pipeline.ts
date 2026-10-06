@@ -5,8 +5,8 @@ import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
-import { alignToOriginal, openDoorsFromOriginal, verifyFurniture } from './align'
-import { applyFix, applyFurniture, applyLabels, guessRoomTypes } from './build'
+import { alignToOriginal, openDoorsFromOriginal, removeFakeWalls, verifyFurniture } from './align'
+import { applyFix, applyFurniture, applyLabels, guessRoomTypes, mergeRooms, splitRoom } from './build'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
@@ -80,6 +80,7 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
     const ta = Date.now()
     raw = (await alignToOriginal(raw, crop)).raw
     raw = (await openDoorsFromOriginal(raw, crop)).raw // porte delle catastali (varchi con segni a croce) chiuse dal ridisegno
+    raw = (await removeFakeWalls(raw, crop, mergeRooms, (r, id, a, b) => splitRoom(r, id, a, b, 'passaggio', 0.1))).raw // muri inventati dal ridisegno (stanzette murate, stanze divise)
     ms.allineamento = Date.now() - ta
   } catch (e) { console.error('casa3d allineamento', e) }
   if (fix?.labels?.length) raw = applyLabels(raw, fix.labels)

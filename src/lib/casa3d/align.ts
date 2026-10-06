@@ -9,7 +9,7 @@
 //     riscontro: se troppi, la schermata di correzione lo segnala (confronto con il cursore dell'originale).
 import sharp from 'sharp'
 import { dist0 } from './raster'
-import { clone, inPoly } from './build'
+import { clone, inPoly, isBridge, touchAir } from './build'
 import type { Pt, RawPlan } from './types'
 
 type Img = { dark: Uint8Array; edge: Uint8Array; dt: Float32Array; w: number; h: number }
@@ -325,4 +325,108 @@ export async function openDoorsFromOriginal(raw0: RawPlan, original: Buffer): Pr
     }
   }
   return { raw, added }
+}
+
+// Muri che non esistono: il ridisegno a volte chiude con un muro un disimpegno o divide una stanza (stanzette murate).
+// Un muro interno (stanze ai due lati) le cui facce sull'originale mancano quasi del tutto (al piu' una linea sottile o i
+// segni a croce delle porte) si toglie e le due parti diventano una stanza. Le stanzette sotto 1,5 m2 senza nessuna
+// apertura si uniscono alla vicina se il muro che le separa e' debole sull'originale.
+export async function removeFakeWalls(raw0: RawPlan, original: Buffer, merge: (r: RawPlan, a: number, b: number) => RawPlan, split: (r: RawPlan, id: number, a: Pt, b: Pt) => RawPlan): Promise<{ raw: RawPlan; removed: number; merged: number }> {
+  let raw = clone(raw0)
+  if ((raw.source.fit?.error_cm ?? 0) > 8) return { raw, removed: 0, merged: 0 }
+  const { imgW: W, imgH: H } = raw.source, T = raw.source.toImage as number[]
+  const img = await loadOriginal(original, W, H)
+  // muro vero sull'originale: di traverso c'e' inchiostro su una fascia larga (muro pieno) o due linee distinte (catastali a
+  // doppia linea); un muro finto ha al piu' una linea sottile al centro. Lo spessore del ridisegno puo' non coincidere con
+  // quello disegnato, quindi si guarda tutta la fascia (+-3 cm) e si misura l'ampiezza dell'inchiostro, non le due facce.
+  const ppmL = pxPerM(T), px = 1 / ppmL
+  const faces = (w: { a: Pt; b: Pt; t: number }) => {
+    const { L, d, n } = frame(w.a, w.b); let p = 0, t = 0
+    const half = w.t / 2 + 0.04, need = Math.max(3 * px, 0.35 * w.t)
+    for (let s = 0.1 * L; s <= 0.9 * L; s += 0.03) {
+      const c: Pt = [w.a[0] + d[0] * s, w.a[1] + d[1] * s]; t++
+      let lo = Infinity, hi = -Infinity
+      for (let o = -half; o <= half; o += px) { const q: Pt = [c[0] + n[0] * o, c[1] + n[1] * o], [x, y] = apply(T, q), xi = Math.round(x), yi = Math.round(y); if (xi >= 0 && yi >= 0 && xi < W && yi < H && img.dark[yi * W + xi]) { lo = Math.min(lo, o); hi = Math.max(hi, o) } }
+      if (hi - lo >= need) p++
+    }
+    return t ? p / t : 1
+  }
+
+  const roomAt = (q: Pt) => raw.rooms.find(r => inPoly(q[0], q[1], r.poly))?.id ?? -1
+  const sides = (w: { a: Pt; b: Pt; t: number }) => { const { L, d, n } = frame(w.a, w.b), m: Pt = [w.a[0] + d[0] * L / 2, w.a[1] + d[1] * L / 2], off = w.t / 2 + 0.25; return [roomAt([m[0] + n[0] * off, m[1] + n[1] * off]), roomAt([m[0] - n[0] * off, m[1] - n[1] * off])] }
+  const typeOf = (id: number) => raw.rooms.find(r => r.id === id)?.type
+  const real = (id: number) => id > 0 && typeOf(id) !== 'esterno'
+  const isPar = (w: { label?: string }) => /^parapetto-/.test(w.label ?? '')
+  let removed = 0, merged = 0
+  const tryMerge = (a0: number, b0: number) => { const big = (i: number) => raw.rooms.find(r => r.id === i)?.area ?? 0, [a, b] = big(a0) >= big(b0) ? [a0, b0] : [b0, a0]; const n = raw.rooms.length; raw = merge(raw, a, b); if (raw.rooms.length < n) { merged++; return true } return false }
+
+  const touched = new Set<number>() // stanze toccate dai passi 1-2: solo loro si uniscono "nell'aria"
+  // 1. porta con la stessa stanza dai due lati: il contorno della stanza e' passato dal vano (porta aggiunta dopo, o
+  // vano lasciato aperto dal ridisegno). Si divide la stanza lungo la linea della porta, senza muro nuovo.
+  for (let k = 0; k < raw.openings.length; k++) {
+    const o = raw.openings[k]
+    if (o.type !== 'door' || o.rooms[0] !== o.rooms[1] || o.rooms[0] <= 0) continue
+    const before = raw.rooms.length, id = o.rooms[0]
+    raw = split(raw, id, o.a, o.b)
+    if (raw.rooms.length === before) continue
+    touched.add(id); touched.add(Math.max(...raw.rooms.map(r => r.id)))
+    const { n } = frame(o.a, o.b), m: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2], off = o.t / 2 + 0.2
+    raw.openings[k] = { ...raw.openings[k], rooms: [roomAt([m[0] + n[0] * off, m[1] + n[1] * off]), roomAt([m[0] - n[0] * off, m[1] - n[1] * off])] }
+  }
+
+  // 2. passaggi finti: il vettorizzatore unisce due muri allineati scavalcando un corridoio, e il "passaggio" va da un
+  // muro di traverso all'altro (nessun muro proprio ai lati). Sul 3D diventa un architrave che chiude scatolette.
+  raw.openings = raw.openings.filter(o => {
+    if (o.type !== 'varco' || !real(o.rooms[0]) || !real(o.rooms[1])) return true
+    if (!isBridge(raw, o)) return true
+    touched.add(o.rooms[0]); touched.add(o.rooms[1]); removed++; return false
+  })
+  // ... e gli stessi passaggi chiusi a muro (dal controllo o dalla correzione): muro senza inchiostro tra due muri di traverso
+  for (const w of raw.walls.filter(x => /^chiusa-/.test(x.label ?? ''))) {
+    const [a, b] = sides(w)
+    if (!real(a) || !real(b) || a === b || !isBridge(raw, w) || faces(w) >= 0.25) continue
+    raw.walls = raw.walls.filter(x => x !== w); touched.add(a); touched.add(b); removed++
+  }
+
+  // 3. stanze vere che si toccano senza muro ne' apertura in mezzo (pezzi lasciati dai passaggi finti o dalle porte)
+  for (let pass = 0; pass < 12; pass++) {
+    const rs = raw.rooms.filter(r => real(r.id) && touched.has(r.id)); let hit = false
+    for (let x = 0; x < rs.length && !hit; x++) for (let y = x + 1; y < rs.length && !hit; y++) if (touchAir(raw, rs[x].id, rs[y].id)) hit = tryMerge(rs[x].id, rs[y].id)
+    if (!hit) break
+  }
+  // i passi seguenti leggono l'inchiostro: solo se l'originale ha muri ben disegnati (non a matita, non scansioni sbiadite)
+  // 4. muri fuori dalla casa: le linee sottili del lotto (resede, confini) ridisegnate come muri spessi. Un muro senza
+  // inchiostro sull'originale che non separa una stanza vera da una stanza vera o dal fuori si toglie.
+  for (const w of [...raw.walls]) {
+    const [a, b] = sides(w), ra = real(a), rb = real(b)
+    if (ra || rb || ![a, b].some(i => i > 0) || isPar(w) || frame(w.a, w.b).L < 0.4) continue // almeno un lato su un'area esterna riconosciuta
+    if (faces(w) < 0.25) { raw.walls = raw.walls.filter(x => x !== w); removed++ }
+  }
+  // 5. "stanze" chiuse solo da linee sottili verso il fuori: e' un'area esterna (resede, corte) ridisegnata come stanza.
+  for (const r of [...raw.rooms]) {
+    if (!real(r.id)) continue
+    const out = raw.walls.filter(w => !isPar(w) && sides(w).includes(r.id) && sides(w).every(i => i === r.id || !real(i)))
+    const len = out.reduce((t, w) => t + frame(w.a, w.b).L, 0)
+    // prudenza: solo aree toccate dai passaggi finti, senza finestre e con molto contorno verso il fuori
+    if (len < 8 || !touched.has(r.id) || raw.openings.some(o => o.type === 'window' && o.rooms.includes(r.id))) continue
+    const ink = out.reduce((t, w) => t + frame(w.a, w.b).L * faces(w), 0) / len
+    if (ink >= 0.35) continue
+    r.type = 'esterno'
+    raw.walls = raw.walls.filter(w => !out.includes(w)); removed += out.length // linee del lotto, non muri della casa
+  }
+  // 6. muri dentro una stessa stanza (o tra spazi esterni) senza inchiostro
+  for (const w of [...raw.walls]) {
+    if (frame(w.a, w.b).L < 0.4 || isPar(w)) continue
+    const [a, b] = sides(w)
+    if (a === b && a > 0 && faces(w) < (real(a) ? 0.25 : 0.6)) { raw.walls = raw.walls.filter(x => x !== w); removed++ }
+  }
+  // 7. stanzette chiuse senza aperture
+  for (const r of [...raw.rooms]) {
+    if (r.area >= 1.5 || !raw.rooms.includes(r) || !real(r.id)) continue
+    if (raw.openings.some(o => o.rooms.includes(r.id))) continue
+    const near = raw.walls.map(w => ({ w, s: sides(w) })).filter(x => x.s.includes(r.id) && x.s.some(i => real(i) && i !== r.id) && faces(x.w) < 0.6)
+    const other = near.map(x => raw.rooms.find(q => q.id === x.s.find(i => i !== r.id))).filter(Boolean).sort((p, q) => q!.area - p!.area)[0]
+    if (other) tryMerge(other.id, r.id)
+  }
+  return { raw, removed, merged }
 }
