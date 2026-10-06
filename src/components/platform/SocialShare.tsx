@@ -299,7 +299,7 @@ function PostView({ build, width }: { build: Slide | null; width: number }) {
   const h = Math.round(width * (build?.size.h ?? 1350) / (build?.size.w ?? 1080));
   return (
     <div className="relative overflow-hidden rounded-[inherit]" style={{ width, height: h }}>
-      {!ok && <div className="absolute inset-0 animate-pulse bg-black/[.06]" />}
+      {!ok && <div className="absolute inset-0 animate-pulse bg-black/[.11]" />}
       <div ref={ref} className={`pointer-events-none transition-opacity duration-[600ms] ${ok ? 'opacity-100' : 'opacity-0'}`} />
     </div>
   );
@@ -337,7 +337,7 @@ function MorphPost({ build, boxW, boxH, fw, fh }: { build: Slide | null; boxW: n
   const d = build ? fit(build.size.w, build.size.h) : fit(fw, fh);
   return (
     <div className={`relative overflow-hidden rounded-2xl shadow-md ring-1 ring-black/5 ease-smooth motion-reduce:transition-none ${morph ? 'transition-[width,height]' : ''}`} style={{ width: d.w, height: d.h }}>
-      <div ref={pulse} className="absolute inset-0 animate-pulse bg-black/[.06]" />
+      <div ref={pulse} className="absolute inset-0 animate-pulse bg-black/[.11]" />
       <div ref={ref} className="absolute inset-0" />
     </div>
   );
@@ -994,7 +994,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             // scheletro del post nella forma del formato scelto (alta, quadrata, verticale) finche' non c'e' la foto
             <span className="relative block overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 ease-smooth transition-[width,height]"
               style={{ width: Math.round(fmt.w * Math.min((boxW - 24) / fmt.w, (boxH - 24) / fmt.h)), height: Math.round(fmt.h * Math.min((boxW - 24) / fmt.w, (boxH - 24) / fmt.h)) }}>
-              <span className="absolute inset-0 animate-pulse bg-black/[.06]" />
+              <span className="absolute inset-0 animate-pulse bg-black/[.11]" />
               <span className="absolute left-[8%] top-[7%] h-[5%] w-[26%] animate-pulse rounded-full bg-white/80" />
               <span className="absolute inset-x-[8%] bottom-[8%] flex flex-col gap-[6%]" style={{ height: '30%' }}>
                 <span className="h-[18%] w-4/5 animate-pulse rounded-full bg-white/80" />
