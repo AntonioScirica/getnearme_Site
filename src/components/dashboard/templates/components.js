@@ -213,7 +213,7 @@ export function createMetricCards(data, opts = {}) {
     { icon: bedroomsIcon, value: withUnit(bedroomsVal, bedroomsIcon), label: metricLabel(bedroomsIcon, bedroomsVal) },
     { icon: bathroomsIcon, value: withUnit(bathroomsVal, bathroomsIcon), label: metricLabel(bathroomsIcon, bathroomsVal) },
     { icon: surfaceIcon, value: withUnit(surfaceVal, surfaceIcon), label: metricLabel(surfaceIcon, surfaceVal) },
-  ];
+  ].filter(m => m.value !== '-'); // dato mancante (es. camere 0): niente riquadro con il trattino
 
   metrics.forEach(m => {
     const card = document.createElement('div');
@@ -292,7 +292,7 @@ export function createMetricPills(data, opts = {}) {
     { icon: bedroomsIcon2, value: withUnit2(bedroomsVal2, bedroomsIcon2), label: pillLabel(bedroomsIcon2, bedroomsVal2) },
     { icon: bathroomsIcon2, value: withUnit2(bathroomsVal2, bathroomsIcon2), label: pillLabel(bathroomsIcon2, bathroomsVal2) },
     { icon: surfaceIcon2, value: withUnit2(surfaceVal2, surfaceIcon2), label: '' },
-  ];
+  ].filter(m => m.value !== '-'); // dato mancante: niente pillola col trattino
 
   metrics.forEach(m => {
     const pill = document.createElement('div');

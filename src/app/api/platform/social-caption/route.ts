@@ -11,13 +11,22 @@ export const maxDuration = 60
 // quota gratuita (costo 0), se manca la chiave o la quota e' finita Haiku 4.5. Un testo e' ~1.500 token in entrata e ~400 in
 // uscita, cioe' ~0,4 centesimi di dollaro con Haiku: sotto il centesimo, non vale un credito (deciso il 05/10/2026).
 // Tetto giornaliero per utente, come per Riscrivi.
-const SYSTEM = `Sei un agente immobiliare italiano che scrive il testo di un post per Instagram e Facebook per una casa della sua agenzia.
+// Il testo cambia col social scelto nel popup (una richiesta per social, il client tiene la copia).
+const SOCIAL: Record<string, string> = {
+  instagram: 'Il post va su Instagram: emoji sobrie, da 6 a 8 hashtag in fondo.',
+  facebook: 'Il post va su Facebook: tono cordiale, poche emoji, al massimo 4 hashtag in fondo.',
+  whatsapp: "Il testo va nello stato di WhatsApp o in un messaggio: BREVE, al massimo 4 righe e 300 caratteri, una o due emoji, niente hashtag, l'invito a scrivere qui.",
+  tiktok: 'Il post va su TikTok: breve, al massimo 5 righe e 400 caratteri, diretto, da 4 a 6 hashtag in fondo.',
+  linkedin: "Il post va su LinkedIn: tono professionale, al massimo 2 emoji in tutto, punti forti in elenco con trattino corto, 3 hashtag professionali in fondo (esempio #immobiliare #realestate e la citta').",
+}
+const SYSTEM = `Sei un agente immobiliare italiano che scrive il testo di un post social per una casa della sua agenzia.
 Rispondi SOLO con un oggetto JSON con la chiave "testo".
 - Italiano, tono da agente di zona: cordiale, concreto, credibile, niente superlativi da pubblicità.
 - Struttura: una riga d'apertura con tipologia e zona; una riga con prezzo, metri quadri e locali; 3 o 4 punti forti presi SOLO dai dati e dalla descrizione (uno per riga, ognuno con una emoji sobria all'inizio, ad esempio 🏡 📐 🛏️ 🛁 🌿 ☀️ 🚗 📍); una riga d'invito a scrivere o chiamare per una visita; una riga vuota; da 5 a 8 hashtag in minuscolo con la città, la zona e la tipologia (esempio #casamilano #navigli #trilocale #casainvendita).
-- Al massimo 900 caratteri. Non inventare nulla che non sia nei dati. Se c'e' il telefono, mettilo nell'invito.
+- Al massimo 900 caratteri, salvo limiti piu' stretti del social indicato in fondo ai dati. Non inventare nulla che non sia nei dati. Se c'e' il telefono, mettilo nell'invito.
 - Se arredata e' vera, aggiungi prima degli hashtag la riga "Alcune immagini sono arredate virtualmente."
-- Niente em dash, usa virgole. Niente link.`
+- Niente em dash, usa virgole. Niente link.
+- In fondo ai dati c'e' il social: le sue regole (lunghezza, emoji, hashtag) valgono sopra quelle qui sopra.`
 const SCHEMA = { type: 'object', properties: { testo: { type: 'string' } }, required: ['testo'], additionalProperties: false }
 type Out = { testo: string }
 
@@ -26,13 +35,28 @@ export async function POST(req: NextRequest) {
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const { data } = await admin.auth.getUser(token)
   if (!data.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  let b: { fields?: Record<string, unknown> }
+  let b: { fields?: Record<string, unknown>; social?: string }
   try { b = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const text = JSON.stringify(b.fields ?? null)
   if (!b.fields || typeof b.fields !== 'object' || text.length > 12000) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   if (await overDailyCap(data.user.id, ['social_caption'], Number(process.env.SOCIAL_CAPTION_DAILY_LIMIT) || 40)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
 
-  const input = `Dati dell'immobile (JSON):\n${text}`
+  const social = typeof b.social === 'string' && SOCIAL[b.social] ? b.social : 'instagram'
+  // testi dei portali con entita' HTML (&nbsp; &amp;): si decodificano prima di darli all'AI
+  // (il client li pulisce gia', qui e' la rete di sicurezza): numeriche (&#8211; &#x2019;) e le nominate piu' comuni;
+  // il carattere torna dentro una stringa JSON, quindi virgolette e barre si riscrivono con l'escape
+  const NAMED: Record<string, string> = { nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: ' ', gt: ' ', ndash: ',', mdash: ',', rsquo: '\u2019', lsquo: '\u2018', ldquo: '\u201c', rdquo: '\u201d', hellip: '\u2026', euro: '\u20ac', agrave: '\u00e0', egrave: '\u00e8', eacute: '\u00e9', igrave: '\u00ec', ograve: '\u00f2', ugrave: '\u00f9', deg: '\u00b0', sup2: '\u00b2' }
+  const ent = (m: string, n: string) => {
+    const cp = n[0] === '#' ? Number(n[1] === 'x' || n[1] === 'X' ? '0x' + n.slice(2) : n.slice(1)) : 0
+    const c = n[0] === '#' ? String.fromCodePoint(cp > 31 && cp <= 0x10ffff ? cp : 32) : NAMED[n.toLowerCase()]
+    if (c === undefined) return m
+    const v = c === '\u00a0' || c === '\u2013' || c === '\u2014' ? (c === '\u00a0' ? ' ' : ',') : c
+    return JSON.stringify(v).slice(1, -1)
+  }
+  let plain = text
+  for (let k = 0; k < 2; k++) plain = plain.replace(/&(#x?[0-9a-f]{1,6}|[a-z]{2,8}\d?);/gi, ent)
+  plain = plain.replace(/<[^>]{0,200}>/g, ' ')
+  const input = `Dati dell'immobile (JSON):\n${plain}\n\nSocial: ${social}. ${SOCIAL[social]}`
   const ok = (o: Partial<Out> | null): o is Out => !!o && typeof o.testo === 'string' && !!o.testo.trim() && !deepProfanity(o)
   const clean = (s: string) => s.replace(/\s*[—–]\s*/g, ', ').trim().slice(0, 1500)
 

@@ -46,7 +46,7 @@ export function renderArch(data, photoUrl, opts = {}) {
     const title = document.createElement('h2');
     title.className = 'tpl-title';
     title.textContent = data.title;
-    title.style.cssText = `margin:0;color:#1C1C1C;font-family:${FONT};font-size:62px;font-weight:700;line-height:72px;text-align:center;white-space:nowrap;overflow:hidden;max-width:100%;min-width:0`;
+    title.style.cssText = `margin:0;color:#1C1C1C;font-family:${FONT};font-size:62px;font-weight:700;line-height:72px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;min-width:0`;
     top.appendChild(title);
   }
 
