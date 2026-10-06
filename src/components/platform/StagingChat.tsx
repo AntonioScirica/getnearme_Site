@@ -2,7 +2,8 @@
 
 import PlanCamera, { CamMark } from './PlanCamera';
 import { CASA3D_ON } from '@/lib/casa3d/flag';
-import Casa3DFlow, { viewerUrl } from './Casa3DFlow';
+import Casa3DFlow from './Casa3DFlow';
+import Casa3DViewer from './Casa3DViewer';
 import type { Casa3d } from '@/lib/casa3d/types';
 import { VIDEO_POSTERS, VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -1025,6 +1026,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // Foto da un punto della planimetria: la richiesta parte dalla pianta con la fotocamera scelta (PlanCamera)
   const [camOpen, setCamOpen] = useState(false);
   // Casa 3D dalla planimetria: popup di riconoscimento e correzione (nuova o da correggere)
+  const [casaView, setCasaView] = useState<string | null>(null); // casa 3D aperta sopra la chat
   const [casaOpen, setCasaOpen] = useState<{ plan: string; existing?: Casa3d; msg?: string } | null>(null);
   const casaDone = (c: Casa3d) => {
     const o = casaOpen
@@ -1235,14 +1237,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             // casa 3D pronta: la vista dall'alto (poster) che apre il visore, e la correzione della pianta
             <div key={m.id} className="blur-in flex justify-start">
               <div className={`w-full max-w-[560px] overflow-hidden rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>
-                <a href={viewerUrl(m.casa.manifest)} target="_blank" rel="noreferrer" className="group relative block overflow-hidden rounded-[20px] bg-canvas">
+                <button type="button" onClick={() => setCasaView(m.casa.manifest)} className="group relative block w-full overflow-hidden rounded-[20px] bg-canvas text-left">
                   {m.casa.poster ? <img src={m.casa.poster} alt={tr('Casa 3D vista dall’alto', '3D home from above')} className="aspect-video w-full object-cover ease-smooth transition-transform duration-[600ms] group-hover:scale-[1.02]" /> : <span className="flex aspect-video w-full items-center justify-center text-sm text-muted"><Loader2 size={16} className="mr-2 animate-spin" /> {tr('Preparo l’anteprima', 'Preparing the preview')}</span>}
                   <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3.5 py-1.5 text-[13px] font-semibold shadow-sm">{tr('Apri la casa 3D', 'Open the 3D home')}</span>
-                </a>
+                </button>
                 <div className="flex flex-wrap items-center gap-2 px-2 pb-1 pt-3">
                   <span className="mr-auto text-xs text-muted">{m.casa.floors.length > 1 ? `${m.casa.floors.length} ${tr('piani', 'floors')}` : ''}{project ? `${m.casa.floors.length > 1 ? ', ' : ''}${tr('salvata nella scheda dell’immobile', 'saved in the listing')}` : ''}</span>
                   <button type="button" onClick={() => setCasaOpen({ plan: m.plan, existing: m.casa, msg: m.id })} className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-3.5 text-[13px] font-semibold hover:bg-black/[0.06]"><Pencil size={13} /> {tr('Correggi la pianta', 'Fix the plan')}</button>
-                  <a href={viewerUrl(m.casa.manifest)} target="_blank" rel="noreferrer" className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-[13px] font-semibold text-white hover:bg-brand"><ExternalLink size={13} /> {tr('Apri', 'Open')}</a>
+                  <button type="button" onClick={() => setCasaView(m.casa.manifest)} className="flex h-9 items-center gap-1.5 rounded-full bg-ink px-3.5 text-[13px] font-semibold text-white hover:bg-brand"><ExternalLink size={13} /> {tr('Apri', 'Open')}</button>
                 </div>
               </div>
             </div>
@@ -1674,6 +1676,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             <div className="blur-in -mx-1 mb-4 flex gap-1.5 overflow-x-auto sm:mb-2 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">{tr('Quanto arredo?', 'How much furniture?')}</span><span role="radiogroup" aria-label={tr('Quantità di arredo', 'Amount of furniture')} className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send(STYLE_FROM_PHOTO, null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
+          {casaView && <Casa3DViewer manifest={casaView} onClose={() => setCasaView(null)} />}
           {casaOpen && <Casa3DFlow plans={[{ src: casaOpen.plan }]} existing={casaOpen.existing} projectId={project ?? undefined} onClose={() => setCasaOpen(null)} onDone={casaDone} />}
           {camOpen && base && <PlanCamera src={sourcePhoto ?? base} onClose={() => setCamOpen(false)} onConfirm={(c, st) => void sendCamera(c, st)} />}
           {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send(STYLE_FROM_PHOTO, null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}

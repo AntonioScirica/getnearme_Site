@@ -190,7 +190,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
 // Video dell'immobile: si fanno in chat (Video dell'annuncio, Venduto, prima e dopo...), con la copertina e l'immobile gia' collegati
 function VideoCard({ project, photos, count: n }: { project: ProjectData; photos: string[]; count: number }) {
   const [pick, setPick] = useState(false);
-  const go = (src: string) => { setPick(false); window.location.assign(`#/chat?photo=${encodeURIComponent(src)}&project=${project.id}`); };
+  const go = (src: string) => { setPick(false); window.location.assign(`#/staging?photo=${encodeURIComponent(src)}&project=${project.id}`); };
   return (
     <section className="rounded-2xl bg-canvas p-3">
       <div className="flex items-center gap-3">
