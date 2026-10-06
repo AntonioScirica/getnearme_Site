@@ -479,7 +479,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
   const show = (n: NetId) => { setActive(n); setSlideIx(0); };
   const goStep = (i: number) => { setStepIx(i); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
-  // passi a scelta singola (Cosa, Foto con una foto sola, Grafica): scelto, si va avanti da soli dopo un attimo
+  // passi a scelta singola (Cosa, Grafica): scelto, si va avanti da soli dopo un attimo
   const autoNext = () => { const from = stepIx; setTimeout(() => goStep(from + 1), 450); };
   // grafica: nessuna finche' non la tocca (tplId: quella di riserva per i conti interni)
   const [tpl, setTpl] = useState<string | null>(null);
@@ -561,7 +561,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const photosSettled = scanned >= upto || (scanned >= Math.min(anyMulti ? 5 : 3, upto) && (anyMulti ? sel : sel.slice(0, 1)).every(seen));
   // formato a una foto: la foto toccata diventa la prima (la scelta del carosello resta, in ordine)
   const tap = (src: string) => {
-    if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); if (!anyMulti) autoNext(); return; }
+    if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
     setSel(s => (s.includes(src) ? s.filter(x => x !== src) : s.length >= MAX_PHOTOS ? s : [...s, src]));
   };
   const needBlur = [...new Set(nets.flatMap(n => photosFor(fmtOf(n))))];
