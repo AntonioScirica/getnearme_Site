@@ -25,7 +25,7 @@ Rispondi SOLO con un oggetto JSON con la chiave "testo".
 - Struttura: una riga d'apertura con tipologia e zona; una riga con prezzo, metri quadri e locali; 3 o 4 punti forti presi SOLO dai dati e dalla descrizione (uno per riga, ognuno con una emoji sobria all'inizio, ad esempio 🏡 📐 🛏️ 🛁 🌿 ☀️ 🚗 📍); una riga d'invito a scrivere o chiamare per una visita; una riga vuota; da 5 a 8 hashtag in minuscolo con la città, la zona e la tipologia (esempio #casamilano #navigli #trilocale #casainvendita).
 - Al massimo 900 caratteri, salvo limiti piu' stretti del social indicato in fondo ai dati. Non inventare nulla che non sia nei dati. Se c'e' il telefono, mettilo nell'invito.
 - Se arredata e' vera, aggiungi prima degli hashtag la riga "Alcune immagini sono arredate virtualmente."
-- Niente em dash, usa virgole. Niente link.
+- Niente em dash e niente trattini a meta' frase, usa virgole. Prezzi sempre scritti cosi': € 260.000. Niente link.
 - In fondo ai dati c'e' il social: le sue regole (lunghezza, emoji, hashtag) valgono sopra quelle qui sopra.`
 const SCHEMA = { type: 'object', properties: { testo: { type: 'string' } }, required: ['testo'], additionalProperties: false }
 type Out = { testo: string }
@@ -58,7 +58,14 @@ export async function POST(req: NextRequest) {
   plain = plain.replace(/<[^>]{0,200}>/g, ' ')
   const input = `Dati dell'immobile (JSON):\n${plain}\n\nSocial: ${social}. ${SOCIAL[social]}`
   const ok = (o: Partial<Out> | null): o is Out => !!o && typeof o.testo === 'string' && !!o.testo.trim() && !deepProfanity(o)
-  const clean = (s: string) => s.replace(/\s*[—–]\s*/g, ', ').trim().slice(0, 1500)
+  // prezzi sempre "€ 260.000" e niente " - " a meta' riga (i punti elenco a inizio riga restano)
+  const euro = (n: string) => `€ ${Number(n.replace(/\D/g, '')).toLocaleString('it-IT')}`
+  const clean = (s: string) => s
+    .replace(/\s*[—–]\s*/g, ', ')
+    .replace(/(\S) - (\S)/g, '$1, $2')
+    .replace(/€\s*(\d{1,3}(?:[.\s]\d{3})+|\d{4,})/g, (_, n) => euro(n))
+    .replace(/(\d{1,3}(?:[.\s]\d{3})+|\d{4,})\s*(?:€|euro\b|EUR\b)/gi, (_, n) => euro(n))
+    .trim().slice(0, 1500)
 
   const free = await geminiFreeJson<Out>({ system: SYSTEM, text: input, userId: data.user.id, kind: 'social_caption', maxTokens: 1500 })
   if (ok(free)) return NextResponse.json({ testo: clean(free.testo) })
