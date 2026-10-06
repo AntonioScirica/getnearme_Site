@@ -44,13 +44,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   }, [pid]);
   const grid = useRef<HTMLDivElement>(null);
   const [addingSlot, setAddingSlot] = useState(false); // foto dai riquadri vuoti della scheda
-  // in modifica (da lg): barra e sito alti quanto lo schermo e fermi, si scorre solo dentro ciascuno.
-  // Si porta la griglia in cima (prima l'altezza inseguiva lo scorrimento della pagina e tutto si spostava)
-  useEffect(() => {
-    if (!editing || window.innerWidth < 1024) return;
-    const t = setTimeout(() => grid.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50);
-    return () => clearTimeout(t);
-  }, [editing, project?.id]); // anche quando l'immobile arriva (prima la griglia non c'era ancora)
+  // in modifica (da lg): barra e sito alti quanto lo schermo e fermi (sticky), si scorre solo dentro ciascuno.
+  // Niente scorrimento automatico all'ingresso: la barra in alto (stato, Manda al cliente) deve restare visibile.
   const planKnown = !!credits; // finche' non si sa il piano, niente interruttore ne' invito (niente salto)
   const sitePlan = !!credits && (credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro'); // come in Il mio sito
   // visite alla scheda sul sito (solo qui, non nel report PDF)
