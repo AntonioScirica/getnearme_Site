@@ -1359,15 +1359,16 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const on = nets.length > 1 && n === active;
     return (
       <section key={n} onFocusCapture={() => { if (n !== active) show(n); }} className={`rounded-[24px] p-4 ease-smooth transition-shadow ${on ? 'ring-2 ring-brand' : 'ring-1 ring-black/10'}`}>
-        {nets.length > 1 && (
-          <button type="button" onClick={() => show(n)} className="mb-3 flex min-h-8 items-center gap-2 text-left">
+        <div className="mb-3 flex items-center gap-2">{/* nome del social a sinistra, Copia testo in alto a destra */}
+          <button type="button" onClick={() => show(n)} className="flex min-h-8 min-w-0 items-center gap-2 text-left">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={n} size={16} /></span>
-            <span className="text-sm font-semibold">{N.label}</span>
+            <span className="truncate text-sm font-semibold">{N.label}</span>
             {done.includes(n) && <Check size={14} className="text-brand" strokeWidth={3} />}
           </button>
-        )}
+          <button type="button" onClick={() => void copy(n)} disabled={!t || !!textBusy[k]} className="ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-canvas px-3.5 text-[13px] font-semibold ease-smooth transition-colors hover:bg-line disabled:opacity-50">{copied === n ? <Check size={16} /> : <Copy size={16} />} <span className="w-[88px] text-left">{copied === n ? tr('Copiato', 'Copied') : tr('Copia testo', 'Copy text')}</span></button>
+        </div>
         <div className="relative">
-          <textarea value={t} onChange={e => putText(n, e.target.value)} rows={nets.length > 1 ? (wide ? 8 : 7) : wide ? 12 : 9} aria-label={tr(`Testo per ${N.label}`, `Text for ${N.label}`)}
+          <textarea value={t} onChange={e => putText(n, e.target.value)} rows={nets.length > 1 ? 5 : wide ? 8 : 6} aria-label={tr(`Testo per ${N.label}`, `Text for ${N.label}`)}
             className="block w-full resize-y rounded-[16px] bg-canvas px-4 py-3 text-base leading-relaxed outline-none ring-1 ring-transparent ease-smooth transition-[background-color,box-shadow] focus:bg-white focus:ring-brand" />
           {(textBusy[k] || (textErr[k] && !t)) && (
             <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-[16px] bg-canvas px-4 text-center text-sm text-muted">
@@ -1380,10 +1381,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             </span>
           )}
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          {long && <span className="text-sm font-semibold text-red-600">{tr(`Testo troppo lungo per ${N.label}`, `Text too long for ${N.label}`)}</span>}
-          <button type="button" onClick={() => void copy(n)} disabled={!t || !!textBusy[k]} className="ml-auto flex h-11 items-center gap-2 rounded-full bg-canvas px-5 text-sm font-semibold ease-smooth transition-colors hover:bg-line disabled:opacity-50">{copied === n ? <Check size={16} /> : <Copy size={16} />} <span className="w-[88px] text-left">{copied === n ? tr('Copiato', 'Copied') : tr('Copia testo', 'Copy text')}</span></button>
-        </div>
+        {long && <p className="mt-2 text-sm font-semibold text-red-600">{tr(`Testo troppo lungo per ${N.label}`, `Text too long for ${N.label}`)}</p>}
       </section>
     );
   };
