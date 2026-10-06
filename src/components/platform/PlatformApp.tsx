@@ -407,7 +407,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   }, [open, onClose]);
 
   const width = { closed: 'sm:w-80 delay-[120ms]', input: 'sm:w-[34rem]', browser: 'sm:w-[56rem]', done: 'sm:w-[56rem]' }[phase];
-  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[15rem] p-6 pt-14 delay-[120ms] max-sm:h-[16.5rem]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
+  const height = { closed: 'h-[22rem] p-6 max-sm:h-auto max-sm:p-4', input: 'h-[15rem] p-6 pt-14 delay-[120ms] max-sm:h-auto', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
     <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s', viewTransitionName: 'ob-card-0' }}>
@@ -439,7 +439,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
         {!open && <ChevronRight size={20} className="shrink-0 text-muted sm:hidden" />}
-        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 scale-95 overflow-hidden opacity-0' : 'max-h-60'} flex-1 ${open ? '' : 'max-sm:hidden'}`}>
+        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 scale-95 overflow-hidden opacity-0' : 'max-h-60'} flex-1 ${open ? (phase === 'input' ? 'max-sm:flex-none' : '') : 'max-sm:hidden'}`}>
           <div className={`relative transition-all ease-smooth ${open ? 'w-72 delay-[120ms]' : 'w-48'}`}>
             <div className="par-2">
               {/* Il contenitore cambia forma (misure, angoli, sfondo: tutto animabile); la versione verticale sfuma e quella
@@ -467,8 +467,8 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         {/* Campo link: nel browser diventa la barra indirizzi */}
         <form onSubmit={e => { e.preventDefault(); if (ok && !busy) onSubmit(); }}
           className={`${open ? "" : "max-sm:hidden "}flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all ease-smooth focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
-            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms] max-sm:max-h-40 max-sm:flex-wrap max-sm:gap-3 max-sm:rounded-none max-sm:bg-transparent max-sm:p-0 max-sm:ring-0 max-sm:focus-within:bg-transparent max-sm:focus-within:ring-0'}`}>{/* telefono: Analizza sotto il campo, a tutta larghezza */}
-          <span className={`flex shrink-0 gap-1.5 overflow-hidden ease-smooth transition-all ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0'}`}>
+            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms] max-sm:mt-3 max-sm:max-h-40 max-sm:flex-wrap max-sm:content-start max-sm:gap-3 max-sm:rounded-none max-sm:bg-transparent max-sm:p-0 max-sm:ring-0 max-sm:focus-within:bg-transparent max-sm:focus-within:ring-0'}`}>{/* telefono: Analizza sotto il campo, a tutta larghezza */}
+          <span className={`flex shrink-0 gap-1.5 overflow-hidden ease-smooth transition-all ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0 max-sm:hidden'}`}>
             {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
           </span>
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."

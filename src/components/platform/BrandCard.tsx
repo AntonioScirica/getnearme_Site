@@ -98,9 +98,14 @@ export default function BrandCard({ inChat = false }: { inChat?: boolean }) {
           <label className="relative flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full ring-1 ring-inset ring-black/10" title={tr('Colore personalizzato', 'Custom colour')} style={{ background: 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)' }}>
             <input type="color" value={hex ? b.primary : '#537eec'} onChange={e => set({ primary: e.target.value })} className="absolute inset-0 cursor-pointer opacity-0" />
           </label>
-          <input value={b.primary} maxLength={7} onChange={e => set({ primary: e.target.value.startsWith('#') ? e.target.value : `#${e.target.value}` })} aria-label={tr('Codice del colore', 'Colour code')}
-            className={`h-9 w-28 rounded-full bg-canvas px-3 font-mono text-[13px] uppercase outline-none ring-1 ring-inset ${hex ? 'ring-transparent' : 'ring-rose-400'}`} />
         </div>
+        {/* codice del colore sotto le tinte, campo intero col pallino del colore scelto */}
+        <label className={`relative mt-3 flex h-12 items-center rounded-2xl ${inChat ? 'bg-white' : 'bg-canvas'} pl-3 pr-4 ring-1 ring-inset ease-smooth transition-shadow focus-within:bg-white sm:max-w-xs ${hex ? 'ring-transparent focus-within:ring-ink/15' : 'ring-rose-400'}`}>
+          <span className="h-7 w-7 shrink-0 rounded-full ring-1 ring-inset ring-black/10" style={{ background: hex ? b.primary : 'transparent' }} aria-hidden />
+          <span className="ml-3 text-sm text-muted">{tr('Codice', 'Code')}</span>
+          <input value={b.primary} maxLength={7} onChange={e => set({ primary: e.target.value.startsWith('#') ? e.target.value : `#${e.target.value}` })} aria-label={tr('Codice del colore', 'Colour code')}
+            className={`ml-auto w-24 bg-transparent text-right font-mono text-sm uppercase outline-none ${hex ? '' : 'text-rose-500'}`} />
+        </label>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
