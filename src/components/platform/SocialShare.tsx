@@ -4,7 +4,9 @@
 // 1 Cosa pubblichi (casa in vendita/affitto o venduta/affittata, chiesto una volta: vale per grafiche, testi e video),
 // 2 Dove (uno o piu' social, per ognuno il tipo di post in un segmentato gia' su "Una foto"), 3 Foto (toccate nell'ordine,
 // "Sistema la foto" sotto l'anteprima), 4 Grafica (la stessa per tutti, adattata a ogni formato), 5 Testo (gia' scritto per ogni
-// social, lib/socialRules), 6 Video facoltativo (api/platform/video-reel, stili della chat), poi Pubblica su ... o Salva.
+// social, lib/socialRules), 6 Video facoltativo: post animato gratis
+// (la grafica che si muove, nel browser) o solo le foto, poi Pubblica su ... o Salva. Il video a crediti (api/platform/video-reel)
+// e' uscito dal popup il 06/10/2026: resta nella chat.
 // Niente misure ne' parole tecniche a schermo. Anteprima a sinistra in un riquadro fisso, il post ci sta dentro in ogni formato.
 // Le grafiche sono quelle dei post della vecchia dashboard GetNearMe
 // (components/dashboard/templates: renderTemplate + exporter) con i dati veri dell'immobile, il logo e il colore
@@ -12,15 +14,13 @@
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Copy, Crop, Download, Facebook, Film, GalleryHorizontal, House, Image as ImageIcon, Instagram, Linkedin, Loader2, MapPin, MessageCircle, Maximize2, Minimize2, Music2, Play, Plus, RotateCcw, Share2, Smartphone, Sparkles, Square, TriangleAlert, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, Facebook, GalleryHorizontal, House, Image as ImageIcon, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
-import { exportToPng } from '@/components/dashboard/templates/exporter.js';
+import { ANIMATION_STYLES, exportStaticToVideo, exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
 import { isClosed, statusOf, STATUS_LABELS, zoneOnly } from '@/lib/siteTemplates';
 import type { ProjectData } from '@/lib/projects';
-import { CREDIT_COST } from '@/lib/pricing';
 import { countChars, ruleOf } from '@/lib/socialRules';
-import { MAX_REEL_PHOTOS, StylePick, type ReelStyle, type ReelTpl } from './ReelSteps';
 import { authFetch, portfolioUrl } from './api';
 import { pageLang, tr } from './i18n';
 
@@ -172,6 +172,51 @@ function numberPill(el: HTMLElement, b: Plain | Contact, dark: boolean) {
   p.textContent = `${b.n}/${b.total}`;
   el.appendChild(p);
 }
+// ---------- post animato (passo Video, gratis, tutto nel browser) ----------
+// La grafica diventa un video: exporter.exportStaticToVideo (lo stesso della vecchia dashboard GetNearMe, 15 s, MP4 o WebM).
+// L'anteprima e' la grafica VERA con le scritte che entrano in CSS, con gli stessi movimenti, ordine e ritmo dell'esportazione
+// (exporter: si parte a 0,4 s, una ogni 0,18 s, 0,5 s ciascuna); un pannello di vetro entra insieme alle sue scritte.
+// translate/scale e non transform: le rotazioni delle grafiche (timbro Venduto) restano.
+const ANIM_SEC = 15;
+const ANIM_EN: Record<string, string> = { 'slide-up': 'Slide up', fade: 'Fade', scale: 'Grow', 'slide-right': 'Side', drop: 'Drop', 'zoom-out': 'Zoom', bounce: 'Bounce', diagonal: 'Diagonal' };
+const AP_CSS = `
+.ap-run .ap-el{animation-duration:4.2s;animation-iteration-count:infinite;animation-fill-mode:both;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+@keyframes ap-slide-up{0%,4%{opacity:0;translate:0 30px}16%,70%{opacity:1;translate:0 0}82%,100%{opacity:0;translate:0 0}}
+@keyframes ap-fade{0%,4%{opacity:0}16%,70%{opacity:1}82%,100%{opacity:0}}
+@keyframes ap-scale{0%,4%{opacity:0;scale:.8}16%,70%{opacity:1;scale:1}82%,100%{opacity:0;scale:1}}
+@keyframes ap-slide-right{0%,4%{opacity:0;translate:-40px 0}16%,70%{opacity:1;translate:0 0}82%,100%{opacity:0;translate:0 0}}
+@keyframes ap-drop{0%,4%{opacity:0;translate:0 -50px}11%{opacity:1;translate:0 0}13.5%{translate:0 5px}16%,70%{opacity:1;translate:0 0}82%,100%{opacity:0;translate:0 0}}
+@keyframes ap-zoom-out{0%,4%{opacity:0;scale:1.4}16%,70%{opacity:1;scale:1}82%,100%{opacity:0;scale:1}}
+@keyframes ap-bounce{0%,4%{opacity:0;translate:0 60px}10%{opacity:1;translate:0 0}13%{translate:0 9px}15%{translate:0 -3px}16%,70%{opacity:1;translate:0 0}82%,100%{opacity:0;translate:0 0}}
+@keyframes ap-diagonal{0%,4%{opacity:0;translate:-30px 30px}16%,70%{opacity:1;translate:0 0}82%,100%{opacity:0;translate:0 0}}
+${ANIMATION_STYLES.map((a: { id: string }) => `.ap--${a.id} .ap-el{animation-name:ap-${a.id}}`).join('\n')}
+@media (prefers-reduced-motion: reduce){.ap-run .ap-el{animation:none}}`;
+function animCss() {
+  if (document.getElementById('ap-css')) return;
+  const st = document.createElement('style'); st.id = 'ap-css'; st.textContent = AP_CSS; document.head.appendChild(st);
+}
+// scritte della grafica nell'ordine dell'exporter (addRect), ognuna dentro il suo pannello di vetro se c'e'
+function markAnim(el: HTMLElement) {
+  const q = (s: string) => Array.from(el.querySelectorAll<HTMLElement>(s));
+  const list = [...q('.tpl-photo'), ...q('.tpl-label'), ...q('.tpl-bar'), ...q('.tpl-badge').filter(b => !b.closest('.tpl-bar')),
+    ...['.tpl-price', '.tpl-title', '.tpl-address', '.tpl-metrics-inline'].flatMap(s => q(s).slice(0, 1)), ...q('.tpl-metric-card, .tpl-metric-pill'),
+    ...['.tpl-desc', '.tpl-btn', '.tpl-logo-overlay'].flatMap(s => q(s).slice(0, 1))];
+  const seen = new Set<HTMLElement>();
+  let i = 0;
+  for (const x of list) {
+    const t = (x.parentElement?.closest<HTMLElement>('.tpl-glass-panel') ?? x);
+    if (!el.contains(t) || seen.has(t) || [...seen].some(o => o.contains(t))) continue;
+    seen.add(t); t.classList.add('ap-el'); t.style.animationDelay = `${(0.4 + i++ * 0.18).toFixed(2)}s`;
+  }
+}
+// MediaRecorder sul canvas: manca su alcuni Safari per iPhone, li' la scelta non compare
+function canAnimate() {
+  try {
+    return typeof MediaRecorder === 'function' && typeof HTMLCanvasElement.prototype.captureStream === 'function'
+      && ['video/mp4', 'video/webm'].some(t => MediaRecorder.isTypeSupported(t));
+  } catch { return false; }
+}
+
 function buildSlide(b: Slide): HTMLElement {
   if (b.kind === 'tpl') {
     const opts: Record<string, unknown> = {
@@ -188,6 +233,7 @@ function buildSlide(b: Slide): HTMLElement {
     if (fg && b.frame) applyFrame(fg, b.fit, b.frame);
     if (b.tpl === 'before-after') el.querySelectorAll<HTMLElement>('.tpl-label').forEach(n => { n.textContent = n.textContent === 'BEFORE' ? 'PRIMA' : 'DOPO'; });
     if (b.staged) stagedPill(el, b.size);
+    markAnim(el);
     return el;
   }
   const el = css(box(), { width: b.size.w + 'px', height: b.size.h + 'px', position: 'relative', overflow: 'hidden', fontFamily: FONT });
@@ -199,16 +245,18 @@ function buildSlide(b: Slide): HTMLElement {
     const bg = box('img') as HTMLImageElement; bg.className = 'tpl-cover-bg'; bg.src = b.blur; bg.alt = '';
     const fg = box('img') as HTMLImageElement; fg.className = 'tpl-cover-fg'; fg.src = b.photo; fg.alt = ''; applyFrame(fg, b.fit, b.frame);
     cover.append(bg, fg); el.appendChild(cover);
-    el.appendChild(css(box(), { position: 'absolute', left: '0', right: '0', top: '0', height: '260px', background: 'linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,0))', zIndex: '1' }));
-    const badge = css(box(), { position: 'absolute', top: ins.t + 'px', left: ins.l + 'px', zIndex: '5', background: b.accent, color: '#fff', fontSize: '28px', fontWeight: '600', lineHeight: '28px', padding: '12px 24px', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '1px' });
-    badge.className = 'tpl-badge'; badge.textContent = b.badge;
-    el.appendChild(badge);
+    if (b.badge || b.logo) el.appendChild(css(box(), { position: 'absolute', left: '0', right: '0', top: '0', height: '260px', background: 'linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,0))', zIndex: '1' }));
+    if (b.badge) { // senza badge (e numero): la foto prima di scegliere la grafica
+      const badge = css(box(), { position: 'absolute', top: ins.t + 'px', left: ins.l + 'px', zIndex: '5', background: b.accent, color: '#fff', fontSize: '28px', fontWeight: '600', lineHeight: '28px', padding: '12px 24px', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '1px' });
+      badge.className = 'tpl-badge'; badge.textContent = b.badge;
+      el.appendChild(badge);
+    }
     if (b.logo) {
       const lg = css(box('img') as HTMLImageElement, { position: 'absolute', top: (ins.t - 6) + 'px', right: ins.r + 'px', height: '64px', maxWidth: '260px', objectFit: 'contain', zIndex: '5' }) as HTMLImageElement;
       lg.className = 'tpl-logo-overlay'; lg.src = b.logo; lg.alt = '';
       el.appendChild(lg);
     }
-    numberPill(el, b, true);
+    if (b.total > 1) numberPill(el, b, true);
     if (b.staged) stagedPill(el, b.size);
     return el;
   }
@@ -316,88 +364,6 @@ function TabRow({ ids, on, deps, children }: { ids: string[]; on: string; deps: 
   );
 }
 
-// anteprima del video prima di crearlo: la foto di QUESTA casa che si muove piano, con sopra il disegno dello stile
-// (come nelle clip di public/staging/reel-styles); le scritte appaiono dopo il riquadro. Niente rete, niente crediti
-function VideoMock({ w, h, photo, style, kind, title, place, days, agency, contract, accent, overlay }: {
-  w: number; h: number; photo?: string; style: ReelStyle; kind: 'reel' | 'venduto' | 'affittato'; title: string; place: string; days: string;
-  agency: string; contract: string; accent: string; overlay?: React.ReactNode;
-}) {
-  const k = w / 360, px = (n: number) => `${Math.round(n * k * 10) / 10}px`;
-  const RED = '#d93025', SERIF = '"Playfair Display", Georgia, serif';
-  const word = kind === 'affittato' ? tr('Affittato', 'Rented') : tr('Venduto', 'Sold');
-  const pad = px(24);
-  const pin = place ? <span className="flex items-center justify-center gap-1" style={{ fontSize: px(13), fontWeight: 500 }}><MapPin size={Math.round(13 * k)} className="shrink-0" /> {place}</span> : null;
-  const frame = <div className="absolute rounded-[2px] border border-white/70" style={{ inset: px(14) }} />;
-  const top = (bars: boolean) => (
-    <div className="absolute inset-x-0 flex items-center justify-between" style={{ top: px(bars ? 28 : 30), left: pad, right: pad, fontSize: px(8), letterSpacing: '.18em', fontWeight: 600 }}>
-      {bars && <div className="absolute flex gap-1" style={{ top: px(-12), left: 0, right: 0 }}>{[0, 1, 2].map(i => <span key={i} className="h-[2px] flex-1 rounded-full bg-white/40"><span className={`block h-full rounded-full bg-white ${i ? 'w-0' : 'w-2/3'}`} /></span>)}</div>}
-      <span className="truncate uppercase">{agency}</span><span>01 / 03</span>
-    </div>
-  );
-  let body: React.ReactNode;
-  if (kind === 'reel') {
-    const titleEl = (s: React.CSSProperties) => <div style={{ fontSize: px(21), fontWeight: 600, lineHeight: 1.2, ...s }} className="line-clamp-3">{title}</div>;
-    const pill = <span className="self-start rounded-[4px] uppercase" style={{ background: accent, fontSize: px(8), fontWeight: 700, letterSpacing: '.12em', padding: `${px(4)} ${px(8)}` }}>{contract}</span>;
-    body = style === 'elegante' ? (
-      <>{frame}{top(false)}
-        <div className="absolute flex flex-col" style={{ left: px(30), right: px(30), bottom: px(70), gap: px(6) }}>
-          <span className="uppercase" style={{ fontSize: px(8), letterSpacing: '.2em' }}>{contract}</span>
-          {titleEl({ fontFamily: SERIF, fontWeight: 400, fontSize: px(22) })}
-          {place && <><span className="mt-2 uppercase" style={{ fontSize: px(7), letterSpacing: '.2em' }}>{tr('Zona', 'Area')}</span><span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: px(14) }}>{place}</span></>}
-        </div></>
-    ) : style === 'classico' ? (
-      <div className="absolute flex flex-col" style={{ left: pad, right: pad, bottom: px(70), gap: px(6) }}>
-        <span className="uppercase" style={{ fontSize: px(8), letterSpacing: '.2em', fontWeight: 600 }}>{contract}</span>
-        {titleEl({})}
-        <span className="bg-white" style={{ width: px(28), height: px(2), margin: `${px(4)} 0` }} />
-        <span style={{ fontSize: px(11) }}>{place}</span>
-      </div>
-    ) : (
-      <>{style === 'vivace' && top(true)}
-        <div className="absolute flex flex-col" style={{ left: pad, right: pad, bottom: px(style === 'vivace' ? 90 : 70), gap: px(8) }}>
-          {pill}{titleEl({})}<div className="flex">{pin}</div>
-        </div></>
-    );
-  } else {
-    const daysEl = (s: React.CSSProperties) => (days ? <span className="rounded-full" style={{ fontSize: px(11), fontWeight: 600, padding: `${px(4)} ${px(12)}`, ...s }}>{days}</span> : null);
-    const stamp = (withAgency: boolean) => (
-      <div className="pop flex flex-col items-center bg-white/95" style={{ border: `${px(3)} solid ${RED}`, borderRadius: px(8), padding: `${px(8)} ${px(18)}`, transform: 'rotate(-6deg)', color: RED, boxShadow: '0 8px 24px rgba(0,0,0,.25)' }}>
-        {withAgency && agency && <span className="max-w-[90%] truncate uppercase" style={{ fontSize: px(7), fontWeight: 700, letterSpacing: '.2em' }}>{agency}</span>}
-        <span className="uppercase" style={{ fontSize: px(34), fontWeight: 800, letterSpacing: '.04em', lineHeight: 1.05 }}>{word}</span>
-      </div>
-    );
-    body = style === 'semplice' || style === 'vivace' ? (
-      <div className="absolute inset-x-0 flex flex-col items-center text-center" style={{ top: '30%', gap: px(14), padding: `0 ${pad}` }}>
-        {stamp(style === 'vivace')}
-        <div className="flex flex-col items-center" style={{ gap: px(8), marginTop: px(style === 'semplice' ? 60 : 16) }}>{pin}{daysEl(style === 'semplice' ? { background: RED, color: '#fff' } : { background: '#fff', color: RED })}</div>
-      </div>
-    ) : style === 'elegante' ? (
-      <>{frame}
-        <div className="absolute inset-x-0 flex flex-col items-center text-center" style={{ top: '28%', gap: px(8), padding: `0 ${pad}` }}>
-          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: px(52), lineHeight: 1 }}>{word}</span>
-          <span className="uppercase" style={{ fontSize: px(10), letterSpacing: '.24em' }}>{place}</span>
-          {days && <span className="uppercase" style={{ fontSize: px(8), letterSpacing: '.24em' }}>{days}</span>}
-        </div></>
-    ) : (
-      <div className="absolute inset-x-0 flex flex-col items-center text-center" style={{ top: '34%', gap: px(8), padding: `0 ${pad}` }}>
-        <span className="bg-white" style={{ width: px(70), height: px(2) }} />
-        <span className="uppercase" style={{ fontSize: px(32), fontWeight: 500, letterSpacing: '.18em' }}>{word}</span>
-        <span style={{ fontSize: px(11), marginTop: px(10) }}>{place}</span>
-        {days && <span style={{ fontSize: px(9), opacity: 0.85 }}>{days}</span>}
-      </div>
-    );
-  }
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-black shadow-md ring-1 ring-black/5" style={{ width: w, height: h, fontFamily: FONT }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {photo && <img src={photo} alt="" className="kenburns absolute inset-0 h-full w-full object-cover" />}
-      <div className="absolute inset-0" style={{ background: kind === 'reel' ? 'linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,0) 22%, rgba(0,0,0,0) 45%, rgba(0,0,0,.72))' : 'rgba(0,0,0,.28)' }} />
-      <div key={`${kind}-${style}`} className="blur-in absolute inset-0 text-white [text-shadow:0_1px_8px_rgba(0,0,0,.35)]">{body}</div>
-      {overlay}
-    </div>
-  );
-}
-
 // icone dei social (lucide; WhatsApp e TikTok non ci sono: fumetto e nota musicale)
 const NET_ICON = { instagram: Instagram, facebook: Facebook, whatsapp: MessageCircle, tiktok: Music2, linkedin: Linkedin } as const;
 function NetIcon({ id, size = 20 }: { id: NetId; size?: number }) {
@@ -414,7 +380,7 @@ export default function SocialCard({ project, photos }: { project: ProjectData; 
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Share2 size={18} /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{tr('Condividi sui social', 'Share on social media')}</span>
-          <span className="block text-xs text-muted">{tr('Foto pronte per Facebook, WhatsApp e Instagram, col tuo logo', 'Ready photos for Facebook, WhatsApp and Instagram, with your logo')}</span>
+          <span className="block truncate text-xs text-muted">{tr('Foto pronte per i social, col tuo logo', 'Photos ready for social media, with your logo')}</span>
         </span>
       </div>
       <button type="button" onClick={() => setOpen(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">
@@ -428,21 +394,18 @@ export default function SocialCard({ project, photos }: { project: ProjectData; 
 
 // ---------- finestra ----------
 // piu' social insieme: per ognuno il suo formato; foto e grafica sono le stesse, adattate a ogni formato; il testo e' per social
-const CHOICE_KEY = 'agenteimmo:social-choice';
-type Saved = { nets: NetId[]; fmts: Partial<Record<NetId, string>>; step: number; tpl: string };
-const netOf = (id: NetId) => NETS.find(n => n.id === id)!;
-function savedChoice(): Saved {
+// Ogni apertura riparte da zero (06/10/2026, richiesta utente): passo 1, Facebook "Alta", foto e grafica di partenza, nessuna
+// scelta al passo Video. Sul dispositivo resta solo la cache dei testi scritti dall'AI (agenteimmo:social-text:*), per non
+// riscriverli; le chiavi delle scelte di prima si cancellano all'apertura.
+const OLD_KEYS = ['agenteimmo:social-choice', 'agenteimmo:social-sold:', 'agenteimmo:social-photos:', 'agenteimmo:social-frames:', 'agenteimmo:social-video:', 'agenteimmo:social-vphotos:', 'agenteimmo:social-anim'];
+function dropOldKeys() {
   try {
-    const c = JSON.parse(localStorage.getItem(CHOICE_KEY) ?? 'null') as (Partial<Saved> & { net?: NetId; fmt?: string }) | null;
-    const nets = (c?.nets ?? (c?.net ? [c.net] : [])).filter(id => NETS.some(n => n.id === id));
-    if (nets.length) {
-      // il tipo di post riparte sempre da "Una foto" (06/10/2026)
-      return { nets, fmts: {}, step: Math.max(0, Math.min(STEPS.length - 1, Number(c?.step) || 0)), tpl: typeof c?.tpl === 'string' && POST_TEMPLATES.some(t => t.id === c.tpl) ? c.tpl : 'gradient' };
-    }
+    const ks: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && OLD_KEYS.some(o => k === o || (o.endsWith(':') && k.startsWith(o)))) ks.push(k); }
+    ks.forEach(k => localStorage.removeItem(k));
   } catch { /* niente storage */ }
-  return { nets: ['facebook'], fmts: {}, step: 0, tpl: 'gradient' };
 }
-const store = (k: string, v: unknown) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* niente storage */ } };
+const netOf = (id: NetId) => NETS.find(n => n.id === id)!;
 // 06/10/2026 (panel agenti 55-70): Cosa pubblichi (annuncio o venduto, una volta sola), Dove, Foto, Grafica, Testo, Video (facoltativo)
 const STEPS: [string, string][] = [['Cosa', 'What'], ['Dove', 'Where'], ['Foto', 'Photos'], ['Grafica', 'Design'], ['Testo', 'Text'], ['Video', 'Video']];
 const S = { cosa: 0, dove: 1, foto: 2, grafica: 3, testo: 4, video: 5 } as const;
@@ -475,67 +438,56 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const d = (project.import_data ?? {}) as { details?: Record<string, unknown>; prima?: Record<string, string>; rooms?: Record<string, { scene?: string }> };
   const det = d.details ?? {};
   const prima = d.prima ?? {};
-  // Venduto o affittato: chiesto una volta al passo "Cosa pubblichi?" (per immobile, sul dispositivo); se la scheda e' venduta
-  // o affittata parte gia' su "Casa venduta o affittata". Acceso: grafiche e video Venduto/Affittato, testo che racconta il
-  // lavoro fatto. Giorni: facoltativi, proposti dalla data del cambio di stato
+  // Venduto o affittato: chiesto al passo "Cosa pubblichi?", niente di gia' scelto (06/10/2026: ogni passo vuole una scelta,
+  // tranne il Video); se la scheda e' venduta o affittata "Casa venduta o affittata" ha l'etichetta Consigliato.
+  // Acceso: grafiche Venduto/Affittato, testo che racconta il lavoro fatto. Giorni: facoltativi, proposti dalla data del cambio di stato
   const status0 = statusOf({ details: det });
-  const soldKey = `agenteimmo:social-sold:${project.id}`;
-  const [soldSaved] = useState(() => { try { return JSON.parse(localStorage.getItem(soldKey) ?? 'null') as { on?: boolean; kind?: string; days?: string } | null; } catch { return null; } });
-  const [soldOn, setSoldOn] = useState(() => isClosed(status0) || soldSaved?.on === true);
-  const [soldKind, setSoldKind] = useState<'venduto' | 'affittato'>(() => (soldSaved?.kind === 'affittato' || soldSaved?.kind === 'venduto' ? soldSaved.kind
-    : status0 === 'affittato' || (status0 !== 'venduto' && (det.contratto === 'Affitto' || /affitt/i.test(`${project.titolo ?? ''} ${project.tipologia ?? ''}`))) ? 'affittato' : 'venduto'));
+  useState(dropOldKeys); // una volta, all'apertura
+  const [soldPick, setSoldPick] = useState<boolean | null>(null);
+  const soldOn = soldPick === true;
+  const [soldKind, setSoldKind] = useState<'venduto' | 'affittato'>(() => (status0 === 'affittato' || (status0 !== 'venduto' && (det.contratto === 'Affitto' || /affitt/i.test(`${project.titolo ?? ''} ${project.tipologia ?? ''}`))) ? 'affittato' : 'venduto'));
   const [soldDays, setSoldDays] = useState(() => {
-    if (typeof soldSaved?.days === 'string') return soldSaved.days;
     const a = Date.parse(String(det.stato_annuncio_data ?? '')), b = Date.parse(project.createdAt ?? '');
     const n = isClosed(status0) && a && b ? Math.round((a - b) / 86_400_000) : 0;
     return n >= 1 && n <= 730 ? String(n) : '';
   });
-  useEffect(() => { store(soldKey, { on: soldOn, kind: soldKind, days: soldDays }); }, [soldOn, soldKind, soldDays, soldKey]);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [logo, setLogo] = useState<{ url: string | null; h: boolean } | null>(null);
   const [fonts, setFonts] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [scanned, setScanned] = useState(0); // foto gia' guardate, nell'ordine (anche quelle che non si aprono)
-  const [first] = useState(savedChoice);
-  const selKey = `agenteimmo:social-photos:${project.id}`;
-  const [sel, setSel] = useState<string[]>(() => { // foto scelte (src), nell'ordine; la prima e' la copertina
-    try { const s = JSON.parse(localStorage.getItem(selKey) ?? '[]') as unknown; return Array.isArray(s) ? s.filter(x => typeof x === 'string' && srcs.includes(x)) : []; } catch { return []; }
-  });
-  // inquadratura di ogni foto, per immobile (resta sul dispositivo)
-  const frKey = `agenteimmo:social-frames:${project.id}`;
-  const [frames, setFrames] = useState<Record<string, Frame>>(() => { try { const f = JSON.parse(localStorage.getItem(frKey) ?? '{}') as unknown; return f && typeof f === 'object' ? f as Record<string, Frame> : {}; } catch { return {}; } });
-  useEffect(() => { store(frKey, frames); }, [frames, frKey]);
+  const [sel, setSel] = useState<string[]>([]); // foto scelte (src), nell'ordine; la prima e' la copertina
+  // inquadratura di ogni foto (solo per questa apertura)
+  const [frames, setFrames] = useState<Record<string, Frame>>({});
   const frameFor = (src: string): Frame => frames[src] ?? FRAME0;
-  const [nets, setNets] = useState<NetId[]>(first.nets);
-  const [fmtIds, setFmtIds] = useState(first.fmts);
-  const [active, setActive] = useState<NetId>(first.nets[0]);
-  // si parte sempre dal passo 1, con le scelte dell'ultima volta gia' impostate
+  const [nets, setNets] = useState<NetId[]>([]); // nessun social gia' scelto
+  const [fmtIds, setFmtIds] = useState<Partial<Record<NetId, string>>>({});
+  const [active, setActive] = useState<NetId>('facebook');
   const [stepIx, setStepIx] = useState(0);
-  const [reached, setReached] = useState(() => (sel.length ? first.step : 0));
+  const [reached, setReached] = useState(0);
   const fmtOf = (n: NetId) => { const N = netOf(n); return N.fmts.find(f => f.id === fmtIds[n]) ?? N.fmts[0]; };
   const net = netOf(active);
   const fmt = fmtOf(active);
   
-  useEffect(() => { store(selKey, sel); }, [sel, selKey]);
   const toggleNet = (id: NetId) => {
     if (nets.includes(id)) {
-      if (nets.length === 1) return; // almeno un social
       const rest = nets.filter(x => x !== id);
       setNets(rest);
-      if (active === id) { setActive(rest[0]); setSlideIx(0); }
+      if (active === id && rest.length) { setActive(rest[0]); setSlideIx(0); }
     } else { setNets(NETS.map(n => n.id).filter(x => x === id || nets.includes(x))); setActive(id); setSlideIx(0); }
   };
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
-  const show = (n: NetId) => { setActive(n); setSlideIx(0); setView('post'); };
-  const goStep = (i: number) => { setStepIx(i); setView(i === S.video && wantVideo ? 'video' : 'post'); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
-  const [tpl, setTpl] = useState(() => (soldOn && !first.tpl.startsWith('sold-') ? 'sold-stamp' : first.tpl));
-  // "Casa venduta o affittata": le grafiche Venduto davanti (e la prima scelta), il video Venduto; altrimenti l'annuncio
+  const show = (n: NetId) => { setActive(n); setSlideIx(0); };
+  const goStep = (i: number) => { setStepIx(i); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
+  // grafica: nessuna finche' non la tocca (tplId: quella di riserva per i conti interni)
+  const [tpl, setTpl] = useState<string | null>(null);
+  const tplChosen = tpl !== null;
+  const tplId = tpl ?? (soldOn ? 'sold-stamp' : 'gradient');
+  // "Casa venduta o affittata": le grafiche Venduto davanti; cambiando, una grafica dell'altro tipo va scelta di nuovo
   const setSold = (on: boolean) => {
-    setSoldOn(on);
-    setTpl(t => (on ? (t.startsWith('sold-') ? t : 'sold-stamp') : t.startsWith('sold-') ? 'gradient' : t));
-    setVid(v => (v.status === 'idle' || v.status === 'error' ? { ...v, tpl: on ? 'venduto' : 'reel', status: 'idle' } : v));
+    setSoldPick(on);
+    setTpl(t => (t && t.startsWith('sold-') === on ? t : null));
   };
-  useEffect(() => { store(CHOICE_KEY, { nets, fmts: fmtIds, step: reached, tpl }); }, [nets, fmtIds, reached, tpl]);
   const [fixOpen, setFixOpen] = useState(false); // "Sistema la foto": Riempi/Intera, zoom, trascinare
   const [blurs, setBlurs] = useState<Record<string, string>>({});
   const [label, setLabel] = useState(true); // scritta "arredata virtualmente" sulle foto AI
@@ -548,11 +500,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const [copied, setCopied] = useState<NetId | null>(null);
   const [done, setDone] = useState<NetId[]>([]); // social gia' condivisi (spunta sulla scheda)
   const [slideIx, setSlideIx] = useState(0);
-  const [view, setView] = useState<'post' | 'video'>('post'); // anteprima: il post del social o il video
   const [vp, setVp] = useState(() => ({ w: window.innerWidth, h: window.innerHeight })); // subito la misura vera: niente salto all'apertura
   const bodyRef = useRef<HTMLDivElement>(null);
   const stepRef = useRef<HTMLDivElement>(null);
   const [gridRef, gridW] = useWidth<HTMLDivElement>();
+  const [animGridRef, animGridW] = useWidth<HTMLDivElement>();
 
   useEffect(() => {
     const on = () => setVp({ w: window.innerWidth, h: window.innerHeight });
@@ -593,7 +545,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   }, [srcs.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
   // foto per formato: una per i formati singoli (la prima scelta, o la copertina); il carosello parte dalle prime 5
   const chosen = sel.map(s => photos.find(p => p.src === s)).filter((p): p is Photo => !!p);
-  const photosFor = (f: Fmt): Photo[] => (f.multi ? chosen.slice(0, MAX_PHOTOS) : chosen.length ? chosen.slice(0, 1) : photos.slice(0, 1));
+  const photosFor = (f: Fmt): Photo[] => (f.multi ? chosen.slice(0, MAX_PHOTOS) : chosen.slice(0, 1)); // nessuna foto gia' scelta
   const anyMulti = nets.some(n => fmtOf(n).multi);
   const slidesPhotos = photosFor(fmt);
   const photo = slidesPhotos[0] as Photo | undefined;
@@ -605,10 +557,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const upto = Math.min(srcs.length, 24);
   const seen = (src: string) => { const i = srcs.indexOf(src); return i < 0 || i >= upto || i < scanned; };
   const photosSettled = scanned >= upto || (scanned >= Math.min(anyMulti ? 5 : 3, upto) && (anyMulti ? sel : sel.slice(0, 1)).every(seen));
-  useEffect(() => {
-    if (!photosSettled) return;
-    if (anyMulti && sel.length <= 1 && photos.length > 1) setSel(s => [...new Set([...s, ...photos.map(p => p.src)])].slice(0, Math.min(5, MAX_PHOTOS)));
-  }, [anyMulti, photos.length, photosSettled]); // eslint-disable-line react-hooks/exhaustive-deps
   // formato a una foto: la foto toccata diventa la prima (la scelta del carosello resta, in ordine)
   const tap = (src: string) => {
     if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
@@ -659,14 +607,14 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   // la grafica scelta, o la piu' simile se in quel formato non regge
   const tplFor = (n: NetId) => {
     const f = fmtOf(n);
-    if (fits(tpl, f)) return tpl;
-    return (SIMILAR.find(g => g.includes(tpl)) ?? []).find(id => fits(id, f)) ?? tplsFor(f)[0]?.id ?? 'gradient';
+    if (fits(tplId, f)) return tplId;
+    return (SIMILAR.find(g => g.includes(tplId)) ?? []).find(id => fits(id, f)) ?? tplsFor(f)[0]?.id ?? 'gradient';
   };
   const tplLabel = (id: string) => (TPL_NAME[id] ? tr(...TPL_NAME[id]) : POST_TEMPLATES.find(t => t.id === id)?.label ?? id);
-  const swaps = nets.filter(n => tplFor(n) !== tpl).map(n => ({ n, f: fmtOf(n), to: tplFor(n) }));
+  const swaps = !tplChosen ? [] : nets.filter(n => tplFor(n) !== tpl).map(n => ({ n, f: fmtOf(n), to: tplFor(n) }));
   const all = tplsFor(fmt);
-  const cur = tplFor(active);
-  const ready = fonts && !!logo && !!brand && photosSettled && !(anyMulti && sel.length <= 1 && photos.length > 1); // carosello: prima la scelta automatica delle foto
+  const cur = tplChosen ? tplFor(active) : null;
+  const ready = fonts && !!logo && !!brand && photosSettled;
   // copertina: la grafica (Prima e Dopo: la prima foto e' l'originale, la seconda quella arredata)
   const cover = (id: string, small: boolean, f: Fmt): Tpl | null => {
     const ph = photosFor(f)[0];
@@ -682,6 +630,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const facts = [price, [project.mq ? `${project.mq} m²` : '', project.locali ? `${project.locali} ${tr('locali', 'rooms')}` : '', project.bagni ? `${project.bagni} ${project.bagni === 1 ? tr('bagno', 'bathroom') : tr('bagni', 'bathrooms')}` : ''].filter(Boolean).join(', '), addr].filter(Boolean);
   const slidesFor = (n: NetId): (Slide | null)[] => {
     const f = fmtOf(n), size: Size = { w: f.w, h: f.h, safe: f.safe }, ps = photosFor(f);
+    // prima della grafica: le foto scelte e basta (senza scritte, logo e numero), "Sistema la foto" funziona gia'
+    if (!tplChosen) return ps.map((p, i) => (blurs[p.full] && ready ? { kind: 'plain', photo: p.full, size, blur: blurs[p.full], logo: null, accent, badge: '', staged: p.staged && label, n: i + 1, total: 1, fit: autoFit(null, f.h, frameFor(p.src)), frame: frameFor(p.src) } : null));
     const firstSlide = cover(tplFor(n), false, f);
     if (!f.multi) return [firstSlide];
     if (!ps.length) return [];
@@ -690,7 +640,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const last: Slide | null = ready ? { kind: 'contact', size, logo: logo!.url, accent, brand: brand!, lines: facts, n: total, total } : null;
     return [firstSlide, ...rest, last];
   };
-  const keyFor = (n: NetId) => { const f = fmtOf(n), ps = photosFor(f); return JSON.stringify([n, f.id, tplFor(n), ps.map(p => p.src), label, ready, accent, ps.map(p => !!blurs[p.full]), ps.map(p => frames[p.src] ?? null), status, soldDaysText, brand?.phone]); };
+  const keyFor = (n: NetId) => { const f = fmtOf(n), ps = photosFor(f); return JSON.stringify([n, f.id, tplChosen ? tplFor(n) : '-', ps.map(p => p.src), label, ready, accent, ps.map(p => !!blurs[p.full]), ps.map(p => frames[p.src] ?? null), status, soldDaysText, brand?.phone]); };
   const key = keyFor(active);
   const keySmall = JSON.stringify([fmt.w, fmt.h, photo?.small, label, ready, accent, !!blurs[photo?.small ?? ''], othersFor(fmt).length, all.length, frames[photo?.src ?? ''] ?? null, status, soldDaysText, brand?.phone]);
   const [big, setBig] = useState<(Slide | null)[]>([]);
@@ -698,15 +648,16 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   // oggetti stabili: si ridisegna solo quando cambia davvero qualcosa
   useEffect(() => { setBig(slidesFor(active)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { setThumbs(Object.fromEntries(all.map(t => [t.id, cover(t.id, true, fmt)]))); }, [keySmall]); // eslint-disable-line react-hooks/exhaustive-deps
-  const nSlides = fmt.multi ? slidesPhotos.length + (slidesPhotos.length ? 1 : 0) : 1;
+  const nSlides = fmt.multi ? slidesPhotos.length + (slidesPhotos.length && tplChosen ? 1 : 0) : 1;
   const six = Math.min(slideIx, Math.max(0, nSlides - 1));
 
   // testo del post, diverso per ogni social: uno per immobile e social (resta sul dispositivo), nei limiti del social
   // venduto e affittato hanno il loro testo (il lavoro fatto e l'invito a chi vende), l'annuncio resta com'era
   const tk = (n: NetId) => (soldOn ? `${n}:${soldKind}` : n);
   const tKey = (k: string) => `agenteimmo:social-text:${project.id}:${k}`;
+  // in cache solo il testo dell'AI; le modifiche a mano valgono per questa apertura
   const putTextK = (k: string, t: string) => { setTexts(o => ({ ...o, [k]: t })); try { localStorage.setItem(tKey(k), t); } catch { /* niente storage */ } };
-  const putText = (n: NetId, t: string) => putTextK(tk(n), t);
+  const putText = (n: NetId, t: string) => setTexts(o => ({ ...o, [tk(n)]: t }));
   const writeText = async (n: NetId, fresh = false) => {
     const k = tk(n);
     if (!fresh) { const s = localStorage.getItem(tKey(k)); if (s) { setTexts(o => ({ ...o, [k]: s })); return; } }
@@ -719,7 +670,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
       arredata: srcs.some(s => !!prima[s]),
       ...(soldOn ? { giorni: nDays || undefined } : {}),
     };
-    const r = await authFetch('/api/platform/social-caption', { method: 'POST', body: JSON.stringify({ fields, social: n, video: n === 'tiktok' && withVideo }) }).catch(() => null);
+    const r = await authFetch('/api/platform/social-caption', { method: 'POST', body: JSON.stringify({ fields, social: n }) }).catch(() => null);
     const j = r?.ok ? await r.json().catch(() => null) : null;
     setTextBusy(o => ({ ...o, [k]: false }));
     if (j?.testo) putTextK(k, j.testo);
@@ -733,100 +684,23 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const text = texts[tk(active)] ?? '';
   const copy = async (n: NetId) => { try { await navigator.clipboard.writeText(texts[tk(n)] ?? ''); setCopied(n); setTimeout(() => setCopied(c => (c === n ? null : c)), 2400); } catch { /* niente appunti */ } };
 
-  // ---- video dell'annuncio (api/platform/video-reel, come nella chat): stesse foto (max 8) e dati, 9:16 ----
-  // Vivace ed Elegante su AWS Lambda (si segue il lavoro), Semplice e Classico con FFmpeg in una richiesta. Crediti a video pronto.
-  type Vid = { tpl: ReelTpl; style: ReelStyle; status: 'idle' | 'working' | 'queued' | 'done' | 'error'; url?: string; job?: string; progress?: number; at?: number; err?: string };
-  const vKey = `agenteimmo:social-video:${project.id}`;
-  const [vid, setVid] = useState<Vid>(() => {
-    try { const v = JSON.parse(localStorage.getItem(vKey) ?? 'null') as Vid | null; if (v?.url || v?.job) return { ...v, tpl: v.tpl === 'venduto' ? 'venduto' : 'reel', status: v.url ? 'done' : 'working', at: v.at ?? Date.now() }; } catch { /* niente storage */ }
-    return { tpl: soldOn ? 'venduto' : 'reel', style: 'vivace', status: 'idle' };
-  });
-  const withVideo = vid.status !== 'idle' && vid.status !== 'error';
-  // "Vuoi anche un video?": si' (gli stili compaiono), no, o non ancora risposto. Un video gia' fatto o in corso vale si'
-  const [wantVideo, setWantVideo] = useState<boolean | null>(() => (vid.url || vid.job ? true : null));
-  const vWorking = vid.status === 'working' || vid.status === 'queued';
-  useEffect(() => { store(vKey, vid.url || vid.job ? { tpl: vid.tpl, style: vid.style, url: vid.url, job: vid.job, at: vid.at } : null); }, [vid.url, vid.job, vid.style, vid.tpl]); // eslint-disable-line react-hooks/exhaustive-deps
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  const [, setTick] = useState(0);
-  useEffect(() => { if (!vWorking) return; const t = setInterval(() => setTick(x => x + 1), 1000); return () => clearInterval(t); }, [vWorking]);
-  const city = indirizzo.split(',').map(x => x.replace(/\d{5}/g, '').trim()).filter(Boolean).pop() ?? '';
-  // foto del video annuncio (da 3 a 8, per immobile): si parte da quelle scelte al passo Foto e si aggiungono le migliori
-  // altre dell'immobile fino a 5 (prima la copertina, poi le arredate, poi le altre; mai le planimetrie). Il Venduto ne usa una.
-  const vSelKey = `agenteimmo:social-vphotos:${project.id}`;
-  const [vSel, setVSel] = useState<string[] | null>(() => { try { const v = JSON.parse(localStorage.getItem(vSelKey) ?? 'null') as unknown; return Array.isArray(v) ? v.filter(x => typeof x === 'string' && srcs.includes(x)) : null; } catch { return null; } });
-  const [vOne, setVOne] = useState<string | null>(null); // foto del Venduto (se manca, la prima scelta)
-  useEffect(() => { if (vSel) store(vSelKey, vSel); }, [vSel, vSelKey]);
-  const vCandidates = photos.filter(p => !p.plan).sort((a, b) => (a === photos[0] ? 0 : a.staged ? 1 : 2) - (b === photos[0] ? 0 : b.staged ? 1 : 2));
-  const vSuggest = () => { const base = chosen.filter(p => !p.plan).slice(0, MAX_REEL_PHOTOS); return [...base, ...vCandidates.filter(p => !base.includes(p))].slice(0, Math.max(base.length, 5)).map(p => p.src); };
-  useEffect(() => { if (stepIx === S.video && photosSettled && !vSel?.length) setVSel(vSuggest()); }, [stepIx, photosSettled]); // eslint-disable-line react-hooks/exhaustive-deps
-  const vList = (vSel ?? []).map(s => photos.find(p => p.src === s)).filter((p): p is Photo => !!p).slice(0, MAX_REEL_PHOTOS);
-  const vSoldPhoto = photos.find(p => p.src === vOne) ?? chosen.find(p => !p.plan) ?? vCandidates[0];
-  // il tipo di video viene dal passo "Cosa pubblichi?"; un video gia' fatto resta com'e'
-  const vTpl: ReelTpl = vid.status === 'idle' || vid.status === 'error' ? (soldOn ? 'venduto' : 'reel') : vid.tpl;
-  const vPhotos = vTpl === 'venduto' ? (vSoldPhoto ? [vSoldPhoto] : []) : vList;
-  const vMin = vTpl === 'venduto' ? 1 : 3;
-  const vCost = vTpl === 'venduto' ? CREDIT_COST.video_venduto : CREDIT_COST.video_reel;
-  const vAdd = (src: string) => setVSel(v => (v ?? []).includes(src) || (v ?? []).length >= MAX_REEL_PHOTOS ? v : [...(v ?? []), src]);
-  const vDel = (src: string) => setVSel(v => (v ?? []).filter(x => x !== src));
-  const vMove = (i: number, by: number) => setVSel(v => { const a = [...(v ?? [])]; const j = i + by; if (j < 0 || j >= a.length) return v; [a[i], a[j]] = [a[j], a[i]]; return a; });
-  type VReply = { url?: string; error?: string; status?: string; job?: string; progress?: number };
-  const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
-  const vDone = (d: VReply) => {
-    if (!live.current) return;
-    if (!d.url) {
-      setVid(v => ({ ...v, status: 'error', job: undefined, err: d.error === 'no_credits' ? tr(`Per il video servono ${vCost} crediti. Ricarica per continuare.`, `The video needs ${vCost} credits. Top up to continue.`) : d.error === 'photo_unreadable' ? tr('Una delle foto non si apre, cambia le foto e riprova.', 'One of the photos won\'t open, change the photos and try again.') : tr('Video non riuscito, nessun credito scalato. Riprova.', 'Video failed, no credits used. Please try again.') }));
-      return;
-    }
-    setVid(v => ({ ...v, status: 'done', url: d.url, job: undefined, progress: undefined }));
-    window.dispatchEvent(new Event('agenteimmo:media')); window.dispatchEvent(new Event('agenteimmo:credits'));
-  };
-  const pollVideo = async (job: string) => {
-    for (let k = 0; k < 100; k++) {
-      await wait(3000);
-      if (!live.current) return 'stop' as const;
-      const res = await authFetch(`/api/platform/video-reel?job=${encodeURIComponent(job)}`).catch(() => null);
-      if (!res) continue;
-      const d = await res.json().catch(() => ({})) as VReply;
-      if (d.status === 'working') { if (typeof d.progress === 'number') setVid(v => ({ ...v, progress: d.progress })); continue; }
-      if (d.status === 'queued') { setVid(v => ({ ...v, status: 'queued', job: undefined })); await wait(15_000); return 'queued' as const; }
-      vDone(d); return 'end' as const;
-    }
-    vDone({}); return 'end' as const;
-  };
-  const makeVideo = async () => {
-    if (vWorking || vPhotos.length < vMin) return;
-    setVid(v => ({ tpl: vTpl, style: v.style, status: 'working', at: Date.now() })); setView('video');
-    const body = JSON.stringify(vTpl === 'venduto' ? {
-      template: 'venduto', style: vid.style, enhance: true, contract: soldRent ? 'affitto' : 'vendita', place: soldPlace.slice(0, 60), days: nDays ? String(nDays) : '',
-      photos: vPhotos.map(p => ({ src: p.src, staged: p.staged })), projectId: project.id,
-    } : {
-      template: 'reel', style: vid.style, enhance: true, contract: rent ? 'affitto' : 'vendita',
-      title: (titolo || tipologia || cleanText(project.nome)).split(' | ')[0].slice(0, 80), place: city.slice(0, 60),
-      price: !hidePrice && project.prezzo ? String(project.prezzo) : '', mq: project.mq ? String(project.mq) : '', rooms: project.locali ? String(project.locali) : '',
-      photos: vPhotos.map(p => ({ src: p.src, staged: p.staged })), projectId: project.id,
-    });
-    // coda: se il server dei video e' pieno si riprova ogni 15 s, fino a 10 minuti
-    for (let k = 0; k < 40 && live.current; k++) {
-      const res = await authFetch('/api/platform/video-reel', { method: 'POST', headers: { 'x-no-modal': '1' }, body }).catch(() => null);
-      const d = res ? await res.json().catch(() => ({})) as VReply : {};
-      if (d.status === 'queued') { setVid(v => ({ ...v, status: 'queued' })); await wait(15_000); continue; }
-      if (d.status === 'working' && d.job) { setVid(v => ({ ...v, status: 'working', job: d.job })); if (await pollVideo(d.job) === 'queued') continue; return; }
-      vDone(d); return;
-    }
-    vDone({});
-  };
-  // popup riaperto con un video che stava lavorando: si riprende a seguirlo
-  useEffect(() => { if (vid.job && vid.status === 'working') void pollVideo(vid.job); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const vFile = async () => {
-    const r = await fetch(vid.url!, { mode: 'cors', cache: 'no-store' });
-    if (!r.ok) throw new Error('video');
-    return new File([await r.blob()], `${title}-video-${vid.style}.mp4`, { type: 'video/mp4' });
-  };
-  const lambdaStyle = vid.style === 'vivace' || vid.style === 'elegante';
-  const vSec = lambdaStyle ? 50 + 6 * vPhotos.length : 8 + 3 * vPhotos.length;
-  const vEta = vSec < 55 ? tr(`di solito circa ${Math.round(vSec / 10) * 10} secondi`, `usually about ${Math.round(vSec / 10) * 10} seconds`) : vSec < 80 ? tr('di solito circa un minuto', 'usually about a minute') : tr('di solito 1-2 minuti', 'usually 1-2 minutes');
-  const vElapsed = vid.at ? Math.max(0, Math.round((Date.now() - vid.at) / 1000)) : 0;
+
+  // ---- post animato: gratis, nel browser (exporter.exportStaticToVideo), uno per social, sulla grafica di quel social ----
+  const [animOk] = useState(canAnimate);
+  const [wantAnim, setWantAnim] = useState(false);
+  const [saidNo, setSaidNo] = useState(false); // "No, salva le foto"
+
+  const [animStyle, setAnimStyle] = useState('slide-up');
+  type Anim = { key: string; file: File; url: string };
+  const [anims, setAnims] = useState<Partial<Record<NetId, Anim>>>({});
+  const [animRun, setAnimRun] = useState<{ n: NetId; i: number; of: number; p: number } | null>(null);
+  const animAbort = useRef<AbortController | null>(null);
+  useEffect(() => { animCss(); return () => animAbort.current?.abort(); }, []);
+  // valido finche' grafica, foto, formato e stile restano quelli
+  const animKey = (n: NetId) => `${keyFor(n)}|${animStyle}`;
+  const animOf = (n: NetId) => { const a = anims[n]; return a && a.key === animKey(n) ? a : null; };
 
   // esportazione: ogni slide a grandezza vera, fuori dalla vista, poi PNG (o video)
   const mount = async <T,>(b: Slide, fn: (el: HTMLElement) => Promise<T>) => {
@@ -846,6 +720,34 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const title = slug(titolo || project.nome || 'immobile').slice(0, 40).replace(/-$/, '');
   const nameOf = (n: NetId) => `${n}-${slug(fmtOf(n).label)}`; // instagram-post, whatsapp-stato, linkedin-carosello
   const save = (blob: Blob, file: string) => { const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = file; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); };
+  // crea il post animato per i social che non l'hanno ancora (prima quello in anteprima), uno dopo l'altro: 15 s ciascuno
+  const makeAnim = async () => {
+    if (animRun || busy) return;
+    const todo = [active, ...nets.filter(n => n !== active)].filter(n => !animOf(n));
+    const ac = new AbortController(); animAbort.current = ac;
+    setNote('');
+    try {
+      for (const [i, n] of todo.entries()) {
+        const s = slidesFor(n)[0];
+        if (!s || s.kind !== 'tpl') throw new Error('not_ready');
+        const k = animKey(n);
+        let last = -1;
+        setAnimRun({ n, i, of: todo.length, p: 0 });
+        const r = await mount(s, el => exportStaticToVideo(el, s.size, {
+          duration: ANIM_SEC, animStyle, photoSrc: s.photo, fitCover: s.fit, frame: s.frame, signal: ac.signal,
+          // l'avanzamento ridisegna il popup: solo ogni 2%, la registrazione resta fluida
+          onProgress: (p: number) => { const q = Math.floor(p * 50); if (q !== last) { last = q; setAnimRun(o => (o && o.n === n ? { ...o, p } : o)); } },
+        } as never) as Promise<{ blob: Blob; ext: string }>);
+        if (!live.current || ac.signal.aborted) return;
+        const file = new File([r.blob], `${title}-${nameOf(n)}-animato.${r.ext}`, { type: r.blob.type || `video/${r.ext}` });
+        setAnims(o => { const old = o[n]; if (old) URL.revokeObjectURL(old.url); return { ...o, [n]: { key: k, file, url: URL.createObjectURL(file) } }; });
+        console.info('[social] post animato', n, animStyle, r.ext, `${Math.round(file.size / 1024)} KB`);
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') { console.error('social anim', e); setNote(tr('Non sono riuscito a creare il post animato, riprova.', 'I could not make the animated post, please try again.')); }
+    }
+    if (live.current) setAnimRun(null);
+  };
   // LinkedIn: il carosello e' un documento PDF, una slide per pagina (JPEG, file leggero)
   const toPdf = async (files: File[], f: Fmt, name: string) => {
     const { jsPDF } = await import('jspdf');
@@ -886,25 +788,15 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const t = setTimeout(() => { void getFiles(active).catch(() => null); }, 500);
     return () => clearTimeout(t);
   }, [stepIx, allReady, key]); // eslint-disable-line react-hooks/exhaustive-deps
-  const shareVideo = view === 'video' && vid.status === 'done' && !!vid.url; // Condividi: il video se e' quello che si guarda
   const share = async () => {
     if (busy) return;
-    if (shareVideo) {
-      // il video: si condivide il file (telefono) o si scarica (computer)
-      setBusy('share'); setNote('');
-      try {
-        const f = await vFile();
-        if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f] }); } catch (e) { if ((e as Error).name !== 'AbortError') throw e; } }
-        else { save(f, f.name); setNote(tr('Video salvato.', 'Video saved.')); }
-      } catch (e) { console.error('social video share', e); setNote(tr('Non sono riuscito a prendere il video, riprova.', 'I could not get the video, please try again.')); }
-      setBusy(null); return;
-    }
     const n = active;
     // il testo si copia subito, prima di ogni attesa (gli appunti vogliono il tocco)
     if (text) void navigator.clipboard?.writeText(text).catch(() => null);
     setBusy('share'); setNote(nSlides > 1 ? tr(`Preparo ${nSlides} foto`, `Making ${nSlides} photos`) : '');
     try {
-      const files = await getFiles(n);
+      const a = wantAnim ? animOf(n) : null; // post animato: si pubblica il video
+      const files = a ? [a.file] : await getFiles(n);
       if (navigator.canShare?.({ files })) {
         try { await navigator.share({ files }); setDone(o => [...new Set([...o, n])]); setNote(text ? tr(`Il testo per ${net.label} è copiato, incollalo nel post.`, `The ${net.label} text is copied, paste it in the post.`) : ''); }
         catch (e) { if ((e as Error).name !== 'AbortError') throw e; setNote(''); }
@@ -913,7 +805,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         if (files.length === 1) save(files[0], files[0].name);
         else await zipSave(files.map(f => ({ path: f.name, f })), `${title}-${nameOf(n)}.zip`);
         setDone(o => [...new Set([...o, n])]);
-        setNote(text ? tr(`Salvato e testo copiato. Ora apri ${net.label}, carica la foto e incolla il testo.`, `Saved and text copied. Now open ${net.label}, upload the photo and paste the text.`) : tr(`Salvato. Ora apri ${net.label} e carica la foto.`, `Saved. Now open ${net.label} and upload the photo.`));
+        const what = a ? tr('il video', 'the video') : tr('la foto', 'the photo');
+        setNote(text ? tr(`Salvato e testo copiato. Ora apri ${net.label}, carica ${what} e incolla il testo.`, `Saved and text copied. Now open ${net.label}, upload ${what} and paste the text.`) : tr(`Salvato. Ora apri ${net.label} e carica ${what}.`, `Saved. Now open ${net.label} and upload ${what}.`));
       }
     } catch (e) {
       console.error('social share', e);
@@ -939,19 +832,15 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         const files = await getFiles(n), nm = nameOf(n);
         if (files.length === 1) items.push({ path: `${nm}.${files[0].name.split('.').pop()}`, f: files[0] });
         else files.forEach((f, j) => items.push({ path: `${nm}/${String(j + 1).padStart(2, '0')}.png`, f }));
-      }
-      let vMissed = false;
-      if (vid.url) {
-        setNote(tr('Aggiungo il video', 'Adding the video'));
-        const f = await vFile().catch(() => null);
-        if (f) items.push({ path: `video-${vid.style}.mp4`, f }); else vMissed = true;
+        const a = wantAnim ? animOf(n) : null;
+        if (a) items.push({ path: `${nm}-animato.${a.file.name.split('.').pop()}`, f: a.file });
       }
       console.info('[social] scarica tutto', nets.join(','), items.length, `${Math.round(items.reduce((a, x) => a + x.f.size, 0) / 1024)} KB`, `${Math.round(performance.now() - t0)} ms`);
       if (items.length === 1) { save(items[0].f, `${title}-${items[0].path}`); setNote(fmt.pdf ? tr('Salvato. Su LinkedIn caricalo come documento.', 'Saved. On LinkedIn upload it as a document.') : tr('Salvato.', 'Saved.')); }
       else {
         await zipSave(items, `${title}-social.zip`);
-        const what = [...nets.map(n => netOf(n).label), ...(vid.url && !vMissed ? [tr('il video', 'the video')] : [])].join(', ');
-        setNote(tr(`Salvato tutto in un file .zip: ${what}.`, `Everything saved in a .zip file: ${what}.`) + (vMissed ? ' ' + tr('Il video non è entrato, salvalo a parte.', 'The video is missing, save it separately.') : ''));
+        const what = [...nets.map(n => netOf(n).label), ...(wantAnim && nets.some(n => animOf(n)) ? [tr('il post animato', 'the animated post')] : [])].join(', ');
+        setNote(tr(`Salvato tutto in un file .zip: ${what}.`, `Everything saved in a .zip file: ${what}.`));
       }
     } catch (e) {
       console.error('social export', e);
@@ -969,21 +858,28 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const btn = 'flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-sm font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 disabled:opacity-50';
   // una sola evidenziazione per scelta: l'anello col colore del marchio
   const chip = (on: boolean) => `bg-white text-ink outline-none ease-smooth transition-[box-shadow] focus-visible:ring-2 focus-visible:ring-brand/50 ${on ? 'shadow-sm ring-2 ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`;
-  const canNext = stepIx !== S.foto || (!anyMulti || chosen.length > 0);
+  // ogni passo vuole una scelta (tranne Video): Avanti spento, sotto cosa manca; dalle linguette non si salta oltre il primo passo da fare
+  const multiShort = anyMulti && chosen.length === 1;
+  const stepOk = [soldPick !== null, nets.length > 0, chosen.length > 0 && !multiShort, tplChosen, true, true];
+  const firstTodo = stepOk.indexOf(false);
+  const canGo = (i: number) => firstTodo < 0 || i <= firstTodo;
+  const canNext = stepOk[stepIx];
+  const missing = [tr('Scegli cosa pubblichi', 'Choose what you post'), tr('Scegli almeno un social', 'Choose at least one network'),
+    multiShort ? tr('Per il post con più foto scegline almeno 2', 'For the post with more photos choose at least 2') : tr('Scegli una foto', 'Choose a photo'),
+    tr('Scegli una grafica', 'Choose a design'), '', ''][stepIx];
   const shown = big[six] ?? null;
   // telefono o computer, per dire "Salva sul telefono" solo dove e' vero
   const onPhone = vp.w < 1024 || (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
   // "Pubblica su" solo su telefono e tablet (condivisione del sistema coi file); al computer si salva e si carica a mano
   const canPublish = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches && typeof navigator.share === 'function';
-  const many = nets.length > 1 || !!vid.url;
+  const many = nets.length > 1 || (wantAnim && nets.some(n => animOf(n)));
   const saveLabel = many ? (onPhone ? tr('Salva tutto sul telefono', 'Save all to phone') : tr('Salva tutto sul computer', 'Save all to computer')) : onPhone ? tr('Salva sul telefono', 'Save to phone') : tr('Salva sul computer', 'Save to computer');
 
   // linguette dei social sopra l'anteprima: SEMPRE una riga. Se i nomi non entrano, le non attive solo icona (nome in title e
   // aria-label); l'indicatore bianco scorre e si allarga sotto quella attiva (600ms)
-  const hasVidTab = withVideo || (stepIx === S.video && !!wantVideo);
-  const tabIds: string[] = [...nets, ...(hasVidTab ? ['video'] : [])];
-  const tabName = (id: string) => (id === 'video' ? tr('Video', 'Video') : netOf(id as NetId).label);
-  const onTab = view === 'video' ? 'video' : active;
+  const tabIds: string[] = nets;
+  const tabName = (id: string) => netOf(id as NetId).label;
+  const onTab = active;
   // stima della larghezza coi nomi (14px semibold ~8px a lettera, + icona, spazi e margini)
   const fullW = tabIds.reduce((a, id) => a + 16 + 6 + 24 + tabName(id).length * 8.2 + 4, 8);
   const compact = fullW > boxW;
@@ -992,45 +888,22 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
       {tabIds.map(id => {
         const on = id === onTab, label = tabName(id), showName = !compact || on;
         return (
-          <button key={id} data-tab={id} type="button" role="tab" aria-selected={on} aria-label={label} title={label} onClick={() => (id === 'video' ? setView('video') : show(id as NetId))}
+          <button key={id} data-tab={id} type="button" role="tab" aria-selected={on} aria-label={label} title={label} onClick={() => show(id as NetId)}
             className={`relative z-[1] flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 ${on ? 'text-ink' : 'text-muted hover:text-ink'}`}>
-            {id === 'video' ? (vWorking ? <Loader2 size={16} className="animate-spin" /> : <Film size={16} />) : <NetIcon id={id as NetId} size={16} />}
+            <NetIcon id={id as NetId} size={16} />
             {showName && <span key={`${id}-${compact}`} className={compact ? 'blur-in' : ''}>{label}</span>}
-            {id !== 'video' && done.includes(id as NetId) && <Check size={14} className="text-brand" strokeWidth={3} />}
+            {(done.includes(id as NetId) || (wantAnim && stepIx === S.video && !!animOf(id as NetId))) && <Check size={14} className="text-brand" strokeWidth={3} />}
           </button>
         );
       })}
     </TabRow>
   ) : null;
 
-  // video nell'anteprima: 9:16 dentro il riquadro. Prima di crearlo: la PRIMA foto di questa casa col disegno dello stile
-  // (niente clip d'esempio di un'altra casa); mentre si crea, la stessa foto con l'avanzamento
-  const vk = Math.min((boxW - 24) / 1080, (boxH - 24) / 1920), vw = Math.round(1080 * vk), vh = Math.round(1920 * vk);
-  const showVid = view === 'video' && (withVideo || (stepIx === S.video && !!wantVideo));
-  const mockPhoto = vPhotos[0]?.full ?? photo?.full;
-  const videoPreview = vid.status === 'done' && vid.url ? (
-    <div className="relative overflow-hidden rounded-2xl bg-black shadow-md ring-1 ring-black/5" style={{ width: vw, height: vh }}>
-      <video key={vid.url} src={vid.url} controls autoPlay muted loop playsInline className="h-full w-full object-cover" />
-    </div>
-  ) : (
-    <VideoMock w={vw} h={vh} photo={mockPhoto} style={vid.style} kind={vTpl === 'venduto' ? soldKind : 'reel'} accent={accent} agency={brand?.agencyName ?? ''}
-      title={(titolo || tipologia || cleanText(project.nome)).split(' | ')[0]} place={vTpl === 'venduto' ? soldPlace || city : city} days={soldDaysText}
-      contract={rent ? tr('In affitto', 'For rent') : tr('In vendita', 'For sale')}
-      overlay={vWorking ? (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/55 px-4 text-center text-white">
-          <Loader2 size={22} className="animate-spin" />
-          <span className="text-sm font-semibold">{vid.status === 'queued' ? tr('In coda', 'Queued') : tr('Creo il video', 'Making the video')}</span>
-          <span className="text-xs tabular-nums text-white/80">{vid.status === 'queued' ? tr('Parte appena si libera un posto', 'Starts as soon as a slot is free') : `${vElapsed} s, ${vEta}`}</span>
-          {typeof vid.progress === 'number' && <span className="mt-1 block h-1.5 w-24 overflow-hidden rounded-full bg-white/25"><span className="block h-full rounded-full bg-white ease-smooth transition-[width]" style={{ width: `${Math.max(4, vid.progress)}%` }} /></span>}
-        </div>
-      ) : null} />
-  );
-
   // ---- inquadratura della foto che si guarda (passo Foto, dietro "Sistema la foto"): a tutto schermo o intera, zoom, trascinando ----
   // mentre si trascina o si muove lo zoom si cambia solo la foto gia' disegnata; il post si ridisegna una volta, a gesto finito
   const curPhoto: Photo | undefined = fmt.multi ? slidesPhotos[six] : slidesPhotos[0];
   const curFrame = shown ? frameOf(shown) : null;
-  const canFix = !!curPhoto && !!curFrame && stepIx === S.foto && !showVid;
+  const canFix = !!curPhoto && !!curFrame && stepIx === S.foto;
   const framable = fixOpen && canFix;
   const previewRef = useRef<HTMLDivElement>(null);
   const live2 = useRef<{ src: string; f: Frame; t?: number } | null>(null);
@@ -1100,18 +973,30 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   ) : null;
 
-  const caption = showVid
-    ? (withVideo ? (vid.status === 'done' ? tr('Il tuo video', 'Your video') : '') : tr('Così sarà il tuo video', 'This is how your video will look'))
-    : `${net.label}, ${fmtShort(net.fmts, fmt).toLowerCase()}`;
+  // post animato nell'anteprima: la grafica con le scritte che entrano (CSS), poi il video vero appena creato
+  const animOn = wantAnim && stepIx === S.video;
+  const animMine = animOn ? animOf(active) : null;
+  const ak = Math.min((boxW - 24) / fmt.w, (boxH - 24) / fmt.h);
+  const caption = animOn ? (animMine ? tr(`Il tuo post animato per ${net.label}`, `Your animated post for ${net.label}`) : tr(`Così si muove su ${net.label}`, `This is how it moves on ${net.label}`))
+    : !nets.length ? '' : `${net.label}, ${fmtShort(net.fmts, fmt).toLowerCase()}`;
   const preview = (
     <div className="flex flex-col items-center gap-3">
       {tabs}
-      <div ref={previewRef} className="relative flex items-center justify-center rounded-[24px] bg-canvas" style={{ width: boxW, height: boxH }}>
-        {showVid ? videoPreview : fmt.multi && !slidesPhotos.length
-          ? <span className="px-6 text-center text-sm text-muted">{tr('Scegli almeno una foto', 'Choose at least one photo')}</span>
+      <div ref={previewRef} className={`relative flex items-center justify-center rounded-[24px] bg-canvas ${animOn && !animRun ? `ap-run ap--${animStyle}` : ''}`} style={{ width: boxW, height: boxH }}>
+        {animMine && !animRun ? (
+          <div className="blur-in overflow-hidden rounded-2xl bg-black shadow-md ring-1 ring-black/5" style={{ width: Math.round(fmt.w * ak), height: Math.round(fmt.h * ak) }}>
+            <video key={animMine.url} src={animMine.url} controls autoPlay muted loop playsInline className="h-full w-full object-cover" />
+          </div>
+        ) : !slidesPhotos.length || !nets.length
+          ? (
+            <span key={stepIx < S.foto ? 'a' : 'b'} className="blur-in flex flex-col items-center gap-3 px-6 text-center text-sm text-muted">
+              <span className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-white text-ink/50 shadow-sm ring-1 ring-black/5"><ImageIcon size={24} /></span>
+              {stepIx < S.foto || !nets.length ? tr('Qui vedrai il tuo post', 'Your post will show here') : tr('Scegli una foto', 'Choose a photo')}
+            </span>
+          )
           : <MorphPost build={shown} boxW={boxW} boxH={boxH} fw={fmt.w} fh={fmt.h} />}
         {framable && <div onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-hidden className="absolute inset-3 cursor-grab touch-none active:cursor-grabbing" />}
-        {!showVid && nSlides > 1 && (
+        {!(animMine && !animRun) && slidesPhotos.length > 0 && nSlides > 1 && (
           <>
             <button type="button" onClick={() => setSlideIx(Math.max(0, six - 1))} disabled={!six} aria-label={tr('Foto prima', 'Previous photo')} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronLeft size={18} /></button>
             <button type="button" onClick={() => setSlideIx(Math.min(nSlides - 1, six + 1))} disabled={six >= nSlides - 1} aria-label={tr('Foto dopo', 'Next photo')} className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronRight size={18} /></button>
@@ -1119,7 +1004,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         )}
       </div>
       <div className="flex min-h-8 flex-wrap items-center justify-center gap-1.5">
-        {!showVid && nSlides > 1 ? (
+        {!(animMine && !animRun) && slidesPhotos.length > 0 && nSlides > 1 ? (
           <>
             {Array.from({ length: nSlides }, (_, i) => (
               <button key={i} type="button" onClick={() => setSlideIx(i)} aria-label={`${tr('Foto', 'Photo')} ${i + 1}`} className="flex h-8 items-center px-0.5">
@@ -1136,8 +1021,10 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
 
   // scelta grande (passi Cosa e Video): icona, titolo, una riga sotto; una sola evidenziata
   // due colonne uguali, contenuto centrato: icona sopra, titolo, una riga sotto
-  const bigChoice = (on: boolean, Icon: typeof Crop, title: string, sub: string, onClick: () => void) => (
-    <button type="button" role="radio" aria-checked={on} onClick={onClick} className={`flex h-full min-h-[168px] w-full flex-col items-center justify-center gap-2 rounded-[24px] p-4 text-center ${chip(on)}`}>
+  // badge: piccola etichetta in alto (Consigliato), non e' una scelta fatta
+  const bigChoice = (on: boolean, Icon: typeof Crop, title: string, sub: string, onClick: () => void, badge?: string) => (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick} className={`relative flex h-full min-h-[168px] w-full flex-col items-center justify-center gap-2 rounded-[24px] p-4 text-center ${chip(on)}`}>
+      {badge && <span className="absolute right-3 top-3 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand">{badge}</span>}
       <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] ease-smooth transition-colors ${on ? 'bg-brand text-white' : 'bg-canvas text-ink/70'}`}><Icon size={24} /></span>
       <span className="block text-base font-semibold leading-snug">{title}</span>
       <span className="block text-sm leading-snug text-muted">{sub}</span>
@@ -1149,21 +1036,23 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     <div className="space-y-4">
       <h3 className="font-display text-lg font-semibold">{tr('Cosa pubblichi?', 'What are you posting?')}</h3>
       <div role="radiogroup" aria-label={tr('Cosa pubblichi', 'What you post')} className="grid grid-cols-2 gap-3">
-        {bigChoice(!soldOn, House, tr('Casa in vendita o in affitto', 'Home for sale or rent'), tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), () => setSold(false))}
-        {bigChoice(soldOn, BadgeCheck, tr('Casa venduta o affittata', 'Home sold or rented'), tr('Per far vedere il lavoro fatto', 'To show your work'), () => setSold(true))}
+        {bigChoice(soldPick === false, House, tr('Casa in vendita o in affitto', 'Home for sale or rent'), tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant'), () => setSold(false))}
+        {bigChoice(soldOn, BadgeCheck, tr('Casa venduta o affittata', 'Home sold or rented'), tr('Per far vedere il lavoro fatto', 'To show your work'), () => setSold(true), isClosed(status0) ? tr('Consigliato', 'Suggested') : undefined)}
       </div>
       {soldOn && (
         <div className="blur-in space-y-4 rounded-[24px] bg-canvas p-4">
-          <div role="radiogroup" aria-label={tr('Venduta o affittata', 'Sold or rented')} className="inline-flex rounded-full bg-white p-1 ring-1 ring-black/5">
+          {/* a tutta larghezza (06/10/2026): segmentato in due meta' uguali con l'indicatore che scorre, campo alto 56 col suffisso dentro */}
+          <div role="radiogroup" aria-label={tr('Venduta o affittata', 'Sold or rented')} className="relative grid h-14 grid-cols-2 rounded-full bg-white p-1 ring-1 ring-black/5">
+            <span aria-hidden className="absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-ink ease-smooth transition-transform motion-reduce:transition-none" style={{ transform: `translateX(${soldKind === 'affittato' ? 100 : 0}%)` }} />
             {([['venduto', tr('Venduta', 'Sold')], ['affittato', tr('Affittata', 'Rented')]] as const).map(([v, l]) => (
-              <button key={v} type="button" role="radio" aria-checked={soldKind === v} onClick={() => setSoldKind(v)} className={`h-10 rounded-full px-5 text-sm font-semibold ease-smooth transition-colors ${soldKind === v ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
+              <button key={v} type="button" role="radio" aria-checked={soldKind === v} onClick={() => setSoldKind(v)} className={`relative h-full rounded-full text-base font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 ${soldKind === v ? 'text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
             ))}
           </div>
           <label className="block">
             <span className="block text-sm font-semibold">{tr('In quanti giorni?', 'In how many days?')} <span className="font-normal text-muted">{tr('(se vuoi)', '(optional)')}</span></span>
-            <span className="mt-2 flex items-center gap-2">
-              <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" aria-label={tr('Giorni', 'Days')} className="h-12 w-24 rounded-2xl bg-white px-3 text-center text-base text-ink outline-none ring-1 ring-black/10 focus:ring-brand" />
-              <span className="text-sm text-muted">{tr('giorni', 'days')}</span>
+            <span className="relative mt-2 block">
+              <input value={soldDays} onChange={e => setSoldDays(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" pattern="[0-9]*" aria-label={tr('Giorni', 'Days')} className="h-14 w-full rounded-full bg-white pl-5 pr-20 text-base text-ink outline-none ring-1 ring-black/10 ease-smooth transition-shadow focus:ring-2 focus:ring-brand" />
+              <span aria-hidden className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-base text-muted">{tr('giorni', 'days')}</span>
             </span>
           </label>
         </div>
@@ -1171,7 +1060,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   );
 
-  // passo 2: dove. Per ogni social scelto il tipo di post sempre in vista, gia' su "Una foto"
+  // passo 2: dove. Nessun social gia' scelto; per ogni social scelto il tipo di post sempre in vista, gia' su "Una foto"
   const stepDove = (
     <div className="space-y-6">
       <section>
@@ -1189,7 +1078,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           })}
         </div>
       </section>
-      <section>
+      {nets.length > 0 && <section className="blur-in">
         <h3 className="font-display text-lg font-semibold">{tr('Che post preparo?', 'Which post do I make?')}</h3>
         <div className="mt-1 divide-y divide-line">
           {nets.map(id => {
@@ -1220,7 +1109,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             );
           })}
         </div>
-      </section>
+      </section>}
     </div>
   );
 
@@ -1260,12 +1149,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           </span>
         </label>
       )}
-      {!canNext && <p className="text-sm text-muted">{tr('Scegli almeno una foto per andare avanti.', 'Choose at least one photo to continue.')}</p>}
     </div>
   );
 
   // passo 4: la grafica. Toccandone una sul telefono l'anteprima grande torna in vista
-  const pickTpl = (id: string) => { setTpl(id); setView('post'); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+  const pickTpl = (id: string) => { setTpl(id); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
   const stepGrafica = (
     <div className="space-y-4">
       <div>
@@ -1294,11 +1182,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
 
   // passo 5: il testo, gia' scritto per ogni social. Avviso solo se supera il limite del social
   const textCard = (n: NetId) => {
-    const N = netOf(n), k = tk(n), t = texts[k] ?? '', rule = ruleOf(n, n === 'tiktok' && withVideo);
+    const N = netOf(n), k = tk(n), t = texts[k] ?? '', rule = ruleOf(n, n === 'tiktok' && wantAnim);
     const long = countChars(t) > rule.max;
-    const on = nets.length > 1 && view === 'post' && n === active;
+    const on = nets.length > 1 && n === active;
     return (
-      <section key={n} onFocusCapture={() => { if (n !== active || view !== 'post') show(n); }} className={`rounded-[24px] p-4 ease-smooth transition-shadow ${on ? 'ring-2 ring-brand' : 'ring-1 ring-black/10'}`}>
+      <section key={n} onFocusCapture={() => { if (n !== active) show(n); }} className={`rounded-[24px] p-4 ease-smooth transition-shadow ${on ? 'ring-2 ring-brand' : 'ring-1 ring-black/10'}`}>
         {nets.length > 1 && (
           <button type="button" onClick={() => show(n)} className="mb-3 flex min-h-8 items-center gap-2 text-left">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={n} size={16} /></span>
@@ -1338,122 +1226,67 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   );
 
-  // passo 6, facoltativo: il video. Prima si', no; gli stili solo dopo il si'
-  const pickable = vid.status === 'idle' || vid.status === 'error';
-  const vOthers = vCandidates.filter(p => !vList.includes(p));
-  const tileBtn = 'flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm hover:bg-white disabled:opacity-0';
-  // foto del video: striscia compatta (numero = ordine, la 1 apre il video), sotto le altre da aggiungere
-  const vPhotoPick = vTpl === 'venduto' ? (
-    <section>
-      <h4 className="text-base font-semibold">{tr('Foto del video', 'Video photo')}</h4>
-      <p className="text-sm text-muted">{tr('Una foto, quella col timbro.', 'One photo, the one with the stamp.')}</p>
-      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
-        {vCandidates.map(p => {
-          const on = p === vSoldPhoto;
-          return (
-            <button key={p.src} type="button" onClick={() => setVOne(p.src)} aria-pressed={on} className={`relative h-[96px] w-[72px] shrink-0 overflow-hidden rounded-2xl ease-smooth transition-shadow ${on ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.small} alt="" className="h-full w-full object-cover" />
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  ) : (
-    <section>
-      <h4 className="text-base font-semibold">{tr('Foto del video', 'Video photos')}</h4>
-      <p className="text-sm text-muted">{tr('Il numero è l’ordine, la 1 apre il video.', 'The number is the order, number 1 opens the video.')}</p>
-      <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
-        {vList.map((p, i) => (
-          <div key={p.src} className="relative h-[112px] w-[84px] shrink-0 overflow-hidden rounded-2xl bg-canvas ring-1 ring-black/5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.small} alt="" className="h-full w-full object-cover" />
-            <span className={`absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold shadow-sm ${i === 0 ? 'bg-brand text-white' : 'bg-white/95 text-ink'}`}>{i + 1}</span>
-            <button type="button" onClick={() => vDel(p.src)} aria-label={tr('Togli', 'Remove')} className={`${tileBtn} absolute right-1 top-1`}><X size={14} /></button>
-            <div className="absolute inset-x-1 bottom-1 flex justify-between">
-              <button type="button" onClick={() => vMove(i, -1)} disabled={!i} aria-label={tr('Sposta prima', 'Move earlier')} className={tileBtn}><ChevronLeft size={15} /></button>
-              <button type="button" onClick={() => vMove(i, 1)} disabled={i === vList.length - 1} aria-label={tr('Sposta dopo', 'Move later')} className={tileBtn}><ChevronRight size={15} /></button>
-            </div>
-          </div>
-        ))}
-        {!vList.length && <span className="flex h-[112px] items-center px-2 text-sm text-muted">{photosSettled ? tr('Nessuna foto, aggiungile qui sotto.', 'No photos, add them below.') : <Loader2 size={16} className="animate-spin" />}</span>}
-      </div>
-      {vOthers.length > 0 && vList.length < MAX_REEL_PHOTOS && (
-        <div className="mt-2">
-          <span className="text-sm font-medium text-muted">{tr('Tocca per aggiungere', 'Tap to add')}</span>
-          <div className="-mx-1 mt-1 flex gap-2 overflow-x-auto px-1 py-1 [scrollbar-width:thin]">
-            {vOthers.map(p => (
-              <button key={p.src} type="button" onClick={() => vAdd(p.src)} aria-label={tr('Aggiungi al video', 'Add to the video')} className="relative h-16 w-12 shrink-0 overflow-hidden rounded-xl ring-1 ring-black/10 ease-smooth transition-shadow hover:ring-brand">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.small} alt="" className="h-full w-full object-cover" />
-                <span className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/95 text-ink shadow-sm"><Plus size={12} /></span>
+  // passo 6, facoltativo: post animato (gratis) o solo le foto; gli stili d'animazione solo dopo la scelta
+  const sayAnim = () => { setWantAnim(true); setSaidNo(false); };
+  // post animato: gli 8 movimenti, ognuno sulla grafica scelta in piccolo; uno solo evidenziato
+  const animTileW = animGridW ? Math.floor((animGridW - 3 * 12) / 4) : 0;
+  const animThumb = cur ? thumbs[cur] ?? null : null;
+  const animDone = nets.filter(n => animOf(n));
+  const stepAnim = (
+    <div className="blur-in space-y-5">
+      <section>
+        <h4 className="text-base font-semibold">{tr('Scegli come entrano le scritte', 'Choose how the text comes in')}</h4>
+        <p className="text-sm text-muted">{tr(`Il post dura ${ANIM_SEC} secondi.`, `The post lasts ${ANIM_SEC} seconds.`)}</p>
+        <div ref={animGridRef} role="radiogroup" aria-label={tr('Animazione', 'Animation')} className="mt-3 grid grid-cols-4 gap-3">
+          {animTileW > 0 && ANIMATION_STYLES.map((a: { id: string; label: string }) => {
+            const on = animStyle === a.id, name = pageLang() === 'it' ? a.label : ANIM_EN[a.id] ?? a.label;
+            return (
+              <button key={a.id} type="button" role="radio" aria-checked={on} aria-label={name} onClick={() => setAnimStyle(a.id)} disabled={!!animRun} className="group flex min-w-0 flex-col items-center gap-2 disabled:opacity-60">
+                <span aria-hidden className={`${animRun ? '' : 'ap-run'} ap--${a.id} block overflow-hidden rounded-2xl ring-offset-2 ease-smooth transition-shadow ${on ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/10 group-hover:ring-black/25'}`}><PostView build={animThumb} width={animTileW - 4} /></span>
+                <span className={`max-w-full truncate text-sm ${on ? 'font-semibold text-ink' : 'font-medium text-muted'}`}>{name}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
-      {vList.length < 3 && photosSettled && (
-        <p className="mt-2 flex items-start gap-2 rounded-2xl bg-amber-50 px-3 py-2.5 text-sm leading-relaxed text-amber-900 ring-1 ring-amber-200">
-          <TriangleAlert size={16} className="mt-0.5 shrink-0" />
-          {vCandidates.length < 3
-            ? tr(`Per il video servono almeno 3 foto e questa casa ne ha ${vCandidates.length}. Aggiungi foto alla scheda.`, `The video needs at least 3 photos and this home has ${vCandidates.length}. Add photos to the listing.`)
-            : tr(`Per il video servono almeno 3 foto, aggiungine ${3 - vList.length}.`, `The video needs at least 3 photos, add ${3 - vList.length} more.`)}
-        </p>
-      )}
-    </section>
-  );
-  const sayYes = () => { setWantVideo(true); setView('video'); };
-  // "No": niente video, si scaricano subito le foto (come il bottone Salva)
-  const sayNo = () => { setWantVideo(false); setView('post'); if (ready && !busy) void downloadAll(); };
-  const stepVideo = (
-    <div className="space-y-5">
-      {pickable && (
-        <>
-          <h3 className="font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
-          <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-2 gap-3">
-            {bigChoice(wantVideo === true, Film, tr('Sì, crea il video', 'Yes, make the video'), tr(`${vCost} crediti`, `${vCost} credits`), sayYes)}
-            {bigChoice(wantVideo === false, ImageIcon, tr('No, salva le foto', 'No, save the photos'), tr('Le scarichi subito', 'Download them now'), sayNo)}
-          </div>
-          {wantVideo && (
-            <div className="blur-in space-y-5">
-              <section>
-                <h4 className="mb-2 text-base font-semibold">{tr('Scegli lo stile', 'Choose the style')}</h4>
-                <StylePick tpl={vTpl} rent={soldRent} value={vid.style} onChange={st => { setVid(v => ({ ...v, style: st })); setView('video'); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' }); }} />
-              </section>
-              {vPhotoPick}
-              {vid.status === 'error' && <p className="text-sm font-medium text-red-600">{vid.err}</p>}
-            </div>
-          )}
-        </>
-      )}
-      {vWorking && (
+      </section>
+      {animRun && (
         <div className="flex items-center gap-3 rounded-[24px] bg-canvas p-4">
           <Loader2 size={20} className="shrink-0 animate-spin text-brand" />
           <span className="min-w-0 flex-1">
-            <span className="block text-base font-semibold">{vid.status === 'queued' ? tr('In coda, parte appena si libera un posto', 'Queued, starts as soon as a slot is free') : tr('Creo il video', 'Making the video')}</span>
-            <span className="block text-sm tabular-nums text-muted">{vElapsed} s, {vEta}. {tr('Intanto puoi salvare o pubblicare le foto.', 'Meanwhile you can save or post the photos.')}</span>
-            {typeof vid.progress === 'number' && <span className="mt-2 block h-1.5 w-full overflow-hidden rounded-full bg-black/10"><span className="block h-full rounded-full bg-brand ease-smooth transition-[width]" style={{ width: `${Math.max(4, vid.progress)}%` }} /></span>}
+            <span className="block text-base font-semibold">{animRun.of > 1 ? tr(`Creo il post animato per ${netOf(animRun.n).label}, ${animRun.i + 1} di ${animRun.of}`, `Making the animated post for ${netOf(animRun.n).label}, ${animRun.i + 1} of ${animRun.of}`) : tr('Creo il post animato', 'Making the animated post')}</span>
+            <span className="block text-sm text-muted">{tr('Tieni aperta questa pagina, ci vuole poco.', 'Keep this page open, it takes a moment.')}</span>
+            <span className="mt-2 block h-1.5 w-full overflow-hidden rounded-full bg-black/10"><span className="block h-full rounded-full bg-brand ease-smooth transition-[width]" style={{ width: `${Math.max(4, Math.round(animRun.p * 100))}%` }} /></span>
           </span>
         </div>
       )}
-      {vid.status === 'done' && vid.url && (
+      {!animRun && animDone.length > 0 && (
         <div className="rounded-[24px] bg-canvas p-4">
-          <span className="flex items-center gap-2 text-base font-semibold"><Check size={18} className="text-brand" strokeWidth={3} /> {tr('Il video è pronto, lo salvi insieme alle foto.', 'The video is ready, you save it with the photos.')}</span>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setView('video')} className="flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Play size={15} /> {tr('Guarda', 'Watch')}</button>
-            <button type="button" onClick={() => void vFile().then(f => save(f, f.name)).catch(() => setNote(tr('Non sono riuscito a salvare il video, riprova.', 'I could not save the video, please try again.')))} className="flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Download size={15} /> {tr('Salva solo il video', 'Save the video only')}</button>
-            <button type="button" onClick={() => { setVid(v => ({ tpl: v.tpl, style: v.style, status: 'idle' })); setWantVideo(true); setView('video'); }} className="flex h-11 items-center rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-white hover:text-ink">{tr('Un altro stile', 'Another style')}</button>
-          </div>
+          <span className="flex items-center gap-2 text-base font-semibold"><Check size={18} className="shrink-0 text-brand" strokeWidth={3} /> {animDone.length === nets.length
+            ? tr('Il post animato è pronto, lo salvi insieme alle foto.', 'The animated post is ready, you save it with the photos.')
+            : tr(`Pronto per ${animDone.map(n => netOf(n).label).join(', ')}.`, `Ready for ${animDone.map(n => netOf(n).label).join(', ')}.`)}</span>
+          {animOf(active) && <button type="button" onClick={() => { const a = animOf(active)!; save(a.file, a.file.name); }} className="mt-3 flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line"><Download size={15} /> {tr('Salva solo il post animato', 'Save the animated post only')}</button>}
         </div>
       )}
+    </div>
+  );
+  // "No": niente video, si scaricano subito le foto (come il bottone Salva)
+  const sayNo = () => { setWantAnim(false); setSaidNo(true); if (ready && !busy && !animRun) void downloadAll(); };
+  const stepVideo = (
+    <div className="space-y-5">
+      <h3 className="font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
+      <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-2 gap-3">
+        {animOk && bigChoice(wantAnim, Clapperboard, tr('Post animato', 'Animated post'), tr('Gratis, la tua grafica si muove', 'Free, your design moves'), sayAnim)}
+        {bigChoice(!wantAnim && saidNo, ImageIcon, tr('No, salva le foto', 'No, save the photos'), tr('Le scarichi subito', 'Download them now'), sayNo)}
+      </div>
+      {wantAnim && stepAnim}
       <p className="min-h-5 text-sm text-muted" aria-live="polite">{note}</p>
     </div>
   );
 
-  // piede dell'ultimo passo: un solo bottone scuro. "Crea il video" finche' il video (voluto) non c'e', poi "Salva tutto"
+  // piede dell'ultimo passo: un solo bottone scuro. "Crea il post animato" finche' (voluto) manca per qualche social, poi "Salva tutto"
   const last = stepIx === S.video;
-  const makeFirst = last && !!wantVideo && pickable;
-  const shareLabel = shareVideo ? tr('Pubblica il video', 'Post the video') : tr(`Pubblica su ${net.label}`, `Post on ${net.label}`);
+  const animFirst = last && wantAnim && (!!animRun || nets.some(n => !animOf(n)));
+  const shareLabel = tr(`Pubblica su ${net.label}`, `Post on ${net.label}`);
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 sm:p-4" onClick={onClose}>
@@ -1474,9 +1307,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           ) : (
             <nav className="mt-3 grid grid-cols-6 gap-1 rounded-full bg-canvas p-1" aria-label={tr('Passi', 'Steps')}>
               {STEPS.map(([i1, e1], i) => {
-                const on = i === stepIx, ok = i !== stepIx && i <= reached;
+                const on = i === stepIx, ok = i !== stepIx && i <= reached && stepOk[i] && (firstTodo < 0 || i < firstTodo);
                 return (
-                  <button key={i1} type="button" onClick={() => goStep(i)} aria-current={on ? 'step' : undefined} className={`flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full text-sm font-semibold ease-smooth transition-[background-color,color,box-shadow] ${on ? 'bg-white text-ink shadow-sm' : ok ? 'text-ink hover:bg-white/60' : 'text-muted hover:bg-white/60'}`}>
+                  <button key={i1} type="button" onClick={() => goStep(i)} disabled={!on && !canGo(i)} aria-current={on ? 'step' : undefined} className={`flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full text-sm font-semibold ease-smooth transition-[background-color,color,box-shadow,opacity] disabled:cursor-not-allowed disabled:opacity-50 ${on ? 'bg-white text-ink shadow-sm' : ok ? 'text-ink hover:bg-white/60' : 'text-muted enabled:hover:bg-white/60'}`}>
                     <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ease-smooth transition-colors ${on ? 'bg-brand text-white' : ok ? 'bg-ink text-white' : 'bg-black/10 text-muted'}`}>{ok ? <Check size={11} strokeWidth={3} /> : i + 1}</span>
                     <span className="truncate">{tr(i1, e1)}</span>
                   </button>
@@ -1494,21 +1327,21 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           </div>
         </div>
 
-        {/* piede: Indietro e Avanti fino al passo Video; li' Pubblica (il social o il video che si guarda) e Salva, o Crea il video */}
+        {/* piede: Indietro e Avanti fino al passo Video; li' Pubblica (il social che si guarda) e Salva, o Crea il post animato */}
         <div className="flex shrink-0 items-end gap-2 border-t border-line px-4 py-3 sm:items-center sm:px-6" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} shrink-0 px-4 text-ink hover:bg-canvas disabled:invisible`}><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
           {!last ? (
-            <>
-              <div className="flex-1" />
-              <button type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} className={`${btn} min-w-[160px] bg-ink text-base text-white hover:bg-brand`}>{tr('Avanti', 'Next')} <ArrowRight size={18} /></button>
-            </>
+            <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
+              <button type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'} className={`${btn} min-w-[160px] bg-ink text-base text-white enabled:hover:bg-brand disabled:opacity-40`}>{tr('Avanti', 'Next')} <ArrowRight size={18} /></button>
+              {!canNext && <span id="social-missing" key={missing} className="blur-in text-sm text-muted">{missing}</span>}
+            </div>
           ) : (
             <div className="flex min-w-0 flex-1 flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              {canPublish && <button type="button" onClick={() => void share()} disabled={(shareVideo ? false : !allReady) || !!busy} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>}
-              {makeFirst ? (
-                <button type="button" onClick={() => void makeVideo()} disabled={vPhotos.length < vMin} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}><Film size={16} /> <span className="truncate">{tr('Crea il video', 'Make the video')}</span></button>
+              {canPublish && <button type="button" onClick={() => void share()} disabled={!allReady || !!busy || !!animRun} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>}
+              {animFirst ? (
+                <button type="button" onClick={() => void makeAnim()} disabled={!ready || !allReady || !!animRun || !!busy} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>{animRun ? <Loader2 size={16} className="animate-spin" /> : <Clapperboard size={16} />} <span className="truncate tabular-nums">{animRun ? tr(`Creo il post animato ${Math.round(animRun.p * 100)}%`, `Making the animated post ${Math.round(animRun.p * 100)}%`) : tr('Crea il post animato', 'Make the animated post')}</span></button>
               ) : (
-                <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} min-w-0 px-5 ${vWorking ? 'bg-canvas text-ink hover:bg-line' : 'bg-ink text-white hover:bg-brand'}`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} <span className="truncate">{saveLabel}</span></button>
+                <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} <span className="truncate">{saveLabel}</span></button>
               )}
             </div>
           )}

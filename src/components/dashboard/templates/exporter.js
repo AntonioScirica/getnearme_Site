@@ -491,7 +491,8 @@ export async function exportToPng(element, size, opts = {}) {
 
 export async function exportStaticToVideo(templateEl, size, opts = {}) {
   const html2canvas = (await import('html2canvas')).default;
-  const { duration = 15, animStyle = 'slide-up', photoSrc, videoSrc, blurredSrc, fitCover = false, onProgress, signal, onOverlayCaptured } = opts;
+  // frame: inquadratura della foto (zoom e punto, come exportToPng); senza, cover/contain come sempre
+  const { duration = 15, animStyle = 'slide-up', photoSrc, videoSrc, blurredSrc, fitCover = false, frame = null, onProgress, signal, onOverlayCaptured } = opts;
   const style = ANIMATION_STYLES.find(s => s.id === animStyle) || ANIMATION_STYLES[0];
   const w = size?.w || 1080;
   const h = size?.h || 1350;
@@ -793,8 +794,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     const compCtx = compCanvas.getContext('2d');
     if (hasCover && fgImg) {
       compCtx.drawImage(preBlurCanvas, 0, 0);
-      if (fitCover) imgCover(compCtx, fgImg, w, h);
-      else imgContain(compCtx, fgImg, w, h);
+      imgFit(compCtx, fgImg, w, h, fitCover, frame);
       compCtx.drawImage(gradientCanvas, 0, 0);
     } else {
       // Cover video (e no-cover): sorgente blur = primo frame video + overlay scuro
@@ -903,8 +903,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       blurCtx.drawImage(preBlurCanvas, 0, 0);
       blurCtx.restore();
       ctx.drawImage(blurCanvas, 0, 0);
-      if (fitCover) imgCover(ctx, fgImg, w, h);
-      else imgContain(ctx, fgImg, w, h);
+      imgFit(ctx, fgImg, w, h, fitCover, frame);
     }
     // Frame 0 = solo scena (cover + overlay). Le box NON si disegnano qui:
     // entrano animate (alpha 0 → 1) nel loop, niente flash statico iniziale.
@@ -921,7 +920,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       if (onProgress) onProgress(1);
       if (!aborted && recorder.state !== 'inactive') { try { recorder.stop(); } catch { /* noop */ } }
       setTimeout(finish, 1200); // fallback se onstop non scatta
-    }, durationMs + 1500);
+    }, durationMs + 2500);
     recorder.onstop = () => { clearTimeout(watchdog); finish(); };
 
     // Ogni layer appartiene al pannello glass che lo CONTIENE (centro dentro la
@@ -947,13 +946,23 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     const animatedPanels = new Set(panelDrive.keys());
     const startTimeOf = (i) => ELEM_START + i * ELEM_STAGGER;
 
+    // 30 fotogrammi al secondo, non uno per requestAnimationFrame: sugli schermi a 120 Hz l'encoder non stava
+    // dietro (06/10/2026: MP4 di 15 s che ne conteneva 4,4, il resto restava in coda e si perdeva allo stop)
+    const FRAME_MS = 1000 / 30;
+    let lastFrameAt = -Infinity;
+    let stopping = false;
     function drawFrame() {
-      if (aborted) return;
+      if (aborted || stopping) return;
       const elapsed = performance.now() - startTime;
       if (elapsed >= durationMs) {
-        if (recorder.state !== 'inactive') recorder.stop();
+        // un secondo all'encoder per finire i fotogrammi in coda (niente fotogrammi nuovi: la durata non cambia),
+        // altrimenti allo stop si perdeva l'ultimo secondo del video
+        stopping = true;
+        setTimeout(() => { if (recorder.state !== 'inactive') recorder.stop(); }, 1000);
         return;
       }
+      if (elapsed - lastFrameAt < FRAME_MS - 2) { requestAnimationFrame(drawFrame); return; }
+      lastFrameAt = elapsed;
 
       const t = elapsed / 1000;
       const progress = t / duration;
@@ -988,8 +997,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         ctx.translate(w / 2, h / 2);
         ctx.scale(fgScale, fgScale);
         ctx.translate(-w / 2, -h / 2);
-        if (fitCover) imgCover(ctx, fgImg, w, h);
-        else imgContain(ctx, fgImg, w, h);
+        imgFit(ctx, fgImg, w, h, fitCover, frame);
         ctx.restore();
       }
 
