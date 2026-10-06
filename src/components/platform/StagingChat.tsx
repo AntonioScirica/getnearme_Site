@@ -1,6 +1,7 @@
 'use client';
 
 import PlanCamera, { CamMark } from './PlanCamera';
+import { uid as uuid } from '@/lib/uid';
 import { CASA3D_ON } from '@/lib/casa3d/flag';
 import Casa3DFlow from './Casa3DFlow';
 import Casa3DViewer from './Casa3DViewer';
@@ -450,7 +451,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
-  const [chatId, setChatId] = useState(() => saved?.chatId ?? crypto.randomUUID()); // id della chat nello storico
+  const [chatId, setChatId] = useState(() => saved?.chatId ?? uuid()); // id della chat nello storico
   const credits = useCredits();
   const [base, setBase] = useState<string | null>(saved?.base ?? null); // immagine su cui lavora la prossima richiesta
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
@@ -592,7 +593,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   useEffect(() => {
     const reset = () => {
       setMsgs([]); setBase(null); setKind(null); setScene('interno'); setRoomState(null); setProject(null); setOrigin(null); setEmptyFrom(null);
-      clearZone(); setSelecting(false); setText(''); setChatId(crypto.randomUUID()); lastSaved.current = '';
+      clearZone(); setSelecting(false); setText(''); setChatId(uuid()); lastSaved.current = '';
       try { sessionStorage.removeItem(SAVE_KEY); } catch { /* niente */ }
     };
     window.addEventListener('agenteimmo:new-chat', reset);

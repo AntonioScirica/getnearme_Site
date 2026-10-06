@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { uid } from '@/lib/uid';
 import { supabase } from '@/lib/supabase';
 import { sectionOf, type Section } from '@/lib/platformSessions';
 
@@ -18,10 +19,10 @@ function sessionId(): string {
   const now = Date.now();
   try {
     const s = JSON.parse(sessionStorage.getItem(KEY) ?? 'null') as { id: string; at: number } | null;
-    const id = s && now - s.at < GAP ? s.id : crypto.randomUUID();
+    const id = s && now - s.at < GAP ? s.id : uid();
     sessionStorage.setItem(KEY, JSON.stringify({ id, at: now }));
     return id;
-  } catch { return crypto.randomUUID(); }
+  } catch { return uid(); }
 }
 
 function device(): string {
