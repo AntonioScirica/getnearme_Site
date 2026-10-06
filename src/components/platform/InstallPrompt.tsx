@@ -186,10 +186,9 @@ export default function InstallPrompt() {
   const inapp = variant.startsWith('inapp');
   const computer = variant === 'desktop' || variant === 'mac-safari';
   const direct = !!ev && (variant === 'android' || variant === 'desktop');
-  const title = inapp ? 'Apri Agente Immo nel browser' : computer ? 'Metti Agente Immo sul computer' : variant === 'ipad' ? 'Metti Agente Immo sul tablet' : 'Metti Agente Immo sul telefono';
+  const title = inapp ? 'Apri Agente Immo nel browser' : computer ? 'Agente Immo sul computer' : variant === 'ipad' ? 'Agente Immo sul tablet' : 'Agente Immo sul telefono';
   const sub = inapp ? 'Da qui dentro non si può installare. Aprila nel browser del telefono, ci vuole un attimo.'
-    : computer ? 'Si apre come un’app, nella sua finestra, con la sua icona.'
-    : 'Si apre come un’app, a tutto schermo, con la sua icona. Niente App Store.';
+    : ''; // solo il titolo: i passi sotto bastano
   const steps = STEPS[variant];
   const T = 'transition-[opacity,transform] duration-[var(--gnm-dur)] ease-[var(--gnm-ease)]';
 
@@ -207,7 +206,7 @@ export default function InstallPrompt() {
           <img src="/icon-192.png" alt="" className="h-14 w-14 shrink-0 rounded-[16px] ring-1 ring-black/5" />
           <div className="min-w-0 flex-1">
             <p id="install-title" className="text-lg font-semibold leading-snug text-ink">{title}</p>
-            <p className="mt-1 text-[15px] leading-snug text-muted">{sub}</p>
+            {sub && <p className="mt-1 text-[15px] leading-snug text-muted">{sub}</p>}
           </div>
           <button type="button" onClick={close} aria-label="Chiudi" className="-mr-2 -mt-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
