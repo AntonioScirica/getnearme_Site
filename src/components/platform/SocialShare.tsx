@@ -10,7 +10,7 @@
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Coins, Copy, Crop, Download, Facebook, Film, Instagram, Linkedin, Loader2, Maximize2, MessageCircle, Minimize2, Music2, Play, RotateCcw, Share2, Sparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Coins, Copy, Crop, Download, Facebook, Film, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, RotateCcw, Share2, Sparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
 import { exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
@@ -874,6 +874,33 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   };
   const onUp = () => { if (drag.current) { drag.current = null; commitFrame(); } };
 
+  const fr = curFrame ?? FRAME0;
+  const changed = !!curPhoto && !!frames[curPhoto.src] && JSON.stringify(frames[curPhoto.src]) !== JSON.stringify(FRAME0);
+  // inquadratura: barra compatta dentro l'anteprima (solo nel passo Foto), come negli editor delle app social
+  const frameBar = framable && stepIx === 1 ? (() => {
+    const z = live2.current?.src === curPhoto!.src ? live2.current.f.z : fr.z;
+    const setZ = (v: number) => setFrame(curPhoto!.src, { z: Math.min(3, Math.max(1, Math.round(v * 100) / 100)) });
+    const seg = (on: boolean, fit: 'cover' | 'contain', Icon: typeof Crop, label: string) => (
+      <button type="button" role="radio" aria-checked={on} onClick={() => setFrame(curPhoto!.src, { fit })} title={label}
+        className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${on ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}><Icon size={14} /> {label}</button>
+    );
+    return (
+      <div className="blur-in absolute inset-x-3 bottom-3 z-10 flex flex-wrap items-center justify-center gap-1 rounded-full bg-white/95 p-1 shadow-lg ring-1 ring-black/5 backdrop-blur" onPointerDown={e => e.stopPropagation()}>
+        <div role="radiogroup" aria-label={tr('Come mostrare la foto', 'How to show the photo')} className="flex">
+          {seg(curFit, 'cover', Maximize2, tr('Riempi', 'Fill'))}
+          {seg(!curFit, 'contain', Minimize2, tr('Intera', 'Whole'))}
+        </div>
+        <span className="mx-1 h-5 w-px bg-black/10" aria-hidden />
+        <button type="button" onClick={() => setZ(z - 0.1)} disabled={z <= 1} aria-label={tr('Meno zoom', 'Zoom out')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomOut size={15} /></button>
+        <input type="range" min={1} max={3} step={0.01} defaultValue={fr.z} key={`${curPhoto!.src}-${fr.z}`} aria-label={tr('Zoom', 'Zoom')}
+          onChange={e => frameLive(curPhoto!.src, { ...(live2.current?.src === curPhoto!.src ? live2.current.f : fr), z: Number(e.target.value) }, curFit)}
+          onPointerUp={commitFrame} onKeyUp={commitFrame} className="h-8 w-20 accent-[#537eec] sm:w-24" />
+        <button type="button" onClick={() => setZ(z + 0.1)} disabled={z >= 3} aria-label={tr('Più zoom', 'Zoom in')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink disabled:opacity-30"><ZoomIn size={15} /></button>
+        {changed && <button type="button" onClick={() => setFrames(o => { const c = { ...o }; delete c[curPhoto!.src]; return c; })} aria-label={tr('Ripristina', 'Reset')} title={tr('Ripristina', 'Reset')} className="flex h-8 w-8 items-center justify-center rounded-full text-ink/70 hover:text-ink"><RotateCcw size={14} /></button>}
+      </div>
+    );
+  })() : null;
+
   const preview = (
     <div className="flex flex-col items-center gap-3">
       {tabs}
@@ -882,6 +909,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           ? <span className="px-6 text-center text-sm text-muted">{tr('Scegli almeno una foto', 'Choose at least one photo')}</span>
           : <MorphPost build={shown} boxW={boxW} boxH={boxH} fw={fmt.w} fh={fmt.h} />}
         {framable && <div onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-hidden className="absolute inset-3 cursor-grab touch-none active:cursor-grabbing" />}
+        {frameBar}
         {!showVid && nSlides > 1 && (
           <>
             <button type="button" onClick={() => setSlideIx(Math.max(0, six - 1))} disabled={!six} aria-label={tr('Slide precedente', 'Previous slide')} className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink shadow-md ease-smooth transition-opacity disabled:opacity-0"><ChevronLeft size={18} /></button>
@@ -952,39 +980,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </div>
   );
 
-  const fr = curFrame ?? FRAME0;
-  const changed = !!curPhoto && !!frames[curPhoto.src] && JSON.stringify(frames[curPhoto.src]) !== JSON.stringify(FRAME0);
-  const fitBtn = (on: boolean) => `flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors sm:text-sm ${on ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`;
-  const framePanel = (
-    <section className="rounded-[32px] bg-canvas p-4">
-      <div className="flex min-h-8 items-center justify-between gap-2">
-        <h4 className="flex items-center gap-2 text-sm font-semibold"><Crop size={16} /> {fmt.multi && curPhoto ? tr(`Inquadratura della foto ${six + 1}`, `Framing of photo ${six + 1}`) : tr('Inquadratura della foto', 'Photo framing')}</h4>
-        {framable && changed && <button type="button" onClick={() => setFrames(o => { const c = { ...o }; delete c[curPhoto!.src]; return c; })} className="flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-muted ease-smooth transition-colors hover:bg-white hover:text-ink"><RotateCcw size={13} /> {tr('Ripristina', 'Reset')}</button>}
-      </div>
-      {framable ? (
-        <div className="mt-3 space-y-3">
-          <div role="radiogroup" aria-label={tr('Come mostrare la foto', 'How to show the photo')} className="flex gap-1 rounded-full bg-black/[.05] p-1">
-            <button type="button" role="radio" aria-checked={curFit} onClick={() => setFrame(curPhoto!.src, { fit: 'cover' })} className={fitBtn(curFit)}><Maximize2 size={15} /> {tr('A tutto schermo', 'Full screen')}</button>
-            <button type="button" role="radio" aria-checked={!curFit} onClick={() => setFrame(curPhoto!.src, { fit: 'contain' })} className={fitBtn(!curFit)}><Minimize2 size={15} /> {tr('Foto intera', 'Whole photo')}</button>
-          </div>
-          <label className="flex items-center gap-3">
-            <ZoomOut size={16} className="shrink-0 text-muted" aria-hidden />
-            <input type="range" min={1} max={3} step={0.01} defaultValue={fr.z} key={`${curPhoto!.src}-${fr.z}`} aria-label={tr('Zoom', 'Zoom')}
-              onChange={e => frameLive(curPhoto!.src, { ...(live2.current?.src === curPhoto!.src ? live2.current.f : fr), z: Number(e.target.value) }, curFit)}
-              onPointerUp={commitFrame} onKeyUp={commitFrame} className="h-10 min-w-0 flex-1 accent-[var(--color-brand,#537eec)]" />
-            <ZoomIn size={16} className="shrink-0 text-muted" aria-hidden />
-          </label>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-muted">{tr('Trascina la foto nell’anteprima per scegliere cosa si vede.', 'Drag the photo in the preview to choose what shows.')}</p>
-            {fmt.multi && slidesPhotos.length > 1 && <button type="button" onClick={() => setFrames(o => ({ ...o, ...Object.fromEntries(slidesPhotos.map(p => [p.src, { ...fr }])) }))} className="flex h-9 items-center rounded-full bg-white px-4 text-xs font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-line">{tr('Applica a tutte', 'Apply to all')}</button>}
-          </div>
-        </div>
-      ) : (
-        <p className="mt-1 text-xs text-muted">{shown?.kind === 'contact' ? tr('La slide dei contatti non ha foto.', 'The contacts slide has no photo.') : tr('Con questa grafica la foto sta in una cornice, l’inquadratura è automatica.', 'This design puts the photo in a frame, framing is automatic.')}</p>
-      )}
-    </section>
-  );
-
   const stepFoto = (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -997,11 +992,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         {anyMulti && (
           <div className="flex gap-1">
             <button type="button" onClick={() => setSel(photos.slice(0, MAX_PHOTOS).map(p => p.src))} className="h-9 rounded-full px-3 text-xs font-semibold text-brand ease-smooth transition-colors hover:bg-brand/10">{tr('Seleziona tutte', 'Select all')}</button>
+            {framable && slidesPhotos.length > 1 && <button type="button" onClick={() => setFrames(o => ({ ...o, ...Object.fromEntries(slidesPhotos.map(p => [p.src, { ...fr }])) }))} title={tr('Stessa inquadratura su tutte le foto', 'Same framing on every photo')} className="h-9 rounded-full px-3 text-xs font-semibold text-brand ease-smooth transition-colors hover:bg-brand/10">{tr('Inquadratura a tutte', 'Framing to all')}</button>}
             <button type="button" onClick={() => setSel([])} disabled={!sel.length} className="h-9 rounded-full px-3 text-xs font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink disabled:opacity-40">{tr('Togli tutte', 'Clear all')}</button>
           </div>
         )}
       </div>
-      {framePanel}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {photos.map(p => {
           const i = gridSel.indexOf(p);
