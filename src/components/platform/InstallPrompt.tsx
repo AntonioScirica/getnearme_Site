@@ -52,8 +52,8 @@ const STEPS: Record<Variant, Step[]> = {
   ios26: [
     { icon: MoreHorizontal, text: <>Tocca {b('i tre puntini')} in basso a destra, accanto all&apos;indirizzo</> },
     { icon: Share, text: <>Tocca {b('Condividi')}</> },
-    { icon: SquarePlus, text: <>Scorri e tocca {b('Aggiungi alla schermata Home')}. Non lo vedi? Tocca prima {b('Altro')}</> },
-    { text: <>Lascia acceso {b('Apri come app web')} e tocca {b('Aggiungi')}</> },
+    { icon: SquarePlus, text: <>Tocca {b('Visualizza altro')}, poi {b('Aggiungi alla schermata Home')}</> },
+    { text: <>Tocca {b('Aggiungi')} in alto a destra</> },
   ],
   ios: [
     { icon: Share, text: <>Tocca {b('Condividi')} in basso al centro</> },
@@ -67,7 +67,7 @@ const STEPS: Record<Variant, Step[]> = {
   ],
   'ios-other': [
     { icon: Share, text: <>Tocca {b('Condividi')} in alto a destra, nella barra dell&apos;indirizzo</> },
-    { icon: SquarePlus, text: <>Tocca {b('Aggiungi alla schermata Home')}. Non lo vedi? Tocca prima {b('Altro')}</> },
+    { icon: SquarePlus, text: <>Tocca {b('Aggiungi alla schermata Home')}. Non lo vedi? Tocca prima {b('Visualizza altro')}</> },
     { text: <>Tocca {b('Aggiungi')}</> },
   ],
   android: [
