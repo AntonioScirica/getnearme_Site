@@ -5,6 +5,7 @@ import { geminiFreeJson } from '@/lib/geminiFree'
 import { deepProfanity } from '@/lib/profanity'
 import { fitCaption, ruleOf, SOCIAL_RULES, type SocialId } from '@/lib/socialRules'
 import { isPlatformAdmin } from '@/lib/platformAdmins'
+import { plainCaption } from '@/lib/socialPlain'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export const maxDuration = 60
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
   try { b = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const text = JSON.stringify(b.fields ?? null)
   if (!b.fields || typeof b.fields !== 'object' || text.length > 12000) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
-  if (!isPlatformAdmin(data.user.email) && await overDailyCap(data.user.id, ['social_caption'], Number(process.env.SOCIAL_CAPTION_DAILY_LIMIT) || 40)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
+  const capped = !isPlatformAdmin(data.user.email) && await overDailyCap(data.user.id, ['social_caption'], Number(process.env.SOCIAL_CAPTION_DAILY_LIMIT) || 40)
 
   const social: SocialId = typeof b.social === 'string' && b.social in SOCIAL_RULES ? b.social as SocialId : 'instagram'
   const video = b.video === true // TikTok: 2.200 caratteri se il post e' il video, 4.000 per le foto
@@ -80,10 +81,13 @@ export async function POST(req: NextRequest) {
     .replace(/(\d{1,3}(?:[.\s]\d{3})+|\d{4,})\s*(?:€|euro\b|EUR\b)/gi, (_, n) => euro(n))
     .trim()
   const fit = (s: string) => fitCaption(clean(s), ruleOf(social, video))
+  // tetto finito o AI giu': testo a schema fisso coi dati, mai un errore (lib/socialPlain)
+  const plainOut = () => { let f: Record<string, unknown> = b.fields as Record<string, unknown>; try { f = JSON.parse(plain) } catch { /* dati gia' puliti dal client */ } return NextResponse.json({ testo: fit(plainCaption(f, social)), plain: true }) }
+  if (capped) return plainOut()
 
   const free = await geminiFreeJson<Out>({ system: SYSTEM, text: input, userId: data.user.id, kind: 'social_caption', maxTokens: 1500 })
   if (ok(free)) return NextResponse.json({ testo: fit(free.testo) })
   const r = await generateJson<Out>({ system: SYSTEM, text: input, schema: SCHEMA, maxTokens: 1200, usage: { userId: data.user.id, kind: 'social_caption' }, model: 'claude-haiku-4-5-20251001' })
-  if (!r.ok || !ok(r.data)) { console.error('social-caption', r.ok ? 'vuoto' : `${r.error} ${r.detail ?? ''}`.slice(0, 400)); return NextResponse.json({ error: 'ai_failed' }, { status: 502 }) }
+  if (!r.ok || !ok(r.data)) { console.error('social-caption', r.ok ? 'vuoto' : `${r.error} ${r.detail ?? ''}`.slice(0, 400)); return plainOut() }
   return NextResponse.json({ testo: fit(r.data.testo) })
 }
