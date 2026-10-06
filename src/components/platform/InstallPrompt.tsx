@@ -188,7 +188,7 @@ export default function InstallPrompt() {
   const direct = !!ev && (variant === 'android' || variant === 'desktop');
   const title = inapp ? 'Apri Agente Immo nel browser' : computer ? 'Agente Immo sul computer' : variant === 'ipad' ? 'Agente Immo sul tablet' : 'Agente Immo sul telefono';
   const sub = inapp ? 'Da qui dentro non si può installare. Aprila nel browser del telefono, ci vuole un attimo.'
-    : computer ? 'Si apre come un’app.' : 'Si apre come un’app, senza App Store.';
+    : computer ? 'Come un’app.' : 'Come un’app, senza App Store.';
   const steps = STEPS[variant];
   const T = 'transition-[opacity,transform] duration-[var(--gnm-dur)] ease-[var(--gnm-ease)]';
 
