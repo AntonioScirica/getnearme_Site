@@ -3,6 +3,9 @@ import { getPublishedPosts } from "@/lib/blog";
 import { GUIDES } from "@/lib/guides";
 import { CITIES } from "@/lib/omiCitta";
 
+// rigenerata ogni ora (come indice e articoli del blog): gli articoli pubblicati dal database entrano senza un nuovo deploy
+export const revalidate = 3600;
+
 const baseUrl = "https://agenteimmo.me";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
