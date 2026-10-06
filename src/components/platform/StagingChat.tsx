@@ -30,7 +30,7 @@ import { fetchMedia } from './MediaView';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { uploadDataUrl } from '@/lib/imageUpload';
-import { videoDuration, videoFrame, videoGrid, videoThumbs } from '@/lib/videoFrames';
+import { sharpestAt, videoDuration, videoFrame, videoGrid, videoThumbs } from '@/lib/videoFrames';
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing';
 import { isFurnishing, isRestyle } from '@/lib/stagingPrompts';
 import { pageLang, pageLocale, tr } from './i18n';
@@ -106,7 +106,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest; at?: number; recover?: boolean }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; renderAt?: number; queued?: boolean; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'season' | 'mode' | 'previews' | 'frames' | 'render' | 'rphotos' | 'rdata'; photo: string; season?: Season; reel?: ReelState & { prevUrl?: string }; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
+  | { id: string; role: 'video'; renderAt?: number; queued?: boolean; step: 'template' | 'anim' | 'warn' | 'upload' | 'vchoice' | 'exit' | 'room' | 'season' | 'mode' | 'previews' | 'frames' | 'render' | 'rphotos' | 'rdata'; photo: string; season?: Season; reel?: ReelState & { prevUrl?: string }; anim?: VideoAnim; plan?: string; room?: string; look?: string; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string; why?: 'none' | 'stays' } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk' | 'fpv' | 'planwalk' | 'ristruttura' | 'reel' | 'venduto' | 'drone' | 'stagioni' | 'casa3d';
@@ -651,7 +651,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const waiting = [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && x.step === 'upload');
       if (waiting) {
         // "Con te in video" aspettava il video: il messaggio d'attesa lascia il posto al video e alla scelta del momento
-        const next: VideoMsg = { ...waiting, id: uid(), step: waiting.anim === 'walk' ? 'upload' : 'exit', err: undefined };
+        const next: VideoMsg = { ...waiting, id: uid(), step: waiting.anim === 'walk' ? 'upload' : 'exit', err: undefined, agent: undefined };
         setMsgs(ms => [...ms.filter(x => x.id !== waiting.id), { id: um, role: 'user', video: URL.createObjectURL(f) }, next]);
         toBottom();
         void agentUpload(next, f, um);
@@ -887,8 +887,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const g = await videoGrid(ag.video);
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
       if (e.at === undefined) throw new Error(e.error);
-      if (!e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: tr('Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.', 'I can\'t see the moment you leave the frame: at the end of the video step out and leave the room empty for 2-3 seconds.') }); return; }
-      patchV(m.id, { agent: { ...ag, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady, landscape: g.tw > g.th } });
+      // nessuna uscita: un messaggio e una pill (video senza persona -> Cambia stile con lo stesso video; ancora dentro -> un altro video)
+      if (!e.exit) {
+        const none = e.why === 'none';
+        patchV(m.id, { step: 'upload', agent: { up: ag.up, video: ag.video, token: ag.token, why: none ? 'none' : 'stays' }, err: none
+          ? tr('Nel video non ti vedo. Per Con te in video parla in camera e poi esci dall’inquadratura. Un video che gira la stanza va bene per Cambia stile.', 'I can\'t see you in the video. For Starring you, talk to camera and then step out of frame. A video walking through the room works for Change style.')
+          : tr('Alla fine del video sei ancora nell’inquadratura. Dopo aver parlato esci e lascia la stanza sola per 1-2 secondi, anche con il telefono in mano.', 'At the end of the video you are still in frame. After talking, step out and leave the room empty for 1-2 seconds, even with the phone in hand.') });
+        return;
+      }
+      // telefono in mano: tra l'uscita e mezzo secondo dopo si sceglie il fotogramma meno mosso (foto della stanza e taglio)
+      const at = await sharpestAt(ag.video, e.at, Math.min(e.at + 0.4, e.duration - 0.05)).catch(() => e.at as number);
+      patchV(m.id, { agent: { ...ag, at, duration: e.duration, exit: e.exit, steady: e.steady, landscape: g.tw > g.th } });
       setTimeout(toBottom, 80); // compare la timeline: la si porta in vista
     } catch {
       patchV(m.id, { step: 'upload', agent: undefined, err: tr('Non sono riuscito a leggere il video, riprova.', 'I couldn\'t read the video, please try again.') });
@@ -1344,12 +1353,23 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               </ol>
                               </>
                             : <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted">
-                                <li><b className="font-semibold text-ink">{tr('Telefono fermo', 'Phone steady')}</b>{tr(', appoggiato o su un cavalletto, con la stanza intera', ', propped up or on a tripod, with the whole room in frame')}</li>
+                                <li><b className="font-semibold text-ink">{tr('Telefono in verticale', 'Phone vertical')}</b>{tr(', fermo o in mano, con la stanza intera', ', steady or in hand, with the whole room in frame')}</li>
                                 <li><b className="font-semibold text-ink">{tr('Parla in camera', 'Talk to camera')}</b>{tr(', anche pochi secondi', ', even just a few seconds')}</li>
-                                <li><b className="font-semibold text-ink">{tr('Esci dall’inquadratura', 'Step out of frame')}</b> {tr('e lascia la stanza sola 2-3 secondi: da lì si arreda', 'and leave the room empty for 2-3 seconds: that\'s where it gets furnished')}</li>
+                                <li><b className="font-semibold text-ink">{tr('Esci dall’inquadratura', 'Step out of frame')}</b> {tr('e lascia la stanza sola 1-2 secondi: da lì si arreda', 'and leave the room empty for 1-2 seconds: that\'s where it gets furnished')}</li>
                               </ol>)}
                         </div>
                         {m.err && <ErrLine err={m.err} className="pt-3" />}
+                        {m.err && m.anim === 'agent' && m.agent?.why && (
+                          <div className="flex flex-wrap gap-2 pt-3">
+                            {m.agent.why === 'none' && m.agent.video
+                              ? <button type="button" onClick={() => { if (short(m, fullCr('walk'))) return; patchV(m.id, { step: 'warn', anim: 'walk', picks: [{ label: tr('Cambia stile', 'Change style'), icon: 'cam' }], err: undefined }); }}
+                                  className="rise flex items-center gap-2 rounded-full bg-white py-2 pl-3 pr-4 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white"><Palette size={15} className="shrink-0" />{tr('Usa Cambia stile', 'Use Change style')}<Cr n={fullCr('walk')} tight /></button>
+                              : <label className="rise flex cursor-pointer items-center gap-2 rounded-full bg-white py-2 pl-3 pr-4 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white">
+                                  <VideoIcon size={15} className="shrink-0" />{tr('Manda un altro video', 'Send another video')}
+                                  <input type="file" accept="video/*" className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />
+                                </label>}
+                          </div>
+                        )}
                       </div>
                     )}
                     {m.step === 'warn' && (
@@ -1429,7 +1449,6 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               <button disabled={!!a?.busy || a?.at === undefined || (m.step === 'exit' && a?.exit === false)} onClick={async () => { if (await agentRoom(m)) patchV(m.id, { step: 'room' }); }}
                                 className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a?.busy && <Loader2 size={14} className="animate-spin" />}{tr('Avanti', 'Next')}</button>
                             </div>
-                            {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">{tr('Il telefono si muove nel video: la trasformazione può venire male.', 'The phone moves in the video: the transformation may not come out well.')}</p>}
                           </div>
                           <div className="relative -order-1 aspect-video w-full overflow-hidden rounded-3xl bg-ink shadow-sm ring-1 ring-black/5">
                             {list.length > 0 && <img src={list[Math.min(list.length - 1, Math.floor((pos / 100) * list.length))]} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />}

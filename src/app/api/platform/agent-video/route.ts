@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   const userId = token ? (await admin.auth.getUser(token)).data.user?.id : null
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  const b = await req.json().catch(() => null) as { phase?: string; type?: string; key?: string; projectId?: string; token?: string; at?: number; styled?: string; room?: string; grid?: string; n?: number; cols?: number; tw?: number; th?: number } | null
+  const b = await req.json().catch(() => null) as { phase?: string; type?: string; key?: string; projectId?: string; token?: string; at?: number; styled?: string; room?: string; grid?: string; n?: number; cols?: number; tw?: number; th?: number; end?: number } | null
   if (!b) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   const bad = (r: { error?: string }, ok: object) => NextResponse.json(r.error ? r : ok, r.error ? { status: r.error === 'bad_request' ? 400 : r.error === 'no_exit' || r.error === 'too_short' ? 422 : 502 } : undefined)
   if (b.phase === 'upload') {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (b.phase === 'exit') {
     const m = typeof b.grid === 'string' ? b.grid.match(/^data:image\/jpeg;base64,(.+)$/) : null
     if (!m || m[1].length > 3_000_000) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
-    const r = await exitFromGrid(userId, Buffer.from(m[1], 'base64'), Number(b.n), Number(b.cols), Number(b.tw), Number(b.th))
+    const r = await exitFromGrid(userId, Buffer.from(m[1], 'base64'), Number(b.n), Number(b.cols), Number(b.tw), Number(b.th), typeof b.end === 'number' ? b.end : undefined)
     return bad(r, r)
   }
   if (b.phase === 'render') {

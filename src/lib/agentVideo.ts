@@ -66,18 +66,55 @@ export async function prepare(owner: string, srcKey: string, projectId: string):
   }
 }
 
-// 2b. punto di uscita da una griglia di fotogrammi fatta dal browser (uno ogni mezzo secondo, piccoli): Haiku dice dove
-// c'e' una persona; il telefono e' fermo se lo sfondo non si sposta (mediana sotto il 2,5%)
-export async function exitFromGrid(logUser: string, grid: Buffer, n: number, cols: number, tw: number, th: number): Promise<{ at?: number; exit?: boolean; steady?: boolean; duration?: number; error?: string }> {
-  if (!(n >= 4 && n <= MAX_SECONDS / STEP + 2 && cols > 0 && tw > 0 && th > 0)) return { error: 'too_short' }
+// 2b. punto di uscita da una griglia di fotogrammi fatta dal browser (uno ogni mezzo secondo, piccoli, piu' l'ultimo del
+// video all'istante `end`): Sonnet dice dove c'e' una persona. Il telefono puo' muoversi (06/10): l'uscita si trova
+// dalla persona, non dalla differenza tra fotogrammi; steady (sfondo fermo, mediana sotto il 2,5%) e' solo informativo.
+// why: perche' non c'e' l'uscita (none = nessuna persona nel video, stays = alla fine c'e' ancora)
+export async function exitFromGrid(logUser: string, grid: Buffer, n: number, cols: number, tw: number, th: number, end?: number): Promise<{ at?: number; exit?: boolean; steady?: boolean; duration?: number; why?: 'none' | 'stays'; error?: string }> {
+  if (!(n >= 4 && n <= MAX_SECONDS / STEP + 3 && cols > 0 && tw > 0 && th > 0)) return { error: 'too_short' }
+  const last = typeof end === 'number' && end > (n - 2) * STEP && end <= MAX_SECONDS + 1 ? end : undefined
+  const time = (k: number) => (k === n - 1 && last !== undefined ? last : k * STEP)
   const frames = await Promise.all(Array.from({ length: n }, (_, k) => sharp(grid).extract({ left: (k % cols) * tw, top: Math.floor(k / cols) * th, width: tw, height: th }).png().toBuffer()))
-  const person = await whoIsThere(frames, logUser)
-  if (!person) return { error: 'ai_failed' }
+  const grid0 = await whoIsThere(frames, logUser)
+  if (!grid0) return { error: 'ai_failed' }
+  // la coda (dove di solito si esce) si ricontrolla un fotogramma alla volta: sulla griglia lunga Sonnet tende a dare
+  // "persona" a tutti i riquadri, anche all'ultimo con la stanza vuota (06/10, terrazza e stanza scura)
+  // (se sulla griglia non c'e' mai nessuno il video e' senza persona: niente controllo, un falso "si'" inventerebbe un'uscita)
+  const tail = grid0.some(Boolean) ? Array.from({ length: Math.min(TAIL, n) }, (_, j) => n - Math.min(TAIL, n) + j) : []
+  const single = await Promise.all(tail.map(k => personIn(frames[k], logUser)))
+  const person = grid0.map((p, k) => { const j = tail.indexOf(k); return j >= 0 && single[j] !== null ? single[j]! : p })
+  // uscita: primo fotogramma senza persona dopo averla vista, con la stanza ancora vuota nel successivo (o fine video)
   let exit = -1
   for (let i = 1; i < n; i++) if (person.slice(0, i).some(Boolean) && !person[i] && !person[i + 1]) { exit = i; break }
   const ref = frames[exit < 0 ? Math.floor(n / 2) : exit]
   const shifts = (await Promise.all(frames.filter((_, k) => k % 2 === 0).map(f => measureShift(ref, f, 0.08).catch(() => ({ dx: 0, dy: 0, gain: 0 }))))).map(x => Math.hypot(x.dx, x.dy)).sort((a, b) => a - b)
-  return { at: exit < 0 ? Math.round(n * STEP * 5) / 10 : Math.round(exit * STEP * 10) / 10, exit: exit >= 0, steady: (shifts[Math.floor(shifts.length / 2)] ?? 0) < 0.025, duration: n * STEP }
+  const duration = last ?? n * STEP
+  return {
+    at: exit < 0 ? Math.round(duration * 5) / 10 : Math.round(time(exit) * 100) / 100, exit: exit >= 0, steady: (shifts[Math.floor(shifts.length / 2)] ?? 0) < 0.025, duration,
+    ...(exit < 0 ? { why: person.some(Boolean) ? 'stays' as const : 'none' as const } : {}),
+  }
+}
+
+// un solo fotogramma: c'e' una persona? (null = risposta non letta, vale la griglia)
+const TAIL = 6
+async function personIn(frame: Buffer, logUser: string): Promise<boolean | null> {
+  const t0 = Date.now()
+  try {
+    const img = await sharp(frame).jpeg({ quality: 85 }).toBuffer()
+    const resp = await new Anthropic().messages.create({
+      model: 'claude-sonnet-5', max_tokens: 5,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img.toString('base64') } },
+        { type: 'text', text: 'Is a person, or any part of a person (body, arm, leg, face), visible in this video frame? Chairs, lamps, clothes on furniture, shadows and reflections are not a person. Reply only yes or no.' },
+      ] }],
+    })
+    await logUsage({ userId: logUser, kind: 'agente_uscita' }, false, Date.now() - t0, { input: resp.usage.input_tokens, output: resp.usage.output_tokens }, true, 'claude-sonnet-5').catch(() => {})
+    const txt = resp.content.map(b => (b.type === 'text' ? b.text : '')).join('').trim().toLowerCase()
+    return txt.startsWith('yes') ? true : txt.startsWith('no') ? false : null
+  } catch (e) {
+    console.error('agente persona fotogramma', e)
+    return null
+  }
 }
 
 // immagini PNG una dopo l'altra (image2pipe): si separano sulla firma PNG
@@ -104,13 +141,14 @@ async function whoIsThere(frames: Buffer[], logUser: string): Promise<boolean[] 
       model: 'claude-sonnet-5', max_tokens: 1500,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: grid.toString('base64') } },
-        { type: 'text', text: `These are ${frames.length} numbered frames of a video, left to right, top to bottom. For each frame, is a person (or part of a person: body, arm, face) visible? Reply only with JSON {"person": [numbers of the frames with a person]}.` },
+        { type: 'text', text: `These are ${frames.length} numbered frames of a video, left to right, top to bottom. The camera may be handheld and move, and the person usually walks out of the shot near the end. Look at each frame on its own: is a person (or part of a person: body, arm, face) visible in it? Chairs, lamps, clothes on furniture, shadows and reflections are not a person. Reply only with JSON {"person": [${frames.length} values true/false, frame 1 first]}.` },
       ] }],
     })
     await logUsage({ userId: logUser, kind: 'agente_uscita' }, false, Date.now() - t0, { input: resp.usage.input_tokens, output: resp.usage.output_tokens }, true, 'claude-sonnet-5').catch(() => {})
     const txt = resp.content.map(b => (b.type === 'text' ? b.text : '')).join('')
-    const nums = (JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { person?: number[] }).person ?? []
-    return frames.map((_, k) => nums.includes(k + 1))
+    const list = (JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { person?: unknown[] }).person ?? []
+    // risposta per fotogramma (06/10: con l'elenco dei numeri Sonnet metteva tutti i riquadri, anche l'ultimo vuoto)
+    return frames.map((_, k) => list[k] === true)
   } catch (e) {
     console.error('agente persona', e)
     return null
