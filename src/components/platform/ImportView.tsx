@@ -137,7 +137,8 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Nuovo immobile nella tua vetrina', 'New property in your showcase')}</a>
+      {/* si arriva dalla home o da Nuovo immobile: Indietro torna da dove si e' venuti (in home se si apre il link diretto) */}
+      <a href="#/" onClick={e => { if (history.length > 1) { e.preventDefault(); history.back(); } }} className="inline-flex items-center gap-1 text-sm text-brand hover:text-brand/70"><ArrowLeft size={16} /> {tr('Indietro', 'Back')}</a>
       <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">{tr('Importa i tuoi immobili', 'Import your properties')}</h1>
       <p className="mt-1 text-muted">{mode === 'link' ? tr('Incolla i link degli annunci: leggiamo dati e foto dal portale e li mettiamo in vetrina.', 'Paste the listing links: we read the details and photos from the portal and add them to your showcase.') : tr('Carica l\u2019export del tuo gestionale: riconosciamo le colonne da soli, tu controlli e confermi.', 'Upload the export from your CRM: we recognise the columns, you check and confirm.')}</p>
       <div className="mt-5 flex w-fit rounded-full bg-canvas p-1">
