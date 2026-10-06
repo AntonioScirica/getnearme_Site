@@ -9,7 +9,7 @@
 //     riscontro: se troppi, la schermata di correzione lo segnala (confronto con il cursore dell'originale).
 import sharp from 'sharp'
 import { dist0 } from './raster'
-import { clone, inPoly, isBridge, touchAir } from './build'
+import { clone, inPoly, isBridge, quad, touchAir } from './build'
 import type { Pt, RawPlan } from './types'
 
 type Img = { dark: Uint8Array; edge: Uint8Array; dt: Float32Array; w: number; h: number }
@@ -340,9 +340,10 @@ export async function removeFakeWalls(raw0: RawPlan, original: Buffer, merge: (r
   // doppia linea); un muro finto ha al piu' una linea sottile al centro. Lo spessore del ridisegno puo' non coincidere con
   // quello disegnato, quindi si guarda tutta la fascia (+-3 cm) e si misura l'ampiezza dell'inchiostro, non le due facce.
   const ppmL = pxPerM(T), px = 1 / ppmL
-  const faces = (w: { a: Pt; b: Pt; t: number }) => {
+  // minW: ampiezza minima dell'inchiostro in metri (fuori casa: una linea singola del lotto, anche marcata, non e' un muro)
+  const faces = (w: { a: Pt; b: Pt; t: number }, minW = 0) => {
     const { L, d, n } = frame(w.a, w.b); let p = 0, t = 0
-    const half = w.t / 2 + 0.04, need = Math.max(3 * px, 0.35 * w.t)
+    const half = Math.max(w.t / 2 + 0.04, minW ? 0.15 : 0), need = Math.max(3 * px, 0.35 * w.t, minW)
     for (let s = 0.1 * L; s <= 0.9 * L; s += 0.03) {
       const c: Pt = [w.a[0] + d[0] * s, w.a[1] + d[1] * s]; t++
       let lo = Infinity, hi = -Infinity
@@ -354,6 +355,8 @@ export async function removeFakeWalls(raw0: RawPlan, original: Buffer, merge: (r
 
   const roomAt = (q: Pt) => raw.rooms.find(r => inPoly(q[0], q[1], r.poly))?.id ?? -1
   const sides = (w: { a: Pt; b: Pt; t: number }) => { const { L, d, n } = frame(w.a, w.b), m: Pt = [w.a[0] + d[0] * L / 2, w.a[1] + d[1] * L / 2], off = w.t / 2 + 0.25; return [roomAt([m[0] + n[0] * off, m[1] + n[1] * off]), roomAt([m[0] - n[0] * off, m[1] - n[1] * off])] }
+  // stanze ai due lati lungo tutto il muro (a 1/4, 1/2, 3/4): un muro lungo puo' toccare una stanza solo da un capo
+  const sidesAlong = (w: { a: Pt; b: Pt; t: number }) => { const { L, d, n } = frame(w.a, w.b), off = w.t / 2 + 0.25; return [0.25, 0.5, 0.75].flatMap(k => { const m: Pt = [w.a[0] + d[0] * L * k, w.a[1] + d[1] * L * k]; return [roomAt([m[0] + n[0] * off, m[1] + n[1] * off]), roomAt([m[0] - n[0] * off, m[1] - n[1] * off])] }) }
   const typeOf = (id: number) => raw.rooms.find(r => r.id === id)?.type
   const real = (id: number) => id > 0 && typeOf(id) !== 'esterno'
   const isPar = (w: { label?: string }) => /^parapetto-/.test(w.label ?? '')
@@ -395,12 +398,28 @@ export async function removeFakeWalls(raw0: RawPlan, original: Buffer, merge: (r
     if (!hit) break
   }
   // i passi seguenti leggono l'inchiostro: solo se l'originale ha muri ben disegnati (non a matita, non scansioni sbiadite)
-  // 4. muri fuori dalla casa: le linee sottili del lotto (resede, confini) ridisegnate come muri spessi. Un muro senza
-  // inchiostro sull'originale che non separa una stanza vera da una stanza vera o dal fuori si toglie.
+  // 4a. strisce e aree aperte prese per stanze (tra il muro della casa e la linea del lotto, Castelfranco a sinistra): una
+  // stanza senza porte ne' finestre aperta verso fuori (senza muro) per almeno il 30% del contorno non e' chiusa, e' fuori casa.
+  for (const r of raw.rooms) {
+    if (!real(r.id) || raw.openings.some(o => o.rooms.includes(r.id))) continue
+    if (openToOutside(raw, r.id) >= 0.3) { r.type = 'esterno'; delete r.label }
+  }
+  // 4. muri fuori dalla casa: le linee del lotto (resede, confini) ridisegnate come muri spessi. Un muro che non tocca
+  // nessuna stanza vera e sull'originale e' al piu' una linea singola (meno di 10 cm d'inchiostro, anche se marcata) si
+  // toglie, anche senza nessuna area riconosciuta ai lati (linee del lotto che scendono oltre la casa).
   for (const w of [...raw.walls]) {
-    const [a, b] = sides(w), ra = real(a), rb = real(b)
-    if (ra || rb || ![a, b].some(i => i > 0) || isPar(w) || frame(w.a, w.b).L < 0.4) continue // almeno un lato su un'area esterna riconosciuta
-    if (faces(w) < 0.25) { raw.walls = raw.walls.filter(x => x !== w); removed++ }
+    if (isPar(w) || frame(w.a, w.b).L < 0.4) continue
+    if (!sidesAlong(w).some(real)) { if (faces(w, 0.1) < 0.25) { raw.walls = raw.walls.filter(x => x !== w); removed++ } continue }
+    // muro lungo che chiude una stanza solo per un tratto (la linea del lotto continua il muro della casa): si tiene il
+    // tratto con una stanza vera a fianco, il resto si toglie se e' una linea singola
+    const { L, d, n } = frame(w.a, w.b), off = w.t / 2 + 0.25, P = (s: number): Pt => [w.a[0] + d[0] * s, w.a[1] + d[1] * s]
+    const ok: number[] = []
+    for (let s = 0.05; s < L; s += 0.1) { const m = P(s); if (real(roomAt([m[0] + n[0] * off, m[1] + n[1] * off])) || real(roomAt([m[0] - n[0] * off, m[1] - n[1] * off]))) ok.push(s) }
+    const s0 = Math.max(0, Math.min(...ok) - 0.05 - w.t), s1 = Math.min(L, Math.max(...ok) + 0.05 + w.t)
+    const cut = [s0 > 1 ? [0, s0] : null, L - s1 > 1 ? [s1, L] : null].filter(Boolean) as number[][]
+    if (!cut.length || cut.some(([u, v]) => faces({ a: P(u), b: P(v), t: w.t }, 0.1) >= 0.25)) continue
+    const i = raw.walls.indexOf(w)
+    raw.walls[i] = { ...w, a: P(s0), b: P(s1) }; removed += cut.length
   }
   // 5. "stanze" chiuse solo da linee sottili verso il fuori: e' un'area esterna (resede, corte) ridisegnata come stanza.
   for (const r of [...raw.rooms]) {
@@ -429,4 +448,25 @@ export async function removeFakeWalls(raw0: RawPlan, original: Buffer, merge: (r
     if (other) tryMerge(other.id, r.id)
   }
   return { raw, removed, merged }
+}
+
+// parte del contorno di una stanza aperta verso fuori: niente muro ne' apertura sul bordo (entro 12 cm dalla faccia) e
+// fuori dal bordo (30 e 60 cm) nessuna stanza della casa. ~0 per una stanza vera (anche aperta su un'altra stanza, come
+// una scala nel soggiorno); molto per una striscia tra il muro della casa e la linea del lotto
+export function openToOutside(raw: RawPlan, id: number): number {
+  const r = raw.rooms.find(x => x.id === id)
+  if (!r) return 0
+  const solid = [...raw.walls, ...raw.openings].map(w => quad(w.a, w.b, w.t + 0.24))
+  const inside = (q: Pt) => raw.rooms.find(x => x.id !== id && x.type !== 'esterno' && inPoly(q[0], q[1], x.poly))
+  let c = 0, t = 0
+  for (let i = 0; i < r.poly.length; i++) {
+    const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length], { L, d, n } = frame(a, b)
+    for (let s = 0.025; s < L; s += 0.05) {
+      const q: Pt = [a[0] + d[0] * s, a[1] + d[1] * s]; t++
+      if (solid.some(P => inPoly(q[0], q[1], P))) continue
+      const sg = inPoly(q[0] + n[0] * 0.05, q[1] + n[1] * 0.05, r.poly) ? -1 : 1
+      if ([0.3, 0.6].every(k => !inside([q[0] + sg * n[0] * k, q[1] + sg * n[1] * k]))) c++
+    }
+  }
+  return t ? c / t : 0
 }

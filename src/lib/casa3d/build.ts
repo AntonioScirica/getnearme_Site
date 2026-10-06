@@ -296,6 +296,11 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
       if (near && near.d < 1.2) room = near.r
     }
     if (l.h >= 2.2 && l.h <= 4.5) hs.push(l.h)
+    // W.C. o bagno scritto in una stanza grande (scritta a cavallo, pianta un po' spostata): va al vano piccolo vicino
+    if (room && l.type === 'bagno' && room.area > 12) {
+      const small = p.rooms.filter(r => r.area <= 8 && r.type !== 'esterno').map(r => ({ r, d: polyDist([x, y], r.poly) })).filter(q => q.d < 0.8).sort((u, v) => u.d - v.d)[0]
+      if (small) room = small.r
+    }
     if (!room && (l.type === 'terrazzo' || l.type === 'balcone')) { (p.outside_labels ??= []).push({ text: l.text.slice(0, 40), type: l.type, x: l.x, y: l.y, ...(l.mq > 0 ? { mq: l.mq } : {}) }); continue }
     if (!room) continue
     const cur = best.get(room.id)
@@ -322,6 +327,38 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
     }
   }
   if (hs.length) { hs.sort((u, v) => u - v); p.height = Math.round(hs[Math.floor(hs.length / 2)] * 100) / 100 }
+  return p
+}
+
+// distanza di un punto dal contorno di una stanza (0 se dentro)
+function polyDist(q: Pt, poly: Pt[]): number {
+  if (inPoly(q[0], q[1], poly)) return 0
+  let best = Infinity
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length], { L, d } = frame(a, b), s = Math.max(0, Math.min(L, (q[0] - a[0]) * d[0] + (q[1] - a[1]) * d[1]))
+    best = Math.min(best, Math.hypot(q[0] - a[0] - d[0] * s, q[1] - a[1] - d[1] * s))
+  }
+  return best
+}
+
+// Tipi plausibili, senza AI (dopo le scritte, prima di guessRoomTypes). Un bagno senza scritta e senza sanitari disegnati
+// e' sospetto se supera 12 m2, o da 6 m2 in su quando la pianta scrive i bagni altrove (catastali: W.C. e Bagno scritti,
+// vani principali senza nome): torna 'stanza' e il tipo lo decide guessRoomTypes. Le porte di un bagno verso fuori sono
+// finestre (sulle catastali la finestra del W.C. sul resede veniva letta come porta d'ingresso).
+export function checkRoomTypes(raw: RawPlan): RawPlan {
+  const p = clone(raw)
+  const written = p.rooms.some(r => r.type === 'bagno' && r.label)
+  const fixtures = (r: (typeof p.rooms)[number]) => (p.furniture ?? []).some(f => ['wc', 'shower', 'bathtub'].includes(f.kind) && inPoly(f.at[0], f.at[1], r.poly))
+  for (const r of p.rooms) if (r.type === 'bagno' && !r.label && !fixtures(r) && (r.area > 12 || (written && r.area >= 6))) r.type = 'stanza'
+  // lati dell'apertura guardati sulla pianta (gli id salvati possono essere di prima di divisioni e unioni)
+  const at = (q: Pt) => p.rooms.find(r => inPoly(q[0], q[1], r.poly))
+  for (const o of p.openings) {
+    if (o.type !== 'door' && o.type !== 'entrance') continue
+    const { n } = frame(o.a, o.b), m: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2], off = o.t / 2 + 0.25
+    const [a, b] = [1, -1].map(sg => at([m[0] + sg * n[0] * off, m[1] + sg * n[1] * off]))
+    const out = (r?: (typeof p.rooms)[number]) => !r || OUT_TYPES.has(r.type)
+    if ((a?.type === 'bagno' && out(b)) || (b?.type === 'bagno' && out(a))) o.type = 'window'
+  }
   return p
 }
 
