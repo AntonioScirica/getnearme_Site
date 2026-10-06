@@ -597,7 +597,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const anyMulti = nets.some(n => fmtOf(n).multi);
   const slidesPhotos = photosFor(fmt);
   const photo = slidesPhotos[0] as Photo | undefined;
-  const gridSel = anyMulti ? chosen.slice(0, MAX_PHOTOS) : photosFor(fmt); // numeri e spunte nella griglia delle foto
+  // la griglia segue il social in anteprima: con "Più foto" numeri e ordine, con una foto sola una spunta sola
+  const gridMulti = !!fmt.multi;
+  const gridSel = gridMulti ? chosen.slice(0, MAX_PHOTOS) : photosFor(fmt); // numeri e spunte nella griglia delle foto
   // le foto che servono all'anteprima sono arrivate (le scelte, e almeno 3 per le grafiche con piu' foto): prima uno scheletro,
   // poi UN solo disegno (niente post che cambia a ogni foto che arriva)
   const upto = Math.min(srcs.length, 24);
@@ -607,9 +609,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     if (!photosSettled) return;
     if (anyMulti && sel.length <= 1 && photos.length > 1) setSel(s => [...new Set([...s, ...photos.map(p => p.src)])].slice(0, Math.min(5, MAX_PHOTOS)));
   }, [anyMulti, photos.length, photosSettled]); // eslint-disable-line react-hooks/exhaustive-deps
-  // solo formati singoli: la foto toccata diventa la prima (la scelta del carosello resta, in ordine)
+  // formato a una foto: la foto toccata diventa la prima (la scelta del carosello resta, in ordine)
   const tap = (src: string) => {
-    if (!anyMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
+    if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
     setSel(s => (s.includes(src) ? s.filter(x => x !== src) : s.length >= MAX_PHOTOS ? s : [...s, src]));
   };
   const needBlur = [...new Set(nets.flatMap(n => photosFor(fmtOf(n))))];
@@ -1221,17 +1223,17 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   );
 
   // passo 3: le foto. Si toccano nell'ordine voluto, il numero e' l'ordine; "Sistema la foto" sta sotto l'anteprima
-  const stagedShown = (anyMulti ? gridSel : photosFor(fmt)).some(p => p.staged);
+  const stagedShown = gridSel.some(p => p.staged);
   const stepFoto = (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-display text-lg font-semibold">{anyMulti ? tr('Scegli le foto', 'Choose the photos') : tr('Scegli la foto', 'Choose the photo')}</h3>
-          <p className="mt-0.5 text-sm text-muted">{anyMulti
+          <h3 className="font-display text-lg font-semibold">{gridMulti ? tr('Scegli le foto', 'Choose the photos') : tr('Scegli la foto', 'Choose the photo')}</h3>
+          <p className="mt-0.5 text-sm text-muted">{gridMulti
             ? tr(`Tocca le foto nell’ordine che vuoi, il numero è l’ordine. Fino a ${MAX_PHOTOS} foto.`, `Tap the photos in the order you want, the number is the order. Up to ${MAX_PHOTOS} photos.`)
-            : tr('Tocca la foto che vuoi pubblicare.', 'Tap the photo you want to post.')}</p>
+            : anyMulti ? tr('Tocca la foto che vuoi pubblicare. Per i post con più foto, tocca il social sopra l’anteprima.', 'Tap the photo you want to post. For posts with more photos, tap that social above the preview.') : tr('Tocca la foto che vuoi pubblicare.', 'Tap the photo you want to post.')}</p>
         </div>
-        {anyMulti && sel.length > 0 && <button type="button" onClick={() => setSel([])} className="h-10 rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{tr('Ricomincia', 'Start over')}</button>}
+        {gridMulti && sel.length > 0 && <button type="button" onClick={() => setSel([])} className="h-10 rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{tr('Ricomincia', 'Start over')}</button>}
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {photos.map(p => {
@@ -1241,7 +1243,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p.small} alt="" className="h-full w-full object-cover" />
               {p.staged && <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-ink">{tr('Arredata al computer', 'Virtually staged')}</span>}
-              {i >= 0 && <span className="pop absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-brand px-2 text-sm font-bold text-white">{anyMulti ? i + 1 : <Check size={16} strokeWidth={3} />}</span>}
+              {i >= 0 && <span className="pop absolute right-2 top-2 flex h-8 min-w-8 items-center justify-center rounded-full bg-brand px-2 text-sm font-bold text-white">{gridMulti ? i + 1 : <Check size={16} strokeWidth={3} />}</span>}
             </button>
           );
         })}
