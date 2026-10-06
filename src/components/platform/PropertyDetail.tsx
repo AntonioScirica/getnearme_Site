@@ -200,7 +200,7 @@ function VideoCard({ project, photos, count: n }: { project: ProjectData; photos
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Wand2 size={18} /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{tr('Modifica foto e video', 'Edit photos and videos')}</span>
-          <span className="block truncate text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, continua in chat`, `${n} videos made, continue in chat`) : tr('Arreda, migliora o crea un video', 'Furnish, improve or make a video')}</span>
+          <span className="block truncate text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, continua in Crea`, `${n} videos made, continue in Create`) : tr('Arreda, migliora o crea un video', 'Furnish, improve or make a video')}</span>
         </span>
       </div>
       <button type="button" onClick={() => setPick(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-50">
@@ -213,7 +213,7 @@ function VideoCard({ project, photos, count: n }: { project: ProjectData; photos
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-xl font-bold tracking-tight">{tr('Scegli la foto', 'Pick the photo')}</h2>
-                <p className="mt-1 text-sm text-muted">{tr('La apriamo in chat: lì la arredi, la migliori o ne fai un video.', 'We open it in the chat: furnish it, improve it or make a video.')}</p>
+                <p className="mt-1 text-sm text-muted">{tr('La apriamo in Crea: lì la arredi, la migliori o ne fai un video.', 'We open it in Create: furnish it, improve it or make a video.')}</p>
               </div>
               <button type="button" onClick={() => setPick(false)} aria-label={tr('Chiudi', 'Close')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={16} /></button>
             </div>
@@ -320,7 +320,7 @@ function GalleryPick({ onPick, onClose }: { onPick: (urls: string[]) => void; on
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {items === null ? <div className="flex justify-center py-10"><Loader2 className="animate-spin text-muted" /></div>
-            : !items.length ? <p className="py-10 text-center text-sm text-muted">{tr('La Galleria è vuota: le foto che arredi in chat finiscono qui.', 'The Gallery is empty: photos you furnish in chat end up here.')}</p>
+            : !items.length ? <p className="py-10 text-center text-sm text-muted">{tr('La Galleria è vuota: le foto che arredi in Crea finiscono qui.', 'The Gallery is empty: photos you furnish in chat end up here.')}</p>
             : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{items.map(u => {
               const on = sel.includes(u);
               return <button key={u} type="button" onClick={() => setSel(s => (on ? s.filter(x => x !== u) : [...s, u]))} className={`relative aspect-[4/3] overflow-hidden rounded-2xl ring-offset-2 ${on ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>

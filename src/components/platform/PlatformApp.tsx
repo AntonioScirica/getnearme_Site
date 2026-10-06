@@ -67,7 +67,7 @@ export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0
 
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
-  { path: '/staging', label: 'Chat', icon: MessageSquare },
+  { path: '/staging', label: tr('Crea', 'Create'), icon: Wand2 }, // qui si creano e modificano foto e video (era 'Chat')
   { path: '/immobili', label: tr('Immobili', 'Properties'), icon: Building2 },
   { path: '/portfolio', label: tr('Il mio sito', 'My website'), icon: Globe },
   { path: '/galleria', label: tr('Galleria', 'Gallery'), icon: Images },
@@ -224,7 +224,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
               {credits && !noPlan && (
                 <span className="blur-in flex h-10 items-center rounded-full bg-white ring-1 ring-line lg:pr-1" style={{ animationDelay: '.15s' }}>
                   {/* telefono: solo la matita, la scritta da sm in su */}
-                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} aria-label={tr('Nuova chat', 'New chat')} className="flex h-full min-w-10 items-center justify-center whitespace-nowrap text-sm font-semibold sm:pl-4 sm:pr-3"><SquarePen size={16} className="sm:hidden" /><span className="hidden sm:inline">{tr('Nuova chat', 'New chat')}</span></button>
+                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} aria-label={tr('Ricomincia da capo', 'Start over')} className="flex h-full min-w-10 items-center justify-center whitespace-nowrap text-sm font-semibold sm:pl-4 sm:pr-3"><SquarePen size={16} className="sm:hidden" /><span className="hidden sm:inline">{tr('Nuova chat', 'New chat')}</span></button>
                   <span className="mr-1 h-5 w-px bg-line" aria-hidden />
                   <ChatHistory />
                 </span>

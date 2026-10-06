@@ -286,7 +286,7 @@ export default function MediaView() {
           ))}
         </div>
       ) : empty ? (
-        <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Qui finiranno le foto che crei nella chat di home staging.', 'Photos you create in the home staging chat will show up here.')}</p>
+        <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Qui finiranno le foto e i video che fai in Crea.', 'Photos you create in the home staging chat will show up here.')}</p>
       ) : !items.length ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">{tr('Niente con questi filtri.', 'Nothing matches these filters.')}</p>
       ) : (
