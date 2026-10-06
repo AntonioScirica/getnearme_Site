@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Clapperboard, Code2, Copy, ChevronLeft, ChevronRight, ExternalLink, Eye, MessageCircle, FileDown, GripVertical, ImagePlus, Images, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { createPortal } from 'react-dom';
 import { isClosed, statusOf, STATUS_KEYS, STATUS_LABELS, STATUSES, TEMPLATES, type PropertyStatus, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -166,6 +166,15 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         );
       })()}
       {embedOpen && site?.slug && <EmbedCode url={`${portfolioUrl(site.slug)}/${project.id}`} id={project.id} title={project.titolo || project.nome || ''} casa={!!((project.import_data as { details?: { casa3d?: unknown } } | undefined)?.details?.casa3d)} onClose={() => setEmbedOpen(false)} />}
+      {/* Promuovi: quello che si fa con l'immobile dopo averlo sistemato (social, video, casa 3D), fuori dal modulo di modifica */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">{tr('Promuovi', 'Promote')}</h2>
+        <div className="mt-3 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <SocialCard project={project} photos={photos} />
+          <VideoCard project={project} photos={photos} count={videos.length} />
+          <Casa3DCard project={project} photos={photos} onChanged={onChange} />
+        </div>
+      </section>
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-6 lg:sticky lg:top-6 lg:h-[calc(100svh-8rem)] lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
@@ -177,6 +186,23 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   );
 }
 
+// Video dell'immobile: si fanno in chat (Video dell'annuncio, Venduto, prima e dopo...), con la copertina e l'immobile gia' collegati
+function VideoCard({ project, photos, count: n }: { project: ProjectData; photos: string[]; count: number }) {
+  return (
+    <section className="rounded-2xl bg-canvas p-3">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-brand ring-1 ring-black/5"><Clapperboard size={18} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">{tr('Video', 'Videos')}</span>
+          <span className="block text-xs text-muted">{n ? tr(`${n} ${n === 1 ? 'video fatto' : 'video fatti'}, altri dalla chat`, `${n} made, more from the chat`) : tr('Annuncio, Venduto, prima e dopo, dalla chat', 'Listing, Sold, before and after, from the chat')}</span>
+        </span>
+      </div>
+      <a href={photos[0] ? `#/chat?photo=${encodeURIComponent(photos[0])}&project=${project.id}` : '#/chat'} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white">
+        <Clapperboard size={14} /> {tr('Crea un video', 'Create a video')}
+      </a>
+    </section>
+  );
+}
 // Modifica dei dati dell'immobile: gli stessi campi della scheda pubblica. Numeri vuoti = 0 (non indicato).
 const FIELDS: { k: keyof ProjectData; label: string; num?: boolean; wide?: boolean; ph?: string }[] = [
   { k: 'titolo', label: tr('Titolo', 'Title'), wide: true, ph: 'Prati, trilocale con box vicino alla metro' },
@@ -509,10 +535,6 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
             </div>
           </section>
         )}
-        {/* casa 3D dalle planimetrie dell'immobile (sul sito: Vedi in 3D) */}
-        <Casa3DCard project={project} photos={photos} onChanged={onAdded} />
-        {/* post e storia per i social con le grafiche GetNearMe, i dati e il marchio dell'agenzia */}
-        <SocialCard project={project} photos={photos} />
         {GROUPS.map(([title, titleEn, keys]) => (
           <section key={title}>
             <h3 className="text-sm font-semibold">{tr(title, titleEn)}</h3>
