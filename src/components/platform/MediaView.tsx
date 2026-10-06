@@ -241,7 +241,7 @@ export default function MediaView() {
   const count = (k: string) => counts[k] ?? 0;
   const empty = items !== null && !casas.length; // nessuna foto nell'account (filtri a parte)
   const casaOptions = [{ value: 'tutte', label: tr('Tutti gli immobili', 'All properties') }, ...casas.map(id => ({ value: id, label: id === 'nessuna' ? tr('Senza immobile', 'No property') : nameOf(id) }))];
-  const pill = 'h-10 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-line';
+  const pill = 'h-10 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-line max-sm:order-3';
 
   return (
     <div>
@@ -263,15 +263,15 @@ export default function MediaView() {
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2 pt-6">
-        <label className="flex h-10 min-w-0 flex-1 items-center max-sm:basis-full gap-2 rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
+        <label className="flex h-10 min-w-0 flex-1 items-center gap-2 max-sm:order-1 max-sm:basis-[calc(100%-7.5rem)] rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
           <Search size={16} className="shrink-0 text-muted" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr('Cerca per stanza, casa o richiesta', 'Search by room, property or request')} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
         </label>
         <Dropdown value={tipo} options={[{ value: 'tutto', label: tr('Foto e video', 'Photos and videos') }, { value: 'foto', label: tr('Solo foto', 'Photos only') }, { value: 'video', label: tr('Solo video', 'Videos only') }]} onChange={setTipo} className={pill} />
         <Dropdown value={casa} options={casaOptions} onChange={setCasa} className={pill} />
         <Dropdown value={period} options={PERIODS.map(p => ({ value: p.value, label: p.label }))} onChange={setPeriod} className={pill} />
-        {items && <span className="ml-auto text-sm text-muted">{total} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span>}
-        {!!items && !empty && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
+        {items && <span className="ml-auto text-sm text-muted max-sm:hidden">{total} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span>}
+        {!!items && !empty && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 shrink-0 rounded-full px-4 max-sm:order-2 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? tr('Annulla', 'Cancel') : tr('Seleziona', 'Select')}</button>}
       </div>
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
@@ -293,7 +293,7 @@ export default function MediaView() {
         <div className={`space-y-10 pt-8 ${selecting ? 'pb-28' : ''}`}>
           {groups.map(([k, list]) => (
             <section key={k}>
-              <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span></h2>
+              <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="shrink-0 whitespace-nowrap text-sm font-normal text-muted">{count(k)} {tipo === 'video' ? tr('video', 'videos') : tipo === 'foto' ? tr('foto', 'photos') : tr('elementi', 'items')}</span></h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
                   <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}
