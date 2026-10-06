@@ -373,7 +373,7 @@ function GrowButton({ children, className, ...rest }: React.ButtonHTMLAttributes
   const [w, setW] = useState<number | null>(null);
   useLayoutEffect(() => { const el = inner.current; if (el && el.offsetWidth !== w) setW(el.offsetWidth); });
   return (
-    <button {...rest} className={`${className ?? ''} max-w-full overflow-hidden transition-[width,background-color,color] motion-reduce:transition-none`} style={w ? { width: w + 48 } : undefined}>
+    <button {...rest} className={`${className ?? ''} max-w-full overflow-hidden transition-[width,background-color,color] motion-reduce:transition-none`} style={w && !className?.includes('w-full') ? { width: w + 48 } : undefined}>{/* w-full (telefono): niente larghezza animata */}
       <span ref={inner} className="flex items-center gap-2 whitespace-nowrap">{children}</span>
     </button>
   );
@@ -1090,6 +1090,13 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   // Telefono come la home: riga compatta, miniatura 64 a sinistra, freccia (o spunta) a destra. Scelta: anello brand e spunta.
   // badge: piccola etichetta (Consigliato), non e' una scelta fatta
   const tiltOn = (e: React.PointerEvent<HTMLElement>) => { if (e.pointerType === 'mouse') tiltMove(e); };
+  // telefono: occhielli corti, una riga sola
+  const SHORT_KICKER: Record<string, string> = {
+    [tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant')]: tr('Trova chi compra', 'Find a buyer'),
+    [tr('Venduta o affittata, il lavoro fatto', 'Sold or rented, your work')]: tr('Il lavoro fatto', 'Your work'),
+    [tr('Gratis, la tua grafica si muove', 'Free, your design moves')]: tr('Gratis, si muove', 'Free, it moves'),
+    [tr('No video, le scarichi subito', 'No video, download them now')]: tr('Le scarichi subito', 'Download now'),
+  };
   const bigChoice = (i: number, on: boolean, thumb: React.ReactNode, scene: React.ReactNode, kicker: string, title: string, onClick: () => void, badge?: string, h = 'sm:h-[22rem]', small = false, loading = false) => (
     <div className="rise" style={{ animationDelay: `${0.12 + i * 0.08}s` }}>
       <button type="button" role="radio" aria-checked={on} onClick={onClick} onPointerMove={tiltOn} onPointerLeave={e => tiltReset(e.currentTarget)}
@@ -1098,7 +1105,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         <span className="relative h-16 w-16 shrink-0 sm:hidden">{thumb}</span>
         <span className="flex w-full min-w-0 flex-col items-start max-sm:flex-1 sm:pr-10">
           <span className="par-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-sm text-muted">{kicker}</span>
+            <span className="text-sm text-muted">{phoneUi ? (SHORT_KICKER[kicker] ?? kicker) : kicker}</span>
             {badge && <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold text-brand">{badge}</span>}
           </span>
           <span className="par-1 mt-1 block max-w-full truncate whitespace-nowrap text-2xl font-bold leading-tight tracking-tight max-sm:text-lg">{title}</span>
@@ -1462,7 +1469,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
         {/* testata e passi; sul telefono solo "Passo 2 di 6, Dove" */}
         <div className="shrink-0 px-4 pt-4 sm:px-6 sm:pt-5">
           <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
+            {phoneUi && stepIx > 0 && <button type="button" onClick={() => goStep(stepIx - 1)} aria-label={tr('Indietro', 'Back')} className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><ArrowLeft size={18} /></button>}{/* telefono: Indietro sempre in alto a sinistra */}
+            <div className="min-w-0 flex-1">
               <h2 className="font-display text-lg font-bold tracking-tight sm:text-xl">{tr('Condividi sui social', 'Share on social media')}</h2>
               {phoneUi && <p className="text-sm font-semibold text-muted">{tr(`Passo ${stepIx + 1} di ${STEPS.length}, ${STEPS[stepIx][0]}`, `Step ${stepIx + 1} of ${STEPS.length}, ${STEPS[stepIx][1]}`)}</p>}
             </div>
@@ -1503,12 +1511,12 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
 
         {/* piede: Indietro e Avanti fino al passo Video; li' Pubblica (il social che si guarda) e Salva, o Crea il post animato */}
         <div className="flex shrink-0 items-end gap-2 border-t border-line px-4 py-3 sm:items-center sm:px-6" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-          <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} shrink-0 px-4 text-ink hover:bg-canvas disabled:invisible`}><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
+          <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} shrink-0 px-4 text-ink hover:bg-canvas disabled:invisible ${phoneUi ? 'hidden' : ''}`}><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
           {!last ? (
-            <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
+            <div className={`flex min-w-0 flex-1 flex-col gap-1 ${phoneUi ? 'items-stretch' : 'items-end'}`}>
               {/* finche' manca qualcosa il bottone dice cosa (spento ma leggibile), poi torna "Avanti" e la larghezza segue il testo */}
               <GrowButton type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'}
-                className={`${btn} min-w-[160px] text-base ${!canNext && ctaTodo ? 'bg-canvas text-ink/70 ring-1 ring-black/10 disabled:opacity-100' : 'bg-ink text-white enabled:hover:bg-brand disabled:opacity-40'}`}>
+                className={`${btn} min-w-[160px] text-base ${phoneUi ? 'w-full justify-center' : ''} ${!canNext && ctaTodo ? 'bg-canvas text-ink/70 ring-1 ring-black/10 disabled:opacity-100' : 'bg-ink text-white enabled:hover:bg-brand disabled:opacity-40'}`}>
                 {!canNext && ctaTodo ? <span key={ctaTodo} className="blur-in">{ctaTodo}</span> : <>{tr('Avanti', 'Next')} <ArrowRight size={18} /></>}
               </GrowButton>
               {!canNext && <span id="social-missing" className="sr-only">{missing}</span>}
