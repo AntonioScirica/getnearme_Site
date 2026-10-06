@@ -3,7 +3,7 @@
 // pianta riconosciuta; il visore riceve muri come poligoni, porte e finestre come rettangoli con asse, stanze
 // con tipo e rettangolo utile per i mobili.
 import { fillPoly, simplifyRing, traceContour } from './raster'
-import { OUTDOOR, type Fix, type OpType, type Pt, type RawOpening, type RawPlan, type ViewerPlan } from './types'
+import { GROUND, OUTDOOR, exteriorType, type Fix, type OpType, type Pt, type RawOpening, type RawPlan, type RawRoom, type ViewerPlan } from './types'
 
 const OUT_TYPES = new Set(['esterno'])
 const hex = (x?: string) => (typeof x === 'string' && /^#[0-9a-fA-F]{6}$/.test(x) ? x : undefined)
@@ -126,7 +126,9 @@ export function rescaleTo(raw: RawPlan, totalM2: number): RawPlan {
   return p
 }
 // superficie della casa: senza terrazzi e balconi (non sono mq interni)
-export const totalArea = (raw: RawPlan) => Math.round(raw.rooms.filter(r => !OUT_TYPES.has(r.type) && !OUTDOOR.has(r.type)).reduce((a, r) => a + r.area, 0) * 10) / 10
+export const totalArea = (raw: RawPlan) => Math.round(raw.rooms.filter(r => !openAir(r)).reduce((a, r) => a + r.area, 0) * 10) / 10
+// stanze all'aperto: terrazzi, balconi, giardini, cortili, scale esterne, e quelle che non sono della casa
+export const openAir = (r: Pick<RawRoom, 'type' | 'stair'>) => OUT_TYPES.has(r.type) || OUTDOOR.has(r.type) || GROUND.has(r.type) || !!r.stair?.outdoor
 
 // rettangolo utile piu' grande dentro una maschera (istogramma per righe)
 function largestRect(mask: Uint8Array, w: number, h: number): [number, number, number, number] | null {
@@ -149,7 +151,7 @@ function largestRect(mask: Uint8Array, w: number, h: number): [number, number, n
   return br
 }
 
-export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
+export function buildViewerPlan(raw: RawPlan, name?: string, opt: { lawn?: boolean } = {}): ViewerPlan {
   const plan = raw
   const keep = new Set(plan.rooms.filter(r => !OUT_TYPES.has(r.type)).map(r => r.id))
   const roomAt = roomFinder(plan)
@@ -168,15 +170,22 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     }
     return { s1: out[0], s2: out[1], n }
   }
-  const outdoor = new Set(plan.rooms.filter(r => OUTDOOR.has(r.type)).map(r => r.id))
+  // all'aperto: terrazzi e balconi (parapetti), giardini e cortili (confini bassi), scale esterne (niente muri attorno)
+  const outdoor = new Set(plan.rooms.filter(r => openAir(r) && !OUT_TYPES.has(r.type)).map(r => r.id))
+  const terrace = new Set(plan.rooms.filter(r => OUTDOOR.has(r.type)).map(r => r.id))
+  const ground = new Map(plan.rooms.filter(r => GROUND.has(r.type)).map(r => [r.id, r.type]))
   const indoor = (id: number) => id > 0 && !outdoor.has(id)
-  const windows: ViewerPlan['windows'] = [], doors: ViewerPlan['doors'] = []
+  const windows: ViewerPlan['windows'] = [], doors: ViewerPlan['doors'] = [], openFills: { room: number; poly: Pt[] }[] = []
   for (const o of plan.openings) {
     // le aperture solo diagonali non si possono fare nel visore (rettangoli con asse): restano muro
     const { L, d } = frame(o.a, o.b)
     if (L < 0.2 || Math.min(Math.abs(d[0]), Math.abs(d[1])) > 0.2) continue
     const { rect, ax } = rectAxis(o), { s1, s2, n } = sidesOf(o)
     if (s1 === -1 && s2 === -1) continue
+    if (!indoor(s1) && !indoor(s2)) { // tra due esterni (scala esterna e cortile, cortile e strada): niente porta, pavimento
+      const id = [s1, s2].find(x => outdoor.has(x)); if (id) openFills.push({ room: id, poly: quad(o.a, o.b, o.t + 0.02).map(p => [r3(p[0]), r3(p[1])] as Pt) })
+      continue
+    }
     if (o.type === 'window') {
       // la finestra appartiene alla stanza interna (verso un terrazzo il terrazzo e' "fuori")
       if (!indoor(s1) && !indoor(s2)) continue
@@ -214,24 +223,37 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     // pavimento e muri: scelta dell'agente, poi quelli letti dalle foto per quel tipo di stanza, se no quelli del visore
     const mt = plan.materials?.rooms?.[r.type]
     const floor = r.floor ?? mt?.floor, wall = hex(r.wall) ?? hex(mt?.wall)
-    rooms.push({ id: r.id, type: r.type, area: r.area, center: r.center, poly: r.poly, rect, ...(floor ? { floor } : {}), ...(wall ? { wall } : {}) })
+    rooms.push({ id: r.id, type: r.type, area: r.area, center: r.center, poly: r.poly, rect, ...(floor ? { floor } : {}), ...(wall ? { wall } : {}), ...(r.stair && r.type === 'scala' ? { stair: r.stair } : {}) })
   }
-  // muri del terrazzo e del balcone verso fuori: parapetto basso (nessun lato su una stanza interna, almeno uno sul terrazzo)
-  const roomAtAll = (x: number, z: number) => { for (const r of plan.rooms) if (inPoly(x, z, r.poly)) return r.type === 'esterno' ? -1 : r.id; return -1 }
-  const isParapet = (w: (typeof plan.walls)[number]) => {
-    if (!outdoor.size) return false
+  // muri senza stanze interne ai lati: verso un terrazzo o un balcone parapetto basso; tra un giardino o un cortile e
+  // il fuori (linee del lotto) siepe o muretto; altrimenti (tra esterni, attorno alle scale esterne, linee fuori casa) niente
+  const roomAtAll = (x: number, z: number) => { for (const r of plan.rooms) if (inPoly(x, z, r.poly)) return r.type === 'esterno' ? -2 : r.id; return -1 } // -2 = non e' della casa
+  const kindOf = (w: (typeof plan.walls)[number]): 'wall' | 'parapet' | 'siepe' | 'muretto' | 'none' => {
     const { L, d, n } = frame(w.a, w.b)
-    let terr = false
-    for (const k of [0.2, 0.5, 0.8]) for (const sg of [1, -1]) {
-      const off = w.t / 2 + 0.25, q: Pt = [w.a[0] + d[0] * L * k + sg * n[0] * off, w.a[1] + d[1] * L * k + sg * n[1] * off], id = roomAtAll(q[0], q[1])
-      if (indoor(id)) return false
-      if (outdoor.has(id)) terr = true
+    let terr = false, lot: string | null = null, ext = false
+    for (const k of [0.2, 0.5, 0.8]) {
+      const ids = [1, -1].map(sg => { const off = w.t / 2 + 0.25; return roomAtAll(w.a[0] + d[0] * L * k + sg * n[0] * off, w.a[1] + d[1] * L * k + sg * n[1] * off) })
+      if (ids.some(indoor)) return 'wall'
+      if (ids.some(id => terrace.has(id))) terr = true
+      if (ids.some(id => id === -2 || outdoor.has(id))) ext = true
+      const g = ids.find(id => ground.has(id)), other = ids.find(id => id !== g)
+      if (g !== undefined && (other === -1 || other === -2)) lot = ground.get(g)!
     }
-    return terr
+    // solo fuori da entrambi i lati (pezzi di muro, pilastri non riconosciuti): restano muri come prima
+    return terr ? 'parapet' : lot ? (lot === 'giardino' ? 'siepe' : 'muretto') : ext ? 'none' : 'wall'
   }
+  const kinds = plan.walls.map(kindOf)
   const poly = (w: (typeof plan.walls)[number]) => ({ outer: quad(w.a, w.b, w.t).map(p => [r3(p[0]), r3(p[1])] as Pt), holes: [] as Pt[][] })
-  const walls = plan.walls.filter(w => !isParapet(w)).map(poly)
-  const parapets = plan.walls.filter(isParapet).map(poly)
+  const walls = plan.walls.filter((_, i) => kinds[i] === 'wall').map(poly)
+  const parapets = plan.walls.filter((_, i) => kinds[i] === 'parapet').map(poly)
+  const boundaries = plan.walls.flatMap((w, i) => (kinds[i] === 'siepe' || kinds[i] === 'muretto' ? [{ a: [r3(w.a[0]), r3(w.a[1])] as Pt, b: [r3(w.b[0]), r3(w.b[1])] as Pt, kind: kinds[i] as 'siepe' | 'muretto' }] : []))
+  // muri tolti tra esterni: la loro striscia diventa pavimento dell'esterno accanto (niente fessure nel cortile)
+  const fills = plan.walls.flatMap((w, i) => {
+    if (kinds[i] !== 'none') return []
+    const { L, d, n } = frame(w.a, w.b), off = w.t / 2 + 0.2
+    const id = [1, -1].map(sg => roomAtAll(w.a[0] + d[0] * L / 2 + sg * n[0] * off, w.a[1] + d[1] * L / 2 + sg * n[1] * off)).find(x => x > 0 && outdoor.has(x))
+    return id ? [{ room: id, poly: quad(w.a, w.b, w.t + 0.02).map(p => [r3(p[0]), r3(p[1])] as Pt) }] : []
+  }).concat(openFills)
   const all = [...walls.flatMap(w => w.outer), ...parapets.flatMap(w => w.outer), ...rooms.flatMap(r => r.poly)]
   const X0 = Math.min(...all.map(p => p[0])), Z0 = Math.min(...all.map(p => p[1])), X1 = Math.max(...all.map(p => p[0])), Z1 = Math.max(...all.map(p => p[1]))
   const furniture: NonNullable<ViewerPlan['furniture']> = []
@@ -239,7 +261,7 @@ export function buildViewerPlan(raw: RawPlan, name?: string): ViewerPlan {
     const m = drawnToViewer(it), room = rooms.find(r => inPoly(it.at[0], it.at[1], r.poly))
     if (m && room) furniture.push({ kind: m.kind, x: it.at[0], z: it.at[1], rot: it.rot, w: m.w, d: m.d, room: room.id, opts: m.opts })
   }
-  return { version: 3, units: 'm', height: plan.height || 2.7, outline: [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]], ...(furniture.length ? { furniture } : {}), image: { toImage: [...plan.source.toImage], w: plan.source.imgW, h: plan.source.imgH }, ...(plan.materials ? { materials: { frames: hex(plan.materials.frames) ?? '#f7f6f3', doors: hex(plan.materials.doors) ?? '#f3f1ec', facade: { kind: plan.materials.facade?.kind ?? 'intonaco', color: hex(plan.materials.facade?.color) ?? '#efe6d6' }, roof: plan.materials.roof, shutters: hex(plan.materials.shutters) ?? '' } } : {}), walls, ...(parapets.length ? { parapets } : {}), windows, doors, rooms, ...(plan.rooms.some(r => OUT_TYPES.has(r.type) || OUTDOOR.has(r.type)) ? { garden: true } : {}), ...(name ? { name } : {}) }
+  return { version: 3, units: 'm', height: plan.height || 2.7, outline: [[X0, Z0], [X1, Z0], [X1, Z1], [X0, Z1]], ...(furniture.length ? { furniture } : {}), image: { toImage: [...plan.source.toImage], w: plan.source.imgW, h: plan.source.imgH }, ...(plan.materials ? { materials: { frames: hex(plan.materials.frames) ?? '#f7f6f3', doors: hex(plan.materials.doors) ?? '#f3f1ec', facade: { kind: plan.materials.facade?.kind ?? 'intonaco', color: hex(plan.materials.facade?.color) ?? '#efe6d6' }, roof: plan.materials.roof, shutters: hex(plan.materials.shutters) ?? '' } } : {}), walls, ...(parapets.length ? { parapets } : {}), ...(boundaries.length ? { boundaries } : {}), ...(fills.length ? { fills } : {}), windows, doors, rooms, ...(plan.rooms.some(r => OUT_TYPES.has(r.type) || OUTDOOR.has(r.type) || GROUND.has(r.type)) ? { garden: true } : {}), ...(opt.lawn ? { lawn: true } : {}), ...(name ? { name } : {}) }
 }
 
 export function planCounts(p: ViewerPlan) {
@@ -304,13 +326,17 @@ export function applyLabels(raw: RawPlan, labels: NonNullable<Fix['labels']>): R
     if (!room && (l.type === 'terrazzo' || l.type === 'balcone')) { (p.outside_labels ??= []).push({ text: l.text.slice(0, 40), type: l.type, x: l.x, y: l.y, ...(l.mq > 0 ? { mq: l.mq } : {}) }); continue }
     if (!room) continue
     const cur = best.get(room.id)
+    if (cur && exteriorType(cur.text)) continue // la scritta dell'esterno (resede, corte) vince sulle altre nella stessa zona
+    if (exteriorType(l.text)) { best.set(room.id, { ...l, mq: l.mq || cur?.mq || 0 }); continue }
     // nella stessa stanza: prima il nome della stanza, poi i mq
     if (!cur || (cur.type === 'altro' && l.type !== 'altro') || (!cur.mq && l.mq && (l.type !== 'altro' || cur.type === 'altro'))) best.set(room.id, { ...l, mq: l.mq || cur?.mq || 0, type: l.type !== 'altro' ? l.type : cur?.type ?? 'altro' })
   }
   for (const r of p.rooms) {
     const l = best.get(r.id)
     if (!l) continue
-    if (l.type !== 'altro' && l.type !== 'esterno') { r.type = l.type; r.label = l.text.slice(0, 40) }
+    const ext = exteriorType(l.text) // resede, corte, giardino: esterno della casa, mai una stanza
+    if (ext) { r.type = ext; r.label = l.text.slice(0, 40) }
+    else if (l.type !== 'altro' && l.type !== 'esterno') { r.type = l.type; r.label = l.text.slice(0, 40) }
     if (l.mq > 0.5 && l.mq < 300) r.written_mq = l.mq
   }
   // scala dai mq scritti
@@ -577,5 +603,37 @@ export function drawOutdoor(raw: RawPlan, pts: Pt[], replace?: number): RawPlan 
     p.walls.push({ a, b, t: 0.12, label: `parapetto-${id}` })
   }
   if (p.source.outdoor_short) p = { ...p, source: { ...p.source, outdoor_short: p.source.outdoor_short.filter(x => x.room !== replace) } }
+  return p
+}
+
+// --- esterni: resede e cortili, scale esterne (senza AI, idempotente: pipeline, build e correzione) ---
+// stanze ai due lati di un'apertura, guardate sulla pianta (gli id salvati possono essere di prima di divisioni e unioni)
+function openingSides(p: RawPlan, o: RawOpening): (RawRoom | undefined)[] {
+  const { n } = frame(o.a, o.b), m: Pt = [(o.a[0] + o.b[0]) / 2, (o.a[1] + o.b[1]) / 2], off = o.t / 2 + 0.25
+  return [1, -1].map(sg => p.rooms.find(r => inPoly(m[0] + sg * n[0] * off, m[1] + sg * n[1] * off, r.poly)))
+}
+// 1. scritte resede/corte/giardino rimaste su stanze di altro tipo: esterni (giardino o cortile)
+// 2. scala senza porte verso le stanze vere della casa e accanto a un esterno (o con aperture verso fuori): scala
+//    esterna, una rampa all'aperto senza muri ne' soffitto (le scale disegnate nel resede non sono vani)
+// 3. vani minuscoli (< 2 m2) senza scritta attaccati a una scala esterna, con aperture solo verso la scala o fuori:
+//    frammenti accanto ai gradini, uniti alla scala (niente "ripostigli" inventati)
+export function normalizeExterior(raw: RawPlan): RawPlan {
+  let p = clone(raw)
+  for (const r of p.rooms) { const t = r.label ? exteriorType(r.label) : null; if (t && !GROUND.has(r.type)) r.type = t }
+  const main = (r?: RawRoom) => !!r && !openAir(r) && r.type !== 'scala' && r.area >= 3
+  const near = (a: RawRoom, test: (r: RawRoom) => boolean) => p.rooms.some(b => b.id !== a.id && test(b) && (touchAir(p, a.id, b.id) || mergeRooms(p, a.id, b.id).rooms.length < p.rooms.length))
+  for (const s of p.rooms.filter(r => r.type === 'scala' && !r.stair?.outdoor)) {
+    const links = p.openings.map(o => openingSides(p, o)).filter(([a, b]) => a?.id === s.id || b?.id === s.id).map(([a, b]) => (a?.id === s.id ? b : a))
+    if (links.some(main)) continue
+    if (links.some(r => !r || openAir(r)) || near(s, r => GROUND.has(r.type) || r.type === 'esterno')) s.stair = { ...s.stair, outdoor: true }
+  }
+  for (const s of p.rooms.filter(r => r.type === 'scala' && r.stair?.outdoor)) {
+    for (const t of p.rooms.filter(r => r.id !== s.id && r.area < 2 && !r.label && !openAir(r) && r.type !== 'scala')) {
+      const links = p.openings.map(o => openingSides(p, o)).filter(([a, b]) => a?.id === t.id || b?.id === t.id).map(([a, b]) => (a?.id === t.id ? b : a))
+      if (links.some(r => r && r.id !== s.id && !openAir(r))) continue // porta verso la casa: e' un vano vero
+      const m = mergeRooms(p, s.id, t.id)
+      if (m.rooms.length < p.rooms.length) p = m
+    }
+  }
   return p
 }

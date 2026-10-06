@@ -1,15 +1,32 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Expand, X } from 'lucide-react';
 import { viewerUrl } from './Casa3DFlow';
+import { authFetch } from './api';
 import { tr } from './i18n';
+import { isStyle, type Casa3d } from '@/lib/casa3d/types';
 
 // Casa 3D aperta sopra la pagina (non in una scheda nuova): si chiude con la X, con Esc, cliccando fuori
 // o col tasto indietro del browser/telefono (stato aggiunto alla cronologia all'apertura).
-export default function Casa3DViewer({ manifest, title, onClose }: { manifest: string; title?: string; onClose: () => void }) {
+// save: casa dell'immobile dell'agente, lo stile d'arredo scelto nel visore si salva (manifest nuovo, il visore aperto resta)
+export default function Casa3DViewer({ manifest, title, onClose, save }: { manifest: string; title?: string; onClose: () => void; save?: { key: string; projectId: string; onSaved?: (c: Casa3d) => void } }) {
   const box = useRef<HTMLDivElement>(null);
+  const [src] = useState(() => viewerUrl(manifest));
+  const saveRef = useRef(save);
+  useEffect(() => { saveRef.current = save; });
+  useEffect(() => {
+    const on = async (e: MessageEvent) => {
+      const sv = saveRef.current
+      if (!sv || e.origin !== location.origin || !isStyle(e.data?.casa3dStyle)) return
+      const r = await authFetch('/api/platform/casa3d', { method: 'POST', body: JSON.stringify({ action: 'style', key: sv.key, projectId: sv.projectId, style: e.data.casa3dStyle }) }).catch(() => null)
+      const d = await r?.json().catch(() => null) as { casa3d?: Casa3d } | null
+      if (d?.casa3d) sv.onSaved?.(d.casa3d)
+    }
+    window.addEventListener('message', on)
+    return () => window.removeEventListener('message', on)
+  }, []);
   const closed = useRef(false);
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; });
@@ -35,7 +52,7 @@ export default function Casa3DViewer({ manifest, title, onClose }: { manifest: s
           <button type="button" onClick={back} aria-label={tr('Chiudi', 'Close')} className="flex h-10 w-10 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={18} /></button>
         </div>
         <div ref={box} className="min-h-0 flex-1 bg-canvas">
-          <iframe title={title || tr('Casa 3D', '3D home')} src={viewerUrl(manifest)} allow="fullscreen" allowFullScreen className="block h-full w-full border-0" />
+          <iframe title={title || tr('Casa 3D', '3D home')} src={src} allow="fullscreen" allowFullScreen className="block h-full w-full border-0" />
         </div>
       </div>
     </div>,

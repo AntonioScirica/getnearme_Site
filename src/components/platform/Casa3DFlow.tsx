@@ -6,10 +6,10 @@
 // una finestra; tocca una porta o una finestra = togli o cambia; superficie totale in mq. Una scheda per piano.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Box, Check, Combine, DoorOpen, Loader2, Minus, Pencil, RotateCcw, ScanText, Scissors, Square, Trash2, X } from 'lucide-react';
+import { Box, Check, Combine, DoorOpen, Info, Loader2, Minus, Pencil, RotateCcw, ScanText, Scissors, Sofa, Square, Trash2, X } from 'lucide-react';
 import { CREDIT_COST } from '@/lib/pricing';
-import { addFurniture, addOpening, drawOutdoor, inPoly, mergeRooms, removeFurniture, rotateFurniture, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
-import { FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, VIEWER_PATH, WALL_COLORS, type Casa3d, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
+import { addFurniture, addOpening, drawOutdoor, inPoly, mergeRooms, normalizeExterior, removeFurniture, rotateFurniture, removeOpening, rescaleTo, setFacade, setRoomLook, setRoomType, splitRoom, totalArea } from '@/lib/casa3d/build';
+import { CASA3D_STYLES, FACADE_COLORS, FLOOR_KINDS, FLOOR_LABEL, ROOM_LABEL_EN, ROOM_LABEL_IT, ROOM_TYPES, STYLE_LABEL, VIEWER_PATH, WALL_COLORS, glossaryOf, isStyle, type Casa3d, type Casa3dStyle, type OpType, type Pt, type RawPlan } from '@/lib/casa3d/types';
 import { authFetch } from './api';
 import { pageLang, tr } from './i18n';
 
@@ -22,6 +22,12 @@ const FURN_LABEL: Record<string, string> = { bed_double: tr('Letto matrimoniale'
 const ROOM_FILL: Record<string, string> = {
   soggiorno: '#dfe8fd', cucina: '#fde9d6', camera: '#e7e1fb', cameretta: '#efe6fb', bagno: '#d9f1f2', ingresso: '#eef0f3', corridoio: '#eef0f3',
   studio: '#e3f1df', ripostiglio: '#f1ece4', balcone: '#e6f3e1', terrazzo: '#e6f3e1', scala: '#ececec', lavanderia: '#d9f1f2', esterno: '#ffffff', stanza: '#f4f4f2',
+  giardino: '#dcefcf', cortile: '#ebe5da',
+};
+// colori dei tondi degli stili (legno, tessuto, accento): come nel visore (public/casa3d/v1/viewer/styles.js)
+const STYLE_SWATCH: Record<Casa3dStyle, string[]> = {
+  moderno: ['#b08a63', '#d8d2c8', '#9a8f7f'], nordico: ['#dcb98e', '#e6e3dd', '#9fb0b5'], classico: ['#4c3020', '#b88f6a', '#7a2e2a'],
+  industriale: ['#3f2b1e', '#7a4626', '#55595c'], lusso: ['#33201a', '#2f5048', '#c6a15b'], boho: ['#be7a3d', '#d9c6a5', '#b5532e'], vuota: ['#f1ece4', '#e7e2da'],
 };
 const OP_COLOR: Record<OpType, string> = { door: '#f08a24', entrance: '#e5484d', varco: '#a35bd6', window: BRAND };
 const OP_LABEL = (t: OpType) => ({ door: tr('Porta', 'Door'), entrance: tr('Ingresso', 'Entrance'), varco: tr('Passaggio', 'Opening'), window: tr('Finestra', 'Window') })[t];
@@ -51,7 +57,11 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
   const [work, setWork] = useState({ i: 0, t0: 0 });
   const [now, setNow] = useState(0);
   const [casa, setCasa] = useState<Casa3d | null>(existing ?? null);
+  const [style, setStyle] = useState<Casa3dStyle>(existing?.style ?? 'moderno'); // stile d'arredo (si salva nella casa)
+  const [shown, setShown] = useState(''); // manifest nel visore: resta quello, il cambio di stile dal visore non lo ricarica
   const started = useRef(false);
+  const casaRef = useRef(casa);
+  useEffect(() => { casaRef.current = casa }, [casa]);
 
   // riconoscimento, un piano dopo l'altro (o le piante gia' corrette, per modificare una casa fatta)
   const run = async (from = 0) => {
@@ -75,7 +85,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
     if (started.current) return
     started.current = true
     if (existing) {
-      Promise.all(existing.floors.map(async (f, i) => ({ name: f.name || floorName(i), raw: await (await fetch(f.raw)).json() as RawPlan, image: f.image, history: [] })))
+      Promise.all(existing.floors.map(async (f, i) => ({ name: f.name || floorName(i), raw: normalizeExterior(await (await fetch(f.raw)).json() as RawPlan), image: f.image, history: [] })))
         .then(fs => { setFloors(fs); setStep('edit') }).catch(() => { setErr('failed'); setStep('error') })
     } else void run(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,10 +98,10 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
 
   const build = async () => {
     setStep('build')
-    const r = await authFetch('/api/platform/casa3d', { method: 'POST', body: JSON.stringify({ action: 'build', key, projectId, floors: floors.map(f => ({ name: f.name, raw: f.raw, image: f.image })) }) }).catch(() => null)
+    const r = await authFetch('/api/platform/casa3d', { method: 'POST', body: JSON.stringify({ action: 'build', key, projectId, style, floors: floors.map(f => ({ name: f.name, raw: f.raw, image: f.image })) }) }).catch(() => null)
     const d = await r?.json().catch(() => null) as { casa3d?: Casa3d } | null
     if (!d?.casa3d) { setErr('failed'); setStep('error'); return }
-    setCasa(d.casa3d); setStep('done')
+    setCasa(d.casa3d); setShown(d.casa3d.manifest); setStep('done')
     onDone?.(d.casa3d)
   }
   // poster: il visore (nascosto) manda la vista dall'alto del primo piano
@@ -102,12 +112,27 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
       window.removeEventListener('message', on)
       const r = await authFetch('/api/platform/casa3d', { method: 'POST', body: JSON.stringify({ action: 'poster', key: casa.key, projectId, image: e.data.casa3dPoster }) }).catch(() => null)
       const d = await r?.json().catch(() => null) as { poster?: string } | null
-      if (d?.poster) { const c = { ...casa, poster: d.poster }; setCasa(c); onDone?.(c) }
+      const last = casaRef.current
+      if (d?.poster && last) { const c = { ...last, poster: d.poster }; setCasa(c); onDone?.(c) }
     }
     window.addEventListener('message', on)
     return () => window.removeEventListener('message', on)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, casa?.manifest])
+  }, [step, shown])
+  // stile cambiato nel visore: si salva nella casa (manifest nuovo), il visore aperto resta com'e'
+  useEffect(() => {
+    if (step !== 'done' || !casa || !projectId) return
+    const on = async (e: MessageEvent) => {
+      if (e.origin !== location.origin || !isStyle(e.data?.casa3dStyle)) return
+      setStyle(e.data.casa3dStyle)
+      const r = await authFetch('/api/platform/casa3d', { method: 'POST', body: JSON.stringify({ action: 'style', key: casa.key, projectId, style: e.data.casa3dStyle }) }).catch(() => null)
+      const d = await r?.json().catch(() => null) as { casa3d?: Casa3d } | null
+      if (d?.casa3d) { setCasa(c => (c ? { ...d.casa3d!, poster: c.poster ?? d.casa3d!.poster } : d.casa3d!)); onDone?.(d.casa3d) }
+    }
+    window.addEventListener('message', on)
+    return () => window.removeEventListener('message', on)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, casa?.key, projectId])
 
   const f = floors[cur]
   const elapsed = work.t0 ? (now - work.t0) / 1000 : 0
@@ -194,7 +219,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
                 ))}
               </div>
             )}
-            <PlanEditor key={cur} floor={f} onEdit={edit} onUndo={undo} onRename={name => setFloors(fs => fs.map((x, i) => (i === cur ? { ...x, name } : x)))} multi={floors.length > 1} />
+            <PlanEditor key={cur} floor={f} onEdit={edit} onUndo={undo} onRename={name => setFloors(fs => fs.map((x, i) => (i === cur ? { ...x, name } : x)))} multi={floors.length > 1} style={style} onStyle={setStyle} />
             <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
               <span className="mr-auto text-xs text-muted">{existing ? tr('Correggere e ricostruire è gratis.', 'Fixing and rebuilding is free.') : tr('Le correzioni non costano crediti.', 'Corrections cost no credits.')}</span>
               <button type="button" onClick={() => void build()} disabled={step === 'build'} className="flex h-11 items-center justify-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">
@@ -207,10 +232,10 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
         {step === 'done' && casa && (
           <>
             <div className="mt-4 overflow-hidden rounded-[24px] bg-canvas">
-              <iframe title={tr('Casa 3D', '3D home')} src={viewerUrl(casa.manifest)} className="block h-[62vh] w-full border-0" allow="fullscreen" />
+              <iframe title={tr('Casa 3D', '3D home')} src={viewerUrl(shown || casa.manifest)} className="block h-[62vh] w-full border-0" allow="fullscreen" />
             </div>
             {/* vista dall'alto per il poster dell'immobile */}
-            <iframe title="" aria-hidden src={viewerUrl(casa.manifest, '&poster=1')} className="pointer-events-none fixed -left-[2000px] top-0 h-[720px] w-[1280px] border-0 opacity-0" tabIndex={-1} />
+            <iframe title="" aria-hidden src={viewerUrl(shown || casa.manifest, '&poster=1')} className="pointer-events-none fixed -left-[2000px] top-0 h-[720px] w-[1280px] border-0 opacity-0" tabIndex={-1} />
             <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
               <button type="button" onClick={() => setStep('edit')} className="flex h-11 items-center gap-2 rounded-full bg-canvas px-5 text-sm font-semibold text-ink hover:bg-black/[0.06]"><Pencil size={15} /> {tr('Correggi la pianta', 'Fix the plan')}</button>
               <a href={viewerUrl(casa.manifest)} target="_blank" rel="noreferrer" className="flex h-11 items-center gap-2 rounded-full bg-canvas px-5 text-sm font-semibold text-ink hover:bg-black/[0.06]">{tr('Apri a schermo intero', 'Open full screen')}</a>
@@ -225,7 +250,7 @@ export default function Casa3DFlow({ plans, projectId, areaM2, existing, reuseKe
 }
 
 // ---- schermata di correzione di un piano ----
-function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; onEdit: (fn: (r: RawPlan) => RawPlan) => void; onUndo: () => void; onRename: (n: string) => void; multi: boolean }) {
+function PlanEditor({ floor, onEdit, onUndo, onRename, multi, style, onStyle }: { floor: Floor; onEdit: (fn: (r: RawPlan) => RawPlan) => void; onUndo: () => void; onRename: (n: string) => void; multi: boolean; style: Casa3dStyle; onStyle: (s: Casa3dStyle) => void }) {
   const raw = floor.raw
   const svg = useRef<SVGSVGElement>(null)
   const [sel, setSel] = useState<Sel>(null)
@@ -259,6 +284,20 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
   const fs = Math.max(0.22, Math.min(0.42, vb[2] / 38))
   const pill = (on: boolean) => `rounded-full px-3.5 py-2 text-[13px] font-semibold transition-colors duration-[600ms] ${on ? 'bg-ink text-white' : 'bg-white text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-canvas'}`
   const selRoom = sel?.kind === 'room' ? raw.rooms.find(r => r.id === sel.id) : null
+  // etichette senza sovrapposizioni: le stanze piu' grandi prima; una che tocca quelle gia' messe prova sopra o sotto,
+  // se no si vede solo quando la stanza e' toccata
+  const labelPos = useMemo(() => {
+    const out = new Map<number, number | null>(), placed: [number, number, number, number][] = []
+    for (const r of [...raw.rooms].filter(x => x.type !== 'esterno').sort((a, b) => b.area - a.area)) {
+      const lines = r.label ? 3 : 2, w = Math.max(roomName(r.type).length, 7, r.label ? 17 : 0) * fs * 0.58, h = lines * fs * 1.2
+      const box = (dy: number): [number, number, number, number] => [r.center[0] - w / 2, r.center[1] - fs + dy, r.center[0] + w / 2, r.center[1] - fs + dy + h]
+      const hit = (b: number[]) => placed.some(q => b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1])
+      const dy = [0, -h * 0.75, h * 0.75].find(d => !hit(box(d)))
+      if (dy === undefined) { out.set(r.id, null); continue }
+      placed.push(box(dy)); out.set(r.id, dy)
+    }
+    return out
+  }, [raw.rooms, fs])
   const selOp = sel?.kind === 'op' ? raw.openings[sel.idx] : null
 
   return (
@@ -284,13 +323,24 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
                 <polygon points={quadPts(o.a, o.b, Math.max(o.t + 0.06, 0.4))} fill="transparent" />
               </g>
             ))}
+            {/* scale lette dalla planimetria: rampa con i gradini e pianerottolo, come verranno nel 3D */}
+            {raw.rooms.filter(r => r.stair?.flight).map(r => {
+              const [x0, z0, x1, z1] = r.stair!.flight!, n = r.stair!.treads ?? 0, alongX = r.stair!.axis !== 'z', l = r.stair!.landing
+              return (
+                <g key={`s${r.id}`} pointerEvents="none" stroke="#6b6b66" strokeWidth={0.025} fill="none">
+                  <rect x={x0} y={z0} width={x1 - x0} height={z1 - z0} fill="rgba(255,255,255,.55)" />
+                  {Array.from({ length: Math.max(0, n - 1) }, (_, k) => { const t = (k + 1) / n; return alongX ? <line key={k} x1={x0 + (x1 - x0) * t} y1={z0} x2={x0 + (x1 - x0) * t} y2={z1} /> : <line key={k} x1={x0} y1={z0 + (z1 - z0) * t} x2={x1} y2={z0 + (z1 - z0) * t} /> })}
+                  {l && <rect x={l[0]} y={l[1]} width={l[2] - l[0]} height={l[3] - l[1]} fill="rgba(255,255,255,.55)" strokeDasharray="0.08 0.06" />}
+                </g>
+              )
+            })}
             {(raw.furniture ?? []).map((f, i) => (
               <rect key={`f${i}`} x={f.at[0] - f.len / 2} y={f.at[1] - f.depth / 2} width={f.len} height={f.depth} rx={0.05} fill={sel?.kind === 'furn' && sel.idx === i ? 'rgba(83,126,236,.25)' : 'rgba(0,0,0,.08)'} stroke={sel?.kind === 'furn' && sel.idx === i ? BRAND : '#8a8a85'} strokeWidth={0.03}
                 transform={`rotate(${-f.rot * 180 / Math.PI} ${f.at[0]} ${f.at[1]})`} className="cursor-pointer" onClick={e => { e.stopPropagation(); setSel({ kind: 'furn', idx: i }) }} />
             ))}
-            {raw.rooms.filter(r => r.type !== 'esterno').map(r => (
-              <text key={r.id} x={r.center[0]} y={r.center[1]} textAnchor="middle" fontSize={fs} fontWeight={700} fill="#1d1d1b" pointerEvents="none" style={{ fontFamily: 'inherit' }}>
-                <tspan x={r.center[0]} dy={0}>{roomName(r.type)}</tspan>
+            {raw.rooms.filter(r => r.type !== 'esterno' && (labelPos.get(r.id) != null || (sel?.kind === 'room' && sel.id === r.id))).map(r => (
+              <text key={r.id} x={r.center[0]} y={r.center[1] + (labelPos.get(r.id) ?? 0)} textAnchor="middle" fontSize={fs} fontWeight={700} fill="#1d1d1b" pointerEvents="none" style={{ fontFamily: 'inherit', paintOrder: 'stroke', stroke: 'rgba(255,255,255,.85)', strokeWidth: fs * 0.18, strokeLinejoin: 'round' }}>
+                <tspan x={r.center[0]} dy={0}>{r.type === 'scala' && r.stair?.outdoor ? tr('Scala esterna', 'Outdoor stairs') : roomName(r.type)}</tspan>
                 <tspan x={r.center[0]} dy={fs * 1.2} fontWeight={500} fill="#6b6b66">{String(r.area).replace('.', ',')} m²</tspan>
                 {r.label && <tspan x={r.center[0]} dy={fs * 1.15} fontSize={fs * 0.8} fontWeight={600} fill={BRAND}>{tr('letto dalla planimetria', 'read from the plan')}</tspan>}
               </text>
@@ -351,7 +401,17 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
           {!tool && !sel && <p className="text-sm text-muted">{tr('Tocca un elemento della pianta.', 'Tap an element of the plan.')}</p>}
           {!tool && !sel && (
             <div className="mt-3">
-              <p className="text-sm font-semibold">{tr('Facciata', 'Facade')}{raw.materials?.from ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
+              <p className="flex items-center gap-1.5 text-sm font-semibold"><Sofa size={14} /> {tr('Stile d’arredo', 'Furniture style')}</p>
+              <div className="mt-2 grid grid-cols-2 gap-1.5">
+                {CASA3D_STYLES.map(id => (
+                  <button key={id} type="button" onClick={() => onStyle(id)} aria-pressed={style === id}
+                    className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-left text-[13px] font-semibold transition-colors duration-[600ms] ${style === id ? 'bg-white text-ink ring-2 ring-brand' : 'bg-white/60 text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white'}`}>
+                    <span className="flex">{STYLE_SWATCH[id].map((c, k) => <i key={k} className="-mr-1 h-3.5 w-3.5 rounded-full ring-2 ring-white" style={{ background: c }} />)}</span>
+                    {tr(...STYLE_LABEL[id])}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-4 text-sm font-semibold">{tr('Facciata', 'Facade')}{raw.materials?.from ? <span className="ml-1.5 text-xs font-medium text-brand">{tr('dalle foto', 'from photos')}</span> : null}</p>
               <Swatches colors={[...new Set([raw.materials?.facade?.color, ...FACADE_COLORS].filter((x): x is string => !!x))]} value={raw.materials?.facade?.color} onPick={c => onEdit(r => setFacade(r, c))} />
               <button type="button" onClick={() => setTool({ kind: 'draw', pts: [] })} className={`${pill(false)} mt-4`}>{tr('Disegna terrazzo o balcone', 'Draw terrace or balcony')}</button>
             </div>
@@ -370,6 +430,8 @@ function PlanEditor({ floor, onEdit, onUndo, onRename, multi }: { floor: Floor; 
               </div>
               <p className="text-sm font-semibold">{tr('Che stanza è?', 'Which room is it?')} <span className="font-normal text-muted">{String(selRoom.area).replace('.', ',')} m²</span></p>
               {selRoom.label && <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-brand"><ScanText size={13} /> {tr('Letto dalla planimetria', 'Read from the plan')}: «{selRoom.label}»{selRoom.written_mq ? `, ${String(selRoom.written_mq).replace('.', ',')} m²` : ''}</p>}
+              {glossaryOf(selRoom.label, pageLang() === 'en') && <p className="blur-in mt-2 flex items-start gap-1.5 rounded-2xl bg-white px-3 py-2 text-xs text-ink/80 ring-1 ring-inset ring-black/5"><Info size={13} className="mt-px shrink-0 text-brand" /> {glossaryOf(selRoom.label, pageLang() === 'en')}</p>}
+              {selRoom.type === 'scala' && selRoom.stair?.outdoor && <p className="mt-2 flex items-start gap-1.5 rounded-2xl bg-white px-3 py-2 text-xs text-ink/80 ring-1 ring-inset ring-black/5"><Info size={13} className="mt-px shrink-0 text-brand" /> {tr('Scala esterna: nel 3D è una rampa all’aperto, senza muri attorno.', 'Outdoor stairs: in 3D an open-air flight, no walls around.')}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 {ROOM_TYPES.map(t => <button key={t} type="button" onClick={() => onEdit(r => setRoomType(r, selRoom.id, t))} className={pill(selRoom.type === t)}>{roomName(t)}</button>)}
                 <button type="button" onClick={() => onEdit(r => setRoomType(r, selRoom.id, 'esterno'))} className={pill(selRoom.type === 'esterno')}>{tr('Non è della casa', 'Not part of the home')}</button>

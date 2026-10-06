@@ -1,12 +1,14 @@
 // Camminata in prima persona: occhi a 1,60 m, WASD/frecce + trascinamento per guardare, doppio clic per andare
 // in un punto; su telefono joystick a sinistra e trascinamento per guardare. Collisioni con muri e mobili (griglia).
+// Quota del calpestio dalla griglia (gradini delle scale, giardino 10 cm sotto casa): si sale e si scende di un
+// gradino alla volta (al massimo 30 cm), la camera segue morbida; canStand(x, z, h) limita fin dove si arriva.
 import * as THREE from 'three'
 
 export class WalkControls {
   constructor(camera, dom, grid, { eye = 1.6, radius = 0.2, lowEnd = false } = {}) {
     Object.assign(this, { camera, dom, grid, eye, radius, enabled: false })
     this.yaw = 0; this.pitch = 0; this.pos = new THREE.Vector2(); this.keys = new Set(); this.joy = null; this.goal = null
-    this.vel = new THREE.Vector2(); this.bob = 0
+    this.vel = new THREE.Vector2(); this.bob = 0; this.y = 0; this.canStand = null
     const look = { id: null, x: 0, y: 0 }
     this._down = e => {
       if (!this.enabled) return
@@ -54,20 +56,27 @@ export class WalkControls {
     for (let a = 0; a < 6.283; a += 0.785) if (!this.grid.free(x + Math.cos(a) * r, z + Math.sin(a) * r)) return false
     return this.grid.free(x, z)
   }
+  // si puo' stare in (x, z) partendo da dove si e': niente muri attorno, dislivello di un gradino al massimo
+  _ok(x, z) {
+    if (!this.clearAround(x, z)) return false
+    const h0 = this.grid.heightAt?.(this.pos.x, this.pos.y) ?? 0, h = this.grid.heightAt?.(x, z) ?? 0
+    if (Math.abs(h - h0) > 0.3) return false
+    return !this.canStand || this.canStand(x, z, h)
+  }
   _try(dx, dz) { // scivola lungo i muri
     const { x, y } = this.pos
-    if (this.clearAround(x + dx, y + dz)) this.pos.set(x + dx, y + dz)
-    else if (this.clearAround(x + dx, y)) this.pos.set(x + dx, y)
-    else if (this.clearAround(x, y + dz)) this.pos.set(x, y + dz)
+    if (this._ok(x + dx, y + dz)) this.pos.set(x + dx, y + dz)
+    else if (this._ok(x + dx, y)) this.pos.set(x + dx, y)
+    else if (this._ok(x, y + dz)) this.pos.set(x, y + dz)
     else return false
     return true
   }
-  poseFor(x, z, yaw, pitch) {
-    const pos = new THREE.Vector3(x, this.eye, z)
+  poseFor(x, z, yaw, pitch, y = this.grid.heightAt?.(x, z) ?? 0) {
+    const pos = new THREE.Vector3(x, this.eye + y, z)
     const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, -yaw, 0, 'YXZ'))
     return { pos, quat }
   }
-  setPose(x, z, yaw, pitch = 0) { this.pos.set(x, z); this.yaw = yaw; this.pitch = pitch; this.showJoystick = true }
+  setPose(x, z, yaw, pitch = 0) { this.pos.set(x, z); this.yaw = yaw; this.pitch = pitch; this.y = this.grid.heightAt?.(x, z) ?? 0; this.showJoystick = true }
   set enabledFlag(v) { this.enabled = v }
   update(dt) {
     if (!this.enabled) { this.showJoystick = false; return }
@@ -89,7 +98,10 @@ export class WalkControls {
     const target = new THREE.Vector2(L ? mx / Math.max(1, L) * run : 0, L ? mz / Math.max(1, L) * run : 0)
     this.vel.lerp(target, Math.min(1, dt * 8))
     if (this.vel.lengthSq() > 1e-5 && !this._try(this.vel.x * dt, this.vel.y * dt)) this.goal = null
-    const p = this.poseFor(this.pos.x, this.pos.y, this.yaw, this.pitch)
+    const hy = this.grid.heightAt?.(this.pos.x, this.pos.y) ?? 0
+    this.y += (hy - this.y) * Math.min(1, dt * 12) // sui gradini la camera sale e scende morbida
+    if (!dt) this.y = hy
+    const p = this.poseFor(this.pos.x, this.pos.y, this.yaw, this.pitch, this.y)
     this.camera.position.copy(p.pos); this.camera.quaternion.copy(p.quat)
   }
   dispose() {

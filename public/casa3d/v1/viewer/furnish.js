@@ -3,6 +3,7 @@
 // mai davanti alle finestre, misure reali, verifica d'ingombro su griglia 5 cm. Puo' girare anche sul server.
 
 const SIDES = ['N', 'S', 'W', 'E']
+const OPEN = new Set(['balcone', 'terrazzo', 'giardino', 'cortile'])
 const INWARD = { N: [0, 1], S: [0, -1], W: [1, 0], E: [-1, 0] }
 const rotFor = ([ix, iz]) => Math.atan2(ix, iz) // ruota il fronte (+z locale) verso l'interno
 
@@ -31,7 +32,7 @@ export function planFurniture(plan, house) {
     for (let lz = -hd; lz <= hd + 1e-6; lz += C) for (let lx = -hw; lx <= hw + 1e-6; lx += C) {
       const px = x + lx * c + lz * s, pz = z - lx * s + lz * c
       const i = grid.idx(px, pz)
-      if (i < 0 || grid.wall[i] || grid.furn[i] || (!ignoreClear && clear[i])) return false
+      if (i < 0 || grid.wall[i] || grid.furn[i] || grid.block[i] || grid.hgt[i] > 0.01 || grid.hgt[i] < -0.11 || (!ignoreClear && clear[i])) return false // non sulle scale
       if (grid.room[i] !== room.id) return false
     }
     return true
@@ -261,12 +262,29 @@ export function planFurniture(plan, house) {
     },
   }
   recipes.corridoio = recipes.ingresso
+  // terrazzi e balconi: arredo da esterno contro il muro (lettini negli stili che li hanno, se c'e' spazio) e un vaso
+  recipes.terrazzo = room => {
+    const sides = bySides(room, { preferNoWin: false })
+    let ok = room.area >= 7 && againstWall(room, 'terraceSet', 2.0, 1.95, { sides, allowWin: true, opts: { w: 2.0, d: 1.95, big: 1 } })
+    if (!ok) ok = againstWall(room, 'terraceSet', 1.75, 0.95, { sides, allowWin: true, opts: { w: 1.75, d: 0.95 } })
+    for (let k = 0; k < (room.area >= 7 ? 2 : 1); k++) { const pc = freeCorner(room, 0.75); if (pc) add(room, 'planter', pc.x, pc.z, 0, { w: 0.7, d: 0.7 }) }
+  }
+  recipes.balcone = recipes.terrazzo
+  // cortili: solo vasi contro i muri e negli angoli liberi (spazio comune, niente arredo privato)
+  recipes.cortile = room => {
+    for (let k = 0; k < 4; k++) { const pc = freeCorner(room, 0.75); if (!pc) break; add(room, 'planter', pc.x, pc.z, 0, { w: 0.7, d: 0.7 }) }
+    againstWall(room, 'planter', 0.7, 0.7, { sides: bySides(room, { preferNoWin: false }), allowWin: true })
+  }
+  // giardini: un paio di vasi contro la casa (arbusti, alberi e vialetto li fa outdoor.js)
+  recipes.giardino = room => {
+    for (let k = 0; k < 2; k++) againstWall(room, 'planter', 0.7, 0.7, { sides: bySides(room, { preferNoWin: false }), allowWin: true })
+  }
 
   // tende ai lati delle finestre (stanze abitabili)
   function curtains() {
     for (const w of house.windows) {
       const room = plan.rooms.find(r => r.id === w.room)
-      if (!room || ['bagno', 'cucina'].includes(room.type)) continue
+      if (!room || ['bagno', 'cucina', 'scala'].includes(room.type)) continue
       const ax = w.axis === 'x', [x0, z0, x1, z1] = w.rect, inn = w.in
       const off = w.face + (ax ? inn[1] : inn[0]) * 0.13
       const rot = rotFor(inn)
@@ -276,6 +294,9 @@ export function planFurniture(plan, house) {
       }
     }
   }
+
+  // vano scala: niente plafoniera (c'e' il buco nel soffitto), solo una luce che di notte la illumina
+  function stairLights() { for (const r of plan.rooms) if (r.type === 'scala' && !r.stair?.outdoor) { const [cx, cz] = center(r); lights.push({ room: r.id, x: cx, y: H - 0.4, z: cz, role: 'main', dim: 0.7 }) } }
 
   return {
     // drawn: mobili disegnati sulla planimetria (plan.furniture): in quelle stanze si mettono loro, al loro posto
@@ -293,12 +314,14 @@ export function planFurniture(plan, house) {
         const sk = skip.get(room.id) ?? new Set(); for (const k of SKIP[it.kind] ?? [it.kind]) sk.add(k); skip.set(room.id, sk)
       }
       for (const r of plan.rooms) recipes[r.type]?.(r)
+      stairLights()
       skip.clear()
       curtains()
       return { items, lights }
     },
     lightsOnly() { // casa vuota: solo le luci principali
-      for (const r of plan.rooms) { if (['balcone', 'terrazzo'].includes(r.type)) continue; const [cx, cz] = center(r); mainLight(r, cx, cz, 'ceilingLight') } // all'aperto niente plafoniera
+      for (const r of plan.rooms) { if (OPEN.has(r.type) || r.type === 'scala') continue; const [cx, cz] = center(r); mainLight(r, cx, cz, 'ceilingLight') } // all'aperto niente plafoniera
+      stairLights()
       return { items, lights }
     },
   }

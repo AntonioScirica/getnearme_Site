@@ -4,12 +4,19 @@ import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { worldUV } from './materials.js'
 import pc from '../vendor/polygon-clipping.js'
+import { layoutStair, buildStair, buildShaft, stairHeight } from './stairs.js'
 
-export const OUTDOOR = new Set(['balcone', 'terrazzo'])
+export const OUTDOOR = new Set(['balcone', 'terrazzo', 'giardino', 'cortile']) // all'aperto: niente soffitto
+export const GROUND = new Set(['giardino', 'cortile']) // esterni a terra: 10 cm sotto il pavimento di casa, prato o pietra
+export const GY = -0.1
+export const isOpenRoom = r => OUTDOOR.has(r.type) || !!r.stair?.outdoor
+export const isGroundRoom = r => GROUND.has(r.type) || !!r.stair?.outdoor
 // pavimenti letti dalle foto (plan.rooms[].floor) -> materiali
 const FLOOR_MAT = { parquet_chiaro: 'parquetLight', parquet_medio: 'parquet', parquet_scuro: 'parquetDark', gres_chiaro: 'tiles', gres_scuro: 'tilesDark', marmo: 'marble', cotto: 'cotto', graniglia: 'graniglia' }
 const WALL_BASE = 0xf1ece4, FACADE_BASE = 0xefe6d6 // all'aperto: niente soffitto, parapetti bassi
 export const FLOOR_OF = { cucina: 'tiles', bagno: 'marble', balcone: 'tiles', terrazzo: 'tiles', lavanderia: 'tiles', scala: 'marble' }
+// pavimento di una stanza: scelto dall'agente o letto dalle foto (fisso), poi quello consigliato dallo stile
+export const floorKey = (r, style) => r.type === 'giardino' ? 'lawn' : r.type === 'cortile' || r.stair?.outdoor ? 'paving' : FLOOR_MAT[r.floor] || style?.floors?.[r.type] || FLOOR_OF[r.type] || 'parquet'
 const SILL = 0.9, HEAD = 2.25, DOOR_H = 2.1
 
 const shapeOf = (pts, holes = []) => {
@@ -35,6 +42,7 @@ export class Grid {
     this.cell = cell; this.x0 = Math.min(...xs) - 1; this.z0 = Math.min(...zs) - 1
     this.w = Math.ceil((Math.max(...xs) + 1 - this.x0) / cell); this.h = Math.ceil((Math.max(...zs) + 1 - this.z0) / cell)
     this.wall = new Uint8Array(this.w * this.h); this.room = new Uint8Array(this.w * this.h); this.furn = new Uint8Array(this.w * this.h)
+    this.block = new Uint8Array(this.w * this.h); this.hgt = new Float32Array(this.w * this.h) // ringhiere e quota del calpestio (scale, esterni)
     const cv = document.createElement('canvas'); cv.width = this.w; cv.height = this.h
     const ctx = cv.getContext('2d', { willReadFrequently: true })
     ctx.setTransform(1 / cell, 0, 0, 1 / cell, -this.x0 / cell, -this.z0 / cell)
@@ -48,13 +56,32 @@ export class Grid {
     read(() => { for (const P of solid) { ctx.beginPath(); P.forEach(poly); ctx.fill('evenodd') }
       for (const d of plan.doors) if (d.entrance) { const r = d.rect; ctx.fillRect(r[0], r[1], r[2] - r[0], r[3] - r[1]) } }, this.wall, 1)
     for (const r of plan.rooms) read(() => { ctx.beginPath(); poly(r.poly); ctx.fill() }, this.room, r.id)
+    // esterni a terra: quota piu' bassa del pavimento di casa
+    const gm = new Uint8Array(this.w * this.h)
+    for (const r of plan.rooms) if (isGroundRoom(r)) read(() => { ctx.beginPath(); poly(r.poly); ctx.fill() }, gm, 1)
+    for (let i = 0; i < gm.length; i++) if (gm[i]) this.hgt[i] = GY
     // le soglie delle porte appartengono alla casa
     for (const d of plan.doors) if (!d.entrance) read(() => { const r = d.rect; ctx.fillRect(r[0], r[1], r[2] - r[0], r[3] - r[1]) }, this.room, d.rooms[0])
+    // fessure di una o due celle (5-10 cm) tra soglie e stanze: si chiudono, se no la camminata si incastra nei varchi
+    for (let pass = 0; pass < 2; pass++) for (let j = 1; j < this.h - 1; j++) for (let i = 1; i < this.w - 1; i++) {
+      const k = j * this.w + i; if (this.room[k] || this.wall[k]) continue
+      const l = this.room[k - 1], r = this.room[k + 1], u = this.room[k - this.w], d = this.room[k + this.w]
+      if (l && r) this.room[k] = l; else if (u && d) this.room[k] = u
+      else if (pass === 0 && i < this.w - 2 && l && this.room[k + 2] && !this.wall[k + 1]) this.room[k] = l
+      else if (pass === 0 && j < this.h - 2 && u && this.room[k + 2 * this.w] && !this.wall[k + this.w]) this.room[k] = u
+    }
   }
   idx(x, z) { const i = Math.floor((x - this.x0) / this.cell), j = Math.floor((z - this.z0) / this.cell); return i < 0 || j < 0 || i >= this.w || j >= this.h ? -1 : j * this.w + i }
   isWall(x, z) { const i = this.idx(x, z); return i < 0 || this.wall[i] === 1 }
   roomAt(x, z) { const i = this.idx(x, z); return i < 0 ? 0 : this.room[i] }
-  free(x, z) { const i = this.idx(x, z); return i >= 0 && !this.wall[i] && !this.furn[i] && this.room[i] > 0 }
+  free(x, z) { const i = this.idx(x, z); return i >= 0 && !this.wall[i] && !this.furn[i] && !this.block[i] && this.room[i] > 0 }
+  heightAt(x, z) { const i = this.idx(x, z); return i < 0 ? 0 : this.hgt[i] }
+  // segmento (ringhiera, siepe) che non si attraversa camminando
+  blockSeg(x0, z0, x1, z1, r = 0.06) {
+    const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.ceil(L / (this.cell / 2)))
+    for (let k = 0; k <= n; k++) { const x = x0 + (x1 - x0) * k / n, z = z0 + (z1 - z0) * k / n
+      for (let dz = -r; dz <= r + 1e-6; dz += this.cell) for (let dx = -r; dx <= r + 1e-6; dx += this.cell) { const i = this.idx(x + dx, z + dz); if (i >= 0) this.block[i] = 1 } }
+  }
   // ingombro di un mobile (rettangolo ruotato) nella griglia
   markFurniture(cx, cz, w, d, rot) {
     const c = Math.cos(rot), s = Math.sin(rot), hw = w / 2, hd = d / 2, r = Math.hypot(hw, hd)
@@ -80,12 +107,15 @@ const rectRing = (r, ax, grow = 0) => {
   return [[[x0 - gx, z0 - gz], [x1 + gx, z0 - gz], [x1 + gx, z1 + gz], [x0 - gx, z1 + gz], [x0 - gx, z0 - gz]]]
 }
 const closeRing = pts => { const r = pts.map(p => [p[0], p[1]]); r.push([...r[0]]); return r }
+// poligono allargato di e (unione con le strisce dei lati): chiude le fessure tra esterni vicini
+const grow = (pts, e) => [[closeRing(pts)], ...pts.map((a, i) => { const b = pts[(i + 1) % pts.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1e-6, nx = -(b[1] - a[1]) / L * e, nz = (b[0] - a[0]) / L * e, tx = (b[0] - a[0]) / L * e, tz = (b[1] - a[1]) / L * e
+  return [closeRing([[a[0] - tx + nx, a[1] - tz + nz], [b[0] + tx + nx, b[1] + tz + nz], [b[0] + tx - nx, b[1] + tz - nz], [a[0] - tx - nx, a[1] - tz - nz]])] })]
 const U = list => list.length ? pc.union(...list) : []
 const D = (a, b) => (a.length && b.length) ? pc.difference(a, b) : a
 // multipoligono (anelli in [x,z]) -> shape three.js
 const shapesOf = mp => mp.map(P => shapeOf(P[0].slice(0, -1), P.slice(1).map(h => h.slice(0, -1))))
 
-export function buildHouse(plan, M) {
+export function buildHouse(plan, M, { style = null, level = null, name = '' } = {}) {
   const H = plan.height || 2.7
   const group = new THREE.Group(); group.name = 'casa'
   const rooms = new Map(plan.rooms.map(r => [r.id, r]))
@@ -107,22 +137,49 @@ export function buildHouse(plan, M) {
     g.rotateX(-Math.PI / 2); g.translate(0, y0, 0)
     const m = mesh(g, M.wall); m.name = `muri-${y0}`; group.add(m)
   }
+  // SCALE: disposizione prima di soffitti e pavimenti (servono i buchi). Piu' piani: sale fino al penultimo, l'ultimo
+  // scende. Un piano solo: sale (scende se il piano e' chiaramente alto: primo, secondo, mansarda)
+  const count = level?.count || 1, idx = level?.index || 0
+  const upper = /\b(primo|secondo|terzo|quarto|1\s*°|2\s*°|superiore|mansard|sottotett|attico|first|second|upper|attic)\b/i.test(name || plan.name || '')
+  const indoorRooms = plan.rooms.filter(r => !isOpenRoom(r))
+  const hc = indoorRooms.length ? [indoorRooms.reduce((a, r) => a + r.center[0], 0) / indoorRooms.length, indoorRooms.reduce((a, r) => a + r.center[1], 0) / indoorRooms.length] : null
+  const stairs = []
+  for (const r of plan.rooms.filter(x => x.type === 'scala')) {
+    const open = !!r.stair?.outdoor
+    const dir = open ? 'up' : count > 1 ? (idx < count - 1 ? 'up' : 'down') : (upper ? 'down' : 'up')
+    const L = layoutStair(r, plan, { dir, R: H + 0.27, base: open ? GY : 0, center: open ? hc : null })
+    if (!L) continue
+    L.open = open; L.linked = count > 1 && !open // si cambia piano camminando
+    stairs.push(L)
+  }
+  const holeRing = L => { const [x0, z0, x1, z1] = L.hole; return [[[x0, z0], [x1, z0], [x1, z1], [x0, z1], [x0, z0]]] }
+  const upHoles = stairs.filter(L => !L.open && L.dir === 'up').map(holeRing), downHoles = stairs.filter(L => !L.open && L.dir === 'down').map(holeRing)
   // sezione scura del muro vista dall'alto: un solo tappo 3 mm sopra la cima dei muri
   const capG = new THREE.ShapeGeometry(shapesOf(full)); capG.rotateX(-Math.PI / 2); capG.translate(0, H + 0.003, 0)
   group.add(mesh(capG, M.wallCut, { cast: false, receive: false }))
 
   // impronta della casa (muri + stanze): solaio sotto, soffitto, e solaio sopra che fa ombra al sole
-  const roomP = plan.rooms.map(r => [closeRing(r.poly)])
-  const foot = U([full, ...roomP])
+  // la casa (stanze interne, terrazzi, muri) separata dagli esterni a terra (giardini, cortili, scale esterne)
+  const roomP = plan.rooms.filter(r => !isGroundRoom(r)).map(r => [closeRing(r.poly)])
+  const groundP = plan.rooms.filter(isGroundRoom).map(r => [closeRing(r.poly)])
+  const downCut = downHoles.length ? U(downHoles) : []
+  const foot = D(U([full, ...roomP]), downCut)
   const slab = new THREE.ExtrudeGeometry(shapesOf(foot), { depth: 0.25, bevelEnabled: false })
   slab.rotateX(-Math.PI / 2); slab.translate(0, -0.26, 0)
   group.add(mesh(slab, M.slab, { cast: false }))
   // sottofondo appena sotto i pavimenti: copre eventuali fessure tra pavimento e muro
   const sub = new THREE.ShapeGeometry(shapesOf(D(foot, band0))); sub.rotateX(-Math.PI / 2); sub.translate(0, -0.004, 0)
-  group.add(mesh(sub, M.parquet, { cast: false }))
-  // soffitto e solaio solo sopra le stanze interne (terrazzi e balconi all'aperto)
-  const outR = plan.rooms.filter(r => OUTDOOR.has(r.type)).map(r => [closeRing(r.poly)])
-  const roofFoot = outR.length ? D(foot, U(outR)) : foot
+  const subMesh = mesh(sub, M.mat(floorKey({ type: 'soggiorno' }, style)), { cast: false }); group.add(subMesh)
+  // terra sotto giardini e cortili: dal fondo del plastico al prato (si vede il taglio sul bordo)
+  const groundFoot = groundP.length ? D(U(plan.rooms.filter(isGroundRoom).flatMap(r => grow(r.poly, 0.08))), U([full, ...roomP])) : []
+  if (groundFoot.length) {
+    const soil = new THREE.ExtrudeGeometry(shapesOf(groundFoot), { depth: 0.26 + GY - 0.006, bevelEnabled: false })
+    soil.rotateX(-Math.PI / 2); soil.translate(0, -0.27, 0); group.add(mesh(soil, M.soil, { cast: false }))
+  }
+  // soffitto e solaio solo sopra le stanze interne (terrazzi e balconi all'aperto); buco sopra le scale che salgono
+  const outR = plan.rooms.filter(r => OUTDOOR.has(r.type) && !GROUND.has(r.type)).map(r => [closeRing(r.poly)])
+  const roofCut = [...outR, ...upHoles]
+  const houseFoot = U([full, ...roomP]), roofFoot = roofCut.length ? D(houseFoot, U(roofCut)) : houseFoot
   const ceilGeo = new THREE.ShapeGeometry(shapesOf(roofFoot)); ceilGeo.rotateX(-Math.PI / 2); ceilGeo.translate(0, H, 0)
   const ceiling = mesh(ceilGeo, M.ceiling, { cast: false }); ceiling.name = 'soffitto'
   const roofGeo = new THREE.ExtrudeGeometry(shapesOf(roofFoot), { depth: 0.3, bevelEnabled: false })
@@ -159,13 +216,17 @@ export function buildHouse(plan, M) {
   const floorPolys = new Map()
   for (const r of plan.rooms) {
     const thr = plan.doors.filter(d => !d.entrance && d.rooms[0] === r.id).map(d => rectRing(d.rect, d.axis, 0.03))
-    let fp = D(U([[closeRing(r.poly)], ...thr]), band0)
+    const fill = (plan.fills || []).filter(f => f.room === r.id).map(f => [closeRing(f.poly)])
+    // esterni a terra allargati di 8 cm (niente fessure verdi tra cortile e scala esterna), mai dentro la casa
+    let fp = isGroundRoom(r) ? D(U([...grow(r.poly, 0.08), ...thr, ...fill]), U([band0, ...roomP])) : D(U([[closeRing(r.poly)], ...thr, ...fill]), band0)
     if (used.length) fp = D(fp, used)
     used = used.length ? U([used, fp]) : fp
     floorPolys.set(r.id, fp)
-    if (!fp.length) continue
-    const g = new THREE.ShapeGeometry(shapesOf(fp)); g.rotateX(-Math.PI / 2)
-    const m = mesh(g, M[FLOOR_MAT[r.floor]] || M[FLOOR_OF[r.type] || 'parquet'], { cast: false }); m.userData.roomId = r.id; m.name = `pavimento-${r.id}`
+    const fpDraw = downCut.length ? D(fp, downCut) : fp // il buco della scala che scende
+    if (!fpDraw.length) continue
+    const g = new THREE.ShapeGeometry(shapesOf(fpDraw)); g.rotateX(-Math.PI / 2)
+    if (isGroundRoom(r)) g.translate(0, GY, 0)
+    const m = mesh(g, M.mat(floorKey(r, style)), { cast: false }); m.userData.roomId = r.id; m.userData.room = r; m.name = `pavimento-${r.id}`
     group.add(m); floors.push(m)
   }
   // parapetti dei terrazzi e balconi: muretto alto 1,05 m (si vede fuori, non si attraversa)
@@ -178,13 +239,19 @@ export function buildHouse(plan, M) {
     const capP = new THREE.ShapeGeometry(shapesOf(parFree)); capP.rotateX(-Math.PI / 2); capP.translate(0, 1.053, 0)
     group.add(mesh(capP, M.sill, { cast: false }))
   }
-  const grid = new Grid(plan, parFree.length ? U([band0, parFree]) : band0)
+  // confini di giardini e cortili (siepe o muretto, fatti in outdoor.js): non si attraversano
+  const bndP = (plan.boundaries || []).map(b => { const L = Math.hypot(b.b[0] - b.a[0], b.b[1] - b.a[1]) || 1e-6, t = b.kind === 'siepe' ? 0.25 : 0.12, nx = -(b.b[1] - b.a[1]) / L * t, nz = (b.b[0] - b.a[0]) / L * t
+    return [closeRing([[b.a[0] + nx, b.a[1] + nz], [b.b[0] + nx, b.b[1] + nz], [b.b[0] - nx, b.b[1] - nz], [b.a[0] - nx, b.a[1] - nz]])] })
+  const grid = new Grid(plan, U([band0, ...(parFree.length ? [parFree] : []), ...bndP]))
 
   // colori dei muri per stanza (letti dalle foto o scelti dall'agente) e facciata fuori: colore per vertice, guardando
   // la stanza che sta davanti a ogni faccia (5 cm verso la normale)
-  const wallColor = new Map(plan.rooms.map(r => [r.id, new THREE.Color(r.wall || WALL_BASE)]))
-  const facade = new THREE.Color(plan.materials?.facade?.color || FACADE_BASE), base = new THREE.Color(WALL_BASE)
-  for (const r of plan.rooms) if (OUTDOOR.has(r.type)) wallColor.set(r.id, facade) // dal terrazzo si vede la facciata
+  // base: colore dello stile per le stanze senza colore letto dalle foto o scelto (si cambia dal vivo, setWallBase)
+  const base = new THREE.Color(style?.wall ?? WALL_BASE)
+  const wallColor = new Map(plan.rooms.map(r => [r.id, r.wall ? new THREE.Color(r.wall) : base]))
+  const facade = new THREE.Color(plan.materials?.facade?.color || FACADE_BASE)
+  for (const r of plan.rooms) if (isOpenRoom(r)) wallColor.set(r.id, facade) // dal terrazzo e dal giardino si vede la facciata
+  const wallMeshes = []
   const facadeMat = M.facade?.(plan.materials?.facade?.kind, plan.materials?.facade?.color) // pietra o mattone
   const facadeParts = []
   group.traverse(o => {
@@ -193,37 +260,48 @@ export function buildHouse(plan, M) {
     // giro del poligono e una parte e' dentro il muro), fino a 18 cm: la stanza davanti alla faccia, se no la facciata
     const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry
     if (g !== o.geometry) o.geometry = g
-    const pos = g.attributes.position, nor = g.attributes.normal, col = new Float32Array(pos.count * 3)
+    const pos = g.attributes.position, nor = g.attributes.normal, col = new Float32Array(pos.count * 3), fl = new Uint8Array(pos.count / 3), ext = new Uint8Array(pos.count / 3)
     for (let t = 0; t + 2 < pos.count; t += 3) {
       const x = (pos.getX(t) + pos.getX(t + 1) + pos.getX(t + 2)) / 3, z = (pos.getZ(t) + pos.getZ(t + 1) + pos.getZ(t + 2)) / 3
       const nx = nor.getX(t), ny = nor.getY(t), nz = nor.getZ(t)
-      let c = base
+      let c = base, b = 1
       if (Math.abs(ny) < 0.5) {
         let id = 0
         for (const k of [0.04, 0.09, 0.14, 0.18]) { id = grid.roomAt(x + nx * k, z + nz * k) || grid.roomAt(x - nx * k, z - nz * k); if (id) break }
         c = id ? (wallColor.get(id) || base) : facade
+        b = id && c === base ? 1 : 0
+        if (c === facade) ext[t / 3] = 1
       }
+      fl[t / 3] = b
       for (let q = t; q < t + 3; q++) { col[q * 3] = c.r; col[q * 3 + 1] = c.g; col[q * 3 + 2] = c.b }
-      if (c === facade) { col[t * 3 + 2] = -1 } // segno: triangolo di facciata (tolto sotto se c'e' una texture)
     }
     if (facadeMat) {
       // i triangoli della facciata passano su una mesh a parte con la texture di pietra o mattone (UV in metri)
-      const inP = [], inN = [], inC = [], exP = [], exN = []
+      const inP = [], inN = [], inC = [], inF = [], exP = [], exN = []
       for (let t = 0; t + 2 < pos.count; t += 3) {
-        const ext = col[t * 3 + 2] === -1
+        const e = ext[t / 3]
+        if (!e) inF.push(fl[t / 3])
         for (let q = t; q < t + 3; q++) {
           const P = [pos.getX(q), pos.getY(q), pos.getZ(q)], Nn = [nor.getX(q), nor.getY(q), nor.getZ(q)]
-          if (ext) { exP.push(...P); exN.push(...Nn) } else { inP.push(...P); inN.push(...Nn); inC.push(col[q * 3], col[q * 3 + 1], col[q * 3 + 2]) }
+          if (e) { exP.push(...P); exN.push(...Nn) } else { inP.push(...P); inN.push(...Nn); inC.push(col[q * 3], col[q * 3 + 1], col[q * 3 + 2]) }
         }
       }
       const gi = new THREE.BufferGeometry(); gi.setAttribute('position', new THREE.Float32BufferAttribute(inP, 3)); gi.setAttribute('normal', new THREE.Float32BufferAttribute(inN, 3)); gi.setAttribute('color', new THREE.Float32BufferAttribute(inC, 3))
-      worldUV(gi); o.geometry = gi
+      worldUV(gi); o.geometry = gi; o.userData.baseTris = Uint8Array.from(inF); wallMeshes.push(o)
       if (exP.length) { const ge = new THREE.BufferGeometry(); ge.setAttribute('position', new THREE.Float32BufferAttribute(exP, 3)); ge.setAttribute('normal', new THREE.Float32BufferAttribute(exN, 3)); worldUV(ge); facadeParts.push(ge) }
       return
     }
-    for (let t = 0; t + 2 < pos.count; t += 3) if (col[t * 3 + 2] === -1) col[t * 3 + 2] = facade.b
-        o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3))
+    o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3)); o.userData.baseTris = fl; wallMeshes.push(o)
   })
+  // colore di base dei muri (stile): solo i triangoli delle stanze senza colore proprio
+  const setWallBase = hex => {
+    base.set(hex)
+    for (const o of wallMeshes) {
+      const c = o.geometry.attributes.color, f = o.userData.baseTris
+      for (let t = 0; t < f.length; t++) if (f[t]) for (let q = t * 3; q < t * 3 + 3; q++) c.setXYZ(q, base.r, base.g, base.b)
+      c.needsUpdate = true
+    }
+  }
   if (facadeParts.length) { const fm = mesh(mergeGeometries(facadeParts), facadeMat); fm.name = 'facciata'; group.add(fm) }
   if (plan.materials?.frames) M.windowFrame.color.set(plan.materials.frames)
   const doorMat = plan.materials?.doors ? M.lacquer.clone() : M.lacquer
@@ -382,9 +460,32 @@ export function buildHouse(plan, M) {
   const sk = merged(skirt, M.lacquer, { cast: false }); if (sk) group.add(sk)
   const cl = merged(cladding, M.wallTiles, { cast: false }); if (cl) group.add(cl)
 
+  // corpo delle scale esterne: intonaco del colore della facciata, o la sua pietra o il suo mattone
+  let outBodyM = null
+  const outBody = () => outBodyM || (outBodyM = facadeMat || new THREE.MeshStandardMaterial({ color: facade.clone(), roughness: 0.95 }))
+  // scale: geometria, quote del calpestio e ringhiere nella griglia della camminata
+  for (const L of stairs) {
+    const indoor = !L.open
+    const clipTop = indoor && L.dir === 'up' ? H : Infinity
+    const depth = Math.min(L.R - 0.2, Math.max(1.4, L.parts.find(p => p.kind === 'landing') ? -L.parts.find(p => p.kind === 'landing').y + 0.25 : 1.6))
+    const st = buildStair(L, M, { clipTop, floorBase: L.dir === 'down' ? -depth : L.base, cutDepth: L.dir === 'down' ? -depth : -Infinity, wallAt: (x, z) => grid.isWall(x, z) && grid.roomAt(x, z) === 0, bodyMat: L.open ? outBody() : null })
+    group.add(st.below)
+    if (st.above.children.length) { group.add(st.above); hideInTop.push(st.above) }
+    if (indoor) { const sh = buildShaft(L, M, { H, depth, up: L.dir === 'up' }); group.add(sh); if (L.dir === 'up') hideInTop.push(sh) }
+    // quote: celle della scala; nel buco senza rampa (non dovrebbe succedere) non si cammina
+    const [hx0, hz0, hx1, hz1] = L.hole
+    for (let z = hz0 + grid.cell / 2; z < hz1; z += grid.cell) for (let x = hx0 + grid.cell / 2; x < hx1; x += grid.cell) {
+      const i = grid.idx(x, z); if (i < 0) continue
+      const h = stairHeight(L, x, z)
+      if (h === null) { if (L.dir === 'down') grid.block[i] = 1 } else grid.hgt[i] = h
+    }
+    for (const [x0, z0, x1, z1] of st.railSegs) grid.blockSeg(x0, z0, x1, z1)
+    L.depth = depth
+  }
+
   group.traverse(o => { if (o.isMesh && o.receiveShadow === undefined) o.receiveShadow = true })
   const xs = plan.outline.map(p => p[0]), zs = plan.outline.map(p => p[1])
   const bounds = { x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) }
-  return { group, grid, floors, hideInTop, ceiling, roof, rooms, doors, windows, lampAnchors, bounds, H, inPoly }
+  return { group, grid, floors, hideInTop, ceiling, roof, rooms, doors, windows, lampAnchors, bounds, H, inPoly, stairs, setWallBase, subMesh }
 }
 export { inPoly }

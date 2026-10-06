@@ -7,7 +7,12 @@ export type OpType = 'door' | 'entrance' | 'varco' | 'window'
 export type RawWall = { a: Pt; b: Pt; t: number; label?: string }
 export type RawOpening = { type: OpType; a: Pt; b: Pt; t: number; width: number; rooms: number[]; suspect: boolean; label?: string; added?: boolean }
 // label: scritta letta dalla planimetria originale (il tipo viene da li'); written_mq: mq scritti per la stanza
-export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: string; label?: string; written_mq?: number; floor?: FloorKind; wall?: string } // floor/wall: scelti dall'agente
+export type RawRoom = { id: number; area: number; center: Pt; poly: Pt[]; type: string; label?: string; written_mq?: number; floor?: FloorKind; wall?: string; stair?: StairHint } // floor/wall: scelti dall'agente
+// scala: verso dei gradini letto dall'originale (axis = asse lungo cui si sale, tread = pedata misurata in metri) e
+// scala esterna (nel resede o fuori dalla casa: rampa all'aperto, niente muri ne' soffitto). {} = guardata, niente trovato
+export type StairHint = { axis?: 'x' | 'z'; tread?: number; outdoor?: boolean
+  // rampa e pianerottolo disegnati (rettangoli [x0, z0, x1, z1] in metri sulla pianta), gradini contati, verso di salita lungo axis
+  flight?: [number, number, number, number]; treads?: number; landing?: [number, number, number, number]; up?: 1 | -1; seen?: boolean }
 // Materiali e colori veri dalle foto dell'immobile (una chiamata di visione per casa), per tipo di stanza
 export const FLOOR_KINDS = ['parquet_chiaro', 'parquet_medio', 'parquet_scuro', 'gres_chiaro', 'gres_scuro', 'marmo', 'cotto', 'graniglia'] as const
 export type FloorKind = (typeof FLOOR_KINDS)[number]
@@ -63,7 +68,11 @@ export type ViewerPlan = {
   furniture?: { kind: string; x: number; z: number; rot: number; w: number; d: number; room: number; opts: Record<string, number> }[]
   windows: { rect: [number, number, number, number]; axis: 'x' | 'z'; room: number; in: [number, number] }[]
   doors: { axis: 'x' | 'z'; rooms: [number, number]; rect: [number, number, number, number]; swing: number; entrance?: boolean; varco?: boolean }[]
-  rooms: { id: number; type: string; area: number; center: Pt; poly: Pt[]; rect: [number, number, number, number]; floor?: FloorKind; wall?: string }[]
+  rooms: { id: number; type: string; area: number; center: Pt; poly: Pt[]; rect: [number, number, number, number]; floor?: FloorKind; wall?: string; stair?: StairHint; label?: string }[]
+  // confini dei giardini e dei cortili (linee del lotto): siepe o muretto basso nel visore, non muri
+  boundaries?: { a: Pt; b: Pt; kind: 'siepe' | 'muretto' }[]
+  fills?: { room: number; poly: Pt[] }[] // strisce dei muri tolti tra esterni: pavimento dell'esterno accanto
+  lawn?: boolean // tra le foto dell'immobile c'e' un giardino: esterni a prato
   materials?: { frames: string; doors: string; facade: { kind: string; color: string }; roof: string; shutters: string }
   // metri -> pixel della planimetria originale (per la miniatura che gira con la vista)
   image?: { toImage: number[]; w: number; h: number }
@@ -74,21 +83,54 @@ export type ViewerPlan = {
 // Un piano della casa salvato su R2 (raw = modificabile, plan = per il visore)
 export type Casa3dFloor = { name: string; raw: string; plan: string; image: string; cad?: string }
 // Casa 3D dell'immobile, in import_data.details.casa3d (niente colonne nuove)
-export type Casa3d = { status: 'ready' | 'working'; floors: Casa3dFloor[]; manifest: string; poster?: string; created: string; updated?: string; key: string }
+export type Casa3d = { status: 'ready' | 'working'; floors: Casa3dFloor[]; manifest: string; poster?: string; created: string; updated?: string; key: string; style?: Casa3dStyle }
+// stili d'arredo del visore (public/casa3d/v1/viewer/styles.js): cambio dal vivo, lo scelto si salva nel manifest
+export const CASA3D_STYLES = ['moderno', 'nordico', 'classico', 'industriale', 'lusso', 'boho', 'vuota'] as const
+export type Casa3dStyle = (typeof CASA3D_STYLES)[number]
+export const STYLE_LABEL: Record<Casa3dStyle, [string, string]> = {
+  moderno: ['Moderno', 'Modern'], nordico: ['Nordico', 'Nordic'], classico: ['Classico', 'Classic'], industriale: ['Industriale', 'Industrial'],
+  lusso: ['Luxury', 'Luxury'], boho: ['Boho', 'Boho'], vuota: ['Vuota', 'Empty'],
+}
+export const isStyle = (x: unknown): x is Casa3dStyle => typeof x === 'string' && (CASA3D_STYLES as readonly string[]).includes(x)
 // indirizzo del visore (pagina statica in public/casa3d, versione nel nome per la cache)
 export const VIEWER_PATH = '/casa3d/v1/index.html'
 
 // stanze all'aperto: niente soffitto, pavimento da esterno, parapetti al posto dei muri esterni
 export const OUTDOOR = new Set(['balcone', 'terrazzo'])
-export const ROOM_TYPES = ['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'ingresso', 'corridoio', 'studio', 'ripostiglio', 'balcone', 'terrazzo', 'scala'] as const
+// esterni a terra della casa (resede, corte, giardino): prato o pavimentazione, confini a siepe o muretto, niente soffitto
+export const GROUND = new Set(['giardino', 'cortile'])
+export const ROOM_TYPES = ['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'ingresso', 'corridoio', 'studio', 'ripostiglio', 'balcone', 'terrazzo', 'scala', 'giardino', 'cortile'] as const
 export const ROOM_LABEL_IT: Record<string, string> = {
   soggiorno: 'Soggiorno', cucina: 'Cucina', camera: 'Camera', cameretta: 'Cameretta', bagno: 'Bagno', ingresso: 'Ingresso', corridoio: 'Corridoio',
   studio: 'Studio', ripostiglio: 'Ripostiglio', balcone: 'Balcone', terrazzo: 'Terrazzo', scala: 'Scala', lavanderia: 'Lavanderia', stanza: 'Stanza', esterno: 'Fuori casa',
+  giardino: 'Giardino', cortile: 'Cortile',
 }
 export const ROOM_LABEL_EN: Record<string, string> = {
   soggiorno: 'Living room', cucina: 'Kitchen', camera: 'Bedroom', cameretta: 'Kids room', bagno: 'Bathroom', ingresso: 'Entrance', corridoio: 'Hallway',
   studio: 'Study', ripostiglio: 'Storage', balcone: 'Balcony', terrazzo: 'Terrace', scala: 'Stairs', lavanderia: 'Laundry', stanza: 'Room', esterno: 'Not part of the home',
+  giardino: 'Garden', cortile: 'Courtyard',
 }
+// scritte delle esterne: resede/corte/cortile/giardino/area esterna/pertinenza sono esterni della casa, mai stanze.
+// "a comune", corte e cortile = cortile condiviso (pavimentato); esclusivo, giardino, area esterna = giardino privato
+export const EXTERIOR_RE = /\b(resede|corte|cortile|giardino|area\s+esterna|pertinenz[ae]|chiostr[oi]|aia)\b/i
+export const exteriorType = (text: string): 'giardino' | 'cortile' | null => !EXTERIOR_RE.test(text) ? null : /comun|condomin|\bcorte\b|cortile|chiostr|\baia\b/i.test(text) && !/esclusiv|privat|giardino/i.test(text) ? 'cortile' : 'giardino'
+// parole delle catastali poco note: spiegazione breve al tocco nella schermata di correzione
+export const GLOSSARY: [RegExp, string, string][] = [
+  [/resede/i, 'Resede: area esterna della casa, cortile o giardino', 'Resede: the home outdoor area, courtyard or garden'],
+  [/\bcorte\b/i, 'Corte: cortile, area esterna comune o della casa', 'Corte: courtyard, shared or private outdoor area'],
+  [/pertinenz/i, 'Pertinenza: spazio al servizio della casa, di solito esterno', 'Pertinenza: space serving the home, usually outdoors'],
+  [/disimp|\bdis\.?\b/i, 'Disimpegno: piccolo corridoio che collega le stanze', 'Disimpegno: small hallway linking the rooms'],
+  [/\bw\.?\s?c\.?\b/i, 'W.C.: bagno', 'W.C.: bathroom'],
+  [/loggia/i, 'Loggia: balcone coperto, chiuso su tre lati', 'Loggia: covered balcony, closed on three sides'],
+  [/lastrico/i, 'Lastrico solare: terrazzo di copertura', 'Lastrico solare: roof terrace'],
+  [/androne/i, 'Androne: ingresso comune del palazzo', 'Androne: shared building entrance'],
+  [/sottotetto|soffitta/i, 'Sottotetto: spazio sotto il tetto, spesso basso', 'Sottotetto: space under the roof, often low'],
+  [/tettoia|portico/i, 'Portico o tettoia: spazio coperto all\'aperto', 'Porch or canopy: covered outdoor space'],
+  [/\bh\s?=?\s?\d/i, 'H: altezza del soffitto in metri', 'H: ceiling height in metres'],
+  [/\bp\.?\s?t\.?\b|piano terra/i, 'P.T.: piano terra', 'P.T.: ground floor'],
+  [/cantin/i, 'Cantina: locale di deposito, spesso interrato', 'Cantina: storage room, often below ground'],
+]
+export const glossaryOf = (text?: string, en = false) => { if (!text) return null; const g = GLOSSARY.find(([re]) => re.test(text)); return g ? (en ? g[2] : g[1]) : null }
 
 // casa 3D di un immobile pubblico (details.casa3d), solo indirizzi https: per il sito e la pagina /3d
 export function casa3dOf(p: { details?: Record<string, unknown> }): { manifest: string; poster?: string; floors: number } | null {

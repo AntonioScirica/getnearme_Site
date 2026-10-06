@@ -6,7 +6,8 @@ import { logUsage } from '@/lib/ai'
 import { gptImage } from '@/lib/gptImage'
 import { planBox } from '@/lib/planCrop'
 import { alignToOriginal, openDoorsFromOriginal, removeFakeWalls, verifyFurniture } from './align'
-import { applyFix, applyFurniture, applyLabels, checkRoomTypes, guessRoomTypes, mergeRooms, splitRoom } from './build'
+import { applyFix, applyFurniture, applyLabels, checkRoomTypes, guessRoomTypes, mergeRooms, normalizeExterior, splitRoom } from './build'
+import { readStairs } from './stairs'
 import { claudeCheck } from './check'
 import { overlayJpeg } from './overlay'
 import type { Fix, RawPlan } from './types'
@@ -91,6 +92,8 @@ export async function recognizeFloor(o: { userId: string; image: Buffer; areaM2?
   // terrazzi e balconi tratteggiati o con la scritta fuori dalle stanze, che il ridisegno ha cancellato
   try { raw = (await findOutdoor(raw, crop)).raw } catch (e) { console.error('casa3d esterni', e) }
   raw = guessRoomTypes(checkRoomTypes(raw)) // bagni senza scritta poco plausibili, poi i tipi mancanti
+  raw = normalizeExterior(raw) // resede e cortili, scale esterne senza vani inventati accanto (niente AI)
+  try { raw = await readStairs(raw, crop) } catch (e) { console.error('casa3d scale', e) } // verso dei gradini dall'originale
   // materiali e colori dalle foto dell'immobile (una sola chiamata per casa: il chiamante passa le foto solo al primo piano)
   if (o.photos?.length) {
     const tm = Date.now()

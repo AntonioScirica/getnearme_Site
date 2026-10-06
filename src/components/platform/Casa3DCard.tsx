@@ -72,7 +72,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
           <Box size={14} /> {tr('Crea la casa 3D', 'Create the 3D home')} <span className="rounded-full bg-black/[.06] px-1.5 text-[10px] font-semibold text-muted">{CREDIT_COST.casa3d}</span>
         </button>
       )}
-      {view && casa && <Casa3DViewer manifest={casa.manifest} title={project.titolo || project.nome || undefined} onClose={() => setView(false)} />}
+      {view && casa && <Casa3DViewer manifest={casa.manifest} title={project.titolo || project.nome || undefined} onClose={() => setView(false)} save={{ key: casa.key, projectId: project.id, onSaved: c => setCasa(c) }} />}
       {picking && <PlanPicker photos={photos} plans={plans} onClose={() => setPicking(false)} onPick={sel => { setPicking(false); setFlow({ plans: sel }) }} />}
       {flow && (
         <Casa3DFlow plans={flow.plans} existing={flow.existing} reuseKey={flow.reuseKey} projectId={project.id} areaM2={project.mq || undefined}

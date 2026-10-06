@@ -11,7 +11,9 @@
 <style>
   /* Casa 3D di Agente Immo: visore a schermo intero (pagina /a/<sito>/<immobile>/3d, incorporabile in altri siti).
      Parametri: src = elenco dei piani (JSON { floors: [{ name, plan, image }] }) oppure plan = una pianta;
-     floor, view (top|walk), time (day|night), ui=0, poster=1 (manda al genitore la vista dall'alto come immagine). */
+     floor, view (top|walk), time (day|night), style (moderno|nordico|classico|industriale|lusso|boho|vuota, se no quello
+     salvato nel manifest), ui=0, poster=1 (manda al genitore la vista dall'alto come immagine). Il cambio di stile manda
+     al genitore { casa3dStyle } (la piattaforma lo salva nella casa). */
   :root { --ink: #1d1d1b; --glass: rgba(255, 255, 255, 0.84); --brand: #537eec; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #eceae6; font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); overflow: hidden; -webkit-tap-highlight-color: transparent; }
@@ -52,7 +54,21 @@
   .orig span { display: block; font: 600 11px inherit; font-family: inherit; color: #6a6a6a; padding: 6px 4px 0; }
   .orig.big { width: min(640px, 90vw); cursor: zoom-out; }
   .fps { position: fixed; bottom: 12px; right: 12px; font: 600 12px ui-monospace, monospace; background: rgba(0,0,0,.55); color: #fff; padding: 4px 8px; border-radius: 8px; z-index: 6; display: none; }
-  body.noui .bar, body.noui .hint, body.noui .floors, body.noui .orig { display: none !important; }
+  body.noui .bar, body.noui .hint, body.noui .floors, body.noui .orig, body.noui .styles { display: none !important; }
+  /* stili d'arredo: pannello sopra la barra che si apre dal pulsante (contenitore che si trasforma, poi il contenuto) */
+  .stylebtn { display: flex; align-items: center; gap: 8px; background: var(--ink); color: #fff; border-radius: 16px; }
+  .stylebtn svg { width: 16px; height: 16px; flex: none; }
+  .styles { position: fixed; left: 50%; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 76px); z-index: 6; width: min(600px, calc(100vw - 24px)); padding: 8px; border-radius: 24px;
+    transform: translateX(-50%) translateY(8px) scale(.96); transform-origin: 50% 100%; opacity: 0; pointer-events: none; transition: transform .6s cubic-bezier(.22,1,.36,1), opacity .6s; }
+  .styles.open { transform: translateX(-50%); opacity: 1; pointer-events: auto; }
+  .styles .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 4px; opacity: 0; transition: opacity .6s; }
+  .styles.open .grid { opacity: 1; }
+  .styles .st { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; border-radius: 16px; text-align: left; background: rgba(255,255,255,.55); }
+  .styles .st.on { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.12), inset 0 0 0 2px var(--brand); color: var(--ink); }
+  .styles .sw { display: flex; }
+  .styles .sw i { width: 18px; height: 18px; border-radius: 9px; margin-right: -4px; box-shadow: 0 0 0 2px #fff; }
+  .styles .mode { display: flex; align-items: center; gap: 8px; padding: 8px 8px 4px; font-size: 13px; color: #555; }
+  .styles .mode[hidden] { display: none; }
   @media (max-width: 560px) { .orig { width: 96px; padding: 6px; border-radius: 16px; } .orig span { display: none; } .bar { gap: 4px; padding: 6px; border-radius: 20px; } .bar button { padding: 9px 10px; font-size: 13px; } .hint { font-size: 12px; } }
   /* schermi stretti (telefono, visore dentro un popup): la barra va a capo e sta tutta nello schermo, niente tagliato */
   @media (max-width: 460px) {
@@ -60,6 +76,9 @@
     .seg { padding: 3px; }
     .bar button { padding: 8px 9px; font-size: 12px; }
     .hint { display: none; }
+    .styles .grid { grid-template-columns: repeat(3, 1fr); }
+    .styles .st { padding: 8px; gap: 6px; font-size: 12px; }
+    .styles .sw i { width: 14px; height: 14px; }
   }
 </style>
 </head>
@@ -71,13 +90,15 @@
 <div class="hint glass" id="hint">Tocca una stanza per entrarci</div>
 <div class="fps" id="fps"></div>
 <div class="orig" id="orig" title="Planimetria"><img id="origImg" alt="Planimetria"><div class="mm" id="mm" hidden><div class="rot" id="mmRot"><img id="mmImg" alt="Planimetria"><div class="me" id="mmMe"><svg width="44" height="44" viewBox="-22 -40 44 44"><path d="M0 0 L-14 -34 A36 36 0 0 1 14 -34 Z" fill="rgba(83,126,236,.35)" stroke="#537eec" stroke-width="1.5"/><circle r="5" fill="#537eec" stroke="#fff" stroke-width="2"/></svg></div></div></div><span>Planimetria, tocca per ingrandire</span></div>
+<div class="styles glass" id="styles" role="dialog" aria-label="Stile d'arredo"><div class="grid" id="styleGrid"></div><div class="mode" id="modeRow" hidden><span>Mobili</span><div class="seg"><button data-mode="plan">Come in pianta</button><button data-mode="auto">Automatici</button></div></div></div>
 <div class="bar glass" id="bar">
   <div class="seg"><button data-view="top" class="on">Dall'alto</button><button data-view="walk">Cammina</button></div>
   <div class="seg"><button data-time="day" class="on">Giorno</button><button data-time="night">Notte</button></div>
-  <button class="toggle on" id="furn">Arredata</button>
+  <button class="stylebtn" id="styleBtn" aria-expanded="false" aria-controls="styles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M4 18v2"/><path d="M20 18v2"/><path d="M12 4v9"/></svg><span id="styleName">Moderno</span></button>
 </div>
 <script type="module">
 import { createViewer } from './viewer/viewer.js'
+import { STYLES, STYLE_IDS, STYLE_LABEL, validStyle } from './viewer/styles.js'
 const q = new URLSearchParams(location.search)
 const $ = s => document.querySelector(s)
 const ASSETS = q.get('assets') || 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/casa3d-assets/v1'
@@ -89,29 +110,33 @@ if (q.get('fps')) $('#fps').style.display = 'block'
 // solo indirizzi https (o del sito stesso): niente javascript: o dati strani dal parametro
 const safe = u => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null } catch { return null } }
 
-let floors = []
+let floors = [], saved = null
 try {
-  if (q.get('src') && safe(q.get('src'))) floors = (await (await fetch(safe(q.get('src')))).json()).floors ?? []
+  if (q.get('src') && safe(q.get('src'))) { const m = await (await fetch(safe(q.get('src')))).json(); floors = m.floors ?? []; saved = m.style }
   else if (q.get('plan') && safe(q.get('plan'))) floors = [{ name: '', plan: safe(q.get('plan')) }]
 } catch { floors = [] }
 floors = floors.filter(f => f && safe(f.plan))
 if (!floors.length) { $('#loading').remove(); $('#err').style.display = 'grid'; throw new Error('nessuna pianta') }
 
 let v = null, cur = -1, busy = false
-const state = { view: q.get('view') || 'top', time: q.get('time') || 'day', furnished: q.get('arredata') !== '0' }
+const state = { view: q.get('view') || 'top', time: q.get('time') || 'day', furnished: q.get('arredata') !== '0', style: validStyle(q.get('style')) ? q.get('style') : validStyle(saved) ? saved : 'moderno' }
 const sync = () => {
   if (!v) return
   const s = v.state
   state.view = s.view; state.furnished = s.furnished
   document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === s.view))
   document.querySelectorAll('[data-time]').forEach(b => b.classList.toggle('on', (b.dataset.time === 'night') === s.night))
-  // arredo: con i mobili disegnati sulla planimetria tre modi (come in pianta, automatico, vuota), se no arredata o vuota
-  $('#furn').classList.toggle('on', s.furnished); $('#furn').textContent = s.hasDrawn ? ({ plan: 'Arredo come in pianta', auto: 'Arredo automatico', empty: 'Vuota' })[s.mode] : (s.furnished ? 'Arredata' : 'Vuota')
+  // stile d'arredo (con i mobili disegnati sulla planimetria anche come in pianta o automatici)
+  state.style = s.style
+  $('#styleName').textContent = STYLE_LABEL[s.style] || 'Moderno'
+  document.querySelectorAll('[data-style]').forEach(b => b.classList.toggle('on', b.dataset.style === s.style))
+  $('#modeRow').hidden = !s.hasDrawn || !s.furnished
+  document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === s.mode))
   $('#hint').textContent = hints[s.view]
   document.querySelectorAll('[data-floor]').forEach(b => b.classList.toggle('on', +b.dataset.floor === cur))
 }
-async function open(i) {
-  if (busy || i === cur) return
+async function open(i, start = null) {
+  if (busy || i === cur || i < 0 || i >= floors.length) return
   busy = true
   const f = floors[i]
   const ld = document.createElement('div'); ld.className = 'loading'; ld.innerHTML = '<div><span>Sto costruendo la casa</span><i><b></b></i></div>'
@@ -121,7 +146,10 @@ async function open(i) {
     v?.dispose(); v = null
     $('#app').innerHTML = ''
     v = await createViewer($('#app'), {
-      planUrl: f.plan, assetsBase: ASSETS, view: 'top', time: state.time, furnished: state.furnished, quality: q.get('q') || 'auto',
+      planUrl: f.plan, assetsBase: ASSETS, view: 'top', time: state.time, furnished: state.style !== 'vuota' && state.furnished, quality: q.get('q') || 'auto',
+      style: state.style, level: { index: i, count: floors.length }, start,
+      // in camminata sulla scala si passa al piano di sopra o di sotto (si arriva in cima o al piede della scala)
+      onStair: floors.length > 1 && !poster ? dir => { const to = dir === 'up' ? cur + 1 : cur - 1; setTimeout(() => open(to, { from: dir === 'up' ? 'below' : 'above' }), 0) } : null,
       onProgress: p => { if (bar) bar.style.width = `${p * 100}%` }, onFps: x => { $('#fps').textContent = `${Math.round(x)} fps` },
     })
     window.viewer = v
@@ -134,7 +162,7 @@ async function open(i) {
       mini = im ? setupMini(im, v.plan) : null
     } else { $('#orig').style.display = 'none'; mini = null }
     const origEnter = v.enterRoom; v.enterRoom = id => { origEnter(id); sync() }
-    if (state.view === 'walk' && !poster) v.setView('walk')
+    if (state.view === 'walk' && !poster && !start) v.setView('walk')
     const l = $('#loading'); if (l) { l.style.opacity = 0; setTimeout(() => l.remove(), 700) }
     sync()
     if (poster) {
@@ -194,7 +222,21 @@ function tickMini() {
 requestAnimationFrame(tickMini)
 document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => { v?.setView(b.dataset.view); sync() })
 document.querySelectorAll('[data-time]').forEach(b => b.onclick = () => { state.time = b.dataset.time; v?.setTime(b.dataset.time); sync() })
-$('#furn').onclick = () => { if (!v) return; const s = v.state; v.setFurnished(s.hasDrawn ? ({ plan: 'auto', auto: 'empty', empty: 'plan' })[s.mode] : !s.furnished); sync() }
+// pannello degli stili: nome e tre tondi con i colori (legno, tessuto, accento)
+const hex = c => '#' + c.toString(16).padStart(6, '0')
+const tint = (spec, oak = [176, 138, 99]) => { if (!spec) return '#ccc'; if (spec.tex === 'oak_veneer_01') { const t = Array.isArray(spec.color) ? spec.color : [((spec.color ?? 0xffffff) >> 16 & 255) / 255, ((spec.color ?? 0xffffff) >> 8 & 255) / 255, ((spec.color ?? 0xffffff) & 255) / 255]; return `rgb(${oak.map((x, k) => Math.min(255, Math.round(x * t[k]))).join(',')})` } return hex(spec.color ?? 0xffffff) }
+for (const id of [...STYLE_IDS, 'vuota']) {
+  const b = document.createElement('button'); b.className = 'st'; b.dataset.style = id
+  const m = STYLES[id]?.mats
+  b.innerHTML = `<span class="sw">${m ? [m.wood, m.sofa, m.accent].map(x => `<i style="background:${tint(x)}"></i>`).join('') : '<i style="background:#f1ece4"></i><i style="background:#e7e2da"></i>'}</span><span>${STYLE_LABEL[id]}</span>`
+  b.onclick = async () => { if (!v || b.classList.contains('on')) return; state.style = id; sync(); await v.setStyle(id); sync(); try { parent.postMessage({ casa3dStyle: id }, '*') } catch {} }
+  $('#styleGrid').appendChild(b)
+}
+const panel = (open) => { $('#styles').classList.toggle('open', open); $('#styleBtn').setAttribute('aria-expanded', String(open)) }
+$('#styleBtn').onclick = e => { e.stopPropagation(); panel(!$('#styles').classList.contains('open')) }
+$('#app').addEventListener('pointerdown', () => panel(false))
+addEventListener('keydown', e => { if (e.key === 'Escape') panel(false) })
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { v?.setFurnished(b.dataset.mode); sync() })
 setInterval(sync, 500)
 await open(Math.min(floors.length - 1, Math.max(0, +(q.get('floor') || 0))))
 </script>

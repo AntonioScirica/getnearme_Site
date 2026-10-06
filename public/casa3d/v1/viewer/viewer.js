@@ -1,6 +1,7 @@
 // Visore 3D della casa: modulo indipendente, embeddabile. Riceve plan.json + opzioni, carica gli asset da assetsBase.
-//   const v = await createViewer(el, { plan, assetsBase, view: 'top'|'walk', time: 'day'|'night', furnished: true })
-//   v.setView('walk'), v.setTime('night'), v.setFurnished(false), v.enterRoom(id), v.dispose()
+//   const v = await createViewer(el, { plan, assetsBase, view: 'top'|'walk', time: 'day'|'night', furnished: true, style: 'moderno',
+//     level: { index, count }, start: { from: 'below'|'above' }, onStair: dir => ..., onStyle: id => ... })
+//   v.setView('walk'), v.setTime('night'), v.setFurnished(false), v.setStyle('nordico'), v.enterRoom(id), v.dispose()
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js'
@@ -8,20 +9,25 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
-import { createMaterials } from './materials.js'
-import { buildHouse } from './house.js'
+import { createMaterials, worldUV } from './materials.js'
+import { buildHouse, floorKey, isGroundRoom } from './house.js'
 import { createCatalog } from './furniture.js'
 import { planFurniture } from './furnish.js'
 import { WalkControls } from './walk.js'
+import { buildOutdoor } from './outdoor.js'
+import { styleOf, validStyle } from './styles.js'
 
-export const ROOM_LABEL = { soggiorno: 'Soggiorno', cucina: 'Cucina', camera: 'Camera', cameretta: 'Cameretta', studio: 'Studio', bagno: 'Bagno', ingresso: 'Ingresso', corridoio: 'Corridoio', ripostiglio: 'Ripostiglio', balcone: 'Balcone', terrazzo: 'Terrazzo', scala: 'Scala', lavanderia: 'Lavanderia', stanza: 'Stanza' }
+export const ROOM_LABEL = { soggiorno: 'Soggiorno', cucina: 'Cucina', camera: 'Camera', cameretta: 'Cameretta', studio: 'Studio', bagno: 'Bagno', ingresso: 'Ingresso', corridoio: 'Corridoio', ripostiglio: 'Ripostiglio', balcone: 'Balcone', terrazzo: 'Terrazzo', scala: 'Scala', lavanderia: 'Lavanderia', stanza: 'Stanza', giardino: 'Giardino', cortile: 'Cortile' }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
-const DAYFILL = new THREE.Color(0xfff6ec), WARM = new THREE.Color(0xffd3a3)
+const DAYFILL = new THREE.Color(0xfff6ec), WARM = new THREE.Color(0xffd3a3) // tono delle luci: dallo stile (setStyle)
 const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 const lerp = (a, b, t) => a + (b - a) * t
 
 export async function createViewer(container, opts = {}) {
-  const o = { view: 'top', time: 'day', furnished: true, quality: 'auto', labels: true, onProgress: () => {}, ...opts }
+  const o = { view: 'top', time: 'day', furnished: true, quality: 'auto', labels: true, style: 'moderno', onProgress: () => {}, ...opts }
+  if (!validStyle(o.style)) o.style = 'moderno'
+  if (o.style === 'vuota') o.furnished = false
+  let ST = styleOf(o.style)
   const plan = o.plan || await (await fetch(o.planUrl)).json()
   const lowEnd = o.quality === 'low' || (o.quality === 'auto' && (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || Math.min(innerWidth, innerHeight) < 600))
   const H = plan.height || 2.7
@@ -42,15 +48,18 @@ export async function createViewer(container, opts = {}) {
 
   o.onProgress(0.1, 'Materiali')
   const M = createMaterials(o.assetsBase, renderer, { lowEnd })
-  const house = buildHouse(plan, M)
+  M.applyStyle(ST)
+  const house = buildHouse(plan, M, { style: ST, level: o.level, name: plan.name })
   scene.add(house.group)
+  scene.add(buildOutdoor(plan, house, M, { lowEnd }))
 
   // cielo: sfera con le due foto HDRI (giorno/notte) mescolate (camminata), piu' il fondo della vista dall'alto
   // ("studio"): di giorno sfumatura verticale sullo schermo, azzurro tenue in alto e bianco caldo in basso; di notte
   // blu profondo con poche stelle tenui ferme. Tutto nello shader, niente immagini in piu'.
   const texL = new THREE.TextureLoader()
   const bgDay = texL.load(`${o.assetsBase}/hdri/castel_st_angelo_roof_bg.webp`), bgNight = texL.load(`${o.assetsBase}/hdri/rooftop_night_bg.webp`)
-  for (const t of [bgDay, bgNight]) t.colorSpace = THREE.SRGBColorSpace
+  // niente mipmap sul cielo: alla cucitura della sfera (u da 1 a 0) la mipmap sbagliata disegnava una riga tratteggiata
+  for (const t of [bgDay, bgNight]) { t.colorSpace = THREE.SRGBColorSpace; t.generateMipmaps = false; t.minFilter = THREE.LinearFilter }
   const skyU = { day: { value: bgDay }, night: { value: bgNight }, mixN: { value: 0 }, studio: { value: 0 }, bright: { value: 1 }, rotY: { value: 0.9 }, vpH: { value: 1 }, pr: { value: 1 } }
   const sky = new THREE.Mesh(new THREE.SphereGeometry(70, 48, 24), new THREE.ShaderMaterial({
     uniforms: skyU, side: THREE.BackSide, depthWrite: false, toneMapped: false,
@@ -107,7 +116,11 @@ export async function createViewer(container, opts = {}) {
     g.translate(-cv.width * 2, 0); g.beginPath(); draw(g, toC, k); g.fill() // draw puo' anche riempire da se'
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.NoColorSpace; return t
   }
-  const baseTex = bake((g, toC, k) => { const r = 0.32 * Math.min(BW, BD) * k, x0 = 0.35 * PAD * k, z0 = 0.35 * PAD * k, w = (BW - 0.7 * PAD) * k, h = (BD - 0.7 * PAD) * k; if (g.roundRect) g.roundRect(x0, z0, w, h, r); else g.rect(x0, z0, w, h) }, 0.45 * PAD)
+  // con giardini o cortili la base segue la forma del lotto (stanze ed esterni allargati), se no un rettangolo morbido
+  const lot = plan.rooms.some(isGroundRoom)
+  const baseTex = lot
+    ? bake((g, toC, k) => { g.lineJoin = 'round'; g.lineWidth = 1.4 * k; g.strokeStyle = '#fff'; for (const P of [...plan.rooms.map(r => r.poly), ...plan.walls.map(w => w.outer)]) { g.beginPath(); P.forEach((p, i) => { const [x, z] = toC(p); i ? g.lineTo(x, z) : g.moveTo(x, z) }); g.closePath(); g.fill(); g.stroke() } }, 0.35 * PAD)
+    : bake((g, toC, k) => { const r = 0.32 * Math.min(BW, BD) * k, x0 = 0.35 * PAD * k, z0 = 0.35 * PAD * k, w = (BW - 0.7 * PAD) * k, h = (BD - 0.7 * PAD) * k; if (g.roundRect) g.roundRect(x0, z0, w, h, r); else g.rect(x0, z0, w, h) }, 0.45 * PAD)
   const foot = [...plan.rooms.map(r => r.poly), ...plan.walls.map(w => w.outer)]
   const shadowTex = bake((g, toC) => { for (const P of foot) { g.beginPath(); P.forEach((p, i) => { const [x, z] = toC(p); i ? g.lineTo(x, z) : g.moveTo(x, z) }); g.fill() } }, 0.5)
   const baseGeo = new THREE.PlaneGeometry(BW, BD).rotateX(-Math.PI / 2)
@@ -117,12 +130,20 @@ export async function createViewer(container, opts = {}) {
   const contact = new THREE.Mesh(baseGeo, new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: shadowTex, transparent: true, depthWrite: false, opacity: 0.35 }))
   contact.position.copy(base.position); contact.position.y += 0.004; contact.renderOrder = -0.4
   scene.add(base, contact)
+  // case con giardino o cortile: in camminata un prato tutto attorno fino all'orizzonte (dall'alto resta il plastico),
+  // cosi' dagli esterni non si vede il terrazzo romano del cielo HDRI
+  let field = null
+  if (lot) {
+    const fm = M.mat('lawn').clone(); fm.color.set(0x8f9a72); fm.roughness = 1
+    field = new THREE.Mesh(worldUV(new THREE.CircleGeometry(45, 64).rotateX(-Math.PI / 2).translate(cx, 0, cz)), fm)
+    field.position.set(0, -0.125, 0); field.receiveShadow = true; field.visible = false; scene.add(field)
+  }
 
   const winLights = [] // provate le RectAreaLight alle finestre: artefatti sulle tende e costo alto, tolte
 
   // arredo e lampade
   o.onProgress(0.4, 'Arredo')
-  const catalog = createCatalog(o.assetsBase, M, { lowEnd })
+  const catalog = createCatalog(o.assetsBase, M, { lowEnd, style: o.style })
   // arredo: 'plan' = come disegnato sulla planimetria (le stanze senza mobili disegnati si arredano da sole),
   // 'auto' = arredo automatico, 'empty' = vuota (solo le luci). Ogni modo ha il suo gruppo e la sua griglia mobili.
   const hasDrawn = !!plan.furniture?.length
@@ -135,17 +156,26 @@ export async function createViewer(container, opts = {}) {
   const furnGroup = new THREE.Group(), planGroup = new THREE.Group(), bareGroup = new THREE.Group(); furnGroup.name = 'arredo'
   scene.add(furnGroup, planGroup, bareGroup)
   await catalog.preload([...fp.items, ...(fpPlan?.items ?? [])].map(i => i.kind))
+  const bulbGeo = new THREE.SphereGeometry(0.06, 16, 12)
+  // arredo di un gruppo dagli elenchi (rifatto al cambio di stile: stessi posti, modelli e materiali dello stile)
   const place = async (list, group) => {
-    for (const it of list) {
-      const obj = await catalog.make(it.kind, it.opts)
-      obj.position.set(it.x, it.y || 0, it.z); obj.rotation.y = it.rot; obj.userData.kind = it.kind
+    const objs = await Promise.all(list.map(it => catalog.make(it.kind, it.opts)))
+    list.forEach((it, i) => {
+      const obj = objs[i]
+      let y = it.y || 0
+      if (it.kind === 'pendant') y = H - (obj.userData.size?.[2] ?? 0.95) // appeso al soffitto qualunque sia l'altezza del modello
+      obj.position.set(it.x, y, it.z); obj.rotation.y = it.rot; obj.userData.kind = it.kind
       if (['pendant', 'ceilingLight'].includes(it.kind)) { house.hideInTop.push(obj); obj.traverse(m => { m.castShadow = false }) }
       group.add(obj)
-    }
-    // lampadine dentro i paralumi dei pendenti (si accendono di notte)
-    for (const it of list.filter(i => i.kind === 'pendant')) {
-      const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), M.bulb); b.position.set(it.x, H - 0.95 + 0.27, it.z); group.add(b); house.hideInTop.push(b)
-    }
+      // lampadina dentro il paralume (si accende di notte)
+      if (it.kind === 'pendant') { const b = new THREE.Mesh(bulbGeo, M.bulb); b.position.set(it.x, H - 0.716 * (obj.userData.size?.[2] ?? 0.95), it.z); b.userData.bulb = true; group.add(b); house.hideInTop.push(b) }
+    })
+  }
+  const clearGroup = group => {
+    const gone = new Set(group.children)
+    house.hideInTop = house.hideInTop.filter(m => !gone.has(m))
+    for (const c of group.children) if (c.userData.proc) c.traverse(m => { if (m.isMesh) m.geometry.dispose() })
+    group.clear()
   }
   await place(fp.items, furnGroup)
   if (fpPlan) await place(fpPlan.items, planGroup)
@@ -202,6 +232,24 @@ export async function createViewer(container, opts = {}) {
   orbit.minDistance = 5; orbit.maxDistance = Math.max(60, R * 10); orbit.maxPolarAngle = 1.2; orbit.minPolarAngle = 0.05
   orbit.screenSpacePanning = false
   const walk = new WalkControls(camera, renderer.domElement, house.grid, { eye: 1.6, lowEnd })
+  // scale: fin dove si sale o si scende. Se c'e' il piano collegato si cambia piano a meta' rampa (onStair), se no ci si
+  // ferma sotto il soffitto (sale) o a un metro sotto il pavimento (scende); le scale esterne si salgono tutte
+  const stairAt = (x, z) => house.stairs.find(L => x >= L.hole[0] - 0.05 && x <= L.hole[2] + 0.05 && z >= L.hole[1] - 0.05 && z <= L.hole[3] + 0.05)
+  walk.canStand = (x, z, h) => {
+    const L = stairAt(x, z); if (!L || L.open) return true
+    if (L.dir === 'up') return h <= (L.linked && o.onStair ? H : H - 1.6 - 0.12)
+    return h >= (L.linked && o.onStair ? -L.depth : -1.0)
+  }
+  let stairFired = false
+  // posa libera vicino a un estremo della scala (davanti possono esserci mobili): il punto libero piu' vicino
+  function stairPose(L, which) {
+    const p = which === 'high' ? L.poseHigh : L.poseLow
+    for (let r = 0; r <= 0.9; r += 0.1) for (let a = 0; a < 6.28; a += r ? 0.5 / r * 0.2 + 0.25 : 7) {
+      const x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r
+      if (walk.clearAround(x, z) && Math.abs(house.grid.heightAt(x, z) - house.grid.heightAt(p.x, p.z)) < 0.05 && !stairAt(x, z)) return { x, z, yaw: p.yaw }
+    }
+    return null
+  }
 
   // etichette delle stanze nella vista dall'alto
   const labelLayer = document.createElement('div')
@@ -209,14 +257,15 @@ export async function createViewer(container, opts = {}) {
   container.appendChild(labelLayer)
   const labels = plan.rooms.map(r => {
     const el = document.createElement('div')
-    el.className = 'v3d-label'; el.innerHTML = `<b>${esc(ROOM_LABEL[r.type] || r.type)}</b><span>${esc(String(r.area).replace('.', ','))} m²</span>`
+    el.className = 'v3d-label'; el.innerHTML = `<b>${esc(r.stair?.outdoor ? 'Scala esterna' : ROOM_LABEL[r.type] || r.type)}</b><span>${esc(String(r.area).replace('.', ','))} m²</span>`
     el.style.cssText = 'position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer'
     el.onclick = () => api.enterRoom(r.id)
     labelLayer.appendChild(el)
     // ripostigli, corridoi e stanze sotto 4 m2: etichetta solo al passaggio o al tocco sulla stanza
     const small = ['ripostiglio', 'corridoio'].includes(r.type) || r.area < 4
     const [x0, z0, x1, z1] = r.rect || [r.center[0] - 1, r.center[1] - 1, r.center[0] + 1, r.center[1] + 1]
-    return { el, id: r.id, small, area: r.area, p: new THREE.Vector3(r.center[0], 0.2, r.center[1]), c0: new THREE.Vector3(x0, 0.2, z0), c1: new THREE.Vector3(x1, 0.2, z1) }
+    const fl = r.stair?.outdoor && r.stair.flight, lc = fl ? [(fl[0] + fl[2]) / 2, (fl[1] + fl[3]) / 2] : r.center // scala esterna: sulla rampa disegnata
+    return { el, id: r.id, small, area: r.area, p: new THREE.Vector3(lc[0], 0.2, lc[1]), c0: new THREE.Vector3(x0, 0.2, z0), c1: new THREE.Vector3(x1, 0.2, z1) }
   })
   let hoverRoom = 0
   renderer.domElement.addEventListener('pointermove', e => {
@@ -253,7 +302,8 @@ export async function createViewer(container, opts = {}) {
   }
 
   // stato e transizioni
-  const state = { view: null, night: o.time === 'night' ? 1 : 0, nightTarget: o.time === 'night' ? 1 : 0, furnished: o.furnished, anim: null, studio: 1 }
+  const state = { view: null, night: o.time === 'night' ? 1 : 0, nightTarget: o.time === 'night' ? 1 : 0, furnished: o.furnished, anim: null, studio: 1, style: o.style }
+  DAYFILL.set(ST.light.day); WARM.set(ST.light.warm)
   function applyLook() {
     const n = state.night, top = state.view === 'top' ? 1 : 0
     const tStudio = state.studio
@@ -269,7 +319,7 @@ export async function createViewer(container, opts = {}) {
       const a = l.userData.anchor
       if (!a) { l.intensity = 0; continue }
       const day = a.main && !top ? a.fill : 0
-      l.intensity = lerp(day, a.base, on)
+      l.intensity = lerp(day, a.base * ST.light.k, on)
       l.color.lerpColors(DAYFILL, WARM, on)
       l.distance = a.main ? 9 : 5
       if (a.main) l.position.y = lerp(1.35, a.y, on)
@@ -278,6 +328,7 @@ export async function createViewer(container, opts = {}) {
     skyU.mixN.value = n; skyU.studio.value = tStudio; skyU.bright.value = lerp(1.0, 0.3, n)
     baseMat.color.lerpColors(BASE_DAY, BASE_NIGHT, n); baseMat.emissive.copy(BASE_NIGHT).multiplyScalar(n); baseMat.opacity = tStudio; contact.material.opacity = tStudio * lerp(0.35, 0.55, n)
     base.visible = contact.visible = tStudio > 0.01
+    if (field) field.visible = tStudio < 0.99
     renderer.toneMappingExposure = lerp(top ? 1.0 : 1.2, top ? 1.0 : 0.82, n)
     if (gtao) gtao.blendIntensity = lerp(0.85, 0.7, n)
   }
@@ -287,6 +338,36 @@ export async function createViewer(container, opts = {}) {
     state.mode = mode; state.furnished = mode !== 'empty'
     furnGroup.visible = mode === 'auto'; planGroup.visible = mode === 'plan'; bareGroup.visible = mode === 'empty'
     house.grid.furn.set(mode === 'plan' ? savedPlan : mode === 'auto' ? savedFurn : new Uint8Array(savedFurn.length)); assignPool(true)
+  }
+
+  // STILE: materiali degli slot, pavimenti consigliati, muri di base, luci, mobili rifatti negli stessi posti. Dal vivo,
+  // la casa non si ricostruisce; i modelli delle varianti si scaricano al primo uso
+  let styleBusy = null
+  async function setStyle(id) {
+    if (!validStyle(id) || (id === state.style && !styleBusy)) return
+    const run = (async () => {
+      const prevMode = state.mode
+      state.style = id // subito, per i pulsanti; materiali e mobili quando le varianti sono scaricate
+      if (id === 'vuota') { setFurnished(false); o.onStyle?.(id); return }
+      const next = styleOf(id)
+      catalog.setStyle(id)
+      await catalog.preload([...fp.items, ...(fpPlan?.items ?? [])].map(i => i.kind)) // varianti scaricate prima dello scambio
+      if (state.style !== id) return // nel frattempo e' stato scelto un altro stile
+      ST = next
+      M.applyStyle(ST)
+      for (const f of house.floors) { const r = f.userData.room; if (r && !r.floor && !isGroundRoom(r)) f.material = M.mat(floorKey(r, ST)) }
+      house.subMesh.material = M.mat(floorKey({ type: 'soggiorno' }, ST))
+      house.setWallBase(ST.wall)
+      DAYFILL.set(ST.light.day); WARM.set(ST.light.warm)
+      clearGroup(furnGroup); clearGroup(planGroup)
+      await place(fp.items, furnGroup)
+      if (fpPlan) await place(fpPlan.items, planGroup)
+      if (prevMode === 'empty' || state.mode === 'empty') setFurnished(true); else setFurnished(prevMode)
+      applyLook(); poolKey = ''
+      o.onStyle?.(id)
+    })()
+    styleBusy = run
+    try { await run } finally { if (styleBusy === run) styleBusy = null }
   }
 
   const tmpQ = new THREE.Quaternion()
@@ -392,7 +473,14 @@ export async function createViewer(container, opts = {}) {
     if (state.studioAnim) { state.studioAnim(now); applyLook() }
     if (state.anim) state.anim(now)
     else if (state.view === 'top') orbit.update()
-    else walk.update(dt)
+    else {
+      walk.update(dt)
+      // cambio di piano camminando sulla scala (una volta sola: il visore del piano nuovo prende il posto di questo)
+      if (walk.enabled && o.onStair && !stairFired) {
+        const L = stairAt(walk.pos.x, walk.pos.y), h = house.grid.heightAt(walk.pos.x, walk.pos.y)
+        if (L?.linked && ((L.dir === 'up' && h >= 1.1) || (L.dir === 'down' && h <= -1.1))) { stairFired = true; o.onStair(L.dir) }
+      }
+    }
     if ((fps.frames & 7) === 0) assignPool()
     const fovT = (container.clientWidth < container.clientHeight) ? 72 : (state.view === 'walk' ? 68 : 50)
     if (Math.abs(camera.fov - fovT) > 0.05) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 3); camera.updateProjectionMatrix() }
@@ -420,13 +508,20 @@ export async function createViewer(container, opts = {}) {
   resize()
   raf = requestAnimationFrame(frame)
   labelLayer.style.display = o.labels ? 'block' : 'none'
-  if (o.view === 'walk') setView('walk', o.room)
+  // arrivo da un altro piano per le scale: subito in camminata in cima (da sotto) o al piede (da sopra) della scala
+  const arrive = o.start?.from && house.stairs.find(L => !L.open && (o.start.from === 'below' ? L.dir === 'down' : L.dir === 'up'))
+  if (arrive) {
+    const ok = stairPose(arrive, o.start.from === 'below' ? 'high' : 'low') || roomPose(arrive.room)
+    orbit.enabled = false; state.view = 'walk'; state.studio = 0
+    walk.setPose(ok.x, ok.z, ok.yaw, -0.05); walk.enabled = true; walk.update(0)
+    labelLayer.style.display = 'none'; house.hideInTop.forEach(m => { m.visible = true }); applyLook()
+  } else if (o.view === 'walk') setView('walk', o.room)
 
   const api = {
-    setView, setTime, setFurnished,
+    setView, setTime, setFurnished, setStyle,
     enterRoom: id => setView('walk', id),
-    get state() { return { view: state.view, night: state.nightTarget === 1, furnished: state.furnished, mode: state.mode, hasDrawn, fps: Math.round(fps.value) } },
-    plan, renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit, base, contact },
+    get state() { return { view: state.view, night: state.nightTarget === 1, furnished: state.furnished, mode: state.mode, hasDrawn, style: state.style, fps: Math.round(fps.value) } },
+    stairPose, plan, renderer, scene, camera, house, walk, debug: { gtao, winLights, sun, composer, M, lightsF, pool, applyLook, skyU, catalog, orbit, base, contact },
     stats: () => ({ calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, textures: renderer.info.memory.textures, geometries: renderer.info.memory.geometries }),
     // fotogramma della vista attuale (poster): si rende e si legge subito, senza tenere il buffer
     snapshot(type = 'image/jpeg', q = 0.86) { composer.render(); return renderer.domElement.toDataURL(type, q) },

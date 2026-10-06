@@ -5,11 +5,12 @@ import { CREDIT_COST } from '@/lib/pricing'
 import { allowedUrl } from '@/lib/safeUrl'
 import { deleteKeys, listKeys, uploadFile } from '@/lib/r2'
 import { getTeamUserIds } from '@/lib/teamScope'
-import { buildViewerPlan } from '@/lib/casa3d/build'
+import { buildViewerPlan, normalizeExterior } from '@/lib/casa3d/build'
+import { readStairs } from '@/lib/casa3d/stairs'
 import { CASA3D_ON } from '@/lib/casa3d/flag'
 import { recognizeFloor, validRaw } from '@/lib/casa3d/pipeline'
 import { pickPhotos } from '@/lib/casa3d/materials'
-import type { Casa3d, RawPlan } from '@/lib/casa3d/types'
+import { isStyle, type Casa3d, type RawPlan } from '@/lib/casa3d/types'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -17,7 +18,9 @@ export const maxDuration = 300
 // Casa 3D dalla planimetria. Azioni:
 //  recognize: una pianta (un piano) -> ritaglio, ridisegno GPT, riconoscimento, controllo Claude; 40 crediti per casa
 //             (chiave della casa, fino a 4 piani), scalati una volta sola a pianta riconosciuta
-//  build:     piani corretti dall'agente -> piante per il visore su R2 (+ details.casa3d dell'immobile); gratis
+//  build:     piani corretti dall'agente -> piante per il visore su R2 (+ details.casa3d dell'immobile); gratis. Prima:
+//             esterni (resede, scale esterne) e verso dei gradini dalla planimetria originale, senza AI. style = stile d'arredo
+//  style:     stile d'arredo scelto nel visore -> manifest nuovo con lo stile (il sito mostra quello); gratis
 //  poster:    vista dall'alto fatta dal visore nel browser -> poster dell'immobile
 //  delete:    toglie la casa 3D dall'immobile (e i file su R2)
 // Niente tabelle nuove: tutto in import_data.details.casa3d e su R2 sotto casa3d/<utente>/<chiave>/.
@@ -113,23 +116,44 @@ export async function POST(req: NextRequest) {
     const mats = floors.map(f => (f.raw as RawPlan).materials).find(Boolean)
     if (mats) for (const f of floors) if (!(f.raw as RawPlan).materials) (f.raw as RawPlan).materials = mats
     const out: Casa3d['floors'] = []
+    const p = await projectOf(userId, b.projectId)
+    // foto del giardino tra quelle dell'immobile (classificazione gia' fatta): esterni a prato
+    const lawn = Object.values(((p?.import_data as { rooms?: Record<string, { scene?: string }> } | null)?.rooms) ?? {}).some(r => r?.scene === 'giardino')
     for (const [i, f] of floors.entries()) {
       const name = typeof f.name === 'string' && f.name.trim() ? f.name.trim().slice(0, 40) : `Piano ${i + 1}`
-      const raw = f.raw as RawPlan
-      const plan = buildViewerPlan(raw, name)
+      let raw = normalizeExterior(f.raw as RawPlan)
+      // scale senza verso letto (case fatte prima del 06/10 o vani scala aggiunti dall'agente): dalla planimetria originale
+      if (raw.rooms.some(r => r.type === 'scala' && !r.stair?.seen) && typeof f.image === 'string' && allowedUrl(f.image)) {
+        const img = await imageBuffer(f.image)
+        if (img) raw = await readStairs(raw, img).catch(() => raw)
+      }
+      const plan = buildViewerPlan(raw, name, { lawn })
       const [rawUrl, planUrl] = await Promise.all([
         uploadFile(Buffer.from(JSON.stringify(raw)), `${base}/f${i}-raw-${v}.json`, 'application/json'),
         uploadFile(Buffer.from(JSON.stringify(plan)), `${base}/f${i}-plan-${v}.json`, 'application/json'),
       ])
       out.push({ name, raw: rawUrl, plan: planUrl, image: typeof f.image === 'string' && allowedUrl(f.image) ? f.image : '' })
     }
-    // elenco dei piani letto dal visore (public/casa3d/v1/index.html?src=...)
-    const manifest = await uploadFile(Buffer.from(JSON.stringify({ floors: out.map(f => ({ name: f.name, plan: f.plan, image: f.image })) })), `${base}/casa-${v}.json`, 'application/json')
-    const now = new Date().toISOString()
-    const p = await projectOf(userId, b.projectId)
+    // elenco dei piani letto dal visore (public/casa3d/v1/index.html?src=...), con lo stile d'arredo scelto
     const prev = ((p?.import_data as { details?: { casa3d?: Casa3d } } | null)?.details?.casa3d) ?? null
-    const casa: Casa3d = { status: 'ready', key, floors: out, manifest, created: prev?.key === key ? prev.created : now, updated: now, ...(prev?.key === key && prev.poster ? { poster: prev.poster } : {}) }
+    const style = isStyle(b.style) ? b.style : prev?.key === key ? prev.style : undefined
+    const manifest = await uploadFile(Buffer.from(JSON.stringify({ floors: out.map(f => ({ name: f.name, plan: f.plan, image: f.image })), ...(style ? { style } : {}) })), `${base}/casa-${v}.json`, 'application/json')
+    const now = new Date().toISOString()
+    const casa: Casa3d = { status: 'ready', key, floors: out, manifest, created: prev?.key === key ? prev.created : now, updated: now, ...(prev?.key === key && prev.poster ? { poster: prev.poster } : {}), ...(style ? { style } : {}) }
     if (p && !(await saveCasa(p, casa))) return NextResponse.json({ error: 'failed' }, { status: 500 })
+    return NextResponse.json({ casa3d: casa })
+  }
+
+  if (b.action === 'style') {
+    if (!key || !isStyle(b.style)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+    const p = await projectOf(userId, b.projectId)
+    const cur = (p?.import_data as { details?: { casa3d?: Casa3d } } | null)?.details?.casa3d
+    if (!p || cur?.key !== key) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+    if (cur.style === b.style) return NextResponse.json({ casa3d: cur })
+    const floorsM = cur.floors.map(f => ({ name: f.name, plan: f.plan, image: f.image }))
+    const manifest = await uploadFile(Buffer.from(JSON.stringify({ floors: floorsM, style: b.style })), `${base}/casa-${Date.now().toString(36)}.json`, 'application/json')
+    const casa: Casa3d = { ...cur, manifest, style: b.style, updated: new Date().toISOString() }
+    if (!(await saveCasa(p, casa))) return NextResponse.json({ error: 'failed' }, { status: 500 })
     return NextResponse.json({ casa3d: casa })
   }
 

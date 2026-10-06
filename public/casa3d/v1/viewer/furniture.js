@@ -1,10 +1,13 @@
 // Catalogo mobili: modelli glTF CC0 Poly Haven (realistici, scala reale) + pezzi procedurali per cio' che Poly Haven
-// non ha in stile contemporaneo (divano, letto, armadio, cucina, sanitari, scrivania, tv, tappeto, lampade, tende).
-// Convenzione: oggetto centrato in x/z, appoggiato a y=0, schiena verso -z, fronte verso +z.
+// non ha in stile contemporaneo (divano, letto, armadio, cucina, sanitari, scrivania, tv, tappeto, lampade, tende,
+// arredo da esterno, vasi con arbusti). Convenzione: oggetto centrato in x/z, appoggiato a y=0, schiena verso -z,
+// fronte verso +z. Lo stile sceglie le varianti dei modelli (styles.js) e i materiali degli slot (materials.js).
 import * as THREE from 'three'
+import { styleOf } from './styles.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import { worldUV } from './materials.js'
 
 // modelli Poly Haven: file, rotazione per avere il fronte su +z, misure (w x d x h) dopo la rotazione
@@ -31,25 +34,40 @@ export const MODELS = {
   pillows: { file: 'throw_pillows_01', rot: 0 },
   basket: { file: 'wicker_basket_01', rot: 0 },
 }
+// ingombro massimo per tipo (larghezza, profondita', altezza): le varianti degli stili piu' grandi si riducono in
+// proporzione, cosi' stanno nello spazio che la disposizione ha riservato (mai ingrandite)
+const FIT = { armchair: [0.9, 0.98, 1.2], lounge: [0.95, 1.2, 1.25], coffee: [1.25, 0.65, 0.6], nightstand: [0.58, 0.47, 0.75], chest: [1.16, 0.5, 2.0],
+  shelves: [1.1, 0.42, 2.1], chair: [0.52, 0.58, 1.05], pendant: [0.9, 0.9, 0.95], deskLamp: [0.3, 0.62, 0.85], vaseTall: [0.3, 0.3, 0.7], picture1: [0.8, 0.06, 0.9], picture2: [0.8, 0.06, 0.9], basket: [0.4, 0.32, 0.3] }
+// le varianti con la schiena gia' verso -z (rot 0); le altre andrebbero girate qui
+const VARIANT_ROT = {}
 
-export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
+export function createCatalog(assetsBase, M, { lowEnd = false, style = 'moderno' } = {}) {
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
   const proto = new Map()
+  let ST = styleOf(style)
+  // file del modello per un tipo nello stile attuale
+  const fileOf = kind => ST.models?.[kind] || MODELS[kind]?.file
   async function loadModel(kind) {
-    const def = MODELS[kind]
-    if (!proto.has(kind)) proto.set(kind, loader.loadAsync(`${assetsBase}/models/${def.file}.glb`).then(g => {
+    const file = fileOf(kind), base = MODELS[kind]
+    const rot = file === base.file ? base.rot : (VARIANT_ROT[kind]?.[file] ?? 0)
+    const key = `${kind}/${file}`
+    if (!proto.has(key)) proto.set(key, loader.loadAsync(`${assetsBase}/models/${file}.glb`).then(g => {
       const root = new THREE.Group(); const s = g.scene
-      s.rotation.y = def.rot; root.add(s); root.updateMatrixWorld(true)
-      const b = new THREE.Box3().setFromObject(root)
+      s.rotation.y = rot; root.add(s); root.updateMatrixWorld(true)
+      let b = new THREE.Box3().setFromObject(root)
+      // variante: ridotta se esce dall'ingombro del tipo (alcuni modelli sono in centimetri)
+      const fit = FIT[kind], sz = [b.max.x - b.min.x, b.max.z - b.min.z, b.max.y - b.min.y]
+      if (fit && file !== base.file) { const k = Math.min(1, fit[0] / sz[0], fit[1] / sz[1], fit[2] / sz[2]); if (k < 0.999) { s.scale.multiplyScalar(k); root.updateMatrixWorld(true); b = new THREE.Box3().setFromObject(root) } }
       s.position.x -= (b.min.x + b.max.x) / 2; s.position.z -= (b.min.z + b.max.z) / 2; s.position.y -= b.min.y
+      if (/^picture/.test(kind) && file !== base.file) s.position.z += 0.02 // quadri delle varianti: la tela sta sul retro, staccata dal muro
       root.traverse(o => { if (o.isMesh && /glass/i.test(o.material.name)) { Object.assign(o.material, { metalness: 0, roughness: 0.05, transparent: true, opacity: 0.1, depthWrite: false, map: null, metalnessMap: null, color: new THREE.Color(0) }); o.material.needsUpdate = true; o.castShadow = false }
         if (o.isMesh && o.material.transmission > 0) { o.material.transmission = 0; o.material.transparent = true; o.material.opacity = 0.15; o.material.depthWrite = false; o.castShadow = false }
         if (o.isMesh) { o.castShadow = !lowEnd || b.max.y - b.min.y > 0.5; o.receiveShadow = true; if (o.material.map) o.material.map.anisotropy = 4 } })
       root.userData.size = [b.max.x - b.min.x, b.max.z - b.min.z, b.max.y - b.min.y]
       return root
     }))
-    const p = await proto.get(kind)
-    const c = p.clone(); c.userData.size = p.userData.size; return c
+    const p = await proto.get(key)
+    const c = p.clone(); c.userData.size = p.userData.size; c.userData.file = file; return c
   }
   const box = (w, h, d, mat, x = 0, y = 0, z = 0, r = 0) => {
     const g = r > 0 ? new RoundedBoxGeometry(w, h, d, 3, Math.min(r, w / 2, h / 2, d / 2) - 1e-4) : new THREE.BoxGeometry(w, h, d)
@@ -61,6 +79,8 @@ export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
     const m = new THREE.Mesh(g, mat); m.position.set(x, y + h / 2, z); m.castShadow = true; m.receiveShadow = true; return m
   }
   const grp = (...ch) => { const g = new THREE.Group(); ch.flat().forEach(c => c && g.add(c)); return g }
+  // arbusto: sfera irregolare con colore per vertice (verdi diversi), ombre si'
+  const bush = (r, x, y, z, seed = 1) => { const m = new THREE.Mesh(leafBlob(r, seed), M.leaf); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; return m }
 
   const P = {
     // divano 3 posti in tessuto, cuscini morbidi, piedini neri
@@ -103,10 +123,10 @@ export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
     },
     // armadio laccato con ante e maniglie a barra
     wardrobe({ w = 2.0, h = 2.36 } = {}) {
-      const d = 0.6, g = [box(w, h - 0.08, d - 0.02, M.lacquer, 0, 0.08, -0.01), box(w - 0.04, 0.08, d - 0.08, M.metalBlack, 0, 0, -0.03)]
+      const d = 0.6, g = [box(w, h - 0.08, d - 0.02, M.cabinet, 0, 0.08, -0.01), box(w - 0.04, 0.08, d - 0.08, M.metalBlack, 0, 0, -0.03)]
       const n = Math.max(2, Math.round(w / 0.5)), dw = w / n
       for (let i = 0; i < n; i++) {
-        g.push(box(dw - 0.004, h - 0.085, 0.02, M.lacquer, -w / 2 + dw * (i + 0.5), 0.082, d / 2 - 0.01, 0.002))
+        g.push(box(dw - 0.004, h - 0.085, 0.02, M.cabinet, -w / 2 + dw * (i + 0.5), 0.082, d / 2 - 0.01, 0.002))
         const hx = -w / 2 + dw * (i + 0.5) + (i % 2 ? -1 : 1) * (dw / 2 - 0.05)
         g.push(box(0.012, 0.32, 0.02, M.metalBlack, hx, 1.0, d / 2 + 0.01))
       }
@@ -124,7 +144,7 @@ export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
         g.push(box(dw * 0.5, 0.012, 0.02, M.metalBlack, x, 0.8, D / 2 + 0.008))
       }
       g.push(box(baseW, 0.76, D - 0.02, M.lacquerWarm, bx0 + baseW / 2, 0.1, -0.02))
-      g.push(box(baseW + 0.01, 0.04, D + 0.02, M.oak, bx0 + baseW / 2, 0.86, 0.01))
+      g.push(box(baseW + 0.01, 0.04, D + 0.02, M.top, bx0 + baseW / 2, 0.86, 0.01))
       // lavello in acciaio e rubinetto
       const sx = bx0 + baseW * 0.7
       g.push(box(0.5, 0.012, 0.4, M.steel, sx, 0.895, 0.02))
@@ -201,9 +221,9 @@ export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
       return grp(g)
     },
     tvcab({ w = 1.6 } = {}) {
-      const g = [box(w, 0.42, 0.42, M.lacquer, 0, 0.12, 0, 0.004)]
+      const g = [box(w, 0.42, 0.42, M.cabinet, 0, 0.12, 0, 0.004)]
       for (const sx of [-1, 1]) g.push(box(0.03, 0.12, 0.03, M.metalBlack, sx * (w / 2 - 0.08), 0, 0.12), box(0.03, 0.12, 0.03, M.metalBlack, sx * (w / 2 - 0.08), 0, -0.12))
-      for (let i = 0; i < 3; i++) g.push(box(w / 3 - 0.004, 0.41, 0.01, M.lacquer, -w / 2 + w / 6 + i * w / 3, 0.125, 0.212, 0.002))
+      for (let i = 0; i < 3; i++) g.push(box(w / 3 - 0.004, 0.41, 0.01, M.cabinet, -w / 2 + w / 6 + i * w / 3, 0.125, 0.212, 0.002))
       return grp(g)
     },
     rug({ w = 2.0, d = 1.4 } = {}) {
@@ -232,13 +252,62 @@ export function createCatalog(assetsBase, M, { lowEnd = false } = {}) {
       const m = new THREE.Mesh(geo, M.curtain); m.castShadow = false; m.receiveShadow = false
       return grp(m)
     },
-    towel() { const g = [box(0.5, 0.02, 0.02, M.chrome, 0, 1.2, 0), box(0.45, 0.5, 0.03, M.linenSand, 0, 0.72, 0.02, 0.01)]; return grp(g) },
+    towel() { const g = [box(0.5, 0.02, 0.02, M.chrome, 0, 1.2, 0), box(0.45, 0.5, 0.03, M.throwGrey, 0, 0.72, 0.02, 0.01)]; return grp(g) },
+    // arredo da esterno nell'ingombro w x d: due lettini con tavolino (stili con i lettini e spazio) o tavolino con due sedie
+    terraceSet({ w = 1.6, d = 0.9, big = 0 } = {}) {
+      const g = [], fr = M.outMetal, wd = M.outWood, cu = M.outFabric
+      if (ST.mats.loungers && big) {
+        for (const sx of [-1, 1]) {
+          const x = sx * 0.48
+          g.push(box(0.64, 0.24, 1.9, wd, x, 0.06, 0, 0.01), box(0.6, 0.07, 1.25, cu, x, 0.3, 0.3, 0.03))
+          for (const ex of [-1, 1]) for (const ez of [-1, 1]) g.push(box(0.05, 0.06, 0.05, fr, x + ex * 0.27, 0, ez * 0.88))
+          const back = box(0.6, 0.07, 0.62, cu, x, 0, 0, 0.03); back.position.set(x, 0.52, -0.62); back.rotation.x = 0.75; g.push(back)
+        }
+        g.push(cyl(0.2, 0.2, 0.03, wd, 0, 0.42, -0.55), cyl(0.025, 0.025, 0.42, fr, 0, 0, -0.55))
+        return grp(g)
+      }
+      g.push(cyl(0.36, 0.36, 0.03, wd, 0, 0.72, 0, 40), cyl(0.03, 0.03, 0.72, fr, 0, 0, 0), cyl(0.22, 0.24, 0.02, fr, 0, 0, 0))
+      for (const sx of [-1, 1]) { // sedie ai lati del tavolino, girate verso il centro
+        const c = new THREE.Group()
+        c.add(box(0.44, 0.04, 0.44, wd, 0, 0.44, 0, 0.01), box(0.4, 0.05, 0.38, cu, 0, 0.48, 0.01, 0.02), box(0.44, 0.42, 0.04, wd, 0, 0.5, -0.2, 0.01))
+        for (const ex of [-1, 1]) for (const ez of [-1, 1]) c.add(box(0.03, 0.44, 0.03, fr, ex * 0.19, 0, ez * 0.19))
+        c.position.x = sx * 0.62; c.rotation.y = -sx * Math.PI / 2; g.push(c)
+      }
+      return grp(g)
+    },
+    // vaso in cotto (o scuro negli stili con i lettini) con un arbusto
+    planter({ s = 1 } = {}) {
+      s *= ST.mats.loungers ? 1.3 : 1 // vasi grandi negli stili con i lettini
+      const pot = ST.mats.loungers ? M.outMetal : M.pot, r = 0.24 * s, h = 0.42 * s
+      const g = [cyl(r, r * 0.78, h, pot, 0, 0, 0, 28), cyl(r * 0.92, r * 0.92, 0.02, M.soil, 0, h - 0.04, 0, 24)]
+      g.push(bush(0.36 * s, 0, h + 0.18 * s, 0, 7))
+      return grp(g)
+    },
   }
 
   async function make(kind, opts = {}) {
-    if (P[kind]) return P[kind](opts)
+    if (P[kind]) { const o = P[kind](opts); o.userData.proc = true; return o }
     if (MODELS[kind]) return loadModel(kind)
     console.warn('mobile sconosciuto', kind); return new THREE.Group()
   }
-  return { make, preload: kinds => Promise.all([...new Set(kinds)].filter(k => MODELS[k]).map(loadModel)) }
+  return {
+    make, fileOf,
+    preload: kinds => Promise.all([...new Set(kinds)].filter(k => MODELS[k]).map(loadModel)),
+    setStyle: id => { ST = styleOf(id) },
+  }
+}
+
+// chioma o arbusto procedurale: icosfera deformata con rumore, verdi diversi per vertice (niente texture)
+export function leafBlob(r, seed = 1, tone = [0.2, 0.34, 0.12]) {
+  const g0 = new THREE.IcosahedronGeometry(r, 2); g0.deleteAttribute('normal'); g0.deleteAttribute('uv')
+  const g = mergeVertices(g0), p = g.attributes.position, col = new Float32Array(p.count * 3)
+  const rnd = (a, b, c) => { const v = Math.sin(a * 12.9898 + b * 78.233 + c * 37.719 + seed * 4.1) * 43758.5453; return v - Math.floor(v) }
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 0.82 + 0.3 * rnd(Math.round(x * 9), Math.round(y * 9), Math.round(z * 9))
+    p.setXYZ(i, x * k, y * k * 0.85, z * k)
+    const l = 0.75 + 0.45 * rnd(Math.round(x * 5), Math.round(y * 5), Math.round(z * 5)) + (y > 0 ? 0.12 : -0.1)
+    col[i * 3] = tone[0] * l; col[i * 3 + 1] = tone[1] * l; col[i * 3 + 2] = tone[2] * l
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals()
+  return g
 }
