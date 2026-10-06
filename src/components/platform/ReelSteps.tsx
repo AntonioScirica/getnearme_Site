@@ -24,7 +24,7 @@ export type ReelStyle = 'vivace' | 'elegante' | 'semplice' | 'classico';
 const REEL_STYLES: ReelStyle[] = ['vivace', 'elegante', 'semplice', 'classico'];
 export const reelStyleLabel = (s: ReelStyle) => ({ vivace: tr('Vivace', 'Lively'), elegante: tr('Elegante', 'Elegant'), semplice: tr('Semplice', 'Simple'), classico: tr('Classico', 'Classic') })[s] ?? s;
 // una riga di quattro card con un fotogramma del video in quello stile (public/staging/reel-styles) e il nome sotto
-function StylePick({ tpl, value, onChange }: { tpl: ReelTpl; value: ReelStyle; onChange: (v: ReelStyle) => void }) {
+export function StylePick({ tpl, value, onChange }: { tpl: ReelTpl; value: ReelStyle; onChange: (v: ReelStyle) => void }) {
   const still = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   return (
     <div role="radiogroup" aria-label={tr('Stile', 'Style')} className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">

@@ -211,6 +211,20 @@ function imgCover(destCtx, img, dw, dh) {
   destCtx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
 }
 
+/**
+ * Photo with framing (Condividi sui social, 06/10/2026): like CSS object-fit + object-position (x, y in 0..1)
+ * + transform: scale(z) with transform-origin at the same point. Without frame = imgCover / imgContain.
+ */
+function imgFit(destCtx, img, dw, dh, cover, frame) {
+  if (!frame) return cover ? imgCover(destCtx, img, dw, dh) : imgContain(destCtx, img, dw, dh);
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  if (!iw || !ih) return;
+  const s = cover ? Math.max(dw / iw, dh / ih) : Math.min(dw / iw, dh / ih);
+  const z = frame.z || 1, x = frame.x ?? 0.5, y = frame.y ?? 0.5;
+  const rw = iw * s * z, rh = ih * s * z;
+  destCtx.drawImage(img, x * (dw - rw), y * (dh - rh), rw, rh);
+}
+
 function imgContain(destCtx, img, dw, dh) {
   const iw = img.naturalWidth, ih = img.naturalHeight;
   if (!iw || !ih) return;
@@ -316,7 +330,7 @@ async function convertBlobImgs(element) {
 
 export async function exportToPng(element, size, opts = {}) {
   const html2canvas = (await import('html2canvas')).default;
-  const { photoSrc, fitCover = false } = opts;
+  const { photoSrc, fitCover = false, frame = null } = opts;
   const w = size?.w || element.offsetWidth || 1080;
   const h = size?.h || element.offsetHeight || 1350;
 
@@ -431,8 +445,7 @@ export async function exportToPng(element, size, opts = {}) {
     ctx.drawImage(preBlurCanvas, 0, 0);
     ctx.restore();
 
-    if (fitCover) imgCover(ctx, fgImg, w, h);
-    else imgContain(ctx, fgImg, w, h);
+    imgFit(ctx, fgImg, w, h, fitCover, frame);
 
     if (glassPanels.length > 0) {
       const compCanvas = document.createElement('canvas');
@@ -440,8 +453,7 @@ export async function exportToPng(element, size, opts = {}) {
       compCanvas.height = h;
       const compCtx = compCanvas.getContext('2d');
       compCtx.drawImage(preBlurCanvas, 0, 0);
-      if (fitCover) imgCover(compCtx, fgImg, w, h);
-      else imgContain(compCtx, fgImg, w, h);
+      imgFit(compCtx, fgImg, w, h, fitCover, frame);
       const blurMap = buildBlurCanvasMap(glassPanels, compCanvas, w, h);
       drawGlassPanels(ctx, glassPanels, blurMap);
     }
