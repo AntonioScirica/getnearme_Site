@@ -1401,7 +1401,8 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     </section>
   );
   const sayYes = () => { setWantVideo(true); setView('video'); };
-  const sayNo = () => { setWantVideo(false); setView('post'); };
+  // "No": niente video, si scaricano subito le foto (come il bottone Salva)
+  const sayNo = () => { setWantVideo(false); setView('post'); if (ready && !busy) void downloadAll(); };
   const stepVideo = (
     <div className="space-y-5">
       {pickable && (
@@ -1409,7 +1410,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           <h3 className="font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
           <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-2 gap-3">
             {bigChoice(wantVideo === true, Film, tr('Sì, crea il video', 'Yes, make the video'), tr(`${vCost} crediti, li paghi solo se riesce`, `${vCost} credits, you only pay if it works`), sayYes)}
-            {bigChoice(wantVideo === false, ImageIcon, tr('No, grazie', 'No, thanks'), tr('Salvi solo le foto', 'You only save the photos'), sayNo)}
+            {bigChoice(wantVideo === false, ImageIcon, tr('No, salva le foto', 'No, save the photos'), tr('Le scarichi subito', 'Download them now'), sayNo)}
           </div>
           {wantVideo && (
             <div className="blur-in space-y-5">
