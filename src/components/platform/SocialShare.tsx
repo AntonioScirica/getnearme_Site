@@ -2,8 +2,9 @@
 
 // Scheda immobile, "Condividi sui social" (05/10/2026; rifatto "facilissimo" il 06/10/2026 per agenti 55-70 anni): sei passi,
 // 1 Cosa pubblichi (casa in vendita/affitto o venduta/affittata, chiesto una volta: vale per grafiche, testi e video),
-// 2 Dove (uno o piu' social, per ognuno il tipo di post in un segmentato gia' su "Una foto"), 3 Foto (toccate nell'ordine,
-// "Sistema la foto" sotto l'anteprima), 4 Grafica (la stessa per tutti, adattata a ogni formato), 5 Testo (gia' scritto per ogni
+// 2 Dove (uno o piu' social, per ognuno il tipo di post in un segmentato gia' su "Una foto"), 3 Foto (per social, toccate nell'ordine,
+// "Sistema la foto" sotto l'anteprima), 4 Grafica (per social, adattata a ogni formato). Foto e grafica scelte su un social valgono
+// per tutti quelli non ancora toccati a mano; Avanti manuale, il bottone dice cosa manca. 5 Testo (gia' scritto per ogni
 // social, lib/socialRules), 6 Video facoltativo: post animato gratis
 // (la grafica che si muove, nel browser) o solo le foto, poi Pubblica su ... o Salva. Il video a crediti (api/platform/video-reel)
 // e' uscito dal popup il 06/10/2026: resta nella chat.
@@ -14,7 +15,7 @@
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, Facebook, GalleryHorizontal, House, Image as ImageIcon, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, Facebook, GalleryHorizontalEnd, House, Image as ImageIcon, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, RectangleVertical, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
 import { ANIMATION_STYLES, exportStaticToVideo, exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
@@ -36,11 +37,12 @@ const f11 = (id: string, label: string, x: Partial<Fmt> = {}): Fmt => ({ id, lab
 const f916 = (id: string, label: string, top: number, bottom: number, x: Partial<Fmt> = {}): Fmt => ({ id, label, kind: kindOf(x, true), ratio: '9:16', w: 1080, h: 1920, safe: { top, bottom, left: 0, right: 0 }, ...x });
 // formati e misure di ogni social; nei 9:16 la safe area lascia libere le scritte del social (nome in alto, risposta in basso).
 // Il primo di ogni social e' "Una foto", gia' scelto; gli altri tipi si scelgono dal segmentato del passo Dove, sempre in vista.
-// Ordine (06/10/2026, panel agenti 55-70): prima i social che usano di piu'
+// Ordine (06/10/2026, panel agenti 55-70): prima i social che usano di piu'; nei tipi "Più foto" sempre per ultimo a destra
 const NETS: { id: NetId; label: string; fmts: Fmt[] }[] = [
-  { id: 'facebook', label: 'Facebook', fmts: [f45('post', 'Post'), f11('square', 'Quadrata'), f11('carousel', 'Carosello', { multi: true }), f916('story', 'Storia', 225, 275)] },
-  { id: 'whatsapp', label: 'WhatsApp', fmts: [f45('foto', 'Foto'), f916('status', 'Stato', 250, 250)] },
-  { id: 'instagram', label: 'Instagram', fmts: [f45('post', 'Post'), f11('square', 'Quadrata'), f45('carousel', 'Carosello', { multi: true }), f916('story', 'Storia o Reel', 200, 300)] },
+  { id: 'facebook', label: 'Facebook', fmts: [f45('post', 'Post'), f11('square', 'Quadrata'), f916('story', 'Storia', 225, 275), f11('carousel', 'Carosello', { multi: true })] },
+  // WhatsApp (06/10/2026): solo lo Stato verticale, niente scelta del tipo al passo Dove
+  { id: 'whatsapp', label: 'WhatsApp', fmts: [f916('status', 'Stato', 250, 250)] },
+  { id: 'instagram', label: 'Instagram', fmts: [f45('post', 'Post'), f11('square', 'Quadrata'), f916('story', 'Storia o Reel', 200, 300), f45('carousel', 'Carosello', { multi: true })] },
   // TikTok e' tutto verticale: la sua "una foto" e' gia' 9:16
   { id: 'tiktok', label: 'TikTok', fmts: [f916('photo', 'Foto', 200, 340, { kind: 'one' }), f916('carousel', 'Carosello', 200, 340, { multi: true })] },
   { id: 'linkedin', label: 'LinkedIn', fmts: [f11('post', 'Post'), f45('doc', 'Carosello', { multi: true, pdf: true })] },
@@ -364,6 +366,18 @@ function TabRow({ ids, on, deps, children }: { ids: string[]; on: string; deps: 
   );
 }
 
+// bottone che cambia larghezza col testo (600ms): misura il contenuto e anima la larghezza
+function GrowButton({ children, className, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const inner = useRef<HTMLSpanElement>(null);
+  const [w, setW] = useState<number | null>(null);
+  useLayoutEffect(() => { const el = inner.current; if (el && el.offsetWidth !== w) setW(el.offsetWidth); });
+  return (
+    <button {...rest} className={`${className ?? ''} max-w-full overflow-hidden transition-[width,background-color,color] motion-reduce:transition-none`} style={w ? { width: w + 48 } : undefined}>
+      <span ref={inner} className="flex items-center gap-2 whitespace-nowrap">{children}</span>
+    </button>
+  );
+}
+
 // icone dei social (lucide; WhatsApp e TikTok non ci sono: fumetto e nota musicale)
 const NET_ICON = { instagram: Instagram, facebook: Facebook, whatsapp: MessageCircle, tiktok: Music2, linkedin: Linkedin } as const;
 function NetIcon({ id, size = 20 }: { id: NetId; size?: number }) {
@@ -405,7 +419,7 @@ function dropOldKeys() {
     ks.forEach(k => localStorage.removeItem(k));
   } catch { /* niente storage */ }
 }
-const netOf = (id: NetId) => NETS.find(n => n.id === id)!;
+const netOf = (id: NetId) => NETS.find(n => n.id === id) ?? NETS[0]; // mai undefined (id sconosciuto: il primo social)
 // 06/10/2026 (panel agenti 55-70): Cosa pubblichi (annuncio o venduto, una volta sola), Dove, Foto, Grafica, Testo, Video (facoltativo)
 const STEPS: [string, string][] = [['Cosa', 'What'], ['Dove', 'Where'], ['Foto', 'Photos'], ['Grafica', 'Design'], ['Testo', 'Text'], ['Video', 'Video']];
 const S = { cosa: 0, dove: 1, foto: 2, grafica: 3, testo: 4, video: 5 } as const;
@@ -425,8 +439,8 @@ function useWidth<T extends HTMLElement>() {
 }
 
 // tipo di post detto semplice, con la sua icona (niente misure)
-const KIND_ICON = { one: ImageIcon, many: GalleryHorizontal, tall: Smartphone } as const;
-const fmtIcon = (f: Fmt) => (f.kind === 'one' && f.ratio === '1:1' ? Square : KIND_ICON[f.kind]);
+// l'icona mostra la forma (06/10/2026): Alta, Quadrata, Verticale, Più foto
+const fmtIcon = (f: Fmt) => (f.multi ? GalleryHorizontalEnd : f.ratio === '1:1' ? Square : f.ratio === '9:16' ? Smartphone : RectangleVertical);
 const kindShort = (k: Fmt['kind']) => (k === 'one' ? tr('Una foto', 'One photo') : k === 'many' ? tr('Più foto', 'More photos') : tr('Verticale', 'Vertical'));
 // spiegazione breve, solo sotto la scelta fatta
 const kindHint = (k: Fmt['kind']) => (k === 'many' ? tr('Da sfogliare col dito', 'To swipe through') : k === 'tall' ? tr('Per Storie e Stati', 'For Stories and Status') : '');
@@ -456,7 +470,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const [fonts, setFonts] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [scanned, setScanned] = useState(0); // foto gia' guardate, nell'ordine (anche quelle che non si aprono)
-  const [sel, setSel] = useState<string[]>([]); // foto scelte (src), nell'ordine; la prima e' la copertina
+  // foto scelte (src) per social, nell'ordine; la prima e' la copertina (06/10/2026: una foto diversa per ogni social).
+  // shared: la scelta comune, vale per i social non ancora toccati a mano; own: i social cambiati stando su di loro.
+  // Ogni tocco cambia il social in anteprima (diventa suo) e anche la scelta comune, quindi tutti quelli non ancora toccati.
+  const [shared, setShared] = useState<string[]>([]);
+  const [own, setOwn] = useState<Partial<Record<NetId, string[]>>>({});
   // inquadratura di ogni foto (solo per questa apertura)
   const [frames, setFrames] = useState<Record<string, Frame>>({});
   const frameFor = (src: string): Frame => frames[src] ?? FRAME0;
@@ -479,16 +497,20 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   const pickFmt = (n: NetId, f: string) => { setFmtIds(o => ({ ...o, [n]: f })); setActive(n); setSlideIx(0); };
   const show = (n: NetId) => { setActive(n); setSlideIx(0); };
   const goStep = (i: number) => { setStepIx(i); setFixOpen(false); setReached(r => Math.max(r, i)); bodyRef.current?.scrollTo({ top: 0 }); stepRef.current?.scrollTo({ top: 0 }); };
-  // passi a scelta singola (Cosa, Grafica): scelto, si va avanti da soli dopo un attimo
+  // passo Cosa (scelta singola): scelto, si va avanti da soli dopo un attimo. Foto e Grafica no: si sceglie per ogni social
   const autoNext = () => { const from = stepIx; setTimeout(() => goStep(from + 1), 450); };
-  // grafica: nessuna finche' non la tocca (tplId: quella di riserva per i conti interni)
-  const [tpl, setTpl] = useState<string | null>(null);
-  const tplChosen = tpl !== null;
-  const tplId = tpl ?? (soldOn ? 'sold-stamp' : 'gradient');
+  // grafica per social, come le foto (06/10/2026): nessuna finche' non la tocca. tplShared vale per i social non ancora
+  // toccati a mano, tplOwn per quelli cambiati stando su di loro; ogni tocco cambia il social in anteprima e la scelta comune
+  const [tplShared, setTplShared] = useState<string | null>(null);
+  const [tplOwn, setTplOwn] = useState<Partial<Record<NetId, string>>>({});
+  const tplOf = (n: NetId) => tplOwn[n] ?? tplShared;
+  const tplChosen = (n: NetId) => tplOf(n) !== null;
   // "Casa venduta o affittata": le grafiche Venduto davanti; cambiando, una grafica dell'altro tipo va scelta di nuovo
   const setSold = (on: boolean) => {
     setSoldPick(on);
-    setTpl(t => (t && t.startsWith('sold-') === on ? t : null));
+    const keep = (t: string | null | undefined) => !!t && t.startsWith('sold-') === on;
+    setTplShared(t => (keep(t) ? t : null));
+    setTplOwn(o => Object.fromEntries(Object.entries(o).filter(([, t]) => keep(t))));
   };
   const [fixOpen, setFixOpen] = useState(false); // "Sistema la foto": Riempi/Intera, zoom, trascinare
   const [blurs, setBlurs] = useState<Record<string, string>>({});
@@ -545,26 +567,33 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     })();
     return () => { live = false; };
   }, [srcs.join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
-  // foto per formato: una per i formati singoli (la prima scelta, o la copertina); il carosello parte dalle prime 5
-  const chosen = sel.map(s => photos.find(p => p.src === s)).filter((p): p is Photo => !!p);
-  const photosFor = (f: Fmt): Photo[] => (f.multi ? chosen.slice(0, MAX_PHOTOS) : chosen.slice(0, 1)); // nessuna foto gia' scelta
+  // foto di un social: la sua scelta o quella comune; a una foto la prima, con "Più foto" fino a 9 (nessuna foto gia' scelta)
+  const srcsOf = (n: NetId) => { const l = own[n] ?? shared; return fmtOf(n).multi ? l.slice(0, MAX_PHOTOS) : l.slice(0, 1); };
+  const photosFor = (n: NetId): Photo[] => srcsOf(n).map(s => photos.find(p => p.src === s)).filter((p): p is Photo => !!p);
   const anyMulti = nets.some(n => fmtOf(n).multi);
-  const slidesPhotos = photosFor(fmt);
+  const slidesPhotos = photosFor(active);
   const photo = slidesPhotos[0] as Photo | undefined;
   // la griglia segue il social in anteprima: con "Più foto" numeri e ordine, con una foto sola una spunta sola
   const gridMulti = !!fmt.multi;
-  const gridSel = gridMulti ? chosen.slice(0, MAX_PHOTOS) : photosFor(fmt); // numeri e spunte nella griglia delle foto
+  const gridSel = slidesPhotos; // numeri e spunte nella griglia delle foto
+  // ogni social scelto ha le sue foto: almeno 1, con "Più foto" almeno 2
+  const photoOk = (n: NetId) => photosFor(n).length >= (fmtOf(n).multi ? 2 : 1);
   // le foto che servono all'anteprima sono arrivate (le scelte, e almeno 3 per le grafiche con piu' foto): prima uno scheletro,
   // poi UN solo disegno (niente post che cambia a ogni foto che arriva)
   const upto = Math.min(srcs.length, 24);
   const seen = (src: string) => { const i = srcs.indexOf(src); return i < 0 || i >= upto || i < scanned; };
-  const photosSettled = scanned >= upto || (scanned >= Math.min(anyMulti ? 5 : 3, upto) && (anyMulti ? sel : sel.slice(0, 1)).every(seen));
-  // formato a una foto: la foto toccata diventa la prima (la scelta del carosello resta, in ordine)
+  const photosSettled = scanned >= upto || (scanned >= Math.min(anyMulti ? 5 : 3, upto) && nets.flatMap(srcsOf).every(seen));
+  // tocco su una foto: cambia il social in anteprima (da qui e' suo) e la scelta comune, cioe' tutti i social non ancora toccati.
+  // Da una foto sola la scelta comune cambia solo la copertina (gia' nel carosello: va prima; se no prende il posto della prima),
+  // le altre foto del carosello restano; da "Più foto" la scelta comune diventa la lista intera (a una foto vale la prima)
   const tap = (src: string) => {
-    if (!gridMulti) { setSel(s => [src, ...s.filter(x => x !== src)]); return; }
-    setSel(s => (s.includes(src) ? s.filter(x => x !== src) : s.length >= MAX_PHOTOS ? s : [...s, src]));
+    const curL = srcsOf(active);
+    const next = !gridMulti ? [src] : curL.includes(src) ? curL.filter(x => x !== src) : curL.length >= MAX_PHOTOS ? curL : [...curL, src];
+    setOwn(o => ({ ...o, [active]: next }));
+    setShared(s => (gridMulti ? next : s.includes(src) ? [src, ...s.filter(x => x !== src)] : [src, ...s.slice(1)]));
   };
-  const needBlur = [...new Set(nets.flatMap(n => photosFor(fmtOf(n))))];
+  const restart = () => { setOwn(o => ({ ...o, [active]: [] })); setShared([]); };
+  const needBlur = [...new Set(nets.flatMap(photosFor))];
   useEffect(() => {
     for (const p of [photo?.small, ...needBlur.map(x => x.full)]) if (p && !blurs[p]) void blurred(p).then(b => setBlurs(o => ({ ...o, [p]: b })));
   }, [photo, needBlur.map(p => p.src).join('|'), blurs]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -601,40 +630,41 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     soldPhone: brand?.phone ? `${tr('Chiamami', 'Call me')} ${brand.phone}` : '', agencyName: brand?.agencyName ?? '',
   };
   // grafiche per formato. tips: consigli, non un annuncio; frame: nell'esportazione la foto sparisce (doppia passata del vetro)
-  const othersFor = (f: Fmt) => (f.multi ? photosFor(f).slice(1) : photos.filter(p => p !== photosFor(f)[0]));
-  const fits = (id: string, f: Fmt) => id !== 'tips' && id !== 'frame' && !(NO_FIT[f.ratio] ?? []).includes(id) && (soldOn || !id.startsWith('sold-'))
-    && (id !== 'gallery' || othersFor(f).length >= 2) && (id !== 'before-after' || !!photosFor(f)[0]?.original);
+  // (le foto sono quelle del social: ognuno puo' avere le sue)
+  const othersFor = (n: NetId) => (fmtOf(n).multi ? photosFor(n).slice(1) : photos.filter(p => p !== photosFor(n)[0]));
+  const fits = (id: string, n: NetId) => id !== 'tips' && id !== 'frame' && !(NO_FIT[fmtOf(n).ratio] ?? []).includes(id) && (soldOn || !id.startsWith('sold-'))
+    && (id !== 'gallery' || othersFor(n).length >= 2) && (id !== 'before-after' || !!photosFor(n)[0]?.original);
   // acceso Venduto: prima le sue grafiche, poi quelle dell'annuncio
-  const tplsFor = (f: Fmt) => POST_TEMPLATES.filter(t => fits(t.id, f)).sort((a, b) => Number(b.id.startsWith('sold-')) - Number(a.id.startsWith('sold-')));
-  // la grafica scelta, o la piu' simile se in quel formato non regge
+  const tplsFor = (n: NetId) => POST_TEMPLATES.filter(t => fits(t.id, n)).sort((a, b) => Number(b.id.startsWith('sold-')) - Number(a.id.startsWith('sold-')));
+  // la grafica scelta per quel social, o la piu' simile se nel suo formato (o con le sue foto) non regge
   const tplFor = (n: NetId) => {
-    const f = fmtOf(n);
-    if (fits(tplId, f)) return tplId;
-    return (SIMILAR.find(g => g.includes(tplId)) ?? []).find(id => fits(id, f)) ?? tplsFor(f)[0]?.id ?? 'gradient';
+    const tplId = tplOf(n) ?? (soldOn ? 'sold-stamp' : 'gradient'); // di riserva per i conti interni
+    if (fits(tplId, n)) return tplId;
+    return (SIMILAR.find(g => g.includes(tplId)) ?? []).find(id => fits(id, n)) ?? tplsFor(n)[0]?.id ?? 'gradient';
   };
   const tplLabel = (id: string) => (TPL_NAME[id] ? tr(...TPL_NAME[id]) : POST_TEMPLATES.find(t => t.id === id)?.label ?? id);
-  const swaps = !tplChosen ? [] : nets.filter(n => tplFor(n) !== tpl).map(n => ({ n, f: fmtOf(n), to: tplFor(n) }));
-  const all = tplsFor(fmt);
-  const cur = tplChosen ? tplFor(active) : null;
+  const swaps = nets.filter(n => tplChosen(n) && tplFor(n) !== tplOf(n)).map(n => ({ n, from: tplOf(n)!, to: tplFor(n) }));
+  const all = tplsFor(active);
+  const cur = tplChosen(active) ? tplFor(active) : null;
   const ready = fonts && !!logo && !!brand && photosSettled;
   // copertina: la grafica (Prima e Dopo: la prima foto e' l'originale, la seconda quella arredata)
-  const cover = (id: string, small: boolean, f: Fmt): Tpl | null => {
-    const ph = photosFor(f)[0];
+  const cover = (id: string, small: boolean, n: NetId): Tpl | null => {
+    const f = fmtOf(n), ph = photosFor(n)[0];
     if (!ready || !ph) return null;
     const blur = blurs[small ? ph.small : ph.full];
     if (!blur) return null;
     const main = id === 'before-after' && ph.original ? ph.original : small ? ph.small : ph.full;
-    const extra = id === 'before-after' ? [small ? ph.small : ph.full] : id === 'gallery' ? othersFor(f).slice(0, 2).map(p => (small ? p.small : p.full)) : undefined;
+    const extra = id === 'before-after' ? [small ? ph.small : ph.full] : id === 'gallery' ? othersFor(n).slice(0, 2).map(p => (small ? p.small : p.full)) : undefined;
     const fr = NO_COVER.includes(id) ? null : frameFor(ph.src);
     return { kind: 'tpl', tpl: id, data, photo: main, size: { w: f.w, h: f.h, safe: f.safe }, blur, logo: logo!.url, logoH: logo!.h, staged: ph.staged && label, photos: extra, fit: autoFit(id, f.h, fr ?? undefined), frame: fr };
   };
   // carosello: copertina, poi le altre foto pulite, in fondo i contatti
   const facts = [price, [project.mq ? `${project.mq} m²` : '', project.locali ? `${project.locali} ${tr('locali', 'rooms')}` : '', project.bagni ? `${project.bagni} ${project.bagni === 1 ? tr('bagno', 'bathroom') : tr('bagni', 'bathrooms')}` : ''].filter(Boolean).join(', '), addr].filter(Boolean);
   const slidesFor = (n: NetId): (Slide | null)[] => {
-    const f = fmtOf(n), size: Size = { w: f.w, h: f.h, safe: f.safe }, ps = photosFor(f);
+    const f = fmtOf(n), size: Size = { w: f.w, h: f.h, safe: f.safe }, ps = photosFor(n);
     // prima della grafica: le foto scelte e basta (senza scritte, logo e numero), "Sistema la foto" funziona gia'
-    if (!tplChosen) return ps.map((p, i) => (blurs[p.full] && ready ? { kind: 'plain', photo: p.full, size, blur: blurs[p.full], logo: null, accent, badge: '', staged: p.staged && label, n: i + 1, total: 1, fit: autoFit(null, f.h, frameFor(p.src)), frame: frameFor(p.src) } : null));
-    const firstSlide = cover(tplFor(n), false, f);
+    if (!tplChosen(n)) return ps.map((p, i) => (blurs[p.full] && ready ? { kind: 'plain', photo: p.full, size, blur: blurs[p.full], logo: null, accent, badge: '', staged: p.staged && label, n: i + 1, total: 1, fit: autoFit(null, f.h, frameFor(p.src)), frame: frameFor(p.src) } : null));
+    const firstSlide = cover(tplFor(n), false, n);
     if (!f.multi) return [firstSlide];
     if (!ps.length) return [];
     const total = ps.length + 1;
@@ -642,15 +672,15 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const last: Slide | null = ready ? { kind: 'contact', size, logo: logo!.url, accent, brand: brand!, lines: facts, n: total, total } : null;
     return [firstSlide, ...rest, last];
   };
-  const keyFor = (n: NetId) => { const f = fmtOf(n), ps = photosFor(f); return JSON.stringify([n, f.id, tplChosen ? tplFor(n) : '-', ps.map(p => p.src), label, ready, accent, ps.map(p => !!blurs[p.full]), ps.map(p => frames[p.src] ?? null), status, soldDaysText, brand?.phone]); };
+  const keyFor = (n: NetId) => { const f = fmtOf(n), ps = photosFor(n); return JSON.stringify([n, f.id, tplChosen(n) ? tplFor(n) : '-', ps.map(p => p.src), label, ready, accent, ps.map(p => !!blurs[p.full]), ps.map(p => frames[p.src] ?? null), status, soldDaysText, brand?.phone]); };
   const key = keyFor(active);
-  const keySmall = JSON.stringify([fmt.w, fmt.h, photo?.small, label, ready, accent, !!blurs[photo?.small ?? ''], othersFor(fmt).length, all.length, frames[photo?.src ?? ''] ?? null, status, soldDaysText, brand?.phone]);
+  const keySmall = JSON.stringify([fmt.w, fmt.h, photo?.small, label, ready, accent, !!blurs[photo?.small ?? ''], othersFor(active).slice(0, 2).map(p => p.src), all.length, frames[photo?.src ?? ''] ?? null, status, soldDaysText, brand?.phone]);
   const [big, setBig] = useState<(Slide | null)[]>([]);
   const [thumbs, setThumbs] = useState<Record<string, Tpl | null>>({});
   // oggetti stabili: si ridisegna solo quando cambia davvero qualcosa
   useEffect(() => { setBig(slidesFor(active)); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { setThumbs(Object.fromEntries(all.map(t => [t.id, cover(t.id, true, fmt)]))); }, [keySmall]); // eslint-disable-line react-hooks/exhaustive-deps
-  const nSlides = fmt.multi ? slidesPhotos.length + (slidesPhotos.length && tplChosen ? 1 : 0) : 1;
+  useEffect(() => { setThumbs(Object.fromEntries(all.map(t => [t.id, cover(t.id, true, active)]))); }, [keySmall]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nSlides = fmt.multi ? slidesPhotos.length + (slidesPhotos.length && tplChosen(active) ? 1 : 0) : 1;
   const six = Math.min(slideIx, Math.max(0, nSlides - 1));
 
   // testo del post, diverso per ogni social: uno per immobile e social (resta sul dispositivo), nei limiti del social
@@ -861,14 +891,27 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   // una sola evidenziazione per scelta: l'anello col colore del marchio
   const chip = (on: boolean) => `bg-white text-ink outline-none ease-smooth transition-[box-shadow] focus-visible:ring-2 focus-visible:ring-brand/50 ${on ? 'shadow-sm ring-2 ring-brand' : 'ring-1 ring-black/10 hover:ring-black/25'}`;
   // ogni passo vuole una scelta (tranne Video): Avanti spento, sotto cosa manca; dalle linguette non si salta oltre il primo passo da fare
-  const multiShort = anyMulti && chosen.length === 1;
-  const stepOk = [soldPick !== null, nets.length > 0, chosen.length > 0 && !multiShort, tplChosen, true, true];
+  const photoTodo = nets.find(n => !photoOk(n)); // il primo social senza le sue foto
+  const tplTodo = nets.find(n => !tplChosen(n)); // il primo social senza grafica (quella comune vale)
+  const stepOk = [soldPick !== null, nets.length > 0, !photoTodo, !tplTodo, true, true];
   const firstTodo = stepOk.indexOf(false);
   const canGo = (i: number) => firstTodo < 0 || i <= firstTodo;
   const canNext = stepOk[stepIx];
   const missing = [tr('Scegli cosa pubblichi', 'Choose what you post'), tr('Scegli almeno un social', 'Choose at least one network'),
-    multiShort ? tr('Per il post con più foto scegline almeno 2', 'For the post with more photos choose at least 2') : tr('Scegli una foto', 'Choose a photo'),
-    tr('Scegli una grafica', 'Choose a design'), '', ''][stepIx];
+    !photoTodo ? '' : !fmtOf(photoTodo).multi ? tr(`Scegli la foto per ${netOf(photoTodo).label}`, `Choose the photo for ${netOf(photoTodo).label}`)
+      : photosFor(photoTodo).length ? tr(`Per ${netOf(photoTodo).label} scegli almeno 2 foto`, `For ${netOf(photoTodo).label} choose at least 2 photos`) : tr(`Scegli le foto per ${netOf(photoTodo).label}`, `Choose the photos for ${netOf(photoTodo).label}`),
+    tplTodo ? tr(`Scegli la grafica per ${netOf(tplTodo).label}`, `Choose the design for ${netOf(tplTodo).label}`) : '', '', ''][stepIx];
+  // testo del bottone Avanti finche' manca qualcosa (passi Foto e Grafica): quante foto mancano e per chi, prima il social in anteprima.
+  // Telefono: una riga corta ("Ancora 1 foto, Instagram")
+  const order = [active, ...nets.filter(n => n !== active)].filter(n => nets.includes(n));
+  const lacks = order.map(n => ({ n, k: (fmtOf(n).multi ? 2 : 1) - photosFor(n).length })).filter(x => x.k > 0);
+  const fotoK = (k: number) => (k === 1 ? tr('1 foto', '1 photo') : tr(`${k} foto`, `${k} photos`));
+  const ctaTodo = stepIx === S.foto && lacks.length ? (phoneUi
+    ? tr(`Ancora ${fotoK(lacks[0].k)}, ${netOf(lacks[0].n).label}${lacks.length > 1 ? ' e altri' : ''}`, `${fotoK(lacks[0].k)} more, ${netOf(lacks[0].n).label}${lacks.length > 1 ? ' and others' : ''}`)
+    : tr(`Ancora ${fotoK(lacks[0].k)} per ${netOf(lacks[0].n).label}${lacks[1] ? `${lacks.length > 2 ? ',' : ' e'} ${lacks[1].k} per ${netOf(lacks[1].n).label}` : ''}${lacks.length > 2 ? ' e altri' : ''}`,
+      `${fotoK(lacks[0].k)} more for ${netOf(lacks[0].n).label}${lacks[1] ? `${lacks.length > 2 ? ',' : ' and'} ${lacks[1].k} for ${netOf(lacks[1].n).label}` : ''}${lacks.length > 2 ? ' and others' : ''}`))
+    : stepIx === S.grafica && tplTodo ? (() => { const n = order.find(x => !tplChosen(x)) ?? tplTodo; return phoneUi ? tr(`Grafica per ${netOf(n).label}`, `Design for ${netOf(n).label}`) : tr(`Scegli la grafica per ${netOf(n).label}`, `Choose the design for ${netOf(n).label}`); })()
+    : '';
   const shown = big[six] ?? null;
   // telefono o computer, per dire "Salva sul telefono" solo dove e' vero
   const onPhone = vp.w < 1024 || (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
@@ -889,11 +932,16 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     <TabRow ids={tabIds} on={onTab} deps={`${compact}|${boxW}`}>
       {tabIds.map(id => {
         const on = id === onTab, label = tabName(id), showName = !compact || on;
+        // passi Foto e Grafica: pallino pieno se quel social ha la sua scelta (anche ereditata), vuoto se manca
+        const mark = stepIx === S.foto ? (photoOk(id as NetId) ? 'ok' : 'todo') : stepIx === S.grafica ? (tplChosen(id as NetId) ? 'ok' : 'todo') : null;
+        const what = stepIx === S.foto ? tr('foto', 'photo') : tr('grafica', 'design');
+        const aria = !mark ? label : mark === 'ok' ? tr(`${label}, ${what} scelta`, `${label}, ${what} chosen`) : tr(`${label}, manca la ${what}`, `${label}, ${what} missing`);
         return (
-          <button key={id} data-tab={id} type="button" role="tab" aria-selected={on} aria-label={label} title={label} onClick={() => show(id as NetId)}
+          <button key={id} data-tab={id} type="button" role="tab" aria-selected={on} aria-label={aria} title={aria} onClick={() => show(id as NetId)}
             className={`relative z-[1] flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold outline-none ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 ${on ? 'text-ink' : 'text-muted hover:text-ink'}`}>
             <NetIcon id={id as NetId} size={16} />
             {showName && <span key={`${id}-${compact}`} className={compact ? 'blur-in' : ''}>{label}</span>}
+            {mark && <span aria-hidden className={`absolute right-1.5 top-1.5 h-2 w-2 rounded-full ease-smooth transition-colors ${mark === 'ok' ? 'bg-brand' : 'border-[1.5px] border-ink/35'}`} />}
             {(done.includes(id as NetId) || (wantAnim && stepIx === S.video && !!animOf(id as NetId))) && <Check size={14} className="text-brand" strokeWidth={3} />}
           </button>
         );
@@ -1098,12 +1146,15 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           {nets.map(id => {
             const N = netOf(id), cf = fmtOf(id), ix = Math.max(0, N.fmts.indexOf(cf)), n = N.fmts.length;
             return (
-              <div key={id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div key={id} className={`flex gap-2 py-3 sm:gap-4 ${n === 1 ? 'items-center justify-between' : 'flex-col sm:flex-row sm:items-start sm:justify-between'}`}>
                 <span className="flex h-12 min-w-0 items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={id} size={18} /></span>
                   <span className="truncate text-base font-semibold">{N.label}</span>
                 </span>
-                <div className="flex flex-col gap-1 sm:items-end">
+                {n === 1 ? (
+                  // un solo formato: niente scelta, solo un'etichetta discreta
+                  <span className="flex h-12 shrink-0 items-center gap-1.5 px-3 text-sm text-muted"><Smartphone size={16} className="shrink-0" aria-hidden /> {kindShort(cf.kind)}</span>
+                ) : <div className="flex flex-col gap-1 sm:items-end">
                   {/* segmentato come nel resto della piattaforma: fondo canvas, la scelta in bianco con ombra che scorre (600ms) */}
                   <div role="radiogroup" aria-label={tr(`Tipo di post per ${N.label}`, `Post type for ${N.label}`)} className="relative grid w-full rounded-[24px] bg-canvas p-1 sm:w-auto sm:rounded-full" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
                     <span aria-hidden className="absolute bottom-1 left-1 top-1 rounded-[20px] bg-white shadow-sm ease-smooth transition-transform motion-reduce:transition-none sm:rounded-full" style={{ width: `calc((100% - 8px) / ${n})`, transform: `translateX(${ix * 100}%)` }} />
@@ -1118,7 +1169,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
                     })}
                   </div>
                   <span key={cf.id} className="blur-in min-h-5 px-3 text-sm text-muted">{fmtHint(N.fmts, cf)}</span>
-                </div>
+                </div>}
               </div>
             );
           })}
@@ -1134,11 +1185,14 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
           <h3 className="font-display text-lg font-semibold">{gridMulti ? tr('Scegli le foto', 'Choose the photos') : tr('Scegli la foto', 'Choose the photo')}</h3>
+          {/* per chi stai scegliendo: il social in anteprima (si cambia dalle linguette sopra l'anteprima) */}
+          {nets.length > 0 && <p key={active} className="blur-in mt-1 flex items-center gap-1.5 text-sm font-semibold text-ink"><NetIcon id={active} size={16} /> {tr(`Foto per ${net.label}`, `Photos for ${net.label}`)}</p>}
           <p className="mt-0.5 text-sm text-muted">{gridMulti
             ? tr(`Tocca le foto nell’ordine che vuoi, il numero è l’ordine. Fino a ${MAX_PHOTOS} foto.`, `Tap the photos in the order you want, the number is the order. Up to ${MAX_PHOTOS} photos.`)
-            : anyMulti ? tr('Tocca la foto che vuoi pubblicare. Per i post con più foto, tocca il social sopra l’anteprima.', 'Tap the photo you want to post. For posts with more photos, tap that social above the preview.') : tr('Tocca la foto che vuoi pubblicare.', 'Tap the photo you want to post.')}</p>
+            : tr('Tocca la foto che vuoi pubblicare.', 'Tap the photo you want to post.')}</p>
+          {nets.length > 1 && <p className="mt-0.5 text-sm text-muted">{tr('Tocca un altro social sopra l’anteprima per cambiare la sua foto.', 'Tap another network above the preview to change its photo.')}</p>}
         </div>
-        {gridMulti && sel.length > 0 && <button type="button" onClick={() => setSel([])} className="h-10 rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{tr('Ricomincia', 'Start over')}</button>}
+        {gridMulti && gridSel.length > 0 && <button type="button" onClick={restart} className="h-10 rounded-full px-3 text-sm font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{tr('Ricomincia', 'Start over')}</button>}
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {photos.map(p => {
@@ -1167,19 +1221,20 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   );
 
   // passo 4: la grafica. Toccandone una sul telefono l'anteprima grande torna in vista
-  const pickTpl = (id: string) => { setTpl(id); autoNext(); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+  // si sceglie per il social in anteprima (da qui e' sua) e per tutti quelli non ancora toccati; niente avanti da soli
+  const pickTpl = (id: string) => { setTplOwn(o => ({ ...o, [active]: id })); setTplShared(id); if (!wide) bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
   const stepGrafica = (
     <div className="space-y-4">
       <div>
         <h3 className="font-display text-lg font-semibold">{tr('Scegli la grafica', 'Choose the design')}</h3>
-        <p className="mt-0.5 text-sm text-muted">{nets.length > 1
-          ? tr('Con il tuo logo e il tuo colore, la stessa per tutti i social scelti.', 'With your logo and colour, the same for every chosen network.')
-          : tr('Con il tuo logo e il tuo colore.', 'With your logo and colour.')}</p>
+        {nets.length > 0 && <p key={active} className="blur-in mt-1 flex items-center gap-1.5 text-sm font-semibold text-ink"><NetIcon id={active} size={16} /> {tr(`Grafica per ${net.label}`, `Design for ${net.label}`)}</p>}
+        <p className="mt-0.5 text-sm text-muted">{tr('Con il tuo logo e il tuo colore.', 'With your logo and colour.')}</p>
+        {nets.length > 1 && <p className="mt-0.5 text-sm text-muted">{tr('Tocca un altro social sopra l’anteprima per cambiare la sua grafica.', 'Tap another network above the preview to change its design.')}</p>}
       </div>
       {swaps.length > 0 && (
         <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900 ring-1 ring-amber-200">
           {swaps.map(s => (
-            <span key={s.n} className="block">{tr(`Su ${netOf(s.n).label} questa grafica non ci sta bene, lì uso ${tplLabel(s.to)}, la più simile.`, `On ${netOf(s.n).label} this design does not fit well, there I use ${tplLabel(s.to)}, the closest one.`)}</span>
+            <span key={s.n} className="block">{tr(`Su ${netOf(s.n).label} ${tplLabel(s.from)} non ci sta bene, lì uso ${tplLabel(s.to)}, la più simile.`, `On ${netOf(s.n).label} ${tplLabel(s.from)} does not fit well, there I use ${tplLabel(s.to)}, the closest one.`)}</span>
           ))}
         </div>
       )}
@@ -1346,7 +1401,11 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} shrink-0 px-4 text-ink hover:bg-canvas disabled:invisible`}><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
           {!last ? (
             <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
-              <button type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'} className={`${btn} min-w-[160px] bg-ink text-base text-white enabled:hover:bg-brand disabled:opacity-40`}>{tr('Avanti', 'Next')} <ArrowRight size={18} /></button>
+              {/* finche' manca qualcosa il bottone dice cosa (spento ma leggibile), poi torna "Avanti" e la larghezza segue il testo */}
+              <GrowButton type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'}
+                className={`${btn} min-w-[160px] text-base ${!canNext && ctaTodo ? 'bg-canvas text-ink/70 ring-1 ring-black/10 disabled:opacity-100' : 'bg-ink text-white enabled:hover:bg-brand disabled:opacity-40'}`}>
+                {!canNext && ctaTodo ? <span key={ctaTodo} className="blur-in">{ctaTodo}</span> : <>{tr('Avanti', 'Next')} <ArrowRight size={18} /></>}
+              </GrowButton>
               {!canNext && <span id="social-missing" className="sr-only">{missing}</span>}
             </div>
           ) : (
