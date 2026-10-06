@@ -26,7 +26,7 @@ const bandMult = (arr: number) => (arr < 250e3 ? 2.5 : arr < 1e6 ? 3 : arr < 3e6
 type Row = { y: number; his: number; tot: number; arr: number; mu: number; val: number; eq: number; eqv: number; feeY: number; feeCum: number; total: number }
 
 // Coorti mensili di clienti tuoi con churn; revenue share 10% dell'incasso netto (prezzo -3% di commissioni);
-// quote = 2% base (cliff 6 mesi, matura in 24) + premi a soglia; valutazione = ARR al netto della revenue share x multiplo.
+// quote = 2% base (cliff 6 mesi, matura in 12) + premi a soglia; valutazione = ARR al netto della revenue share x multiplo.
 function model(name: Scenario, p: Inputs): Row[] {
   const arpu = p.arpu * 0.97, ch = p.churn / 100, s = SC[name]
   const cohorts: { n: number; age: number }[] = []
@@ -46,7 +46,7 @@ function model(name: Scenario, p: Inputs): Row[] {
     aHis = cohorts.reduce((t, c) => t + c.n, 0)
     feeCum += feeY
     MS.forEach((m, i) => { if (aHis >= m[0]) reached.add(i) })
-    const month = (y + 1) * 12, base = month < 6 ? 0 : 2 * Math.min(1, month / 24)
+    const month = (y + 1) * 12, base = month < 6 ? 0 : 2 * Math.min(1, month / 12)
     const eq = Math.min(CAP, base + [...reached].reduce((t, i) => t + MS[i][1], 0))
     const tot = Math.max(s.tot[y] * p.tot, aHis)
     const arr = tot * arpu * 12, mu = bandMult(arr) * p.mult, val = Math.max(0, arr - feeM * 12) * mu, eqv = (val * eq) / 100
@@ -234,7 +234,7 @@ export default function PropostaSocio() {
           <div className={card}>
             <div className={pill}>B · Quota per il ruolo</div><div className={big}>2%</div>
             <p className="text-muted">di quote, per il lavoro da frontman.</p>
-            <Clean items={[<>Maturano in <b>24 mesi</b></>, <>Nessuna quota prima dei <b>6 mesi</b> (cliff)</>, 'Legate agli impegni minimi']} />
+            <Clean items={[<>Maturano in <b>12 mesi</b></>, <>Nessuna quota prima dei <b>6 mesi</b> (cliff)</>, 'Legate agli impegni minimi']} />
           </div>
           <div className={card}>
             <div className={pill}>C · Quote a premio</div><div className={big}>fino a +8%</div>
