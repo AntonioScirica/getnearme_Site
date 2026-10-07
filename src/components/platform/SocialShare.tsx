@@ -28,7 +28,6 @@ import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { authFetch, portfolioUrl } from './api';
 import { pageLang, pageLocale, tr } from './i18n';
 import { connect, createPost, friendlyError, listPosts, needsReconnect, PublishError, socialCaps, usable, useSocialAccounts, useSocialPublish, type SocialCaps, type SocialNet, type SocialPost } from './socialApi';
-import { SocialPostsList } from './SocialAccounts';
 
 type Safe = { top: number; bottom: number; left: number; right: number };
 type Size = { w: number; h: number; safe: Safe };
@@ -393,7 +392,6 @@ function NetIcon({ id, size = 20 }: { id: NetId; size?: number }) {
 // ---------- card nella fascia Promuovi ----------
 export default function SocialCard({ project, photos }: { project: ProjectData; photos: string[] }) {
   const [open, setOpen] = useState(false);
-  const [posted, setPosted] = useState(0); // ricarica l'elenco dei post dopo una pubblicazione dal popup
   // pubblicazione diretta solo per gli utenti abilitati (SOCIAL_PUBLISH_EMAILS): per gli altri il popup resta di 6 passi
   const social = useSocialPublish();
   return (
@@ -408,9 +406,7 @@ export default function SocialCard({ project, photos }: { project: ProjectData; 
       <button type="button" onClick={() => setOpen(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">
         <Sparkles size={14} /> {photos.length ? tr('Crea il post', 'Create the post') : tr('Aggiungi prima le foto', 'Add photos first')}
       </button>
-      {/* post pubblicati o programmati da qui per questo immobile (06/10/2026), con Annulla sui programmati */}
-      {social && <SocialPostsList project={project.id} title={tr('I tuoi post', 'Your posts')} refreshKey={posted} compact />}
-      {open && <SocialShare project={project} photos={photos} social={social} onClose={() => { setOpen(false); setPosted(k => k + 1); }} onPosted={() => setPosted(k => k + 1)} />}
+      {open && <SocialShare project={project} photos={photos} social={social} onClose={() => setOpen(false)} />}
     </section>
   );
 }
