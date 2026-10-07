@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createClient } from '@supabase/supabase-js'
+import { markImage, markVideo } from '@/lib/aiMark'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,8 +44,10 @@ export async function POST(req: NextRequest) {
     if (!imageRes.ok) throw new Error('Failed to fetch image from provider')
     
     const arrayBuffer = await imageRes.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
     const contentType = imageRes.headers.get('content-type') || 'image/jpeg'
+    // segno nascosto AI Act (lib/aiMark): staging = foto vera modificata, video = generato; l'originale no
+    const raw = Buffer.from(arrayBuffer)
+    const buffer = type === 'original' ? raw : contentType.includes('mp4') ? await markVideo(raw, 'generated') : markImage(raw, 'composite')
     
     // Determina l'estensione dal content type
     let ext = 'jpg'

@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { markImage, type AiKind } from '@/lib/aiMark';
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
 const ACCESS_KEY = process.env.R2_ACCESS_KEY_ID!;
@@ -44,13 +45,15 @@ export async function deleteFromR2(key: string): Promise<void> {
   }
 }
 
-export async function uploadUrlToR2(url: string, key: string): Promise<string> {
+// ai: risultato di un modello AI, salvato col segno nascosto IPTC/XMP (AI Act, lib/aiMark)
+export async function uploadUrlToR2(url: string, key: string, ai?: AiKind): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch image from URL: ${response.statusText}`);
   }
   const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const raw = Buffer.from(arrayBuffer);
+  const buffer = ai ? markImage(raw, ai) : raw;
   const contentType = response.headers.get('content-type') || 'image/jpeg';
   
   return uploadToR2(buffer, key, contentType);

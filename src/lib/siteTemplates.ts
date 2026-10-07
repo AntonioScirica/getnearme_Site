@@ -71,7 +71,32 @@ export type SiteProperty = {
   createdAt?: string
   details?: Record<string, unknown>
   prima?: Record<string, string> // foto AI -> foto originale (per il prima/dopo nella galleria)
+  ai?: Record<string, AiPhotoKind> // foto fatte con l'AI -> tipo, per il bollino sulla foto (AI Act art. 50, vedi aiPhotoKinds)
   status?: PropertyStatus // stato dell'annuncio (da details.stato_annuncio), disponibile se manca
+}
+
+// ---------- Foto fatte con l'AI (AI Act, art. 50: chi guarda il sito deve saperlo) ----------
+// Bollino in basso a sinistra su ogni foto AI e una riga sotto la galleria della scheda. Il tipo sta in
+// import_data.ai (lo scrive property-photo leggendo il lavoro fatto in photo-edit: arreda = arredata, luminoso = no);
+// per le foto messe prima del 07/10/2026 (tipo sconosciuto): foto con il prima/dopo o risultati AI su R2 = modificata.
+export type AiPhotoKind = 'arredata' | 'modificata'
+export const AI_PHOTO_LABEL: Record<AiPhotoKind, string> = { arredata: 'Arredata virtualmente', modificata: 'Modificata con AI' }
+// risultato AI della piattaforma su R2: edits/<utente>/... (non il -prima), staging/<id>/result.jpg
+export const isAiPhotoUrl = (u: string) => (/\/edits\/[^?#]+\.(jpe?g|png|webp)([?#]|$)/i.test(u) && !/-prima\.(jpe?g|png|webp)([?#]|$)/i.test(u)) || /\/staging\/[^/?#]+\/result\./i.test(u)
+export function aiPhotoKinds(d: { photos?: unknown; prima?: unknown; ai?: unknown }, cover?: string | null): Record<string, AiPhotoKind> | undefined {
+  const photos = [...(Array.isArray(d.photos) ? d.photos : []), cover].filter((x): x is string => typeof x === 'string' && !!x)
+  const set = (d.ai && typeof d.ai === 'object' ? d.ai : {}) as Record<string, unknown>
+  const prima = (d.prima && typeof d.prima === 'object' ? d.prima : {}) as Record<string, unknown>
+  const out: Record<string, AiPhotoKind> = {}
+  for (const u of photos) {
+    const k = set[u]
+    if (k === 'arredata' || k === 'modificata') out[u] = k
+    else if (k === 'no') continue
+    else if (/\/staging\/[^/?#]+\/result\./i.test(u)) out[u] = 'arredata' // vecchio home staging a lotti
+    // senza il tipo non si sa se e' arredo o un'altra modifica: "Modificata con AI" e' vero in entrambi i casi
+    else if (typeof prima[u] === 'string' || isAiPhotoUrl(u)) out[u] = 'modificata'
+  }
+  return Object.keys(out).length ? out : undefined
 }
 
 // ---------- Stato dell'immobile ----------

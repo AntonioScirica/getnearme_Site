@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
+import { markImage, markVideo, type AiKind } from '@/lib/aiMark'
 
 // Copia un'immagine remota su R2, ridimensionata (lato lungo maxDim) e in JPEG.
 // null se download/resize/upload falliscono: il chiamante decide se proseguire.
@@ -34,6 +35,9 @@ export async function uploadFile(body: Buffer, key: string, contentType: string)
   return `${process.env.R2_PUBLIC_URL}/${key}`
 }
 export const uploadJpeg = (body: Buffer, key: string) => uploadFile(body, key, 'image/jpeg')
+// Foto e video fatti dall'AI: segno nascosto IPTC/XMP prima del salvataggio (AI Act art. 50, vedi lib/aiMark)
+export const uploadAiJpeg = (body: Buffer, key: string, kind: AiKind) => uploadJpeg(markImage(body, kind), key)
+export const uploadAiVideo = async (body: Buffer, key: string, kind: AiKind) => uploadFile(await markVideo(body, kind), key, 'video/mp4')
 
 // Chiavi sotto un prefisso (con data di caricamento), fino a `max`.
 export async function listKeys(prefix: string, max = 2000): Promise<{ key: string; at: number }[]> {

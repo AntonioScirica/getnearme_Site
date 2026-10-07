@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, ImagePlus, Loader2, Mail, MapPin, MessageCircle, Phone, Handshake, Play, Search, SearchX, SlidersHorizontal, Sparkles, Star, Wand2, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
-import { ABOUT_DEFAULT, isClosed, pageHidden, statusOf, STATUS_LABELS, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { AI_PHOTO_LABEL, ABOUT_DEFAULT, isClosed, pageHidden, statusOf, STATUS_LABELS, zoneOnly, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat, Casa3DBlock } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, SoldRecent, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, Sec, StatusTag, SiteLink, SiteRoot, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
+import { AiBadge, Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, Sec, StatusTag, SiteLink, SiteRoot, typeOf, useAiKind, useFavs, useLockScroll, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -184,6 +184,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
 function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record<string, string>; i: number | null; setI: (n: number | null) => void }) {
   useLockScroll(i !== null);
   const pe = useSite().propEdit; // scheda in piattaforma: anche a schermo intero Migliora con l'AI e Copertina
+  const ai = useAiKind(i === null ? null : photos[i]); // foto fatta con l'AI: bollino anche a schermo intero (AI Act)
   const [x0, setX0] = useState<number | null>(null); // inizio del trascinamento col dito
   useEffect(() => {
     if (i === null) return;
@@ -202,11 +203,12 @@ function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record
         <div className="relative aspect-[3/2] max-h-[86vh] w-[min(92vw,calc(86vh*1.5))] overflow-hidden rounded-[var(--rc)]" onClick={e => e.stopPropagation()}>
           <InlineSlider before={before} after={photos[i]} isVertical={false} showImages interactive />
           <span className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Prima</span>
-          <span className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Dopo</span>
+          <span className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Dopo{ai ? ` · ${AI_PHOTO_LABEL[ai]}` : ''}</span>
         </div>
       ) : /\.mp4$/.test(photos[i]) ? <video key={photos[i]} src={photos[i]} controls autoPlay playsInline className="max-h-[86vh] max-w-[92vw] rounded-[var(--rc)]" onClick={e => e.stopPropagation()} />
         : <div className="relative" onClick={e => e.stopPropagation()}>
           <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" />
+          {ai && <AiBadge kind={ai} className={pe && pe.photos.includes(photos[i]) ? '!bottom-16' : ''} />}
           {/* scheda in piattaforma: sopra la foto, in basso a sinistra, solo icone come sulle foto della scheda */}
           {pe && pe.photos.includes(photos[i]) && (
             <span className="absolute bottom-3 left-3 flex gap-2">
@@ -290,6 +292,18 @@ function Gallery({ p }: { p: SiteProperty }) {
   return <><div className="relative">{body}{photos.length > 0 && <StatusTag p={p} className="absolute right-4 top-4 z-10 !px-3.5 !py-1.5 !text-xs" />}</div><Lightbox photos={[...photos, ...vids]} prima={p.prima} i={i} setI={setI} /></>;
 }
 
+// Riga sotto la galleria della scheda se almeno una foto e' fatta con l'AI (AI Act, art. 50)
+function AiNote({ p, className = '' }: { p: SiteProperty; className?: string }) {
+  const kinds = Object.entries(p.ai ?? {}).filter(([src]) => (p.photos?.length ? p.photos : [p.cover]).includes(src)).map(([, k]) => k);
+  if (!kinds.length) return null;
+  return (
+    <p className={`flex items-start gap-1.5 text-[13px] leading-snug text-[var(--muted)] ${className}`}>
+      <Sparkles size={13} aria-hidden className="mt-[2px] shrink-0" />
+      {kinds.includes('arredata') ? 'Alcune immagini sono arredate virtualmente con l’intelligenza artificiale.' : 'Alcune immagini sono modificate con l’intelligenza artificiale.'}
+    </p>
+  );
+}
+
 function AgentCard({ subject, property }: { subject?: string; property?: SiteProperty }) {
   const { cfg, name } = useSite();
   const tx = useT();
@@ -346,11 +360,12 @@ function PropertyPage({ id }: { id: string }) {
     <>
       <Sec id="header"><Header /></Sec>
       {t.gallery === 'full' ? (
-        <div className="relative"><Gallery key={p.cover} p={p} />{/* telefono: il testo sta sopra il pulsante delle foto, non sotto */}<Container className="absolute inset-x-0 bottom-20 text-white md:bottom-10">{heading}</Container></div>
+        <><div className="relative"><Gallery key={p.cover} p={p} />{/* telefono: il testo sta sopra il pulsante delle foto, non sotto */}<Container className="absolute inset-x-0 bottom-20 text-white md:bottom-10">{heading}</Container></div><Container><AiNote p={p} className="pt-3" /></Container></>
       ) : (
         <Container className="pt-8">
           {!embed && <div className="text-[var(--muted)]">{crumbs}</div>}
           <Gallery key={p.cover} p={p} />
+          <AiNote p={p} className="mt-3" />
         </Container>
       )}
       <Container className="grid gap-12 py-12 lg:grid-cols-[1fr_360px]">

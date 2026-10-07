@@ -10,7 +10,7 @@ import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
 import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
-import { uploadJpeg, uploadMarker } from '@/lib/r2'
+import { uploadAiJpeg, uploadJpeg, uploadMarker } from '@/lib/r2'
 import { alignTo } from '@/lib/align'
 import { styleFromPhoto } from '@/lib/styleFromPhoto'
 import sharp from 'sharp'
@@ -175,12 +175,15 @@ export async function POST(req: NextRequest) {
   // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
   const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
+  // segno nascosto AI Act (lib/aiMark): foto da un punto della pianta = generata; arredo e modifiche = foto vera
+  // modificata con l'AI; Luminoso no (curva di esposizione, niente AI)
+  const save = async (k: string) => body.angle === 'day' ? uploadJpeg(await shaped(), k) : uploadAiJpeg(await shaped(), k, body.plan === 'camera' ? 'generated' : 'composite')
   if (body.preview === true) {
-    const url = await uploadJpeg(await shaped(), `previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
+    const url = await save(`previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
     return NextResponse.json({ url, seconds: Math.round((Date.now() - t0) / 1000), credits: creditsLeft })
   }
   const key = `edits/${userId}/${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const url = await uploadJpeg(await shaped(), `${key}.jpg`)
+  const url = await save(`${key}.jpg`)
   // Media: accanto al risultato si salva anche il "prima" (<chiave>-prima.jpg), cosi' la pagina Media
   // mostra ogni modifica con prima e dopo leggendo solo la cartella su R2 (niente tabella).
   await savePrima(imageBase64, imageUrl, `${key}-prima.jpg`)
@@ -191,7 +194,9 @@ export async function POST(req: NextRequest) {
   const what = custom || [body.style, body.angle, body.planimetria ? 'planimetria' : ''].filter(Boolean).join(' ')
   const mine = `${process.env.R2_PUBLIC_URL}/edits/${userId}/`
   const from = imageUrl.startsWith(mine) ? imageUrl.slice(`${process.env.R2_PUBLIC_URL}/`.length) : undefined
-  const meta = Buffer.from(JSON.stringify({ t: what.slice(0, 160), r: room, ...(from ? { f: from } : {}) })).toString('base64url')
+  // a: che lavoro e' stato (arreda, svuota, modifica, luminoso...): il sito dell'agente lo usa per il bollino
+  // "Arredata virtualmente" / "Modificata con AI" (property-photo, lib/siteTemplates aiPhotoKinds)
+  const meta = Buffer.from(JSON.stringify({ t: what.slice(0, 160), r: room, a: body.plan === 'camera' ? 'foto_pianta' : body.planimetria ? 'planimetria' : action, ...(from ? { f: from } : {}) })).toString('base64url')
   await uploadMarker(`${key}.meta.${meta}`).catch(e => console.error('media meta', e))
   return NextResponse.json({ url, seconds: Math.round((Date.now() - t0) / 1000), credits: creditsLeft })
 }

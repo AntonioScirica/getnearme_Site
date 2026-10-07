@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (resultUrl && resultUrl.startsWith('http')) {
       try {
         const key = `staging/${batch.id}/result.jpg`;
-        await uploadUrlToR2(resultUrl, key);
+        await uploadUrlToR2(resultUrl, key, 'composite'); // home staging: foto vera modificata con l'AI
         finalResultPath = key;
       } catch (e) {
         console.error('R2 upload failed for result, falling back to original URL:', e);

@@ -3,8 +3,8 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
-import { Bath, BedDouble, Check, Star, Wand2, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
-import { closedAt, closedPriceHidden, FONTS, fontCss, isClosed, statusOf, STATUS_LABELS, zoneOnly, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { Bath, BedDouble, Check, Star, Wand2, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, Sparkles, type LucideIcon } from 'lucide-react';
+import { AI_PHOTO_LABEL, closedAt, closedPriceHidden, FONTS, fontCss, isClosed, statusOf, STATUS_LABELS, zoneOnly, PAGE_SECTIONS, SECTION_LABELS_EN, pageHidden, TEXTS, type AiPhotoKind, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
@@ -77,6 +77,8 @@ export type SiteCtx = {
   embed?: boolean;
   // tutti gli immobili, anche venduti e affittati (li mette SiteRoot: properties resta solo con quelli sul mercato)
   allProperties?: SiteProperty[];
+  // foto fatte con l'AI di tutti gli immobili (src -> tipo): bollino sulla foto ovunque compaia (la mette SiteRoot)
+  aiPhotos?: Record<string, AiPhotoKind>;
 };
 // texts: testi modificabili al clic sulla pagina (spento: si modifica dalla barra a sinistra)
 export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; editing?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void; onAdd?: (files: FileList) => void; adding?: boolean };
@@ -109,7 +111,7 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
   // carattere dei titoli scelto dall'agente: il foglio di Google Fonts va nella pagina (React lo sposta nel <head>)
   const fontHref = fontCss([ctx.cfg.headingFont]);
   // venduti e affittati: fuori dagli elenchi, in evidenza e dai numeri; restano raggiungibili da all/sold (scheda, Venduti di recente)
-  const value = useMemo(() => ({ ...ctx, allProperties: ctx.properties, properties: ctx.properties.filter(p => !isClosed(statusOf(p))) }), [ctx]);
+  const value = useMemo(() => ({ ...ctx, allProperties: ctx.properties, properties: ctx.properties.filter(p => !isClosed(statusOf(p))), aiPhotos: Object.assign({}, ...ctx.properties.map(p => p.ai ?? {})) as Record<string, AiPhotoKind> }), [ctx]);
   return <Ctx.Provider value={value}>{/* niente precedence: nell'editor sospenderebbe e rimonterebbe la pagina (modifiche perse) */}{fontHref && <link rel="stylesheet" href={fontHref} />}<div data-site-root style={style} className={`relative ${ctx.embed ? '' : 'min-h-screen'} font-body antialiased selection:bg-[var(--c)] selection:text-white`}>{children}</div></Ctx.Provider>;
 }
 
@@ -154,7 +156,8 @@ export function Btn({ children, href, onClick, variant = 'solid', size = 'md', c
 export const PLACEHOLDER_PHOTOS = ['/staging/ph-1.webp', '/staging/ph-2.webp', '/staging/ph-3.webp', '/staging/ph-4.webp', '/staging/ph-5.webp', '/staging/ph-6.webp'];
 const pick = (key: string) => PLACEHOLDER_PHOTOS[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PLACEHOLDER_PHOTOS.length];
 // fit: foto verticali intere con lo sfondo sfocato (gallerie della scheda) invece che ritagliate
-export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean; noActions?: boolean }) {
+// aiClass: posizione del bollino AI dove qualcosa copre il basso della foto (ricerca sopra la foto negli hero)
+export function Photo({ src, alt = '', className = '', zoom, fit, noActions, aiClass = '' }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean; noActions?: boolean; aiClass?: string }) {
   const preview = useContext(Ctx)?.preview;
   const pe = useContext(Ctx)?.propEdit;
   // foto d'esempio solo nell'anteprima del modello, mai nella scheda di un immobile vero (sembrava una foto della casa)
@@ -170,9 +173,13 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
       </span>
     )
   ) : null;
+  // foto fatta con l'AI (AI Act): bollino in basso a sinistra, sopra le icone della piattaforma se ci sono; non sulle miniature
+  const aiMap = useContext(Ctx)?.aiPhotos;
+  const ai = src && !noActions ? aiMap?.[src] : undefined;
   return (
-    <div className={`overflow-hidden bg-[var(--soft)] ${fit || acts ? 'relative' : ''} ${acts ? 'group/ph' : ''} ${className}`}>
+    <div className={`overflow-hidden bg-[var(--soft)] ${fit || acts || ai ? 'relative' : ''} ${acts ? 'group/ph' : ''} ${className}`}>
       {acts}
+      {ai && <AiBadge kind={ai} className={acts ? '!bottom-14' : aiClass} />}
       {/* scheda in piattaforma: la foto di copertina ha la sua etichetta */}
       {acts && src === pe?.cover && <span className="pointer-events-none absolute left-4 top-4 z-30 flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-sm font-semibold text-neutral-900 shadow-lg"><Star size={14} className="fill-amber-400 text-amber-400" /> Copertina</span>}
       {shown && fit && <FitImage src={shown} alt={alt} imgClassName={zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''} />}
@@ -181,6 +188,20 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
       {!shown && <div className="flex h-full min-h-24 w-full items-center justify-center text-[var(--muted)] opacity-40"><ImageIcon size={28} strokeWidth={1.5} /></div>}
     </div>
   );
+}
+
+// Bollino delle foto fatte con l'AI: testo (non solo icona), scuro traslucido per leggersi su foto chiare e scure,
+// raggio e misure come il bollino dello stato. Sta in basso a sinistra; i bollini delle card che stavano li' salgono.
+export function AiBadge({ kind, className = '' }: { kind: AiPhotoKind; className?: string }) {
+  return (
+    <span title="Immagine elaborata con l’intelligenza artificiale" className={`pointer-events-none absolute bottom-3 left-3 z-10 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-1 overflow-hidden whitespace-nowrap rounded-[calc(var(--r)*0.5)] bg-black/60 px-2 py-1 text-[11px] font-semibold leading-tight text-white shadow-sm ring-1 ring-white/15 backdrop-blur-sm ${className}`}>
+      <Sparkles size={11} aria-hidden className="shrink-0" /><span className="truncate">{AI_PHOTO_LABEL[kind]}</span>
+    </span>
+  );
+}
+export function useAiKind(src?: string | null): AiPhotoKind | undefined {
+  const m = useContext(Ctx)?.aiPhotos;
+  return src ? m?.[src] : undefined;
 }
 
 // Stato vuoto del sito: icona in un cerchio tenue, titolo, testo e un'azione. Prende colori e raggi del template.

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
-import { uploadJpeg } from '@/lib/r2'
+import { uploadAiJpeg, uploadJpeg } from '@/lib/r2'
+import { markImage } from '@/lib/aiMark'
 import { sealKey } from '@/lib/demoProtect'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
@@ -93,15 +94,15 @@ export async function POST(req: NextRequest) {
   // foto pulita su R2 a una chiave casuale che il browser non vede: riceve solo un gettone cifrato, che la piattaforma
   // scambia con la foto dopo il login (DemoDownload). In pagina solo la versione con la filigrana.
   const cleanKey = `landing-clean/${Date.now()}-${randomBytes(12).toString('hex')}.jpg`
-  const saved = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), cleanKey).then(() => true, () => false)
+  const saved = await uploadAiJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), cleanKey, 'composite').then(() => true, () => false)
   // foto della prova legata all'account: la usano le email dopo la prova (api/cron/trial-emails), via entro 12 mesi
   // anche la foto di partenza, per il prima e dopo nelle email (stessa chiave con -prima)
   if (saved && user && !free) void uploadJpeg(src, cleanKey.replace(/\.jpg$/, '-prima.jpg')).catch(() => {})
   // e nella sua Galleria: foto con il suo prima (edits/<utente>/<nome>.jpg e -prima.jpg)
-  if (saved && user) { const g = `edits/${user.id}/${Date.now()}-prova`; void Promise.all([uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), `${g}.jpg`), uploadJpeg(src, `${g}-prima.jpg`)]).catch(() => {}) }
+  if (saved && user) { const g = `edits/${user.id}/${Date.now()}-prova`; void Promise.all([uploadAiJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), `${g}.jpg`, 'composite'), uploadJpeg(src, `${g}-prima.jpg`)]).catch(() => {}) }
   if (saved && user && !free) void admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo_photo', provider: 'counter', model: cleanKey, duration_ms: 0, cost_usd: 0, ok: true } as never).then(() => {}, () => {})
   const small = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 88 }).toBuffer()
-  const out = small // niente filigrana: la prova si fa solo con l'account (30/09)
+  const out = markImage(small, 'composite') // niente filigrana: la prova si fa solo con l'account (30/09); segno nascosto AI Act
   return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, token: saved ? sealKey(cleanKey) : null, left: free ? 99 : PER_IP - used - 1 })
 }
 

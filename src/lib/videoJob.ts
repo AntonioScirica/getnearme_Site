@@ -12,7 +12,7 @@ import { FAKE_VIDEO, isFakeUser } from '@/lib/fakeAi'
 import { RENO_FINISHED_IMAGE, RENO_FURNISHED_IMAGE, RENO_1, RENO_2, DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR, DRONE_EXTERIOR, DRONE_EXTERIOR_NEG, SEASON_IMAGE, SEASON_VIDEO, SEASON_NEG, type Season } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
-import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
+import { deleteKeys, uploadAiJpeg, uploadAiVideo, uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
@@ -180,7 +180,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       const frame = async (prompt: string, label: string, ref = fullUrl, extra?: string[]) => {
         const out = await gptImage({ userId: logUser, image: ref, prompt, kind: `video_${anim}`, quality: process.env.GPT_EDIT_QUALITY || 'low', ...(extra ? { extra } : {}) })
         if (!out) return null
-        return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
+        return uploadAiJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`, 'composite')
       }
       const kling = (image_url: string, end_image_url: string | undefined, prompt: string) => fal(KLING_URL, { image_url, ...(end_image_url ? { end_image_url } : {}), prompt, duration: 5, generate_audio: false }, { userId: logUser, kind: `video_${anim}` })
       let ids: string[] = []
@@ -226,7 +226,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         if (!o.plan) return { error: 'bad_request', status: 400 }
         const top = await gptImage({ userId: logUser, image: o.plan, prompt: PLAN_TOP_3D, kind: 'video_planwalk', size: landscape ? '1536x1024' : '1024x1536', quality: process.env.GPT_IMAGE_QUALITY || 'medium' })
         if (!top) return { error: 'ai_failed', status: 502 }
-        const topUrl = await uploadJpeg(await sharp(Buffer.from(top, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-pianta3d.jpg`)
+        const topUrl = await uploadAiJpeg(await sharp(Buffer.from(top, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-pianta3d.jpg`, 'generated')
         const [a, b] = await Promise.all([
           fal(KLING_TURBO_URL, { image_url: topUrl, tail_image_url: fullUrl, prompt: PLAN_DIVE, negative_prompt: 'cut, jump cut, fade, morphing walls, layout changing, fisheye, distortion, people, text, labels', duration: '5' }, { userId: logUser, kind: 'video_planwalk' }),
           fal(KLING16_URL, { image_url: fullUrl, prompt: WALK_INTERIOR, negative_prompt: WALK_INTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_planwalk' }),
@@ -245,7 +245,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         // stop-motion: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
         const q = await emptyRoom(fullUrl, logUser)
-        const empty = q && await uploadJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`)
+        const empty = q && await uploadAiJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`, 'composite')
         if (!empty) return { error: 'ai_failed', status: 502 }
         ids = [(await kling(empty, fullUrl, GNM_STOPMOTION)).request_id]
       }
@@ -290,7 +290,8 @@ export async function prepareFrames(owner: string, logUser: string, o: { name: s
     const toJpeg = async (b64: string) => sharp(Buffer.from(b64, 'base64')).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
     const b64Of = async (src: string) => (src.startsWith('data:') ? src.split(',').pop()! : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64'))
     const furnished = o.styled ? await toJpeg(await b64Of(o.styled)) : o.full
-    const after = await uploadJpeg(furnished, `${key}-finale.jpg`)
+    // segno AI solo se la foto finale e' quella nel nuovo stile (photo-edit); altrimenti e' la foto vera dell'agente
+    const after = o.styled ? await uploadAiJpeg(furnished, `${key}-finale.jpg`, 'composite') : await uploadJpeg(furnished, `${key}-finale.jpg`)
     let emptyBuf: Buffer
     if (o.empty) emptyBuf = await toJpeg(await b64Of(o.empty))
     else {
@@ -298,7 +299,7 @@ export async function prepareFrames(owner: string, logUser: string, o: { name: s
       if (!e) return { error: 'ai_failed', status: 502 }
       emptyBuf = await toJpeg(e)
     }
-    const before = await uploadJpeg(emptyBuf, `${key}-vuota.jpg`)
+    const before = await uploadAiJpeg(emptyBuf, `${key}-vuota.jpg`, 'composite')
     return { frames: framesToken(owner, name), before, after }
   } catch (e) {
     console.error('video frames', e)
@@ -425,7 +426,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
       const wide = /-kh$/.test(name), intro = join(dir, 'intro.mp4')
       await writeFile(intro, Buffer.from(await (await fetch(`${FPV_ASSETS}/intro${wide ? '-16x9' : ''}.mp4`)).arrayBuffer()))
       await montageFpv({ intro, flip: parts[0], finish: parts[1], music, final, size: wide ? [1920, 1080] : [1080, 1920] })
-      await uploadFile(await readFile(final), key, 'video/mp4')
+      await uploadAiVideo(await readFile(final), key, 'generated')
       await deleteKeys([`${key.replace(/\.mp4$/, '')}.job.json`]).catch(() => {})
       return { url, id, fresh: true }
     }
@@ -438,7 +439,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // Con te in video (-ka): montaggio suo (video dell'agente + trasformazione), vedi agentVideo
     if (/-k[aw]$/.test(name)) {
       if (/-kw$/.test(name)) await montageWalk({ raw, music, final }); else await montageAgent({ dir, raw, music, final, owner, name })
-      await uploadFile(await readFile(final), key, 'video/mp4')
+      await uploadAiVideo(await readFile(final), key, 'composite')
       await deleteKeys([`${key.replace(/\.mp4$/, '')}.job.json`]).catch(() => {})
       return { url, id, fresh: true }
     }
@@ -490,7 +491,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
         `${clip},${walkCam ? 'format=yuv420p[v];' : `tpad=stop_mode=clone:stop_duration=${HOLD},${zoom}`}[1:a]${audio}`,
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     }
-    await uploadFile(await readFile(final), key, 'video/mp4')
+    await uploadAiVideo(await readFile(final), key, 'generated')
     await deleteKeys([`${key.replace(/\.mp4$/, '')}.job.json`]).catch(() => {}) // via il segnaposto "in lavorazione"
     return { url, id, fresh: true }
   } catch (e) {

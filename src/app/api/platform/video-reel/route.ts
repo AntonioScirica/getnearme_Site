@@ -4,8 +4,9 @@ import { createHash, createHmac } from 'crypto'
 import { canAfford, spendOnce } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
 import { allowedUrl } from '@/lib/safeUrl'
-import { publicUrl, uploadFile, uploadJpeg } from '@/lib/r2'
+import { publicUrl, uploadAiJpeg, uploadAiVideo, uploadFile, uploadJpeg } from '@/lib/r2'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
+import { isAiPhotoUrl } from '@/lib/siteTemplates'
 import { DEFAULT_COLOR, MUSIC_MOOD, renderVideo, type AgentInfo, type Job, type Photo } from '@/lib/reel/render'
 import { cleanLambda, fetchLambdaVideo, isThrottle, lambdaProgress, lambdaReady, startLambda, type LambdaJob } from '@/lib/reel/lambda'
 
@@ -70,7 +71,11 @@ const onLambda = (s: Style): s is 'vivace' | 'elegante' => s === 'vivace' || s =
 const COVER_AT = { reel: 2, venduto: 2.5 }
 const redoToken = (uid: string, name: string, n: number, print: string) => (n < FREE_REDOS ? `${name.replace('/', '~')}.${n}.${sign(uid, `reel.${name}.${n}.${print}`)}` : null)
 // lavoro su Lambda: dati del render firmati (niente tabella), li rilegge il GET
-type Work = { r: string; b: string; name: string; t: 'reel' | 'venduto'; n: number; p: string; redo: boolean; dir: string; c: number; logo: boolean; at: number }
+type Work = { r: string; b: string; name: string; t: 'reel' | 'venduto'; n: number; p: string; redo: boolean; dir: string; c: number; logo: boolean; at: number; ai?: boolean }
+// video con almeno una foto arredata dall'AI: mp4 e copertina col segno nascosto (AI Act, lib/aiMark); gli altri restano normali
+const saveReel = (key: string, mp4: Buffer, cover: Buffer, ai: boolean) => Promise.all(ai
+  ? [uploadAiVideo(mp4, `${key}.mp4`, 'composite'), uploadAiJpeg(cover, `${key}-arredata.jpg`, 'composite')]
+  : [uploadFile(mp4, `${key}.mp4`, 'video/mp4'), uploadJpeg(cover, `${key}-arredata.jpg`)])
 // foto temporanee su R2 (0.jpg, 1.jpg, ... e logo.png) da cancellare a fine render
 const srcFiles = (w: Work) => [...Array.from({ length: w.c }, (_, k) => `${w.dir}/${k}.jpg`), ...(w.logo ? [`${w.dir}/logo.png`] : [])]
 const packWork = (uid: string, w: Work) => { const d = Buffer.from(JSON.stringify(w)).toString('base64url'); return `${d}.${sign(uid, `reel-job.${d}`)}` }
@@ -108,6 +113,9 @@ export async function POST(req: NextRequest) {
   const bufs = await Promise.all(srcs.map(p => load(p.src).catch(() => null)))
   if (bufs.some(b => !b)) return NextResponse.json({ error: 'photo_unreadable' }, { status: 422 })
   const photos: Photo[] = bufs.map((b, k) => ({ buf: b!, staged: srcs[k].staged }))
+  // segno nascosto AI Act sul video: foto arredate (staged) o risultati AI della piattaforma (edits/ su R2)
+  // (anche foto caricate che hanno gia' il segno nascosto nei metadati)
+  const aiReel = srcs.some(x => x.staged || isAiPhotoUrl(x.src)) || bufs.some(b => b!.includes('AlgorithmicMedia'))
   const contract: 'vendita' | 'affitto' = body.contract === 'affitto' ? 'affitto' : 'vendita'
   const style = STYLES.find(s => s === body.style) ?? 'vivace'
   // montaggio FFmpeg: Semplice = il suo vivace, Classico = il suo elegante (anche per la scelta della musica)
@@ -131,7 +139,7 @@ export async function POST(req: NextRequest) {
       const j = { ...fields, style } as LambdaJob
       const { renderId, bucket } = await startLambda(j, dir, musicUrl)
       console.log('video-reel lambda start', template, style, photos.length, 'foto', renderId, Date.now() - t0, 'ms')
-      return NextResponse.json({ status: 'working', job: packWork(u.id, { r: renderId, b: bucket, name, t: template, n: redo?.n ?? 0, p: print, redo: !!redo, dir, c: photos.length, logo: !!agent.logo, at: t0 }) })
+      return NextResponse.json({ status: 'working', job: packWork(u.id, { r: renderId, b: bucket, name, t: template, n: redo?.n ?? 0, p: print, redo: !!redo, dir, c: photos.length, logo: !!agent.logo, at: t0, ...(aiReel ? { ai: true } : {}) }) })
     } catch (e) {
       if (isThrottle(e)) { console.log('video-reel lambda in coda', template, style); return NextResponse.json({ status: 'queued' }) }
       console.error('video-reel lambda start', e)
@@ -146,7 +154,7 @@ export async function POST(req: NextRequest) {
     const t0 = Date.now()
     const r = await renderVideo(job, music)
     const key = `videos/${u.id}/${name}`
-    const [url] = await Promise.all([uploadFile(r.mp4, `${key}.mp4`, 'video/mp4'), uploadJpeg(r.cover, `${key}-arredata.jpg`)])
+    const [url] = await saveReel(key, r.mp4, r.cover, aiReel)
     console.log('video-reel', template, style, photos.length, 'foto', Date.now() - t0, 'ms')
     // primo video: crediti ora (una volta sola per nome); correzioni gratis
     const credits = redo ? undefined : await spendOnce(u.id, action, name)
@@ -178,7 +186,7 @@ export async function GET(req: NextRequest) {
     if (!pr.done || !pr.outKey) return NextResponse.json({ status: 'working', progress: Math.round(pr.overallProgress * 100) })
     const { mp4, cover } = await fetchLambdaVideo(w.b, pr.outKey, COVER_AT[w.t])
     const key = `videos/${u.id}/${w.name}`
-    const [url] = await Promise.all([uploadFile(mp4, `${key}.mp4`, 'video/mp4'), uploadJpeg(cover, `${key}-arredata.jpg`)])
+    const [url] = await saveReel(key, mp4, cover, !!w.ai)
     const action = w.t === 'reel' ? 'video_reel' : 'video_venduto'
     const credits = w.redo ? undefined : await spendOnce(u.id, action, w.name)
     console.log('video-reel lambda done', w.t, w.r, Date.now() - w.at, 'ms', 'costo AWS', pr.costs.displayCost, pr.costs.accruedSoFar, (mp4.length / 1e6).toFixed(1), 'MB')

@@ -6,7 +6,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { s3 } from '@/lib/s3'
-import { uploadFile, uploadJpeg } from '@/lib/r2'
+import { uploadAiJpeg, uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
 import { alignTo, measureShift } from '@/lib/align'
 import { spawn } from 'child_process'
@@ -166,7 +166,7 @@ export async function renderAgent(owner: string, t: string, at: number, styled: 
   const { width = 720, height = 1280 } = await sharp(room).metadata()
   const st = Buffer.from(await (await fetch(styled)).arrayBuffer())
   const after = await alignTo(room, await sharp(st).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer())
-  const afterUrl = await uploadJpeg(after, `${key(owner, name)}-arredata.jpg`)
+  const afterUrl = await uploadAiJpeg(after, `${key(owner, name)}-arredata.jpg`, 'composite') // stanza nel nuovo stile (AI)
   await uploadFile(Buffer.from(JSON.stringify({ at })), `${key(owner, name)}.agent.json`, 'application/json')
   const q = await fal(KLING_TURBO_URL, { image_url: `${process.env.R2_PUBLIC_URL}/${key(owner, name)}-stanza.jpg`, tail_image_url: afterUrl, prompt: TRANSFORM, negative_prompt: TRANSFORM_NEG, duration: '5' }, { userId: owner, kind: 'video_agent' })
   if (!q.request_id) { console.error('agente kling', q); return { error: 'ai_failed' } }

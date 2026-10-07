@@ -7,7 +7,7 @@ import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
 import Dropdown from '@/components/ui/Dropdown';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { FIELD_LABELS, FIELD_LABELS_EN, SECTION_LABELS_EN, FONTS, fontCss, PAGE_SECTIONS, PLACEHOLDERS, statusOf, withPlaceholders, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { aiPhotoKinds, FIELD_LABELS, FIELD_LABELS_EN, SECTION_LABELS_EN, FONTS, fontCss, PAGE_SECTIONS, PLACEHOLDERS, statusOf, withPlaceholders, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
@@ -39,7 +39,8 @@ export const toSite = (p: ProjectData): SiteProperty => {
         descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : p.cover ? [p.cover] : [], zona: Array.isArray(d.zona) ? d.zona : [],
         // come sul sito pubblicato (toSiteProperty): il contratto puo' stare anche nei dettagli (affitti fatti a mano)
         contratto: d.contratto ?? String((d as { details?: { contratto?: unknown } }).details?.contratto ?? ''),
-        status: statusOf({ details: (d as { details?: Record<string, unknown> }).details }) };
+        status: statusOf({ details: (d as { details?: Record<string, unknown> }).details }),
+        ai: aiPhotoKinds(d as { photos?: unknown; prima?: unknown; ai?: unknown }, p.cover) }; // bollino delle foto AI, come sul sito pubblicato
 };
 
 const draftKey = (slug: string | null) => `agenteimmo:site-draft:${slug ?? ''}`; // per sito: piu' account sullo stesso browser

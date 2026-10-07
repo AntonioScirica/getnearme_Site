@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { ABOUT_DEFAULT, isClosed, isSampleReview, pageHidden, statusOf, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, SiteLink, StatusTag, typeOf, useFavs, useLockScroll, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
+import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, priceShown, SiteLink, StatusTag, typeOf, useAiKind, useFavs, useLockScroll, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -283,7 +283,7 @@ export function Hero() {
     return (
       <section className="relative">
         <div className="relative flex h-[620px] items-start justify-center overflow-hidden text-center text-white">
-          <Photo src={src} className="absolute inset-0 h-full" />
+          <Photo src={src} className="absolute inset-0 h-full" aiClass="!bottom-[4.5rem]" />{/* la ricerca copre gli ultimi 56 px */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-transparent" />
           <div className="relative px-6 pt-36">
             <div className="font-[family-name:var(--font-serif-accent)] text-4xl italic md:text-5xl">Compra. Vendi. Affitta.</div>
@@ -342,7 +342,7 @@ export function Hero() {
   if (t.hero === 'full') return (
     <section className="relative">
       <div className="relative h-[660px] overflow-hidden text-white">
-        <Photo src={src} className="h-full" />
+        <Photo src={src} className="h-full" aiClass="!bottom-20" />{/* la ricerca copre gli ultimi 64 px */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
         <Container className="absolute inset-0 flex flex-col justify-center pb-16">
           {cfg.city && <span className="mb-6 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-[var(--c)]"><Leaf size={13} /> {cfg.city}</span>}
@@ -369,7 +369,7 @@ export function Hero() {
   if (t.hero === 'center') return (
     <section className="relative">
       <div className="relative flex h-[760px] items-center justify-center overflow-hidden text-center text-white">
-        <Photo src={src} className="absolute inset-0 h-full" />
+        <Photo src={src} className="absolute inset-0 h-full" aiClass="!bottom-48" />{/* ricerca e punti di forza coprono gli ultimi 176 px */}
         <div className="absolute inset-0 bg-black/50" />
         <Container className="relative -mt-24">
           <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-white/70">{cfg.city || 'Immobili'}</div>
@@ -558,7 +558,9 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
   const riv = cfg.template === 'riviera';
   // stato: venduti e affittati senza le etichette "in vendita / in evidenza", il bollino dello stato in basso a sinistra sulla foto
   const st = statusOf(p), closed = isClosed(st), avail = st === 'disponibile';
-  const tag = <StatusTag p={p} className="absolute bottom-3 left-3 z-10" />;
+  // copertina fatta con l'AI: il suo bollino sta in basso a sinistra, lo stato (e "In vendita") sale sopra
+  const up = useAiKind(p.cover) ? '!bottom-11' : '';
+  const tag = <StatusTag p={p} className={`absolute bottom-3 left-3 z-10 ${up}`} />;
   const badge = closed ? null : <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
   const pr = priceShown(cfg, p) && <span className="shrink-0 whitespace-nowrap text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
   const place = <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-[var(--muted)]"><MapPin size={13} className="shrink-0" />{zoneOf(p.addr)}</div>;
@@ -579,7 +581,7 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
         <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-900">{typeOf(p)}</span>
         <FavButton id={p.id} className="absolute right-3 top-3 !h-8 !w-8 !bg-black/35 !text-white backdrop-blur" />
-        {avail ? <span className="absolute bottom-3 left-3 rounded-[calc(var(--r)*0.4)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span> : tag}
+        {avail ? <span className={`absolute bottom-3 left-3 ${up} rounded-[calc(var(--r)*0.4)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white`}>{isRent(p) ? 'In affitto' : 'In vendita'}</span> : tag}
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="line-clamp-2 min-h-[2.75em] text-[16px] font-bold leading-snug">{p.titolo}</div>{place}
@@ -642,9 +644,10 @@ function PropertyCardBody({ p }: { p: SiteProperty }) {
 // Riga lunga per le liste (template citta)
 export function PropertyRow({ p }: { p: SiteProperty }) {
   const { cfg } = useSite();
+  const aiUp = useAiKind(p.cover) ? '!bottom-11' : ''; // bollino AI della copertina in basso a sinistra
   return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group grid gap-6 border-b border-[var(--line)] py-8 md:grid-cols-[340px_1fr_auto] md:items-center">
-      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><FavButton id={p.id} className="absolute right-3 top-3" /><StatusTag p={p} className="absolute bottom-3 left-3 z-10" /></div>
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><FavButton id={p.id} className="absolute right-3 top-3" /><StatusTag p={p} className={`absolute bottom-3 left-3 z-10 ${aiUp}`} /></div>
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">{typeOf(p)} · {isRent(p) ? 'Affitto' : 'Vendita'}</div>
         <H as="h3" className="mt-2 text-3xl">{p.titolo}</H>
