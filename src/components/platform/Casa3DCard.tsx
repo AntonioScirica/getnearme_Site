@@ -28,8 +28,9 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
   const [more, setMore] = useState(false) // menu con Rifai ed Elimina: sotto restano due pulsanti
   const plans = photos.filter(p => d.rooms?.[p]?.scene === 'planimetria')
 
-  // niente planimetria tra le foto e nessuna casa gia' fatta: la sezione non c'e' (la Casa 3D nasce solo dalla planimetria vera)
-  if (!CASA3D_ON || (!plans.length && !casa && !flow && !picking)) return null
+  // sempre in Promuovi (07/10/2026): senza planimetria tra le foto si chiede di caricarla (la Casa 3D nasce solo da li')
+  if (!CASA3D_ON) return null
+  const noPlan = !plans.length && !casa && !flow
 
   const remove = async () => {
     if (!confirm(tr('Tolgo la casa 3D da questo immobile?', 'Remove the 3D home from this listing?'))) return
@@ -47,7 +48,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold">{tr('Casa 3D', '3D home')}</span>
-          <span className="block truncate text-xs text-muted">{flow && !casa ? tr('In creazione', 'Being created') : casa ? `${tr('Pronta', 'Ready')}${casa.floors.length > 1 ? `, ${casa.floors.length} ${tr('piani', 'floors')}` : ''}` : tr('Dalla planimetria, navigabile sul tuo sito', 'From the floor plan, explorable on your site')}</span>
+          <span className="block truncate text-xs text-muted">{flow && !casa ? tr('In creazione', 'Being created') : casa ? `${tr('Pronta', 'Ready')}${casa.floors.length > 1 ? `, ${casa.floors.length} ${tr('piani', 'floors')}` : ''}` : noPlan ? tr('Carica la planimetria per crearla', 'Upload the floor plan to create it') : tr('Dalla planimetria, navigabile sul tuo sito', 'From the floor plan, explorable on your site')}</span>
         </span>
         {casa && (
           <span className="relative shrink-0">
@@ -69,7 +70,7 @@ export default function Casa3DCard({ project, photos, onChanged }: { project: Pr
         </div>
       ) : (
         <button type="button" onClick={() => setPicking(true)} disabled={!!flow} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">
-          <Box size={14} /> {tr('Crea la casa 3D', 'Create the 3D home')} <span className="rounded-full bg-black/[.06] px-1.5 text-[10px] font-semibold text-muted">{CREDIT_COST.casa3d}</span>
+          {noPlan ? <><ImagePlus size={14} /> {tr('Carica la planimetria', 'Upload the floor plan')}</> : <><Box size={14} /> {tr('Crea la casa 3D', 'Create the 3D home')}</>} <span className="rounded-full bg-black/[.06] px-1.5 text-[10px] font-semibold text-muted">{CREDIT_COST.casa3d}</span>
         </button>
       )}
       {view && casa && <Casa3DViewer manifest={casa.manifest} title={project.titolo || project.nome || undefined} onClose={() => setView(false)} save={{ key: casa.key, projectId: project.id, onSaved: c => setCasa(c) }} />}

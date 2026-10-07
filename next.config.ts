@@ -18,7 +18,11 @@ const nextConfig: NextConfig = {
   },
   // login con un indirizzo da login (la pagina e' quella del checkout, che senza piano scelto fa solo l'accesso)
   async rewrites() {
-    return [{ source: "/:locale/accedi", destination: "/:locale/checkout/agency" }];
+    return [
+      { source: "/:locale/accedi", destination: "/:locale/checkout/agency" },
+      // foto per TikTok (PULL_FROM_URL): TikTok le scarica solo da domini verificati, agenteimmo.me lo e' (file in public)
+      { source: "/tt/:file", destination: "https://pub-a3907bca995e415d9ac08265d4c1081f.r2.dev/tiktok-social/:file" },
+    ];
   },
   async redirects() {
     return [
