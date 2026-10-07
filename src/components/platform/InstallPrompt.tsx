@@ -142,7 +142,8 @@ export default function InstallPrompt() {
     // da solo dopo 20 s di uso (subito con ?install), se non e' gia' installata o rimandata da meno di 30 giorni;
     // su Chrome/Edge a quel punto l'evento di solito e' gia' arrivato, altrimenti si mostrano le istruzioni dal menu
     const later = Number(localStorage.getItem(KEY) || 0);
-    const auto = !!q || (!localStorage.getItem(INSTALLED) && Date.now() - later >= DAYS * 86_400_000);
+    // sul computer mai da solo (disturba appena si entra): solo dal profilo o con ?install
+    const auto = !!q || (v !== 'desktop' && v !== 'mac-safari' && !localStorage.getItem(INSTALLED) && Date.now() - later >= DAYS * 86_400_000);
     const t = auto ? setTimeout(() => setOpen(true), q ? 0 : 20_000) : undefined;
     return () => { window.removeEventListener('beforeinstallprompt', onPrompt); window.removeEventListener('appinstalled', onInstalled); window.removeEventListener(INSTALL_EVENT, onAsk); clearTimeout(t); };
   }, []);
