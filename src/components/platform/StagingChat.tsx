@@ -1584,6 +1584,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             </div>
           ) : m.role === 'user' ? (
             <div key={m.id} className={`blur-in ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
+              {/* ogni foto nuova dopo la prima apre un pezzo di chat: si lavora sempre sull'ultima */}
+              {m.image && i > 0 && <div className="mb-6 flex items-center gap-3 pt-2 text-xs font-medium text-muted"><span className="h-px flex-1 bg-line" />{tr('Nuova foto, da qui modifichi questa', 'New photo, from here you edit this one')}<span className="h-px flex-1 bg-line" /></div>}
               <div className="flex justify-end">
                 {m.video
                   ? <video src={m.video} autoPlay muted loop playsInline className={`max-h-56 max-w-[60%] rounded-3xl object-cover ${CARD_SHADOW}`} />
