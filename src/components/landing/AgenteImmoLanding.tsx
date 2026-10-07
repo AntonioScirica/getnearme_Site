@@ -52,7 +52,7 @@ const useLinks = () => {
   return { l, APP: `/${l}/dashboard`, TRIAL: `/${l}/prova`, TRIAL_LOGIN: `/${l}/accedi?next=/${l}/prova`, SIGNUP: `/${l}/accedi?next=/${l}/dashboard` };
 };
 // i modelli di video della piattaforma (stessi esempi della chat)
-const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Camminata', 'Walk-in'], ['agent', 'Con te in video', 'You on camera'], ['drone', 'Giro col drone', 'Drone orbit'], ['stagioni', 'Stagioni', 'Seasons']];
+const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Ripresa lenta', 'Slow shot'], ['agent', 'Con te in video', 'You on camera'], ['drone', 'Giro col drone', 'Drone orbit'], ['stagioni', 'Stagioni', 'Seasons']];
 
 // Compare quando entra in vista. Se la pagina e' nascosta l'observer non scatta: dopo 1,5 s si mostra comunque.
 function Reveal({ children, className = '', delay = 0, as: Tag = 'div', anim = 'blur-in' }: { children: ReactNode; className?: string; delay?: number; as?: 'div' | 'section' | 'li'; anim?: 'blur-in' | 'in-left' | 'in-right' | 'rise' }) {
@@ -223,7 +223,7 @@ const VIDEO_TEMPLATES = [
   ['cantiere', 'Cantiere', 'Building site', 'Dal cantiere alla casa finita', 'From building site to finished home', VIDEO_SAMPLES.cantiere],
   ['fpv', 'Volo nel cantiere', 'Site fly-through', 'Un volo tra le fondamenta, poi la casa finita', 'A fly-through the site, then the finished home', VIDEO_SAMPLES.fpv],
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', VIDEO_SAMPLES.daynight],
-  ['camera', 'Camminata', 'Walkthrough', 'Entri nella stanza con una ripresa lenta', 'A slow walk into the room', VIDEO_SAMPLES.camera],
+  ['camera', 'Ripresa lenta', 'Slow shot', 'Da una foto, la camera avanza nella stanza', 'From a photo, the camera moves into the room', VIDEO_SAMPLES.camera],
   ['drone', 'Giro col drone', 'Drone orbit', 'Dalla tua foto fatta col drone, un giro lento attorno alla casa', 'From your drone photo, a slow circle around the home', VIDEO_SAMPLES.drone],
   ['stagioni', 'Stagioni', 'Seasons', 'Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes', VIDEO_SAMPLES.stagioni],
 ] as const;

@@ -133,44 +133,44 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   { id: 'annuncio', label: tr('Video dell’annuncio', 'Listing video'), desc: tr('Per Facebook, Instagram e stato WhatsApp', 'For Facebook, Instagram and WhatsApp status'), sample: VIDEO_SAMPLES.reel, anims: [
     { id: 'reel', label: tr('Video dell’annuncio', 'Listing video'), desc: tr('Per Facebook, Instagram e stato WhatsApp', 'For Facebook, Instagram and WhatsApp status'), sample: VIDEO_SAMPLES.reel },
   ] },
-  { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto, anims: [
-    { id: 'venduto', label: tr('Video Venduto o Affittato', 'Sold or Rented video'), desc: tr('Il timbro sulla foto della casa e i tuoi contatti', 'The stamp on the home photo and your contacts'), sample: VIDEO_SAMPLES.venduto },
+  { id: 'venduto', label: tr('Timbro Venduto', 'Sold stamp'), desc: tr('Da una foto, timbro Venduto o Affittato e i tuoi contatti', 'From one photo, a Sold or Rented stamp and your contacts'), sample: VIDEO_SAMPLES.venduto, anims: [
+    { id: 'venduto', label: tr('Timbro Venduto', 'Sold stamp'), desc: tr('Da una foto, timbro Venduto o Affittato e i tuoi contatti', 'From one photo, a Sold or Rented stamp and your contacts'), sample: VIDEO_SAMPLES.venduto },
   ] },
-  { id: 'prima-dopo', label: tr('Prima e dopo', 'Before and after'), desc: tr('Dalla stanza vuota a quella arredata', 'From an empty room to a furnished one'), sample: VIDEO_SAMPLES.popup, anims: [
-    { id: 'popup', label: 'Popup', desc: tr('I mobili spuntano uno alla volta', 'Furniture pops up one piece at a time'), sample: VIDEO_SAMPLES.popup },
-    { id: 'gravity', label: tr('Dall’alto', 'From above'), desc: tr('I mobili cadono dall’alto e si posano', 'Furniture drops from above and settles'), sample: VIDEO_SAMPLES.gravity },
+  { id: 'prima-dopo', label: tr('Prima e dopo', 'Before and after'), desc: tr('Da una stanza vuota, un video che si arreda', 'From an empty room, a video that gets furnished'), sample: VIDEO_SAMPLES.popup, anims: [
+    { id: 'popup', label: 'Popup', desc: tr('Nel video i mobili spuntano uno a uno', 'In the video furniture pops up one by one'), sample: VIDEO_SAMPLES.popup },
+    { id: 'gravity', label: tr('Dall’alto', 'From above'), desc: tr('Nel video i mobili cadono dall’alto', 'In the video furniture drops from above'), sample: VIDEO_SAMPLES.gravity },
   ] },
   // un'animazione sola: dal template si passa subito alla scelta della stanza
-  { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Dal cantiere alla casa finita', 'From construction site to finished home'), sample: VIDEO_SAMPLES.cantiere, anims: [
-    { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Dal cantiere alla casa finita', 'From construction site to finished home'), sample: VIDEO_SAMPLES.cantiere },
+  { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Da una foto della casa, video dal cantiere', 'From a home photo, a video from the building site'), sample: VIDEO_SAMPLES.cantiere, anims: [
+    { id: 'cantiere', label: tr('Cantiere', 'Construction'), desc: tr('Da una foto della casa, video dal cantiere', 'From a home photo, a video from the building site'), sample: VIDEO_SAMPLES.cantiere },
   ] },
   // stanza in cantiere: muri grezzi e impianti a vista diventano la stanza finita, poi arredata (solo interni)
-  { id: 'ristrutturazione', label: tr('Ristrutturazione', 'Renovation'), desc: tr('Dalla stanza in cantiere alla stanza finita e arredata', 'From a room under construction to a finished, furnished room'), sample: VIDEO_SAMPLES.ristruttura, anims: [
-    { id: 'ristruttura', label: tr('Ristrutturazione', 'Renovation'), desc: tr('Dalla stanza in cantiere alla stanza finita e arredata', 'From a room under construction to a finished, furnished room'), sample: VIDEO_SAMPLES.ristruttura },
+  { id: 'ristrutturazione', label: tr('Ristrutturazione', 'Renovation'), desc: tr('Da una stanza, video dai lavori all’arredo', 'From a room, a video from works to furniture'), sample: VIDEO_SAMPLES.ristruttura, anims: [
+    { id: 'ristruttura', label: tr('Ristrutturazione', 'Renovation'), desc: tr('Da una stanza, video dai lavori all’arredo', 'From a room, a video from works to furniture'), sample: VIDEO_SAMPLES.ristruttura },
   ] },
-  { id: 'volo-cantiere', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Un volo tra le fondamenta, poi il palazzo si svela finito', 'A flight over the foundations, then the finished building is revealed'), sample: VIDEO_SAMPLES.fpv, anims: [
-    { id: 'fpv', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Un volo tra le fondamenta, poi il palazzo si svela finito', 'A flight over the foundations, then the finished building is revealed'), sample: VIDEO_SAMPLES.fpv },
+  { id: 'volo-cantiere', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Da una foto del palazzo, volo sul cantiere', 'From a building photo, a flight over the site'), sample: VIDEO_SAMPLES.fpv, anims: [
+    { id: 'fpv', label: tr('Volo nel cantiere', 'Flight over the site'), desc: tr('Da una foto del palazzo, volo sul cantiere', 'From a building photo, a flight over the site'), sample: VIDEO_SAMPLES.fpv },
   ] },
-  { id: 'giorno-notte', label: tr('Giorno e notte', 'Day and night'), desc: tr('Scende la sera e si accendono le luci', 'Evening falls and the lights come on'), sample: VIDEO_SAMPLES.daynight, anims: [
-    { id: 'daynight', label: tr('Giorno e notte', 'Day and night'), desc: tr('Scende la sera e si accendono le luci', 'Evening falls and the lights come on'), sample: VIDEO_SAMPLES.daynight },
+  { id: 'giorno-notte', label: tr('Giorno e notte', 'Day and night'), desc: tr('Da una foto di giorno, video che fa sera', 'From a daytime photo, a video into evening'), sample: VIDEO_SAMPLES.daynight, anims: [
+    { id: 'daynight', label: tr('Giorno e notte', 'Day and night'), desc: tr('Da una foto di giorno, video che fa sera', 'From a daytime photo, a video into evening'), sample: VIDEO_SAMPLES.daynight },
   ] },
-  { id: 'agente', label: tr('Con te in video', 'Starring you'), desc: tr('Parli in camera, esci e la stanza si arreda', 'You talk to camera, step out and the room gets furnished'), sample: VIDEO_SAMPLES.agent, anims: [
-    { id: 'agent', label: tr('Con te in video', 'Starring you'), desc: tr('Parli in camera, esci e la stanza si arreda', 'You talk to camera, step out and the room gets furnished'), sample: VIDEO_SAMPLES.agent },
+  { id: 'agente', label: tr('Con te in video', 'Starring you'), desc: tr('Da una stanza, parli tu e poi si arreda', 'From a room, you talk and then it gets furnished'), sample: VIDEO_SAMPLES.agent, anims: [
+    { id: 'agent', label: tr('Con te in video', 'Starring you'), desc: tr('Da una stanza, parli tu e poi si arreda', 'From a room, you talk and then it gets furnished'), sample: VIDEO_SAMPLES.agent },
   ] },
   // rimesso il 04/10: l'arredo cambia stile mentre si gira la stanza, anche con l'agente nel video (avviso sul viso da lontano)
-  { id: 'cammina-stile', label: tr('Cambia stile', 'Change style'), desc: tr('Giri la stanza, anche con te dentro, e l’arredo cambia stile', 'You walk the room, even with you in it, and the furniture changes style'), sample: VIDEO_SAMPLES.walk, anims: [
-    { id: 'walk', label: tr('Cambia stile', 'Change style'), desc: tr('Giri la stanza, anche con te dentro, e l’arredo cambia stile', 'You walk the room, even with you in it, and the furniture changes style'), sample: VIDEO_SAMPLES.walk },
+  { id: 'cammina-stile', label: tr('Cambia stile', 'Change style'), desc: tr('Da un tuo video, l’arredo cambia stile', 'From your video, the furniture changes style'), sample: VIDEO_SAMPLES.walk, anims: [
+    { id: 'walk', label: tr('Cambia stile', 'Change style'), desc: tr('Da un tuo video, l’arredo cambia stile', 'From your video, the furniture changes style'), sample: VIDEO_SAMPLES.walk },
   ] },
-  { id: 'camera', label: tr('Camminata', 'Walkthrough'), desc: tr('Entri nella stanza con una ripresa lenta', 'Walk into the room with a slow camera move'), sample: VIDEO_SAMPLES.camera, anims: [
-    { id: 'camera', label: tr('Camminata', 'Walkthrough'), desc: tr('Entri nella stanza con una ripresa lenta', 'Walk into the room with a slow camera move'), sample: VIDEO_SAMPLES.camera },
+  { id: 'camera', label: tr('Ripresa lenta', 'Slow shot'), desc: tr('Da una foto, la camera avanza nella stanza', 'From a photo, the camera moves into the room'), sample: VIDEO_SAMPLES.camera, anims: [
+    { id: 'camera', label: tr('Ripresa lenta', 'Slow shot'), desc: tr('Da una foto, la camera avanza nella stanza', 'From a photo, the camera moves into the room'), sample: VIDEO_SAMPLES.camera },
   ] },
   // solo foto di esterni (facciata, giardino; Stagioni anche terrazzi e balconi): con un interno si vedono spenti, vedi templateOff
   // Giro col drone: la foto e' gia' aerea (fatta col drone dall'agente); nessuna classificazione affidabile per le foto aeree, quindi vale per gli esterni
-  { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone, anims: [
-    { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Carica una foto fatta col drone, il video gira piano attorno alla casa', 'Upload a drone photo, the video slowly circles the home'), sample: VIDEO_SAMPLES.drone },
+  { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Da una foto col drone, giro attorno alla casa', 'From a drone photo, an orbit around the home'), sample: VIDEO_SAMPLES.drone, anims: [
+    { id: 'drone', label: tr('Giro col drone', 'Drone orbit'), desc: tr('Da una foto col drone, giro attorno alla casa', 'From a drone photo, an orbit around the home'), sample: VIDEO_SAMPLES.drone },
   ] },
-  { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni, anims: [
-    { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Il giardino cambia stagione davanti ai tuoi occhi', 'The garden changes season before your eyes'), sample: VIDEO_SAMPLES.stagioni },
+  { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Da una foto del giardino, cambiano le stagioni', 'From a garden photo, the seasons change'), sample: VIDEO_SAMPLES.stagioni, anims: [
+    { id: 'stagioni', label: tr('Stagioni', 'Seasons'), desc: tr('Da una foto del giardino, cambiano le stagioni', 'From a garden photo, the seasons change'), sample: VIDEO_SAMPLES.stagioni },
   ] },
 ];
 // anteprime degli stili per stanza (30/09, da foto Unsplash in public/staging/stili/<stanza>/); le altre stanze: il soggiorno
