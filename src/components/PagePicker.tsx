@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { signalConnected } from "@/components/platform/socialApi";
 
 const SUPABASE_URL = "https://ecrnpyksnfyykqwnutwa.supabase.co/functions/v1";
 
@@ -39,9 +40,9 @@ const i18n: Record<string, {
     noIg: "Nessun IG Business",
     selecting: "Collegamento in corso...",
     done: "Account collegato!",
-    doneDesc: "Puoi chiudere questa pagina e tornare all'estensione Agente Immo.",
+    doneDesc: "Puoi chiudere questa finestra e tornare ad Agente Immo.",
     error: "Errore durante il collegamento. Riprova.",
-    expired: "Sessione scaduta. Riprova dall'estensione.",
+    expired: "Sessione scaduta. Torna ad Agente Immo e premi di nuovo Collega.",
     loading: "Caricamento pagine...",
     close: "Chiudi questa pagina",
   },
@@ -52,9 +53,9 @@ const i18n: Record<string, {
     noIg: "No IG Business",
     selecting: "Connecting...",
     done: "Account connected!",
-    doneDesc: "You can close this page and return to the Agente Immo extension.",
+    doneDesc: "You can close this window and go back to Agente Immo.",
     error: "Error during connection. Please retry.",
-    expired: "Session expired. Please retry from the extension.",
+    expired: "Session expired. Go back to Agente Immo and press Connect again.",
     loading: "Loading pages...",
     close: "Close this page",
   },
@@ -157,6 +158,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
       if (data.success) {
         setResult(data);
         setStatus("done");
+        signalConnected(); // la piattaforma aperta nell'altra scheda ricarica i social collegati
       } else {
         throw new Error("Save failed");
       }
@@ -181,7 +183,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
         <XCircle className="w-14 h-14 text-amber-500" />
         <p className="text-slate-600 text-lg">{t.expired}</p>
         <a
-          href="https://agenteimmo.me"
+          href={`/${locale}/dashboard#/profilo`}
           className="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
         >
           {t.close}
@@ -202,7 +204,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
           </p>
         )}
         <a
-          href="https://agenteimmo.me"
+          href={`/${locale}/dashboard#/profilo`}
           className="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
         >
           {t.close}
@@ -218,7 +220,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
         <p className="text-slate-600 text-lg">{t.error}</p>
         {errorMsg && <p className="text-red-400 text-xs font-mono">{errorMsg}</p>}
         <a
-          href="https://agenteimmo.me"
+          href={`/${locale}/dashboard#/profilo`}
           className="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
         >
           {t.close}

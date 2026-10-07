@@ -24,7 +24,7 @@ interface LegalPage {
 
 const privacyIt: LegalPage = {
   title: "Informativa sulla Privacy",
-  lastUpdated: "Ultimo aggiornamento: 5 ottobre 2026",
+  lastUpdated: "Ultimo aggiornamento: 7 ottobre 2026",
   description: "Come Agente Immo tratta i dati personali di chi usa la piattaforma per agenti immobiliari su agenteimmo.me e di chi chiede la valutazione gratuita della casa.",
   blocks: [
     { type: "h2", text: "1. Titolare del trattamento" },
@@ -75,6 +75,18 @@ const privacyIt: LegalPage = {
       "Se spunti \"Voglio essere ricontattato da un agente immobiliare della mia zona\", possiamo comunicare i tuoi contatti e i dati della casa a un agente immobiliare che usa Agente Immo e opera nella tua zona, perché ti contatti per una consulenza o una proposta di incarico. L'agente che li riceve li tratta come titolare autonomo, con la propria informativa.",
       "Se spunti il consenso al marketing, possiamo inviarti comunicazioni su servizi e novità legati alla vendita o all'affitto della casa. Puoi disiscriverti in ogni momento dal link presente in ogni email."
     ]},
+    { type: "h3", text: "3.10. Facebook, Instagram e TikTok collegati" },
+    { type: "p", text: "Dal Profilo, nella sezione \"I tuoi social\", puoi collegare la Pagina Facebook della tua agenzia, il profilo Instagram professionale collegato a quella Pagina e il tuo account TikTok, per pubblicare da Agente Immo i post dei tuoi immobili. Il collegamento è facoltativo e lo avvii tu, con l'accesso di Meta o di TikTok, dove vedi e approvi i permessi richiesti. Quando colleghi un social trattiamo solo questi dati:" },
+    { type: "ul", items: [
+      "Facebook: identificativo, nome e immagine della Pagina che scegli e il codice di accesso (token) della Pagina, che serve per pubblicare. Se gestisci più Pagine, per fartene scegliere una teniamo l'elenco delle tue Pagine (nome, immagine, Instagram collegato e codici di accesso) solo per il tempo della scelta: si può usare per 15 minuti e lo cancelliamo appena scegli.",
+      "Instagram: identificativo, nome utente e immagine del profilo professionale collegato alla Pagina, e il codice di accesso che Meta ci rilascia per pubblicare.",
+      "TikTok: identificativo dell'account, nome visualizzato e immagine del profilo, il codice di accesso e il codice per rinnovarlo.",
+      "Post che pubblichi o programmi da Agente Immo: foto o video, testo, data e ora scelte, immobile a cui si riferiscono, stato della pubblicazione, identificativo e link del post pubblicato, eventuali messaggi di errore del social e data dell'ultimo utilizzo del collegamento."
+    ]},
+    { type: "p", text: "Usiamo questi dati solo per pubblicare i contenuti che scegli tu e per mostrarti lo stato dei tuoi post. Un post esce solo quando premi \"Pubblica ora\" o \"Programma\": non pubblichiamo nulla da soli. Su TikTok il post arriva come bozza nell'app TikTok e lo pubblichi tu da lì. Non leggiamo i post, i commenti, i messaggi, i follower né le statistiche delle tue Pagine e dei tuoi profili." },
+    { type: "p", text: "I codici di accesso sono conservati nel nostro database (Supabase, UE), cifrato a riposo, non vengono mai mostrati nella piattaforma e li usano solo i nostri server per pubblicare. Le foto e i video da pubblicare restano in un archivio privato fino alla pubblicazione; per le foto su TikTok ne mettiamo una copia nel nostro archivio Cloudflare R2, a un indirizzo da cui TikTok la scarica." },
+    { type: "p", text: "Non vendiamo questi dati, non li usiamo per pubblicità o profilazione e non li condividiamo con altri. I contenuti che pubblichi arrivano a Meta (Facebook e Instagram) o a TikTok, che li trattano come titolari autonomi secondo le proprie condizioni e informative." },
+    { type: "p", text: "Come togliere l'accesso: nel Profilo, in \"I tuoi social\", premi \"Scollega\" accanto al social (Facebook e Instagram si scollegano uno per uno). Cancelliamo subito il collegamento con i suoi codici di accesso e annulliamo i post programmati su quel social. Puoi togliere l'accesso anche da Facebook (Impostazioni e privacy, Impostazioni, App e siti web oppure Integrazioni aziendali), da Instagram (Impostazioni, App e siti web) o da TikTok (Impostazioni e privacy, Sicurezza, App e servizi): i codici smettono di funzionare, e per cancellare anche i dati che conserviamo noi premi \"Scollega\" o scrivi a info@agenteimmo.me. Eliminando l'account cancelliamo tutti i social collegati e i post." },
     { type: "h2", text: "4. Finalità e basi giuridiche" },
     { type: "ul", items: [
       "Creare e gestire l'account, fornire le funzioni richieste (home staging, video, import degli annunci, gestione immobili, sito personale, inoltro delle richieste di contatto), gestire piani, crediti e pagamenti, fornire assistenza: esecuzione del contratto (art. 6.1.b GDPR).",
@@ -82,7 +94,8 @@ const privacyIt: LegalPage = {
       "Proteggere il Servizio, prevenire frodi e abusi, applicare i limiti della prova gratuita (hash di IP e dispositivo), correggere errori: legittimo interesse del titolare (art. 6.1.f GDPR), bilanciato con i tuoi diritti tramite l'uso di soli codici cifrati e di tempi di conservazione limitati.",
       "Misurare l'uso della piattaforma (tempo e sezioni aperte) per migliorarla e offrirti assistenza: legittimo interesse del titolare (art. 6.1.f GDPR).",
       "Statistiche di utilizzo del sito e misurazione delle campagne pubblicitarie: consenso (art. 6.1.a GDPR), revocabile in ogni momento.",
-      "Valutazione gratuita della casa: calcolo e invio della stima su tua richiesta (art. 6.1.b GDPR); comunicazione dei tuoi contatti a un agente della zona e comunicazioni di marketing solo con i consensi specifici e facoltativi (art. 6.1.a GDPR), revocabili in ogni momento scrivendo a info@agenteimmo.me."
+      "Valutazione gratuita della casa: calcolo e invio della stima su tua richiesta (art. 6.1.b GDPR); comunicazione dei tuoi contatti a un agente della zona e comunicazioni di marketing solo con i consensi specifici e facoltativi (art. 6.1.a GDPR), revocabili in ogni momento scrivendo a info@agenteimmo.me.",
+      "Collegare Facebook, Instagram e TikTok, pubblicare i post che scegli e mostrarti il loro stato: esecuzione del contratto, su tua richiesta (art. 6.1.b GDPR)."
     ]},
     { type: "p", text: "Non vendiamo i tuoi dati e non li usiamo per addestrare modelli di intelligenza artificiale." },
     { type: "h2", text: "5. Fornitori che trattano i dati per nostro conto" },
@@ -98,6 +111,7 @@ const privacyIt: LegalPage = {
       "Anthropic (USA): modelli Claude per riconoscere il tipo di stanza, preparare planimetrie e scrivere le istruzioni dei video.",
       "fal.ai (USA): generazione dei video con i modelli Kling e Veo.",
       "ZenRows: lettura delle pagine pubbliche degli annunci che importi da un link.",
+      "Meta Platforms (Irlanda e USA) e TikTok: solo se colleghi i tuoi social, per pubblicare i post che scegli (vedi il punto 3.10).",
       "Google Analytics, Microsoft Clarity, Cal.com e Meta (USA): solo con il tuo consenso ai cookie statistici o di marketing."
     ]},
     { type: "p", text: "Ai fornitori AI inviamo solo quanto serve per la singola operazione (la foto o il video e le istruzioni), senza il tuo nome né la tua email." },
@@ -113,6 +127,8 @@ const privacyIt: LegalPage = {
       "Conteggio delle visite agli immobili: numeri aggregati per giorno, senza dati personali, per la durata dell'account.",
       "Dati della prova gratuita (hash di IP e dispositivo, legati all'account): per il tempo necessario a garantire che la prova sia usata una sola volta, e comunque non oltre 12 mesi, poi li cancelliamo automaticamente. Foto e video della prova seguono le regole della Galleria.",
       "Valutazioni della casa e relativi contatti: 24 mesi dalla richiesta, poi li cancelliamo; prima, se revochi i consensi o chiedi la cancellazione. Se hai acconsentito al contatto, l'agente che ha ricevuto i tuoi dati li conserva secondo la propria informativa.",
+      "Social collegati (Facebook, Instagram, TikTok) e codici di accesso: finché non scolleghi il social o non elimini l'account.",
+      "Post pubblicati o programmati dalla piattaforma: l'elenco con stato e link resta finché non elimini l'account. Le foto e i video del post li cancelliamo dopo la pubblicazione o quando annulli il post; quelli dei post non riusciti, o annullati scollegando il social, al massimo 90 giorni dopo la creazione del post.",
       "Dati di pagamento e fatture: 10 anni, come previsto dalla legge (art. 2220 del Codice civile), anche dopo l'eliminazione dell'account.",
       "Registri tecnici e di sicurezza con indirizzo IP: al massimo 90 giorni.",
       "Registri delle operazioni AI e dei crediti: per la durata dell'account.",
@@ -148,7 +164,7 @@ const privacyIt: LegalPage = {
 
 const privacyEn: LegalPage = {
   title: "Privacy Policy",
-  lastUpdated: "Last Updated: 5 October 2026",
+  lastUpdated: "Last Updated: 7 October 2026",
   description: "How Agente Immo processes the personal data of people who use the platform for real estate agents on agenteimmo.me.",
   blocks: [
     { type: "h2", text: "1. Data Controller" },
@@ -199,6 +215,18 @@ const privacyEn: LegalPage = {
       "If you tick \"I want to be contacted by a real estate agent in my area\", we may share your contact details and the property data with a real estate agent who uses Agente Immo and works in your area, so that they can contact you for advice or a listing proposal. The agent receiving them processes them as an independent controller, under their own privacy notice.",
       "If you tick the marketing consent, we may send you communications about services and news related to selling or renting your home. You can unsubscribe at any time using the link in every email."
     ]},
+    { type: "h3", text: "3.10. Connected Facebook, Instagram and TikTok Accounts" },
+    { type: "p", text: "From your Profile, in the \"Your social accounts\" section, you can connect your agency's Facebook Page, the Instagram professional account linked to that Page and your TikTok account, to publish posts about your properties from Agente Immo. Connecting is optional and you start it yourself, through the Meta or TikTok login, where you see and approve the requested permissions. When you connect an account we process only this data:" },
+    { type: "ul", items: [
+      "Facebook: ID, name and picture of the Page you choose and the Page access token, which is needed to publish. If you manage more than one Page, to let you choose one we keep the list of your Pages (name, picture, linked Instagram account and access tokens) only for the time of the choice: it can be used for 15 minutes and we delete it as soon as you choose.",
+      "Instagram: ID, username and profile picture of the professional account linked to the Page, and the access token Meta issues to us for publishing.",
+      "TikTok: account ID, display name and profile picture, the access token and the token used to renew it.",
+      "Posts you publish or schedule from Agente Immo: photos or video, text, chosen date and time, the property they refer to, publishing status, ID and link of the published post, any error messages from the social network and the date the connection was last used."
+    ]},
+    { type: "p", text: "We use this data only to publish the content you choose and to show you the status of your posts. A post goes out only when you press \"Pubblica ora\" (Publish now) or \"Programma\" (Schedule): we never publish anything on our own. On TikTok the post arrives as a draft in the TikTok app and you publish it from there. We do not read the posts, comments, messages, followers or insights of your Pages and accounts." },
+    { type: "p", text: "Access tokens are stored in our database (Supabase, EU), which is encrypted at rest; they are never shown in the platform and only our servers use them to publish. The photos and videos to be published are kept in private storage until they are published; for photos posted to TikTok we place a copy in our Cloudflare R2 storage, at an address from which TikTok downloads it." },
+    { type: "p", text: "We do not sell this data, we do not use it for advertising or profiling and we do not share it with anyone else. The content you publish is sent to Meta (Facebook and Instagram) or TikTok, which process it as independent controllers under their own terms and privacy policies." },
+    { type: "p", text: "How to remove access: in your Profile, under \"Your social accounts\", press \"Disconnect\" next to the account (Facebook and Instagram are disconnected one at a time). We immediately delete the connection and its access tokens and cancel the posts scheduled on that network. You can also remove access from Facebook (Settings and privacy, Settings, Apps and websites or Business integrations), Instagram (Settings, Apps and websites) or TikTok (Settings and privacy, Security, Apps and services): the tokens stop working, and to also delete the data we keep, press \"Disconnect\" or write to info@agenteimmo.me. Deleting your account deletes all connected accounts and posts." },
     { type: "h2", text: "4. Purposes and Legal Bases" },
     { type: "ul", items: [
       "Creating and managing your account, providing the features you request (home staging, videos, listing import, property management, personal website, forwarding of contact requests), managing plans, credits and payments, providing support: performance of a contract (Art. 6(1)(b) GDPR).",
@@ -206,7 +234,8 @@ const privacyEn: LegalPage = {
       "Protecting the Service, preventing fraud and abuse, enforcing free trial limits (IP and device hashes), fixing errors: legitimate interest of the controller (Art. 6(1)(f) GDPR), balanced against your rights by using only hashed codes and limited retention periods.",
       "Measuring platform usage (time and sections opened) to improve it and provide support: legitimate interest of the controller (Art. 6(1)(f) GDPR).",
       "Website usage statistics and measurement of advertising campaigns: consent (Art. 6(1)(a) GDPR), which can be withdrawn at any time.",
-      "Free home valuation: calculating and sending the estimate at your request (Art. 6(1)(b) GDPR); sharing your contact details with a local agent and marketing communications only with the specific, optional consents (Art. 6(1)(a) GDPR), which can be withdrawn at any time by writing to info@agenteimmo.me."
+      "Free home valuation: calculating and sending the estimate at your request (Art. 6(1)(b) GDPR); sharing your contact details with a local agent and marketing communications only with the specific, optional consents (Art. 6(1)(a) GDPR), which can be withdrawn at any time by writing to info@agenteimmo.me.",
+      "Connecting Facebook, Instagram and TikTok, publishing the posts you choose and showing you their status: performance of a contract, at your request (Art. 6(1)(b) GDPR)."
     ]},
     { type: "p", text: "We do not sell your data and we do not use it to train artificial intelligence models." },
     { type: "h2", text: "5. Providers Processing Data on Our Behalf" },
@@ -222,6 +251,7 @@ const privacyEn: LegalPage = {
       "Anthropic (USA): Claude models for recognizing room types, preparing floor plans and writing video instructions.",
       "fal.ai (USA): video generation with Kling and Veo models.",
       "ZenRows: reading the public pages of the listings you import from a link.",
+      "Meta Platforms (Ireland and USA) and TikTok: only if you connect your accounts, to publish the posts you choose (see section 3.10).",
       "Google Analytics, Microsoft Clarity, Cal.com and Meta (USA): only with your consent to analytics or marketing cookies."
     ]},
     { type: "p", text: "We send AI providers only what is needed for each operation (the photo or video and the instructions), without your name or email." },
@@ -237,6 +267,8 @@ const privacyEn: LegalPage = {
       "Property view counts: aggregated numbers per day, with no personal data, for the lifetime of the account.",
       "Free trial data (IP and device hashes, linked to the account): for as long as needed to ensure the trial is used only once, and in any case no longer than 12 months, after which we delete them automatically. Trial photos and videos follow the Gallery rules.",
       "Home valuations and related contacts: 24 months from the request, then deleted; earlier if you withdraw consent or ask for deletion. If you agreed to be contacted, the agent who received your data keeps it under their own privacy notice.",
+      "Connected accounts (Facebook, Instagram, TikTok) and access tokens: until you disconnect the account or delete your Agente Immo account.",
+      "Posts published or scheduled from the platform: the list with status and links is kept until you delete your account. We delete the post photos and videos after publishing or when you cancel the post; those of failed posts, or of posts cancelled by disconnecting the account, at most 90 days after the post was created.",
       "Payment data and invoices: 10 years, as required by Italian law (Art. 2220 of the Civil Code), also after account deletion.",
       "Technical and security logs containing IP addresses: up to 90 days.",
       "Logs of AI operations and credits: for the lifetime of the account.",
@@ -518,7 +550,7 @@ export const termsContent: Record<Locale, LegalPage> = {
 
 const dataDeletionIt: LegalPage = {
   title: "Come cancellare i tuoi dati",
-  lastUpdated: "Ultimo aggiornamento: 30 settembre 2026",
+  lastUpdated: "Ultimo aggiornamento: 7 ottobre 2026",
   description: "Come eliminare l'account Agente Immo e i dati collegati, e cosa conserviamo per obbligo di legge.",
   blocks: [
     { type: "p", text: "Puoi cancellare in ogni momento i dati che Agente Immo conserva su di te. Questa pagina spiega come fare e cosa viene eliminato." },
@@ -536,6 +568,7 @@ const dataDeletionIt: LegalPage = {
       "Il tuo sito personale, che smette di essere raggiungibile.",
       "Foto e video della Galleria e i file caricati per il sito.",
       "Conversazioni della chat, crediti e storico dei crediti.",
+      "Facebook, Instagram e TikTok collegati, con i loro codici di accesso, e i post pubblicati o programmati dalla piattaforma.",
       "L'abbonamento, che viene annullato subito su Stripe senza ulteriori addebiti."
     ]},
     { type: "h2", text: "3. Cosa conserviamo" },
@@ -548,8 +581,17 @@ const dataDeletionIt: LegalPage = {
     ]},
     { type: "h2", text: "5. Richiesta via email" },
     { type: "p", text: "Se non riesci ad accedere o vuoi esercitare un altro diritto previsto dal GDPR, scrivi a info@agenteimmo.me dall'indirizzo email del tuo account, con oggetto \"Richiesta di cancellazione\". Rispondiamo entro 30 giorni e ti confermiamo la cancellazione via email (art. 17 GDPR)." },
-    { type: "h2", text: "6. Account Instagram o Facebook collegati in passato" },
-    { type: "p", text: "Se in passato hai collegato un account Instagram o una Pagina Facebook ad Agente Immo, puoi revocare l'accesso dalle impostazioni di Facebook (Impostazioni, Integrazioni aziendali) o di Instagram (Impostazioni, App e siti web), cercando \"Agente Immo\" e premendo \"Rimuovi\". Eliminando l'account cancelliamo anche i relativi codici di accesso." },
+    { type: "h2", text: "6. Facebook, Instagram e TikTok collegati" },
+    { type: "p", text: "Se hai collegato la tua Pagina Facebook, il tuo profilo Instagram professionale o il tuo account TikTok, conserviamo solo: identificativo, nome e immagine della Pagina o del profilo, i codici di accesso (token) per pubblicare e i post che hai pubblicato o programmato da Agente Immo. Li usiamo solo per pubblicare i contenuti che scegli tu e mostrarti lo stato dei post; non li vendiamo e non li usiamo per pubblicità. Li conserviamo finché non scolleghi il social o non elimini l'account." },
+    { type: "p", text: "Per togliere l'accesso e cancellare questi dati:" },
+    { type: "ul", items: [
+      "Da Agente Immo: Profilo, \"I tuoi social\", \"Scollega\" accanto al social. Cancelliamo subito il collegamento e i codici di accesso e annulliamo i post programmati su quel social. Facebook e Instagram si scollegano uno per uno.",
+      "Da Facebook: Impostazioni e privacy, Impostazioni, App e siti web (oppure Integrazioni aziendali), cerca \"Agente Immo\" e premi \"Rimuovi\".",
+      "Da Instagram: Impostazioni, App e siti web, cerca \"Agente Immo\" e premi \"Rimuovi\".",
+      "Da TikTok: Impostazioni e privacy, Sicurezza, App e servizi, cerca \"Agente Immo\" e rimuovi l'accesso.",
+      "Togliendo l'accesso da Facebook, Instagram o TikTok i codici smettono di funzionare; per cancellare anche i dati che conserviamo noi premi \"Scollega\" in Agente Immo, elimina l'account oppure scrivi a info@agenteimmo.me con oggetto \"Cancellazione dati social\": li cancelliamo entro 30 giorni e te lo confermiamo via email."
+    ]},
+    { type: "p", text: "I post già pubblicati su Facebook, Instagram o TikTok restano sui social: puoi cancellarli da lì." },
     { type: "h2", text: "7. Domande" },
     { type: "p", text: "Per qualsiasi domanda sulla cancellazione dei dati o sui tuoi diritti scrivi a info@agenteimmo.me. Puoi anche rivolgerti al Garante per la protezione dei dati personali: www.garanteprivacy.it." },
   ],
@@ -557,7 +599,7 @@ const dataDeletionIt: LegalPage = {
 
 const dataDeletionEn: LegalPage = {
   title: "How to Delete Your Data",
-  lastUpdated: "Last updated: 30 September 2026",
+  lastUpdated: "Last updated: 7 October 2026",
   description: "How to delete your Agente Immo account and related data, and what we keep to comply with the law.",
   blocks: [
     { type: "p", text: "You can delete the data Agente Immo holds about you at any time. This page explains how to do it and what is deleted." },
@@ -575,6 +617,7 @@ const dataDeletionEn: LegalPage = {
       "Your personal website, which is no longer reachable.",
       "Gallery photos and videos and files uploaded for your website.",
       "Chat conversations, credits and credit history.",
+      "Connected Facebook, Instagram and TikTok accounts, with their access tokens, and the posts published or scheduled from the platform.",
       "Your subscription, which is cancelled immediately on Stripe with no further charges."
     ]},
     { type: "h2", text: "3. What we keep" },
@@ -587,8 +630,17 @@ const dataDeletionEn: LegalPage = {
     ]},
     { type: "h2", text: "5. Request by email" },
     { type: "p", text: "If you cannot sign in or want to exercise another GDPR right, write to info@agenteimmo.me from your account's email address, with the subject \"Deletion Request\". We reply within 30 days and confirm the deletion by email (Art. 17 GDPR)." },
-    { type: "h2", text: "6. Instagram or Facebook accounts connected in the past" },
-    { type: "p", text: "If you connected an Instagram account or a Facebook Page to Agente Immo in the past, you can revoke access from your Facebook settings (Settings, Business Integrations) or Instagram settings (Settings, Apps and Websites) by finding \"Agente Immo\" and pressing \"Remove\". Deleting your account also deletes the related access tokens." },
+    { type: "h2", text: "6. Connected Facebook, Instagram and TikTok accounts" },
+    { type: "p", text: "If you connected your Facebook Page, your Instagram professional account or your TikTok account, we keep only: the ID, name and picture of the Page or account, the access tokens used to publish, and the posts you published or scheduled from Agente Immo. We use them only to publish the content you choose and to show you the status of your posts; we do not sell them or use them for advertising. We keep them until you disconnect the account or delete your Agente Immo account." },
+    { type: "p", text: "To remove access and delete this data:" },
+    { type: "ul", items: [
+      "From Agente Immo: Profile, \"Your social accounts\", \"Disconnect\" next to the account. We immediately delete the connection and the access tokens and cancel the posts scheduled on that network. Facebook and Instagram are disconnected one at a time.",
+      "From Facebook: Settings and privacy, Settings, Apps and websites (or Business integrations), find \"Agente Immo\" and press \"Remove\".",
+      "From Instagram: Settings, Apps and websites, find \"Agente Immo\" and press \"Remove\".",
+      "From TikTok: Settings and privacy, Security, Apps and services, find \"Agente Immo\" and remove access.",
+      "Removing access from Facebook, Instagram or TikTok makes the tokens stop working; to also delete the data we keep, press \"Disconnect\" in Agente Immo, delete your account or write to info@agenteimmo.me with the subject \"Social data deletion\": we delete it within 30 days and confirm by email."
+    ]},
+    { type: "p", text: "Posts already published on Facebook, Instagram or TikTok stay on those networks: you can delete them there." },
     { type: "h2", text: "7. Questions" },
     { type: "p", text: "For any question about data deletion or your rights, write to info@agenteimmo.me. You can also contact the Italian Data Protection Authority: www.garanteprivacy.it." },
   ],

@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const content = dataDeletionContent[locale as Locale];
 
   return {
-    title: `${content.title} — Agente Immo`,
+    title: { absolute: `${content.title} | Agente Immo` },
     description: content.description,
     alternates: {
       canonical: `https://agenteimmo.me/${locale}/data-deletion`,

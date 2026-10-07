@@ -36,6 +36,8 @@ import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { tr, lp, pageLocale } from './i18n';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 import BrandCard from './BrandCard';
+import SocialAccountsCard from './SocialAccounts';
+import { useSocialPublish } from './socialApi';
 import { useHeartbeat } from './useHeartbeat';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -678,6 +680,7 @@ function PlanCard() {
 }
 
 function ProfileView({ email, profile, onSaved, admin }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void; admin: boolean }) {
+  const social = useSocialPublish();
   return (
     <div className="mx-auto max-w-xl">
       <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il mio profilo', 'My profile')}</h1>
@@ -691,6 +694,8 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
         {profile?.slug && <a href="#/portfolio" className="mt-2 inline-flex min-h-10 items-center text-sm font-medium text-brand hover:underline md:mt-4 md:min-h-0">{tr('Modifica il tuo sito', 'Edit your website')}</a>}
       </div>
       <BrandCard />
+      {/* I tuoi social: solo per gli utenti abilitati alla pubblicazione social (SOCIAL_PUBLISH_EMAILS) */}
+      {social && <SocialAccountsCard />}
       {/* Agente Immo sul telefono: apre il popup della web app (InstallPrompt), non se e' gia' installata */}
       {!isStandalone() && (
         <button type="button" onClick={() => window.dispatchEvent(new Event(INSTALL_EVENT))} className={`mt-4 flex w-full items-center gap-3 rounded-[28px] bg-white p-6 text-left ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>

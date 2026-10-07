@@ -8,6 +8,8 @@
 // social, lib/socialRules), 6 Video facoltativo: post animato gratis
 // (la grafica che si muove, nel browser) o solo le foto, poi Pubblica su ... o Salva. Il video a crediti (api/platform/video-reel)
 // e' uscito dal popup il 06/10/2026: resta nella chat.
+// 06/10/2026 sera: settimo passo Pubblica. Facebook, Instagram e TikTok collegati (Profilo, I tuoi social) si pubblicano da qui,
+// subito o programmati (api/platform/social-posts + edge publish-due-posts); gli altri si salvano o si aprono nell'app.
 // Niente misure ne' parole tecniche a schermo. Anteprima a sinistra in un riquadro fisso, il post ci sta dentro in ogni formato.
 // Le grafiche sono quelle dei post della vecchia dashboard GetNearMe
 // (components/dashboard/templates: renderTemplate + exporter) con i dati veri dell'immobile, il logo e il colore
@@ -15,7 +17,7 @@
 // Le grafiche restano in Poppins: sono il marchio dell'agente, non il nostro.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, BadgeCheck, Check, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, Facebook, GalleryHorizontalEnd, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, RectangleVertical, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, BadgeCheck, CalendarClock, Check, CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Copy, Crop, Download, ExternalLink, Facebook, GalleryHorizontalEnd, Instagram, Linkedin, Loader2, MessageCircle, Maximize2, Minimize2, Music2, Play, Plug, RectangleVertical, RotateCcw, Share2, Smartphone, Sparkles, Square, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { renderTemplate, TEMPLATES as POST_TEMPLATES } from '@/components/dashboard/templates/index.js';
 import { ANIMATION_STYLES, exportStaticToVideo, exportToPng } from '@/components/dashboard/templates/exporter.js';
 import '@/components/dashboard/templates/styles.css';
@@ -24,7 +26,9 @@ import type { ProjectData } from '@/lib/projects';
 import { countChars, ruleOf } from '@/lib/socialRules';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { authFetch, portfolioUrl } from './api';
-import { pageLang, tr } from './i18n';
+import { pageLang, pageLocale, tr } from './i18n';
+import { connect, createPost, friendlyError, listPosts, needsReconnect, PublishError, socialCaps, usable, useSocialAccounts, useSocialPublish, type SocialCaps, type SocialNet, type SocialPost } from './socialApi';
+import { SocialPostsList } from './SocialAccounts';
 
 type Safe = { top: number; bottom: number; left: number; right: number };
 type Size = { w: number; h: number; safe: Safe };
@@ -389,6 +393,9 @@ function NetIcon({ id, size = 20 }: { id: NetId; size?: number }) {
 // ---------- card nella fascia Promuovi ----------
 export default function SocialCard({ project, photos }: { project: ProjectData; photos: string[] }) {
   const [open, setOpen] = useState(false);
+  const [posted, setPosted] = useState(0); // ricarica l'elenco dei post dopo una pubblicazione dal popup
+  // pubblicazione diretta solo per gli utenti abilitati (SOCIAL_PUBLISH_EMAILS): per gli altri il popup resta di 6 passi
+  const social = useSocialPublish();
   return (
     <section className="rounded-2xl bg-canvas p-3">
       <div className="flex items-center gap-3">
@@ -401,7 +408,9 @@ export default function SocialCard({ project, photos }: { project: ProjectData; 
       <button type="button" onClick={() => setOpen(true)} disabled={!photos.length} className="mt-3 flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white disabled:opacity-60">
         <Sparkles size={14} /> {photos.length ? tr('Crea il post', 'Create the post') : tr('Aggiungi prima le foto', 'Add photos first')}
       </button>
-      {open && <SocialShare project={project} photos={photos} onClose={() => setOpen(false)} />}
+      {/* post pubblicati o programmati da qui per questo immobile (06/10/2026), con Annulla sui programmati */}
+      {social && <SocialPostsList project={project.id} title={tr('I tuoi post', 'Your posts')} refreshKey={posted} compact />}
+      {open && <SocialShare project={project} photos={photos} social={social} onClose={() => { setOpen(false); setPosted(k => k + 1); }} onPosted={() => setPosted(k => k + 1)} />}
     </section>
   );
 }
@@ -422,8 +431,9 @@ function dropOldKeys() {
 }
 const netOf = (id: NetId) => NETS.find(n => n.id === id) ?? NETS[0]; // mai undefined (id sconosciuto: il primo social)
 // 06/10/2026 (panel agenti 55-70): Cosa pubblichi (annuncio o venduto, una volta sola), Dove, Foto, Grafica, Testo, Video (facoltativo)
-const STEPS: [string, string][] = [['Cosa', 'What'], ['Dove', 'Where'], ['Foto', 'Photos'], ['Grafica', 'Design'], ['Testo', 'Text'], ['Video', 'Video']];
-const S = { cosa: 0, dove: 1, foto: 2, grafica: 3, testo: 4, video: 5 } as const;
+// 06/10/2026 sera: settimo passo Pubblica (una card per social: pubblica ora o programma se collegato, se no salva o apri l'app)
+const STEPS: [string, string][] = [['Cosa', 'What'], ['Dove', 'Where'], ['Foto', 'Photos'], ['Grafica', 'Design'], ['Testo', 'Text'], ['Video', 'Video'], ['Pubblica', 'Publish']];
+const S = { cosa: 0, dove: 1, foto: 2, grafica: 3, testo: 4, video: 5, pubblica: 6 } as const;
 const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
 
 // larghezza di un elemento (la griglia delle grafiche)
@@ -449,7 +459,11 @@ const kindHint = (k: Fmt['kind']) => (k === 'many' ? tr('Da sfogliare col dito',
 const fmtShort = (fs: Fmt[], f: Fmt) => (f.kind === 'one' && fs.filter(x => x.kind === 'one').length > 1 ? (f.ratio === '1:1' ? tr('Quadrata', 'Square') : tr('Alta', 'Tall')) : kindShort(f.kind));
 const fmtHint = (fs: Fmt[], f: Fmt) => (f.kind === 'one' && fs.filter(x => x.kind === 'one').length > 1 ? (f.ratio === '1:1' ? tr('Per la bacheca', 'For the feed') : tr('Per la bacheca, prende più spazio', 'For the feed, takes more room')) : kindHint(f.kind));
 
-function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData; photos: string[]; onClose: () => void }) {
+function SocialShare({ project, photos: srcs, onClose, onPosted, social = false }: { project: ProjectData; photos: string[]; onClose: () => void; onPosted?: () => void; social?: boolean }) {
+  // pub: passo Pubblica e pubblicazione diretta (utenti abilitati). Senza: 6 passi, l'ultimo e' Video con Salva, Pubblica su e
+  // Ho finito, come prima del 06/10/2026. Si fissa all'apertura, non cambia a meta' strada.
+  const [pub] = useState(social);
+  const steps = pub ? STEPS : STEPS.slice(0, S.pubblica);
   const d = (project.import_data ?? {}) as { details?: Record<string, unknown>; prima?: Record<string, string>; rooms?: Record<string, { scene?: string }> };
   const det = d.details ?? {};
   const prima = d.prima ?? {};
@@ -715,7 +729,6 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     if (!brand || stepIx < S.grafica) return;
     for (const n of nets) if (texts[tk(n)] === undefined && !textBusy[tk(n)] && !textErr[tk(n)]) void writeText(n);
   }, [brand, nets.join(','), stepIx >= S.grafica, soldOn, soldKind]); // eslint-disable-line react-hooks/exhaustive-deps
-  const text = texts[tk(active)] ?? '';
   const copy = async (n: NetId) => { try { await navigator.clipboard.writeText(texts[tk(n)] ?? ''); setCopied(n); setTimeout(() => setCopied(c => (c === n ? null : c)), 2400); } catch { /* niente appunti */ } };
 
   const live = useRef(true);
@@ -822,9 +835,9 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     const t = setTimeout(() => { void getFiles(active).catch(() => null); }, 500);
     return () => clearTimeout(t);
   }, [stepIx, allReady, key]); // eslint-disable-line react-hooks/exhaustive-deps
-  const share = async () => {
+  const share = async (n: NetId = active) => {
     if (busy) return;
-    const n = active;
+    const text = texts[tk(n)] ?? '', net = netOf(n), nSlides = fmtOf(n).multi ? photosFor(n).length + 1 : 1;
     // il testo si copia subito, prima di ogni attesa (gli appunti vogliono il tocco)
     if (text) void navigator.clipboard?.writeText(text).catch(() => null);
     setBusy('share'); setNote(nSlides > 1 ? tr(`Preparo ${nSlides} foto`, `Making ${nSlides} photos`) : '');
@@ -882,6 +895,91 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     }
     setBusy(null);
   };
+  // ---- pubblicazione diretta (06/10/2026): Facebook, Instagram e TikTok collegati nel Profilo ----
+  // Il post va nella coda di publish-due-posts (cron ogni minuto): "ora" esce entro un minuto, "Programma" all'ora scelta.
+  // Cosa si pubblica: il post animato se c'e', se no le foto del social (una, o le slide del carosello), in JPEG (Instagram
+  // non accetta PNG). WhatsApp e LinkedIn non hanno pubblicazione diretta: restano "Pubblica su" e Salva.
+  const { byNet } = useSocialAccounts(pub);
+  const [caps, setCaps] = useState<SocialCaps | null>(null);
+  useEffect(() => { if (pub && stepIx >= S.testo && !caps) void socialCaps().then(setCaps); }, [stepIx >= S.testo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [connErr, setConnErr] = useState('');
+  const doConnect = (n: SocialNet) => { setConnErr(''); void connect(n, false).catch(e => setConnErr((e as Error).message === 'blocked' ? tr('Il browser ha bloccato la finestra per collegarti. Consenti le finestre per questo sito e riprova.', 'The browser blocked the connect window. Allow pop-ups for this site and try again.') : tr('Non riesco ad aprire il collegamento, riprova.', 'I cannot open the connection, try again.'))); };
+  const isDirect = (n: NetId): n is SocialNet => n === 'facebook' || n === 'instagram' || n === 'tiktok';
+  const linked = (n: NetId) => isDirect(n) && usable(byNet(n));
+  const videoFor = (n: NetId) => (wantAnim ? animOf(n) : null);
+  // formato per publish-due-posts: feed/square (bacheca), story (Storia), reel (video verticale su Instagram)
+  const pubFormat = (n: NetId, video: boolean): 'feed' | 'square' | 'story' | 'reel' => {
+    const f = fmtOf(n);
+    if (f.kind === 'tall') return n === 'instagram' && video ? 'reel' : n === 'tiktok' ? 'feed' : 'story';
+    return f.ratio === '1:1' && !f.multi ? 'square' : 'feed';
+  };
+  // quello che la publish-due-posts pubblicata non sa ancora fare: si dice prima, niente errore dopo
+  const notYet = (n: NetId) => {
+    if (!caps) return '';
+    const v = !!videoFor(n), f = fmtOf(n);
+    if (!v && f.multi && !caps.carousel) return tr(`Le foto da sfogliare su ${netOf(n).label} per ora non si pubblicano da qui. Salvale e caricale dall'app, oppure scegli una foto sola al passo Dove.`, `Swipe posts on ${netOf(n).label} cannot be published from here yet. Save them and upload from the app, or choose one photo at the Where step.`);
+    if (n === 'facebook' && f.kind === 'tall' && !caps.fbStory) return tr('La storia di Facebook per ora non si pubblica da qui. Salvala e caricala dall\'app, oppure scegli "Alta" al passo Dove.', 'Facebook stories cannot be published from here yet. Save it and upload from the app, or choose "Tall" at the Where step.');
+    if (n === 'tiktok' && !v && !caps.tiktokPhoto) return tr('Su TikTok per ora da qui si pubblica solo il post animato. Torna al passo Video e scegli Post animato.', 'On TikTok you can only publish the animated post from here for now. Go back to the Video step and choose Animated post.');
+    return '';
+  };
+  const whatFor = (n: NetId) => {
+    const v = !!videoFor(n), f = fmtOf(n), k = photosFor(n).length + (f.multi ? 1 : 0);
+    if (v) return tr('il post animato', 'the animated post');
+    if (f.multi) return tr(`${k} foto da sfogliare`, `${k} photos to swipe`);
+    return f.kind === 'tall' && n === 'whatsapp' ? tr('lo stato', 'the status') : f.kind === 'tall' && n !== 'tiktok' ? tr('la storia', 'the story') : tr('la foto', 'the photo');
+  };
+  type Pub = { state: 'sending' | 'publishing' | 'done' | 'scheduled' | 'error' | 'slow'; post?: SocialPost; msg?: string; reconnect?: boolean };
+  const [pubs, setPubs] = useState<Partial<Record<NetId, Pub>>>({});
+  const [sched, setSched] = useState(() => {
+    const d = new Date(Date.now() + 86_400_000); d.setHours(18, 0, 0, 0); // domani alle 18, l'ora in cui si guardano i social
+    const p = (x: number) => String(x).padStart(2, '0');
+    return { date: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`, time: '18:00' };
+  });
+  const schedAt = () => { const d = new Date(`${sched.date}T${sched.time}`); return isNaN(d.getTime()) ? null : d; };
+  const jpeg = async (f: File) => {
+    const bm = await createImageBitmap(f);
+    const c = document.createElement('canvas'); c.width = bm.width; c.height = bm.height;
+    c.getContext('2d')!.drawImage(bm, 0, 0);
+    const b = await new Promise<Blob | null>(ok => c.toBlob(ok, 'image/jpeg', 0.92));
+    return b ? new File([b], f.name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' }) : f;
+  };
+  const setPub = (n: NetId, p: Pub | undefined) => setPubs(o => ({ ...o, [n]: p }));
+  // dopo "ora": si guarda la coda ogni 4 s finche' il post esce (o va male); oltre 4 minuti si dice di guardare l'elenco
+  const follow = async (n: NetId, id: string) => {
+    const t0 = Date.now();
+    while (live.current && Date.now() - t0 < 240_000) {
+      await new Promise(r => setTimeout(r, 4000));
+      const p = (await listPosts({ ids: [id] }).catch(() => []))[0];
+      if (!p) continue;
+      if (p.status === 'published' || p.status === 'partial') { setPub(n, { state: 'done', post: p }); onPosted?.(); return; }
+      if (p.status === 'failed') {
+        // niente tentativi automatici dopo l'errore mostrato: se riprova lo decide l'agente (niente post doppi)
+        await authFetch(`/api/platform/social-posts?id=${id}`, { method: 'DELETE' }).catch(() => null);
+        setPub(n, { state: 'error', msg: friendlyError(p.error || '', n as SocialNet), reconnect: needsReconnect(p.error || '') }); onPosted?.(); return;
+      }
+      setPub(n, { state: 'publishing', post: p });
+    }
+    if (live.current) setPub(n, { state: 'slow' });
+  };
+  const publish = async (n: NetId, at: Date | null) => {
+    if (!isDirect(n) || pubs[n]?.state === 'sending' || pubs[n]?.state === 'publishing') return;
+    setPub(n, { state: 'sending' });
+    try {
+      const a = videoFor(n);
+      const files = a ? [a.file] : await Promise.all((await getFiles(n)).map(jpeg));
+      const post = await createPost({ net: n, files, mediaType: a ? 'video' : 'image', format: pubFormat(n, !!a), caption: texts[tk(n)] ?? '', at, project: project.id });
+      console.info('[social] in coda', n, at ? 'programmato' : 'ora', files.length, a ? 'video' : 'foto');
+      onPosted?.();
+      if (at) { setPub(n, { state: 'scheduled', post }); return; }
+      setPub(n, { state: 'publishing', post });
+      void follow(n, post.id);
+    } catch (e) {
+      console.error('social publish', e);
+      setPub(n, { state: 'error', reconnect: e instanceof PublishError && needsReconnect(e.message), msg: e instanceof PublishError ? friendlyError(e.message, n) : tr('Non sono riuscito a preparare il post, riprova.', 'I could not prepare the post, try again.') });
+    }
+  };
+  const fmtWhen = (iso: string) => new Date(iso).toLocaleString(pageLocale(), { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
   // misure: il riquadro dell'anteprima ha sempre la stessa grandezza, il post ci sta dentro (contain) in ogni formato
   const wide = vp.w >= 1024;
   const phoneUi = vp.w < 640; // telefono: testata "Passo 2 di 6", bottoni finali uno sotto l'altro
@@ -895,14 +993,14 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   // ogni passo vuole una scelta (tranne Video): Avanti spento, sotto cosa manca; dalle linguette non si salta oltre il primo passo da fare
   const photoTodo = nets.find(n => !photoOk(n)); // il primo social senza le sue foto
   const tplTodo = nets.find(n => !tplChosen(n)); // il primo social senza grafica (quella comune vale)
-  const stepOk = [soldPick !== null, nets.length > 0, !photoTodo, !tplTodo, true, true];
+  const stepOk = [soldPick !== null, nets.length > 0, !photoTodo, !tplTodo, true, true, true];
   const firstTodo = stepOk.indexOf(false);
   const canGo = (i: number) => firstTodo < 0 || i <= firstTodo;
   const canNext = stepOk[stepIx];
   const missing = [tr('Scegli cosa pubblichi', 'Choose what you post'), tr('Scegli almeno un social', 'Choose at least one network'),
     !photoTodo ? '' : !fmtOf(photoTodo).multi ? tr(`Scegli la foto per ${netOf(photoTodo).label}`, `Choose the photo for ${netOf(photoTodo).label}`)
       : photosFor(photoTodo).length ? tr(`Per ${netOf(photoTodo).label} scegli almeno 2 foto`, `For ${netOf(photoTodo).label} choose at least 2 photos`) : tr(`Scegli le foto per ${netOf(photoTodo).label}`, `Choose the photos for ${netOf(photoTodo).label}`),
-    tplTodo ? tr(`Scegli la grafica per ${netOf(tplTodo).label}`, `Choose the design for ${netOf(tplTodo).label}`) : '', '', ''][stepIx];
+    tplTodo ? tr(`Scegli la grafica per ${netOf(tplTodo).label}`, `Choose the design for ${netOf(tplTodo).label}`) : '', '', '', ''][stepIx];
   // testo del bottone Avanti finche' manca qualcosa (passi Foto e Grafica): quante foto mancano e per chi, prima il social in anteprima.
   // Telefono: una riga corta ("Ancora 1 foto, Instagram")
   const order = [active, ...nets.filter(n => n !== active)].filter(n => nets.includes(n));
@@ -1095,6 +1193,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
     [tr('Per trovare chi la compra o la affitta', 'To find a buyer or a tenant')]: tr('Trova chi compra', 'Find a buyer'),
     [tr('Venduta o affittata, il lavoro fatto', 'Sold or rented, your work')]: tr('Il lavoro fatto', 'Your work'),
     [tr('Gratis, la tua grafica si muove', 'Free, your design moves')]: tr('Gratis, si muove', 'Free, it moves'),
+    [tr('Niente video, solo le foto', 'No video, just the photos')]: tr('Solo le foto', 'Just photos'),
     [tr('No video, le scarichi subito', 'No video, download them now')]: tr('Le scarichi subito', 'Download now'),
   };
   const bigChoice = (i: number, on: boolean, thumb: React.ReactNode, scene: React.ReactNode, kicker: string, title: string, onClick: () => void, badge?: string, h = 'sm:h-[22rem]', small = false, loading = false) => (
@@ -1250,9 +1349,13 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             const N = netOf(id), cf = fmtOf(id), ix = Math.max(0, N.fmts.indexOf(cf)), n = N.fmts.length;
             return (
               <div key={id} className={`flex gap-2 py-3 sm:gap-4 ${n === 1 ? 'items-center justify-between' : 'flex-col sm:flex-row sm:items-start sm:justify-between'}`}>
-                <span className="flex h-12 min-w-0 items-center gap-3">
+                <span className="flex min-h-12 min-w-0 items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink"><NetIcon id={id} size={18} /></span>
-                  <span className="truncate text-base font-semibold">{N.label}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-base font-semibold">{N.label}</span>
+                    {/* Facebook, Instagram e TikTok collegati nel Profilo: un piccolo segno, la pubblicazione e' al passo Pubblica */}
+                    {linked(id) && <span className="flex items-center gap-1 text-xs text-muted"><Check size={12} className="shrink-0 text-brand" strokeWidth={3} /> {tr('collegato', 'connected')}</span>}
+                  </span>
                 </span>
                 {n === 1 ? (
                   // un solo formato: niente scelta, solo un'etichetta discreta
@@ -1439,15 +1542,135 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
       )}
     </div>
   );
-  // "No": niente video, si scaricano subito le foto (come il bottone Salva)
-  const sayNo = () => { setWantAnim(false); setSaidNo(true); if (ready && !busy && !animRun) void downloadAll(); };
+  // ---- passo 7, Pubblica: una card per ogni social scelto (come le card della home del popup), con la miniatura del post
+  // (o del video) e l'inizio del testo, lo stato del collegamento e l'azione. Collegato: "Pubblica ora" o "Programma" (giorno
+  // e ora); non collegato: "Collega" (si apre una finestra, il popup resta qui) oppure "Salva" e "Apri l'app" (condivisione
+  // del telefono). WhatsApp e LinkedIn: Salva e Apri l'app. In basso il bottone scuro "Pubblica tutto ora", poi gli esiti.
+  const directNets = nets.filter(isDirect);
+  const [schedFor, setSchedFor] = useState<NetId | null>(null);
+  const field = 'h-14 w-full rounded-full bg-white px-5 text-base text-ink outline-none ring-1 ring-black/10 ease-smooth transition-shadow focus:ring-2 focus:ring-brand';
+  const pending = (n: NetId) => { const st = pubs[n]?.state; return !st || st === 'error'; };
+  const targets = directNets.filter(n => linked(n) && !notYet(n) && pending(n)); // pronti per "Pubblica tutto ora"
+  const anyGoing = directNets.some(n => pubs[n]?.state === 'sending' || pubs[n]?.state === 'publishing');
+  const publishAll = async () => { setSchedFor(null); for (const n of targets) await publish(n, null); };
+  // miniature dei post (prima slide di ogni social), fatte una volta entrando nel passo
+  const [minis, setMinis] = useState<Partial<Record<NetId, Slide | null>>>({});
+  useEffect(() => { if (stepIx === S.pubblica) setMinis(Object.fromEntries(nets.map(n => [n, slidesFor(n)[0] ?? null]))); }, [stepIx === S.pubblica, nets.map(keyFor).join('|')]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [savingNet, setSavingNet] = useState<NetId | null>(null);
+  const saveNet = async (n: NetId) => {
+    if (busy || savingNet) return;
+    setSavingNet(n);
+    try {
+      const a = videoFor(n), files = a ? [a.file] : await getFiles(n);
+      if (files.length === 1) save(files[0], files[0].name); else await zipSave(files.map((f, j) => ({ path: `${nameOf(n)}/${String(j + 1).padStart(2, '0')}.png`, f })), `${title}-${nameOf(n)}.zip`);
+      const t = texts[tk(n)]; if (t) void navigator.clipboard?.writeText(t).catch(() => null);
+      setDone(o => [...new Set([...o, n])]);
+    } catch (e) { console.error('social save', e); setNote(tr('Non sono riuscito a creare il file, riprova.', 'I could not create the file, please try again.')); }
+    setSavingNet(null);
+  };
+  const results = directNets.filter(n => pubs[n] && pubs[n]!.state !== 'sending');
+  const sub = (n: NetId) => {
+    const p = pubs[n], N = netOf(n);
+    if (!p) return null;
+    if (p.state === 'done') return <p className="blur-in mt-3 flex items-center gap-1.5 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} className="shrink-0" /> {n === 'tiktok' ? tr('Inviato a TikTok: apri l’app e conferma il post.', 'Sent to TikTok: open the app and confirm the post.') : tr(`Pubblicato su ${N.label}`, `Published on ${N.label}`)}</p>;
+    if (p.state === 'scheduled' && p.post) return <p className="blur-in mt-3 flex items-start gap-1.5 text-sm font-semibold text-ink"><CalendarClock size={16} className="mt-0.5 shrink-0 text-brand" /> <span>{tr(`Programmato per ${fmtWhen(p.post.scheduledAt)}`, `Scheduled for ${fmtWhen(p.post.scheduledAt)}`)}<span className="block font-normal text-muted">{tr('Puoi annullarlo dalla scheda dell’immobile.', 'You can cancel it from the property page.')}</span></span></p>;
+    if (p.state === 'error') return <p className="blur-in mt-3 flex items-start gap-1.5 text-sm text-red-700"><AlertCircle size={16} className="mt-0.5 shrink-0" /> <span><span className="block font-semibold">{tr('Non pubblicato', 'Not published')}</span>{p.msg}</span></p>;
+    if (p.state === 'slow') return <p className="mt-3 text-sm text-ink">{tr(`${N.label} ci mette più del solito. Il post è in coda: l’esito lo trovi nella scheda dell’immobile.`, `${N.label} is slower than usual. The post is queued: you will find the result on the property page.`)}</p>;
+    return <p className="mt-3 flex items-center gap-1.5 text-sm text-ink"><Loader2 size={16} className="shrink-0 animate-spin text-brand" /> {p.state === 'sending' ? tr('Preparo il post', 'Preparing the post') : tr('Sto pubblicando, ci vuole un minuto o due', 'Publishing, it takes a minute or two')}</p>;
+  };
+  const ghost = 'flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors disabled:opacity-50';
+  const pubCard = (n: NetId, i: number) => {
+    const N = netOf(n), direct = isDirect(n), acc = direct ? byNet(n) : null, on = linked(n), why = on ? notYet(n) : '', p = pubs[n];
+    const going = p?.state === 'sending' || p?.state === 'publishing', v = videoFor(n), mini = minis[n] ?? null, t = texts[tk(n)] ?? '';
+    const finished = p?.state === 'done' || p?.state === 'scheduled' || p?.state === 'slow';
+    const shareBtns = (
+      <>
+        <button type="button" onClick={() => void saveNet(n)} disabled={!ready || !!busy || !!savingNet} className={`${ghost} bg-canvas text-ink hover:bg-line`}>{savingNet === n ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} {onPhone ? tr('Salva sul telefono', 'Save to phone') : tr('Salva sul computer', 'Save to computer')}</button>
+        {canPublish && <button type="button" onClick={() => void share(n)} disabled={!allReady || !!busy} className={`${ghost} bg-canvas text-ink hover:bg-line`}><Share2 size={15} /> {tr(`Apri ${N.label}`, `Open ${N.label}`)}</button>}
+      </>
+    );
+    return (
+      <section key={n} className="rise rounded-[28px] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 sm:p-5" style={{ animationDelay: `${0.08 + i * 0.06}s` }}>
+        <div className="flex gap-4">
+          <span className="relative block w-20 shrink-0 self-start overflow-hidden rounded-xl ring-1 ring-black/5 sm:w-24">
+            {v ? <video src={v.url} muted loop autoPlay playsInline className="block w-full" /> : <PostView build={mini} width={onPhone && vp.w < 640 ? 80 : 96} />}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2"><NetIcon id={n} size={18} /><span className="text-base font-semibold">{N.label}</span>{done.includes(n) && <Check size={14} className="text-brand" strokeWidth={3} />}</span>
+            <span className="mt-0.5 block truncate text-sm text-muted">{direct ? (on ? tr(`Collegato, ${acc?.name || N.label}`, `Connected, ${acc?.name || N.label}`) : acc ? tr('Collegamento scaduto', 'Connection expired') : tr('Non collegato', 'Not connected')) : tr('Si pubblica dall’app', 'Posted from the app')}</span>
+            <span className="mt-1 block text-sm text-ink/80">{tr(`Pubblico ${whatFor(n)}`, `I post ${whatFor(n)}`)}</span>
+            {t && <span className="mt-1 line-clamp-2 text-sm text-muted">{t}</span>}
+          </span>
+        </div>
+        {direct && on && sub(n)}
+        {direct && on && why && <p className="mt-3 text-sm leading-relaxed text-muted">{why}</p>}
+        {direct && on && !why && !finished && !going && (schedFor === n ? (
+          <div className="blur-in mt-3 space-y-3 rounded-[24px] bg-canvas p-3">
+            <span className="block px-1 text-sm font-semibold">{tr(`Quando lo pubblico su ${N.label}?`, `When should I post it on ${N.label}?`)}</span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="block"><span className="mb-1 block px-1 text-sm text-muted">{tr('Giorno', 'Day')}</span><input type="date" value={sched.date} min={new Date().toISOString().slice(0, 10)} onChange={e => setSched(o => ({ ...o, date: e.target.value }))} className={field} /></label>
+              <label className="block"><span className="mb-1 block px-1 text-sm text-muted">{tr('Ora', 'Time')}</span><input type="time" value={sched.time} step={300} onChange={e => setSched(o => ({ ...o, time: e.target.value }))} className={field} /></label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => { const d = schedAt(); if (d) { setSchedFor(null); void publish(n, d); } }} disabled={!allReady || !!busy || !schedAt()} className={`${ghost} bg-white text-ink shadow-sm ring-1 ring-black/10 hover:bg-line`}><CalendarClock size={15} /> {schedAt() ? tr(`Programma per ${fmtWhen(schedAt()!.toISOString())}`, `Schedule for ${fmtWhen(schedAt()!.toISOString())}`) : tr('Programma', 'Schedule')}</button>
+              <button type="button" onClick={() => setSchedFor(null)} className={`${ghost} text-muted hover:bg-white hover:text-ink`}>{tr('Lascia stare', 'Never mind')}</button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {p?.reconnect && <button type="button" onClick={() => { setPub(n, undefined); doConnect(n as SocialNet); }} className={`${ghost} bg-canvas text-ink hover:bg-line`}><Plug size={15} /> {tr(`Collega di nuovo ${N.label}`, `Reconnect ${N.label}`)}</button>}
+            {!p?.reconnect && <button type="button" onClick={() => void publish(n, null)} disabled={!allReady || !!busy || anyGoing} className={`${ghost} bg-canvas text-ink hover:bg-line`}>{p?.state === 'error' ? <RotateCcw size={15} /> : <Share2 size={15} />} {p?.state === 'error' ? tr('Riprova', 'Try again') : tr('Pubblica ora', 'Post now')}</button>}
+            <button type="button" onClick={() => setSchedFor(n)} disabled={!allReady || !!busy || anyGoing} className={`${ghost} text-ink ring-1 ring-black/10 hover:bg-canvas`}><CalendarClock size={15} /> {tr('Programma', 'Schedule')}</button>
+          </div>
+        ))}
+        {direct && on && p?.state === 'done' && p.post?.link && <a href={p.post.link} target="_blank" rel="noopener" className={`${ghost} mt-2 w-fit bg-canvas text-ink hover:bg-line`}>{tr('Vedi il post', 'View the post')} <ExternalLink size={14} /></a>}
+        {direct && on && why && <div className="mt-3 flex flex-wrap gap-2">{shareBtns}</div>}
+        {direct && !on && (
+          <div className="mt-3 space-y-2">
+            <button type="button" onClick={() => doConnect(n as SocialNet)} className={`${ghost} bg-canvas text-ink hover:bg-line`}><Plug size={15} /> {acc ? tr(`Collega di nuovo ${N.label}`, `Reconnect ${N.label}`) : tr(`Collega ${N.label} e pubblica da qui`, `Connect ${N.label} and publish from here`)}</button>
+            <p className="px-1 text-sm text-muted">{tr('Oppure salvalo e pubblicalo tu dall’app:', 'Or save it and post it yourself from the app:')}</p>
+            <div className="flex flex-wrap gap-2">{shareBtns}</div>
+          </div>
+        )}
+        {!direct && <div className="mt-3 flex flex-wrap gap-2">{shareBtns}</div>}
+      </section>
+    );
+  };
+  const stepPubblica = (
+    <div className="space-y-4">
+      <div className="text-center">
+        <h3 className="font-display text-lg font-semibold sm:text-xl">{tr('Pubblica', 'Publish')}</h3>
+        <p className="mt-0.5 text-sm text-muted">{targets.length || directNets.some(linked) ? tr('Sui social collegati il post esce da solo, senza passare dal telefono.', 'On connected accounts the post goes out by itself, no phone needed.') : tr('Salva i post o aprili nell’app. Collegando Facebook, Instagram o TikTok li pubblichi da qui.', 'Save the posts or open them in the app. Connect Facebook, Instagram or TikTok to publish from here.')}</p>
+      </div>
+      {/* riepilogo degli esiti, con i link ai post */}
+      {results.length > 0 && !anyGoing && (
+        <div className="blur-in rounded-[24px] bg-canvas p-4">
+          <span className="block text-base font-semibold">{tr('Com’è andata', 'How it went')}</span>
+          <ul className="mt-2 space-y-1.5">
+            {results.map(n => { const p = pubs[n]!; return (
+              <li key={n} className="flex min-h-9 items-center gap-2 text-sm">
+                <NetIcon id={n} size={16} /> <span className="font-semibold">{netOf(n).label}</span>
+                <span className={`flex-1 ${p.state === 'error' ? 'text-red-700' : 'text-muted'}`}>{p.state === 'done' ? (n === 'tiktok' ? tr('inviato all’app', 'sent to the app') : tr('pubblicato', 'published')) : p.state === 'scheduled' && p.post ? tr(`programmato, ${fmtWhen(p.post.scheduledAt)}`, `scheduled, ${fmtWhen(p.post.scheduledAt)}`) : p.state === 'error' ? tr('non pubblicato', 'not published') : tr('in coda', 'queued')}</span>
+                {p.state === 'done' && p.post?.link && <a href={p.post.link} target="_blank" rel="noopener" className="flex h-9 items-center gap-1 rounded-full px-3 font-semibold text-brand hover:bg-white">{tr('Vedi', 'View')} <ExternalLink size={13} /></a>}
+              </li>
+            ); })}
+          </ul>
+        </div>
+      )}
+      {nets.map(pubCard)}
+      {connErr && <p className="text-sm text-red-600">{connErr}</p>}
+      <p className="min-h-5 text-sm text-muted" aria-live="polite">{note}</p>
+    </div>
+  );
+  // "No": niente video. Con il passo Pubblica si va li'; senza, si scaricano subito le foto (come il bottone Salva)
+  const sayNo = () => { setWantAnim(false); setSaidNo(true); if (pub) autoNext(); else if (ready && !busy && !animRun) void downloadAll(); };
   const stepVideo = (
     <div className="space-y-5">
       <div className="space-y-4">
         <h3 className="text-center font-display text-lg font-semibold">{tr('Vuoi anche un video?', 'Do you want a video too?')}</h3>
         <div role="radiogroup" aria-label={tr('Video', 'Video')} className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
           {animOk && bigChoice(0, wantAnim, thumbImg(`${H}fan-1.webp`, corner('bg-brand', <Play size={12} fill="currentColor" />)), sceneAnim, tr('Gratis, la tua grafica si muove', 'Free, your design moves'), tr('Post animato', 'Animated post'), sayAnim, undefined, 'sm:h-[20rem]', true)}
-          {bigChoice(animOk ? 1 : 0, !wantAnim && saidNo, thumbImg(`${H}fan-2.webp`, corner('bg-ink', <Download size={14} />)), sceneSave, tr('No video, le scarichi subito', 'No video, download them now'), tr('Solo foto', 'Photos only'), sayNo, undefined, 'sm:h-[20rem]', true, busy === 'all')}
+          {bigChoice(animOk ? 1 : 0, !wantAnim && saidNo, thumbImg(`${H}fan-2.webp`, corner('bg-ink', <Download size={14} />)), sceneSave, pub ? tr('Niente video, solo le foto', 'No video, just the photos') : tr('No video, le scarichi subito', 'No video, download them now'), tr('Solo foto', 'Photos only'), sayNo, undefined, 'sm:h-[20rem]', true, !pub && busy === 'all')}
         </div>
       </div>
       {wantAnim && stepAnim}
@@ -1456,10 +1679,10 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
   );
 
   // piede dell'ultimo passo: un solo bottone scuro. "Crea il post animato" finche' (voluto) manca per qualche social, poi "Salva tutto"
-  const last = stepIx === S.video;
-  const withPreview = stepIx >= S.foto; // anteprima del post solo dal passo Foto in poi
-  const animFirst = last && wantAnim && (!!animRun || nets.some(n => !animOf(n)));
+  const last = stepIx === (pub ? S.pubblica : S.video);
   const shareLabel = tr(`Pubblica su ${net.label}`, `Post on ${net.label}`);
+  const withPreview = stepIx >= S.foto && stepIx < S.pubblica; // anteprima grande dal passo Foto al Video (Pubblica ha le sue card)
+  const animFirst = stepIx === S.video && wantAnim && (!!animRun || nets.some(n => !animOf(n)));
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 sm:p-4" onClick={onClose}>
@@ -1470,17 +1693,17 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             {phoneUi && stepIx > 0 && <button type="button" onClick={() => goStep(stepIx - 1)} aria-label={tr('Indietro', 'Back')} className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><ArrowLeft size={18} /></button>}{/* telefono: Indietro sempre in alto a sinistra */}
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-lg font-bold tracking-tight sm:text-xl">{tr('Condividi sui social', 'Share on social media')}</h2>
-              {phoneUi && <p className="text-sm font-semibold text-muted">{tr(`Passo ${stepIx + 1} di ${STEPS.length}, ${STEPS[stepIx][0]}`, `Step ${stepIx + 1} of ${STEPS.length}, ${STEPS[stepIx][1]}`)}</p>}
+              {phoneUi && <p className="text-sm font-semibold text-muted">{tr(`Passo ${stepIx + 1} di ${steps.length}, ${steps[stepIx][0]}`, `Step ${stepIx + 1} of ${steps.length}, ${steps[stepIx][1]}`)}</p>}
             </div>
             <button type="button" onClick={onClose} aria-label={tr('Chiudi', 'Close')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-canvas text-ink/70 hover:text-ink"><X size={18} /></button>
           </div>
           {phoneUi ? (
             <div className="mt-3 flex gap-1" aria-hidden>
-              {STEPS.map((_, i) => <span key={i} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i <= stepIx ? 'bg-brand' : 'bg-black/10'}`} />)}
+              {steps.map((_, i) => <span key={i} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i <= stepIx ? 'bg-brand' : 'bg-black/10'}`} />)}
             </div>
           ) : (
-            <nav className="mt-3 grid grid-cols-6 gap-1 rounded-full bg-canvas p-1" aria-label={tr('Passi', 'Steps')}>
-              {STEPS.map(([i1, e1], i) => {
+            <nav className={`mt-3 grid ${pub ? 'grid-cols-7' : 'grid-cols-6'} gap-1 rounded-full bg-canvas p-1`} aria-label={tr('Passi', 'Steps')}>
+              {steps.map(([i1, e1], i) => {
                 const on = i === stepIx, ok = i !== stepIx && i <= reached && stepOk[i] && (firstTodo < 0 || i < firstTodo);
                 return (
                   <button key={i1} type="button" onClick={() => goStep(i)} disabled={!on && !canGo(i)} aria-current={on ? 'step' : undefined} className={`flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full text-sm font-semibold ease-smooth transition-[background-color,color,box-shadow,opacity] disabled:cursor-not-allowed disabled:opacity-50 ${on ? 'bg-white text-ink shadow-sm' : ok ? 'text-ink hover:bg-white/60' : 'text-muted enabled:hover:bg-white/60'}`}>
@@ -1503,7 +1726,7 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
             </div>
           </div>
           <div ref={stepRef} className={`flex min-w-0 flex-1 flex-col px-4 pb-6 pt-3 ease-smooth transition-[padding] motion-reduce:transition-none sm:px-6 lg:overflow-y-auto lg:py-6 lg:pr-8 ${withPreview ? 'lg:pl-2' : 'min-h-full pt-4 lg:pl-8'}`}>
-            <div key={stepIx} className={`blur-in mx-auto w-full ${stepIx === S.cosa ? 'my-auto' : ''} ${withPreview ? 'max-lg:max-w-none lg:max-w-2xl' : 'max-w-2xl'}`}>{[stepCosa, stepDove, stepFoto, stepGrafica, stepTesto, stepVideo][stepIx]}</div>
+            <div key={stepIx} className={`blur-in mx-auto w-full ${stepIx === S.cosa || stepIx === S.pubblica ? 'my-auto' : ''} ${withPreview ? 'max-lg:max-w-none lg:max-w-2xl' : 'max-w-2xl'}`}>{[stepCosa, stepDove, stepFoto, stepGrafica, stepTesto, stepVideo, stepPubblica][stepIx]}</div>
           </div>
         </div>
 
@@ -1512,21 +1735,37 @@ function SocialShare({ project, photos: srcs, onClose }: { project: ProjectData;
           <button type="button" onClick={() => goStep(Math.max(0, stepIx - 1))} disabled={!stepIx} aria-label={tr('Indietro', 'Back')} className={`${btn} shrink-0 px-4 text-ink hover:bg-canvas disabled:invisible ${phoneUi ? 'hidden' : ''}`}><ArrowLeft size={18} /> <span className="hidden sm:inline">{tr('Indietro', 'Back')}</span></button>
           {!last ? (
             <div className={`flex min-w-0 flex-1 flex-col gap-1 ${phoneUi ? 'items-stretch' : 'items-end'}`}>
-              {/* finche' manca qualcosa il bottone dice cosa (spento ma leggibile), poi torna "Avanti" e la larghezza segue il testo */}
-              <GrowButton type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'}
-                className={`${btn} min-w-[160px] text-base ${phoneUi ? 'w-full justify-center' : ''} ${!canNext && ctaTodo ? 'bg-canvas text-ink/70 ring-1 ring-black/10 disabled:opacity-100' : 'bg-ink text-white enabled:hover:bg-brand disabled:opacity-40'}`}>
-                {!canNext && ctaTodo ? <span key={ctaTodo} className="blur-in">{ctaTodo}</span> : <>{tr('Avanti', 'Next')} <ArrowRight size={18} /></>}
-              </GrowButton>
+              {animFirst ? (
+                // passo Video, post animato voluto: prima si crea (poi torna "Avanti" verso Pubblica)
+                <button type="button" onClick={() => void makeAnim()} disabled={!ready || !allReady || !!animRun || !!busy} className={`${btn} min-w-[160px] bg-ink px-5 text-white hover:bg-brand ${phoneUi ? 'w-full justify-center' : ''}`}>{animRun ? <Loader2 size={16} className="animate-spin" /> : <Clapperboard size={16} />} <span className="truncate tabular-nums">{animRun ? tr(`Creo il post animato ${Math.round(animRun.p * 100)}%`, `Making the animated post ${Math.round(animRun.p * 100)}%`) : tr('Crea il post animato', 'Make the animated post')}</span></button>
+              ) : (
+                // finche' manca qualcosa il bottone dice cosa (spento ma leggibile), poi torna "Avanti" e la larghezza segue il testo
+                <GrowButton type="button" onClick={() => goStep(stepIx + 1)} disabled={!canNext} aria-describedby={canNext ? undefined : 'social-missing'}
+                  className={`${btn} min-w-[160px] text-base ${phoneUi ? 'w-full justify-center' : ''} ${!canNext && ctaTodo ? 'bg-canvas text-ink/70 ring-1 ring-black/10 disabled:opacity-100' : 'bg-ink text-white enabled:hover:bg-brand disabled:opacity-40'}`}>
+                  {!canNext && ctaTodo ? <span key={ctaTodo} className="blur-in">{ctaTodo}</span> : <>{tr('Avanti', 'Next')} <ArrowRight size={18} /></>}
+                </GrowButton>
+              )}
               {!canNext && <span id="social-missing" className="sr-only">{missing}</span>}
             </div>
-          ) : (
-            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row-reverse sm:justify-start">{/* in ordine: Salva (o Crea il post animato), Pubblica, Ho finito */}
+          ) : !pub ? (
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row-reverse sm:justify-start">{/* senza pubblicazione diretta, in ordine: Salva (o Crea il post animato), Pubblica, Ho finito */}
               {animFirst ? (
                 <button type="button" onClick={() => void makeAnim()} disabled={!ready || !allReady || !!animRun || !!busy} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>{animRun ? <Loader2 size={16} className="animate-spin" /> : <Clapperboard size={16} />} <span className="truncate tabular-nums">{animRun ? tr(`Creo il post animato ${Math.round(animRun.p * 100)}%`, `Making the animated post ${Math.round(animRun.p * 100)}%`) : tr('Crea il post animato', 'Make the animated post')}</span></button>
               ) : (
                 <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} <span className="truncate">{saveLabel}</span></button>
               )}
               {canPublish && <button type="button" onClick={() => void share()} disabled={!allReady || !!busy || !!animRun} className={`${btn} min-w-0 bg-canvas px-5 text-ink hover:bg-line`}>{busy === 'share' ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />} <span className="truncate">{shareLabel}</span></button>}
+              <button type="button" onClick={onClose} className={`${btn} min-w-0 px-5 text-muted hover:bg-canvas hover:text-ink`}>{tr('Ho finito', 'Done')}</button>
+            </div>
+          ) : (
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row-reverse sm:justify-start">{/* in ordine: Pubblica tutto ora (o Salva tutto), Salva tutto, Ho finito */}
+              {targets.length > 0 || anyGoing ? (
+                <button type="button" onClick={() => void publishAll()} disabled={!allReady || !!busy || anyGoing || !targets.length} className={`${btn} min-w-0 bg-ink px-5 text-white hover:bg-brand`}>
+                  {anyGoing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
+                  <span className="truncate">{anyGoing ? tr('Sto pubblicando', 'Publishing') : targets.length === 1 ? tr(`Pubblica ora su ${netOf(targets[0]).label}`, `Post now on ${netOf(targets[0]).label}`) : tr('Pubblica tutto ora', 'Post everything now')}</span>
+                </button>
+              ) : null}
+              <button type="button" onClick={() => void downloadAll()} disabled={!ready || !!busy} className={`${btn} min-w-0 px-5 ${targets.length > 0 || anyGoing ? 'bg-canvas text-ink hover:bg-line' : 'bg-ink text-white hover:bg-brand'}`}>{busy === 'all' ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} <span className="truncate">{saveLabel}</span></button>
               <button type="button" onClick={onClose} className={`${btn} min-w-0 px-5 text-muted hover:bg-canvas hover:text-ink`}>{tr('Ho finito', 'Done')}</button>
             </div>
           )}

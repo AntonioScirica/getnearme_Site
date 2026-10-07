@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { locales, type Locale } from "@/lib/i18n";
 import Navbar from "@/components/Navbar";
 import PagePicker from "@/components/PagePicker";
+import SocialSignal from "@/components/SocialSignal";
 import { CheckCircle, XCircle } from "lucide-react";
 
 type Props = {
@@ -42,25 +43,25 @@ const content: Record<Locale, {
   it: {
     success: {
       title: "Account collegato!",
-      desc: "Puoi chiudere questa pagina e tornare all'estensione Agente Immo.",
+      desc: "Puoi chiudere questa finestra e tornare ad Agente Immo.",
       close: "Chiudi questa pagina",
     },
     error: {
       title: "Connessione non riuscita",
-      desc: "Si è verificato un errore durante il collegamento. Riprova dall'estensione.",
+      desc: "Il collegamento non è riuscito. Torna ad Agente Immo, nel Profilo, e premi di nuovo Collega.",
       retry: "Chiudi e riprova",
     },
-    igMissing: "Instagram Business non trovato. Assicurati di aver convertito il tuo profilo in Business e collegato una Pagina Facebook.",
+    igMissing: "Facebook è collegato, Instagram no: serve un profilo Instagram aziendale collegato alla tua Pagina Facebook. Fallo dall'app Instagram (Impostazioni, Tipo di account) e poi premi di nuovo Collega.",
   },
   en: {
     success: {
       title: "Account connected!",
-      desc: "You can close this page and return to the Agente Immo extension.",
+      desc: "You can close this window and go back to Agente Immo.",
       close: "Close this page",
     },
     error: {
       title: "Connection failed",
-      desc: "An error occurred during the connection. Please try again from the extension.",
+      desc: "The connection did not work. Go back to Agente Immo, Profile, and press Connect again.",
       retry: "Close and retry",
     },
     igMissing: "Instagram Business not found. Make sure you converted your profile to Business and linked a Facebook Page.",
@@ -141,6 +142,7 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
           ) : (
             /* ── Success / Error mode ── */
             <>
+              {success && <SocialSignal />}
               <div className="mb-4 flex justify-center">
                 {success ? (
                   <CheckCircle className="w-14 h-14 text-green-500" />
@@ -170,7 +172,7 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
               )}
 
               <a
-                href="https://agenteimmo.me"
+                href={`/${locale}/dashboard#/profilo`}
                 className="mt-6 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
               >
                 {success ? t.success.close : t.error.retry}
