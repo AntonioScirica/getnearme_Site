@@ -27,7 +27,7 @@ import { countChars, ruleOf } from '@/lib/socialRules';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { authFetch, portfolioUrl } from './api';
 import { pageLang, pageLocale, tr } from './i18n';
-import { connect, createPost, friendlyError, listPosts, needsReconnect, PublishError, socialCaps, usable, useSocialAccounts, useSocialPublish, type SocialCaps, type SocialNet, type SocialPost } from './socialApi';
+import { connect, createPost, friendlyError, listPosts, needsReconnect, PublishError, socialCaps, tiktokCreator, usable, useSocialAccounts, useSocialPublish, type SocialCaps, type SocialNet, type SocialPost, type TikTokCreator, type TikTokPrivacy } from './socialApi';
 
 type Safe = { top: number; bottom: number; left: number; right: number };
 type Size = { w: number; h: number; safe: Safe };
@@ -940,6 +940,17 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
     return b ? new File([b], f.name.replace(/\.png$/, '.jpg'), { type: 'image/jpeg' }) : f;
   };
   const setPub = (n: NetId, p: Pub | undefined) => setPubs(o => ({ ...o, [n]: p }));
+  // TikTok Direct Post (07/10/2026): schermata "Pubblica su TikTok" secondo le regole TikTok (Content Sharing Guidelines).
+  // Account del creator chiesto a ogni apertura del passo Pubblica; privacy SENZA valore preimpostato; commenti, duetti e
+  // stitch spenti finche' l'agente non li accende (grigi se il creator li ha disattivati); dichiarazione dei contenuti
+  // commerciali spenta; frase di consenso sopra i bottoni. Senza tiktokDirect (vecchia publish-due-posts): bozza nella casella.
+  const ttDirect = !!caps?.tiktokDirect && linked('tiktok');
+  const [tt, setTt] = useState<TikTokCreator | null>(null);
+  const [ttc, setTtc] = useState<{ privacy: TikTokPrivacy | ''; comment: boolean; duet: boolean; stitch: boolean; disclose: boolean; brandOrganic: boolean; brandContent: boolean }>({ privacy: '', comment: false, duet: false, stitch: false, disclose: false, brandOrganic: false, brandContent: false });
+  useEffect(() => { if (stepIx === S.pubblica && ttDirect && nets.includes('tiktok')) { setTt(null); void tiktokCreator().then(setTt); } }, [stepIx, ttDirect]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ttVideoLong = !!videoFor('tiktok') && !!tt?.maxVideoSec && tt.maxVideoSec < 15; // il post animato dura 15 s
+  const ttOk = !!tt?.ok && !!ttc.privacy && (!ttc.disclose || ttc.brandOrganic || ttc.brandContent) && !ttVideoLong;
+  const ttChoice = () => (ttc.privacy ? { privacy: ttc.privacy, comment: ttc.comment, duet: ttc.duet, stitch: ttc.stitch, brandOrganic: ttc.disclose && ttc.brandOrganic, brandContent: ttc.disclose && ttc.brandContent } : undefined);
   // dopo "ora": si guarda la coda ogni 4 s finche' il post esce (o va male); oltre 4 minuti si dice di guardare l'elenco
   const follow = async (n: NetId, id: string) => {
     const t0 = Date.now();
@@ -963,7 +974,7 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
     try {
       const a = videoFor(n);
       const files = a ? [a.file] : await Promise.all((await getFiles(n)).map(jpeg));
-      const post = await createPost({ net: n, files, mediaType: a ? 'video' : 'image', format: pubFormat(n, !!a), caption: texts[tk(n)] ?? '', at, project: project.id });
+      const post = await createPost({ net: n, files, mediaType: a ? 'video' : 'image', format: pubFormat(n, !!a), caption: texts[tk(n)] ?? '', at, project: project.id, tiktok: n === 'tiktok' && ttDirect ? ttChoice() : undefined });
       console.info('[social] in coda', n, at ? 'programmato' : 'ora', files.length, a ? 'video' : 'foto');
       onPosted?.();
       if (at) { setPub(n, { state: 'scheduled', post }); return; }
@@ -1546,7 +1557,7 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
   const [schedFor, setSchedFor] = useState<NetId | null>(null);
   const field = 'h-14 w-full rounded-full bg-white px-5 text-base text-ink outline-none ring-1 ring-black/10 ease-smooth transition-shadow focus:ring-2 focus:ring-brand';
   const pending = (n: NetId) => { const st = pubs[n]?.state; return !st || st === 'error'; };
-  const targets = directNets.filter(n => linked(n) && !notYet(n) && pending(n)); // pronti per "Pubblica tutto ora"
+  const targets = directNets.filter(n => linked(n) && !notYet(n) && pending(n) && (n !== 'tiktok' || !ttDirect || ttOk)); // pronti per "Pubblica tutto ora"
   const anyGoing = directNets.some(n => pubs[n]?.state === 'sending' || pubs[n]?.state === 'publishing');
   const publishAll = async () => { setSchedFor(null); for (const n of targets) await publish(n, null); };
   // miniature dei post (prima slide di ogni social), fatte una volta entrando nel passo
@@ -1568,13 +1579,79 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
   const sub = (n: NetId) => {
     const p = pubs[n], N = netOf(n);
     if (!p) return null;
-    if (p.state === 'done') return <p className="blur-in mt-3 flex items-center gap-1.5 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} className="shrink-0" /> {n === 'tiktok' ? tr('Inviato a TikTok: apri l’app e conferma il post.', 'Sent to TikTok: open the app and confirm the post.') : tr(`Pubblicato su ${N.label}`, `Published on ${N.label}`)}</p>;
+    if (p.state === 'done') return <p className="blur-in mt-3 flex items-center gap-1.5 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} className="shrink-0" /> {n === 'tiktok' && !ttDirect ? tr('Inviato a TikTok: apri l’app e conferma il post.', 'Sent to TikTok: open the app and confirm the post.') : tr(`Pubblicato su ${N.label}`, `Published on ${N.label}`)}{n === 'tiktok' && ttDirect && <span className="block font-normal text-muted">{tr('TikTok può metterci qualche minuto a elaborarlo e a mostrarlo sul tuo profilo.', 'It may take a few minutes for TikTok to process it and show it on your profile.')}</span>}</p>;
     if (p.state === 'scheduled' && p.post) return <p className="blur-in mt-3 flex items-start gap-1.5 text-sm font-semibold text-ink"><CalendarClock size={16} className="mt-0.5 shrink-0 text-brand" /> <span>{tr(`Programmato per ${fmtWhen(p.post.scheduledAt)}`, `Scheduled for ${fmtWhen(p.post.scheduledAt)}`)}<span className="block font-normal text-muted">{tr('Puoi annullarlo dalla scheda dell’immobile.', 'You can cancel it from the property page.')}</span></span></p>;
     if (p.state === 'error') return <p className="blur-in mt-3 flex items-start gap-1.5 text-sm text-red-700"><AlertCircle size={16} className="mt-0.5 shrink-0" /> <span><span className="block font-semibold">{tr('Non pubblicato', 'Not published')}</span>{p.msg}</span></p>;
     if (p.state === 'slow') return <p className="mt-3 text-sm text-ink">{tr(`${N.label} ci mette più del solito. Il post è in coda: l’esito lo trovi nella scheda dell’immobile.`, `${N.label} is slower than usual. The post is queued: you will find the result on the property page.`)}</p>;
     return <p className="mt-3 flex items-center gap-1.5 text-sm text-ink"><Loader2 size={16} className="shrink-0 animate-spin text-brand" /> {p.state === 'sending' ? tr('Preparo il post', 'Preparing the post') : tr('Sto pubblicando, ci vuole un minuto o due', 'Publishing, it takes a minute or two')}</p>;
   };
   const ghost = 'flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors disabled:opacity-50';
+  const ttPrivacyLabel: Record<TikTokPrivacy, string> = { PUBLIC_TO_EVERYONE: tr('Tutti', 'Everyone'), MUTUAL_FOLLOW_FRIENDS: tr('Amici', 'Friends'), FOLLOWER_OF_CREATOR: tr('Follower', 'Followers'), SELF_ONLY: tr('Solo io', 'Only me') };
+  const ttMsg = (code: string) => /spam_risk|reached_active_user_cap|too_many/.test(code) ? tr('TikTok per oggi non ti fa pubblicare altro da qui. Riprova più tardi.', 'TikTok does not let you post more from here right now. Try again later.')
+    : tr('Non riesco a leggere il tuo account TikTok. Collega di nuovo TikTok dal Profilo.', 'I cannot read your TikTok account. Connect TikTok again from Profile.');
+  const ttCheck = (on: boolean, label: string, onChange: (v: boolean) => void, off = false, hint = '') => (
+    <label className={`flex min-h-10 items-center gap-2.5 text-sm ${off ? 'text-muted' : 'text-ink'}`} title={hint || undefined}>
+      <input type="checkbox" checked={on && !off} disabled={off} onChange={e => onChange(e.target.checked)} className="size-5 accent-[var(--brand,#2563eb)]" />
+      <span>{label}{hint && <span className="block text-xs text-muted">{hint}</span>}</span>
+    </label>
+  );
+  const ttPanel = (() => {
+    if (!tt) return <p className="mt-3 flex items-center gap-1.5 text-sm text-muted"><Loader2 size={15} className="animate-spin" /> {tr('Leggo il tuo account TikTok', 'Reading your TikTok account')}</p>;
+    if (!tt.ok) return <p className="mt-3 flex items-start gap-1.5 text-sm text-red-700"><AlertCircle size={16} className="mt-0.5 shrink-0" /> {ttMsg(tt.code)}</p>;
+    const photo = !videoFor('tiktok'), k = tk('tiktok'), brandPrivate = ttc.privacy === 'SELF_ONLY';
+    const label = ttc.brandContent ? tr('Il tuo post avrà l’etichetta "Partnership retribuita"', 'Your photo/video will be labeled as \'Paid partnership\'')
+      : ttc.brandOrganic ? tr('Il tuo post avrà l’etichetta "Contenuto promozionale"', 'Your photo/video will be labeled as \'Promotional content\'') : '';
+    const link = (href: string, t: string) => <a href={href} target="_blank" rel="noopener" className="font-semibold text-brand underline-offset-2 hover:underline">{t}</a>;
+    const music = link('https://www.tiktok.com/legal/page/global/music-usage-confirmation/en', tr('Conferma di utilizzo della musica', 'Music Usage Confirmation'));
+    return (
+      <div className="blur-in mt-3 space-y-3 rounded-[24px] bg-canvas p-4">
+        {/* account su cui esce il post */}
+        <div className="flex items-center gap-2.5">
+          {tt.avatar ? <img src={tt.avatar} alt="" className="size-9 rounded-full object-cover" /> : <span className="flex size-9 items-center justify-center rounded-full bg-white"><Music2 size={16} /></span>}
+          <span className="min-w-0 text-sm"><span className="block truncate font-semibold">{tt.nickname || tt.username}</span><span className="block truncate text-muted">{tr('Il post esce su questo account TikTok', 'The post goes to this TikTok account')}{tt.username ? `, @${tt.username}` : ''}</span></span>
+        </div>
+        <label className="block">
+          <span className="mb-1 block px-1 text-sm font-semibold">{tr('Testo del post', 'Post text')}</span>
+          <textarea value={texts[k] ?? ''} onChange={e => setTexts(o => ({ ...o, [k]: e.target.value }))} rows={3} maxLength={photo ? 4000 : 2200} className="w-full resize-y rounded-[20px] bg-white px-4 py-3 text-sm text-ink outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-brand" />
+        </label>
+        <label className="block">
+          <span className="mb-1 block px-1 text-sm font-semibold">{tr('Chi può vederlo', 'Who can see this post')}</span>
+          <select value={ttc.privacy} onChange={e => setTtc(o => ({ ...o, privacy: e.target.value as TikTokPrivacy }))} className="h-12 w-full rounded-full bg-white px-4 text-sm text-ink outline-none ring-1 ring-black/10 focus:ring-2 focus:ring-brand">
+            <option value="" disabled>{tr('Scegli', 'Choose')}</option>
+            {(tt.privacy ?? []).map(v => <option key={v} value={v} disabled={v === 'SELF_ONLY' && ttc.disclose && ttc.brandContent} title={v === 'SELF_ONLY' && ttc.disclose && ttc.brandContent ? tr('I contenuti sponsorizzati non possono essere privati.', 'Branded content visibility cannot be set to private.') : undefined}>{ttPrivacyLabel[v] ?? v}</option>)}
+          </select>
+        </label>
+        <div>
+          <span className="block px-1 text-sm font-semibold">{tr('Cosa possono fare gli altri', 'Allow users to')}</span>
+          <div className="mt-1 flex flex-wrap gap-x-5 px-1">
+            {ttCheck(ttc.comment, tr('Commentare', 'Comment'), v => setTtc(o => ({ ...o, comment: v })), !!tt.commentOff)}
+            {!photo && ttCheck(ttc.duet, 'Duet', v => setTtc(o => ({ ...o, duet: v })), !!tt.duetOff)}
+            {!photo && ttCheck(ttc.stitch, 'Stitch', v => setTtc(o => ({ ...o, stitch: v })), !!tt.stitchOff)}
+          </div>
+        </div>
+        <div className="rounded-[20px] bg-white p-3">
+          <label className="flex min-h-10 items-center justify-between gap-3 text-sm">
+            <span><span className="block font-semibold">{tr('Dichiara contenuto commerciale', 'Disclose video content')}</span><span className="block text-muted">{tr('Se il post promuove te, la tua agenzia o un altro marchio', 'If this post promotes you, your business or another brand')}</span></span>
+            <input type="checkbox" role="switch" checked={ttc.disclose} onChange={e => setTtc(o => ({ ...o, disclose: e.target.checked, brandOrganic: false, brandContent: false }))} className="size-5 shrink-0 accent-[var(--brand,#2563eb)]" />
+          </label>
+          {ttc.disclose && (
+            <div className="mt-1 border-t border-line pt-1">
+              {ttCheck(ttc.brandOrganic, tr('Il tuo marchio: promuovi te stesso o la tua attività', 'Your brand: you are promoting yourself or your own business'), v => setTtc(o => ({ ...o, brandOrganic: v })))}
+              {ttCheck(ttc.brandContent, tr('Contenuto sponsorizzato: promuovi un altro marchio', 'Branded content: you are promoting another brand or a third party'), v => setTtc(o => ({ ...o, brandContent: v })), brandPrivate, brandPrivate ? tr('I contenuti sponsorizzati non possono essere privati.', 'Visibility for branded content can\'t be private.') : '')}
+              {label ? <p className="px-1 pt-1 text-sm text-ink">{label}</p> : <p className="px-1 pt-1 text-sm text-red-700">{tr('Scegli almeno una delle due voci.', 'Choose at least one option.')}</p>}
+            </div>
+          )}
+        </div>
+        {ttVideoLong && <p className="text-sm text-red-700">{tr(`Il tuo account TikTok accetta video fino a ${tt.maxVideoSec} secondi. Pubblica le foto.`, `Your TikTok account accepts videos up to ${tt.maxVideoSec} seconds. Post the photos.`)}</p>}
+        <p className="px-1 text-sm text-muted">
+          {ttc.disclose && ttc.brandContent
+            ? <>{tr('Pubblicando accetti la ', 'By posting, you agree to TikTok\'s ')}{link('https://www.tiktok.com/legal/page/global/bc-policy/en', tr('Policy sui contenuti sponsorizzati', 'Branded Content Policy'))}{tr(' e la ', ' and ')}{music}{tr(' di TikTok.', '.')}</>
+            : <>{tr('Pubblicando accetti la ', 'By posting, you agree to TikTok\'s ')}{music}{tr(' di TikTok.', '.')}</>}
+        </p>
+        {!ttc.privacy && <p className="px-1 text-sm text-ink">{tr('Scegli chi può vederlo per pubblicare.', 'Choose who can see this post to publish.')}</p>}
+      </div>
+    );
+  })();
   const pubCard = (n: NetId, i: number) => {
     const N = netOf(n), direct = isDirect(n), acc = direct ? byNet(n) : null, on = linked(n), why = on ? notYet(n) : '', p = pubs[n];
     const going = p?.state === 'sending' || p?.state === 'publishing', v = videoFor(n), mini = minis[n] ?? null, t = texts[tk(n)] ?? '';
@@ -1600,6 +1677,7 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
         </div>
         {direct && on && sub(n)}
         {direct && on && why && <p className="mt-3 text-sm leading-relaxed text-muted">{why}</p>}
+        {n === 'tiktok' && ttDirect && on && !why && !finished && ttPanel}
         {direct && on && !why && !finished && !going && (schedFor === n ? (
           <div className="blur-in mt-3 space-y-3 rounded-[24px] bg-canvas p-3">
             <span className="block px-1 text-sm font-semibold">{tr(`Quando lo pubblico su ${N.label}?`, `When should I post it on ${N.label}?`)}</span>
@@ -1608,15 +1686,15 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
               <label className="block"><span className="mb-1 block px-1 text-sm text-muted">{tr('Ora', 'Time')}</span><input type="time" value={sched.time} step={300} onChange={e => setSched(o => ({ ...o, time: e.target.value }))} className={field} /></label>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => { const d = schedAt(); if (d) { setSchedFor(null); void publish(n, d); } }} disabled={!allReady || !!busy || !schedAt()} className={`${ghost} bg-white text-ink shadow-sm ring-1 ring-black/10 hover:bg-line`}><CalendarClock size={15} /> {schedAt() ? tr(`Programma per ${fmtWhen(schedAt()!.toISOString())}`, `Schedule for ${fmtWhen(schedAt()!.toISOString())}`) : tr('Programma', 'Schedule')}</button>
+              <button type="button" onClick={() => { const d = schedAt(); if (d) { setSchedFor(null); void publish(n, d); } }} disabled={!allReady || !!busy || !schedAt() || (n === 'tiktok' && ttDirect && !ttOk)} className={`${ghost} bg-white text-ink shadow-sm ring-1 ring-black/10 hover:bg-line`}><CalendarClock size={15} /> {schedAt() ? tr(`Programma per ${fmtWhen(schedAt()!.toISOString())}`, `Schedule for ${fmtWhen(schedAt()!.toISOString())}`) : tr('Programma', 'Schedule')}</button>
               <button type="button" onClick={() => setSchedFor(null)} className={`${ghost} text-muted hover:bg-white hover:text-ink`}>{tr('Lascia stare', 'Never mind')}</button>
             </div>
           </div>
         ) : (
           <div className="mt-3 flex flex-wrap gap-2">
             {p?.reconnect && <button type="button" onClick={() => { setPub(n, undefined); doConnect(n as SocialNet); }} className={`${ghost} bg-canvas text-ink hover:bg-line`}><Plug size={15} /> {tr(`Collega di nuovo ${N.label}`, `Reconnect ${N.label}`)}</button>}
-            {!p?.reconnect && <button type="button" onClick={() => void publish(n, null)} disabled={!allReady || !!busy || anyGoing} className={`${ghost} bg-canvas text-ink hover:bg-line`}>{p?.state === 'error' ? <RotateCcw size={15} /> : <Share2 size={15} />} {p?.state === 'error' ? tr('Riprova', 'Try again') : tr('Pubblica ora', 'Post now')}</button>}
-            <button type="button" onClick={() => setSchedFor(n)} disabled={!allReady || !!busy || anyGoing} className={`${ghost} text-ink ring-1 ring-black/10 hover:bg-canvas`}><CalendarClock size={15} /> {tr('Programma', 'Schedule')}</button>
+            {!p?.reconnect && <button type="button" onClick={() => void publish(n, null)} disabled={!allReady || !!busy || anyGoing || (n === 'tiktok' && ttDirect && !ttOk)} className={`${ghost} bg-canvas text-ink hover:bg-line`}>{p?.state === 'error' ? <RotateCcw size={15} /> : <Share2 size={15} />} {p?.state === 'error' ? tr('Riprova', 'Try again') : tr('Pubblica ora', 'Post now')}</button>}
+            <button type="button" onClick={() => setSchedFor(n)} disabled={!allReady || !!busy || anyGoing || (n === 'tiktok' && ttDirect && !ttOk)} className={`${ghost} text-ink ring-1 ring-black/10 hover:bg-canvas`}><CalendarClock size={15} /> {tr('Programma', 'Schedule')}</button>
           </div>
         ))}
         {direct && on && p?.state === 'done' && p.post?.link && <a href={p.post.link} target="_blank" rel="noopener" className={`${ghost} mt-2 w-fit bg-canvas text-ink hover:bg-line`}>{tr('Vedi il post', 'View the post')} <ExternalLink size={14} /></a>}
@@ -1646,7 +1724,7 @@ function SocialShare({ project, photos: srcs, onClose, onPosted, social = false 
             {results.map(n => { const p = pubs[n]!; return (
               <li key={n} className="flex min-h-9 items-center gap-2 text-sm">
                 <NetIcon id={n} size={16} /> <span className="font-semibold">{netOf(n).label}</span>
-                <span className={`flex-1 ${p.state === 'error' ? 'text-red-700' : 'text-muted'}`}>{p.state === 'done' ? (n === 'tiktok' ? tr('inviato all’app', 'sent to the app') : tr('pubblicato', 'published')) : p.state === 'scheduled' && p.post ? tr(`programmato, ${fmtWhen(p.post.scheduledAt)}`, `scheduled, ${fmtWhen(p.post.scheduledAt)}`) : p.state === 'error' ? tr('non pubblicato', 'not published') : tr('in coda', 'queued')}</span>
+                <span className={`flex-1 ${p.state === 'error' ? 'text-red-700' : 'text-muted'}`}>{p.state === 'done' ? (n === 'tiktok' && !ttDirect ? tr('inviato all’app', 'sent to the app') : tr('pubblicato', 'published')) : p.state === 'scheduled' && p.post ? tr(`programmato, ${fmtWhen(p.post.scheduledAt)}`, `scheduled, ${fmtWhen(p.post.scheduledAt)}`) : p.state === 'error' ? tr('non pubblicato', 'not published') : tr('in coda', 'queued')}</span>
                 {p.state === 'done' && p.post?.link && <a href={p.post.link} target="_blank" rel="noopener" className="flex h-9 items-center gap-1 rounded-full px-3 font-semibold text-brand hover:bg-white">{tr('Vedi', 'View')} <ExternalLink size={13} /></a>}
               </li>
             ); })}

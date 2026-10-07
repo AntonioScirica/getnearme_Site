@@ -16,7 +16,7 @@ export type SocialPost = {
   scheduledAt: string; publishedAt: string | null; mediaType: 'image' | 'video'; format: string; carousel: boolean; count: number;
   link: string | null; error: string | null; retrying: boolean;
 };
-export type SocialCaps = { carousel: boolean; fbStory: boolean; tiktokPhoto: boolean };
+export type SocialCaps = { carousel: boolean; fbStory: boolean; tiktokPhoto: boolean; tiktokDirect: boolean };
 export const NET_LABEL: Record<SocialNet, string> = { facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok' };
 
 const FN = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
@@ -115,7 +115,7 @@ export const disconnect = (net: SocialNet) => fn('social-disconnect', { method: 
 export async function socialCaps(): Promise<SocialCaps> {
   const r = await authFetch('/api/platform/social-posts?caps=1').catch(() => null);
   const j = r?.ok ? await r.json().catch(() => null) : null;
-  return j?.caps ?? { carousel: false, fbStory: false, tiktokPhoto: false };
+  return j?.caps ?? { carousel: false, fbStory: false, tiktokPhoto: false, tiktokDirect: false };
 }
 export async function listPosts(q: { project?: string; ids?: string[] }) {
   const sp = new URLSearchParams();
@@ -130,7 +130,7 @@ export async function cancelPost(id: string) {
   return r.ok;
 }
 // carica i file (cartella privata dell'utente) e mette il post in coda: at null = adesso
-export async function createPost(o: { net: SocialNet; files: File[]; mediaType: 'image' | 'video'; format: 'feed' | 'square' | 'story' | 'reel'; caption: string; at: Date | null; project: string }) {
+export async function createPost(o: { net: SocialNet; files: File[]; mediaType: 'image' | 'video'; format: 'feed' | 'square' | 'story' | 'reel'; caption: string; at: Date | null; project: string; tiktok?: TikTokChoice }) {
   const up = await authFetch('/api/platform/social-posts', { method: 'POST', body: JSON.stringify({ mode: 'upload', mimes: o.files.map(f => f.type || 'image/png') }) });
   const uj = await up.json().catch(() => ({}));
   if (!up.ok) throw new PublishError(uj.error || 'upload');
@@ -142,13 +142,19 @@ export async function createPost(o: { net: SocialNet; files: File[]; mediaType: 
   }
   const r = await authFetch('/api/platform/social-posts', { method: 'POST', body: JSON.stringify({
     mode: 'create', net: o.net, mediaType: o.mediaType, mime: o.files[0]?.type, format: o.format, paths, caption: o.caption, project: o.project,
-    at: o.at ? o.at.toISOString() : null, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome',
+    tiktok: o.tiktok, at: o.at ? o.at.toISOString() : null, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome',
   }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new PublishError(j.error || 'create');
   return j.post as SocialPost;
 }
 export class PublishError extends Error {}
+
+// TikTok Direct Post (07/10/2026): dati del creator chiesti ogni volta che si apre la schermata (regole TikTok)
+export type TikTokPrivacy = 'PUBLIC_TO_EVERYONE' | 'MUTUAL_FOLLOW_FRIENDS' | 'FOLLOWER_OF_CREATOR' | 'SELF_ONLY';
+export type TikTokCreator = { ok: boolean; code: string; nickname?: string; username?: string; avatar?: string | null; privacy?: TikTokPrivacy[]; commentOff?: boolean; duetOff?: boolean; stitchOff?: boolean; maxVideoSec?: number | null };
+export type TikTokChoice = { privacy: TikTokPrivacy; comment: boolean; duet: boolean; stitch: boolean; brandOrganic: boolean; brandContent: boolean };
+export const tiktokCreator = (): Promise<TikTokCreator> => fn('tiktok-creator-info', { method: 'POST', body: '{}' }).catch(() => ({ ok: false, code: 'network' }));
 
 // collegamento scaduto o permessi tolti: serve ricollegare, riprovare non basta
 export const needsReconnect = (code: string) => code === 'expired' || code === 'not_connected' || /"code":\s*(190|10|200)\b|oauthexception|session has expired|token.*(expired|invalid)|token_expired|access_token_invalid|permission/i.test(code);

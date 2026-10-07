@@ -27,13 +27,13 @@ const hidden = () => NextResponse.json({ error: 'not_found' }, { status: 404 })
 
 // Cosa sa fare la publish-due-posts pubblicata: la versione nuova risponde a GET ?caps=1 (caroselli, storie Facebook, foto
 // TikTok); quella vecchia risponde 403 e allora si pubblicano solo foto singole e video. Si riguarda ogni 10 minuti.
-type Caps = { carousel: boolean; fbStory: boolean; tiktokPhoto: boolean }
+type Caps = { carousel: boolean; fbStory: boolean; tiktokPhoto: boolean; tiktokDirect: boolean }
 let capsCache: { at: number; caps: Caps } | null = null
 async function caps(): Promise<Caps> {
   if (capsCache && Date.now() - capsCache.at < 600_000) return capsCache.caps
-  const none: Caps = { carousel: false, fbStory: false, tiktokPhoto: false }
+  const none: Caps = { carousel: false, fbStory: false, tiktokPhoto: false, tiktokDirect: false }
   const c = await fetch(`${URL_}/functions/v1/publish-due-posts?caps=1`, { cache: 'no-store', signal: AbortSignal.timeout(5000) })
-    .then(r => (r.ok ? r.json() : none)).then(j => ({ carousel: !!j.carousel, fbStory: !!j.fbStory, tiktokPhoto: !!j.tiktokPhoto })).catch(() => none)
+    .then(r => (r.ok ? r.json() : none)).then(j => ({ carousel: !!j.carousel, fbStory: !!j.fbStory, tiktokPhoto: !!j.tiktokPhoto, tiktokDirect: !!j.tiktokDirect })).catch(() => none)
   capsCache = { at: Date.now(), caps: c }
   return c
 }
@@ -114,8 +114,8 @@ export async function POST(req: NextRequest) {
 
     const { data: acc } = await admin.from('social_accounts').select('platform, token_expires_at').eq('user_id', user.id).eq('platform', net).maybeSingle()
     if (!acc) return NextResponse.json({ error: 'not_connected' }, { status: 409 })
-    // Facebook pubblica col token della Pagina, che non scade; Instagram e TikTok col token dell'utente
-    if (net !== 'facebook' && acc.token_expires_at && new Date(acc.token_expires_at).getTime() < Date.now()) return NextResponse.json({ error: 'expired' }, { status: 409 })
+    // Facebook pubblica col token della Pagina, che non scade; TikTok lo rinnova publish-due-posts (refresh token 365 giorni)
+    if (net === 'instagram' && acc.token_expires_at && new Date(acc.token_expires_at).getTime() < Date.now()) return NextResponse.json({ error: 'expired' }, { status: 409 })
 
     if (net === 'instagram') {
       const d0 = new Date(at); d0.setHours(0, 0, 0, 0)
@@ -124,11 +124,23 @@ export async function POST(req: NextRequest) {
         .gte('scheduled_at', d0.toISOString()).lte('scheduled_at', d1.toISOString()).in('status', ['scheduled', 'publishing', 'published'])
       if ((count ?? 0) >= IG_DAILY_LIMIT) return NextResponse.json({ error: 'ig_daily_limit' }, { status: 429 })
     }
+    // TikTok Direct Post (07/10/2026): le scelte della schermata "Pubblica su TikTok" (privacy senza valore preimpostato,
+    // interazioni, dichiarazione dei contenuti commerciali). Senza: bozza nella casella TikTok come prima.
+    let tiktok_options: Record<string, unknown> | null = null
+    if (net === 'tiktok' && body.tiktok && typeof body.tiktok === 'object') {
+      const t = body.tiktok as Record<string, unknown>
+      const privacy = String(t.privacy)
+      if (!['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'].includes(privacy)) return NextResponse.json({ error: 'tt_privacy' }, { status: 400 })
+      if (t.brandContent === true && privacy === 'SELF_ONLY') return NextResponse.json({ error: 'tt_branded_private' }, { status: 400 })
+      if (!c.tiktokDirect) return NextResponse.json({ error: 'not_supported_yet' }, { status: 409 })
+      tiktok_options = { direct: true, privacy_level: privacy, allow_comments: t.comment === true, allow_duet: t.duet === true, allow_stitch: t.stitch === true,
+        brand_content_toggle: t.brandContent === true, brand_organic_toggle: t.brandOrganic === true }
+    }
     const { data: membership } = await admin.from('team_members').select('team_id').eq('user_id', user.id).maybeSingle()
     const project = typeof body.project === 'string' && /^[\w-]{1,64}$/.test(body.project) ? body.project : null
     const { data: row, error } = await admin.from('scheduled_posts').insert({
       user_id: user.id, team_id: membership?.team_id ?? null, platforms: [net], media_url: paths[0], media_type: mediaType, format,
-      caption, hashtags: '', first_comment: '', scheduled_at: at.toISOString(), timezone: String(body.timezone || 'Europe/Rome').slice(0, 64), status: 'scheduled',
+      caption, hashtags: '', first_comment: '', tiktok_options, scheduled_at: at.toISOString(), timezone: String(body.timezone || 'Europe/Rome').slice(0, 64), status: 'scheduled',
       platform_results: { _meta: { project, media_paths: paths, carousel, count: paths.length, source: 'agenteimmo' } },
     }).select('id, platforms, media_type, format, scheduled_at, status, published_at, error_message, retry_count, next_retry_at, platform_results, created_at').single()
     if (error || !row) return NextResponse.json({ error: 'create_failed' }, { status: 500 })
