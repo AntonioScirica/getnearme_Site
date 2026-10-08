@@ -24,9 +24,22 @@ export type PlatformEmail =
   | { kind: 'plan_ended' }
   | { kind: 'payment_failed'; plan: Plan }
   | { kind: 'affiliate_used'; code: string; credits: number; uses: number }
+  | { kind: 'welcome'; credits: number }
 
 function build(e: PlatformEmail, name: string): { subject: string; html: string } {
   switch (e.kind) {
+    // benvenuto di chi si iscrive dal sito (08/10/2026: prima riceveva quello dell'estensione, con funzioni che qui non ci sono)
+    case 'welcome': return { subject: e.credits ? `Benvenuto in Agente Immo: hai ${e.credits} crediti per provare` : 'Benvenuto in Agente Immo', html: email({
+      preheader: e.credits ? `${photosFor(e.credits)} foto arredate o un video per i social, gratis.` : 'Foto arredate, video per i social e il tuo sito da agente.',
+      body: eyebrow('Benvenuto') + title('Il tuo account è pronto')
+        + text(`${hi(name)} benvenuto in Agente Immo.${e.credits ? ` Ti abbiamo regalato <strong style="color:#1d1d1f">${e.credits} crediti</strong> per provare tutto: bastano per ${photosFor(e.credits)} foto arredate oppure per un video Prima e dopo.` : ''}`)
+        + features([
+          ['Arreda o svuota una stanza', 'In chat carichi la foto e scrivi come la vuoi: in pochi secondi è pronta per l’annuncio.'],
+          ['Crea un video per i social', 'Dalla stessa foto un reel prima e dopo, pronto per Instagram e TikTok.'],
+          ['Prepara il tuo sito da agente', 'In Il mio sito scegli il modello e lo personalizzi. Con Plus e Pro va online al tuo indirizzo.'],
+        ])
+        + button(`${APP}#/staging`, 'Arreda la prima stanza', 'Ci vogliono pochi secondi'),
+    }) }
     case 'plan_started': return { subject: `Benvenuto in Agente Immo ${NAMES[e.plan]}`, html: email({
       preheader: `Il tuo piano è attivo: ${credits(e.plan)} crediti pronti da usare.`,
       body: eyebrow('Piano attivo') + title(`Benvenuto in ${NAMES[e.plan]}`)
